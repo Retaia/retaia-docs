@@ -262,6 +262,7 @@ Toute implémentation qui viole ces objectifs est invalide.
 ## Références associées
 
 * [CAPABILITIES.md](CAPABILITIES.md)
+* [PROCESSING-PROFILES.md](PROCESSING-PROFILES.md)
 * [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md)
 * [AGENT-PROTOCOL.md](../workflows/AGENT-PROTOCOL.md)
 * [API-CONTRACTS.md](../api/API-CONTRACTS.md)
