@@ -77,6 +77,8 @@ Comportement :
 * `batches:execute` (**humain uniquement**)
 * `purge:execute` (**humain uniquement**)
 
+La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md).
+
 
 ## 2) Assets
 
@@ -93,9 +95,15 @@ Query params (exemples) :
 * `tags_mode=AND|OR` (défaut: AND)
 * `suggested_tags=foo,bar` (**v1.1+**, suggestions uniquement)
 * `suggested_tags_mode=AND|OR` (**v1.1+**, défaut: AND)
-* `q=texte` (optionnel)
+* `q=texte` (optionnel, recherche full-text sur `filename`, `notes`, `transcript_text`)
 * `sort=-created_at`
 * `limit=50&cursor=...`
+
+Règles `q=` :
+
+* matching case-insensitive
+* `q` ne modifie pas la sémantique des filtres (`state`, `media_type`, etc.)
+* tri par défaut conservé (`sort`) ; pas de score implicite exposé en v1
 
 Response :
 
@@ -229,6 +237,7 @@ Response :
 Body :
 
 * `lock_token`
+* `job_type`
 * `result: ProcessingResultPatch`
 
 Effets :
@@ -244,6 +253,11 @@ Note v1 (important) :
 * Les binaires (proxies/thumbs/waveforms) sont uploadés via l’API Derived.
 * `submit` référence les dérivés déjà uploadés.
 * Le serveur applique un merge partiel par domaine ; un job ne peut pas écraser les domaines qu'il ne possède pas.
+* ownership de patch par `job_type` :
+  * `extract_facts` -> `facts_patch`
+  * `generate_proxy|generate_thumbnails|generate_audio_waveform` -> `derived_patch`
+  * `transcribe_audio` -> `transcript_patch`
+  * `suggest_tags` -> `suggestions_patch`
 
 ### POST `/jobs/{job_id}/fail`
 
@@ -364,6 +378,7 @@ Retourne statut + rapport.
 * release du lock asset après opération filesystem et avant transition d'état
 * suffixe de collision obligatoire : `__{short_nonce}`
 * un asset locké pour move n'est pas claimable pour processing
+* `short_nonce` suit la spec [`NAMING-AND-NONCE.md`](../policies/NAMING-AND-NONCE.md)
 
 
 ## 7.1) Bulk decisions (v1.1)
@@ -439,6 +454,7 @@ Effet :
 * `reprocess` est refusé si un lock move est actif sur l'asset
 * `purge` est refusé si un job est `claimed` pour l'asset
 * claim job : atomique, lease TTL obligatoire, heartbeat obligatoire pour jobs longs
+* cycle de vie détaillé des verrous défini dans [`LOCK-LIFECYCLE.md`](../policies/LOCK-LIFECYCLE.md)
 
 
 ## 9) Schémas (objets)
@@ -502,6 +518,8 @@ Règles :
 * `429 RATE_LIMITED`
 * `503 TEMPORARY_UNAVAILABLE`
 
+Le payload d’erreur normatif est défini dans [`ERROR-MODEL.md`](ERROR-MODEL.md).
+
 
 ## 11) Décisions actées (v1)
 
@@ -522,7 +540,6 @@ Règles :
 
 ## 13) Points en suspens
 
-* Full-text search : `q=` en v1 (si oui, préciser le comportement exact)
 * Batch purge : si nécessaire plus tard
 
 ## Références associées
@@ -530,7 +547,12 @@ Règles :
 * [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md)
 * [JOB-TYPES.md](../definitions/JOB-TYPES.md)
 * [PROCESSING-PROFILES.md](../definitions/PROCESSING-PROFILES.md)
+* [SIDECAR-RULES.md](../definitions/SIDECAR-RULES.md)
 * [CAPABILITIES.md](../definitions/CAPABILITIES.md)
 * [AGENT-PROTOCOL.md](../workflows/AGENT-PROTOCOL.md)
 * [LOCKING-MATRIX.md](../policies/LOCKING-MATRIX.md)
+* [LOCK-LIFECYCLE.md](../policies/LOCK-LIFECYCLE.md)
+* [NAMING-AND-NONCE.md](../policies/NAMING-AND-NONCE.md)
+* [AUTHZ-MATRIX.md](../policies/AUTHZ-MATRIX.md)
 * [HOOKS-CONTRACT.md](../policies/HOOKS-CONTRACT.md)
+* [ERROR-MODEL.md](ERROR-MODEL.md)

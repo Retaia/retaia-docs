@@ -27,6 +27,25 @@ paths:
     get:
       tags: [Assets]
       summary: List assets
+      parameters:
+        - name: state
+          in: query
+          schema:
+            type: string
+        - name: media_type
+          in: query
+          schema:
+            type: string
+            enum: [VIDEO, PHOTO, AUDIO]
+        - name: tags
+          in: query
+          schema:
+            type: string
+        - name: q
+          in: query
+          schema:
+            type: string
+          description: Full-text query over filename, notes and transcript_text.
       responses:
         "200":
           description: Asset list
@@ -132,6 +151,10 @@ paths:
           description: Reprocess accepted
         "409":
           description: State conflict or idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /assets/{uuid}/decision:
     post:
@@ -156,6 +179,10 @@ paths:
           description: Decision applied
         "409":
           description: State conflict or idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /assets/{uuid}/reopen:
     post:
@@ -260,8 +287,16 @@ paths:
           description: Job completed
         "409":
           description: Idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "423":
           description: Invalid or missing lock
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /jobs/{job_id}/fail:
     post:
@@ -295,6 +330,10 @@ paths:
           description: Job failed recorded
         "409":
           description: Idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /assets/{uuid}/derived/upload/init:
     post:
@@ -536,6 +575,12 @@ paths:
       responses:
         "200":
           description: Purge executed
+        "409":
+          description: State conflict or idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /assets/{uuid}/purge/preview:
     post:
@@ -771,14 +816,111 @@ components:
           nullable: true
 
     JobSubmitRequest:
+      oneOf:
+        - $ref: "#/components/schemas/SubmitExtractFacts"
+        - $ref: "#/components/schemas/SubmitDerived"
+        - $ref: "#/components/schemas/SubmitTranscribe"
+        - $ref: "#/components/schemas/SubmitSuggest"
+
+    SubmitExtractFacts:
       type: object
-      required: [lock_token, result]
       additionalProperties: false
+      required: [lock_token, job_type, result]
       properties:
         lock_token:
           type: string
+        job_type:
+          type: string
+          enum: [extract_facts]
         result:
-          $ref: "#/components/schemas/ProcessingResultPatch"
+          type: object
+          additionalProperties: false
+          required: [facts_patch]
+          properties:
+            facts_patch:
+              $ref: "#/components/schemas/FactsPatch"
+            warnings:
+              type: array
+              items:
+                type: string
+            metrics:
+              type: object
+              additionalProperties: true
+
+    SubmitDerived:
+      type: object
+      additionalProperties: false
+      required: [lock_token, job_type, result]
+      properties:
+        lock_token:
+          type: string
+        job_type:
+          type: string
+          enum: [generate_proxy, generate_thumbnails, generate_audio_waveform]
+        result:
+          type: object
+          additionalProperties: false
+          required: [derived_patch]
+          properties:
+            derived_patch:
+              $ref: "#/components/schemas/DerivedPatch"
+            warnings:
+              type: array
+              items:
+                type: string
+            metrics:
+              type: object
+              additionalProperties: true
+
+    SubmitTranscribe:
+      type: object
+      additionalProperties: false
+      required: [lock_token, job_type, result]
+      properties:
+        lock_token:
+          type: string
+        job_type:
+          type: string
+          enum: [transcribe_audio]
+        result:
+          type: object
+          additionalProperties: false
+          required: [transcript_patch]
+          properties:
+            transcript_patch:
+              $ref: "#/components/schemas/TranscriptPatch"
+            warnings:
+              type: array
+              items:
+                type: string
+            metrics:
+              type: object
+              additionalProperties: true
+
+    SubmitSuggest:
+      type: object
+      additionalProperties: false
+      required: [lock_token, job_type, result]
+      properties:
+        lock_token:
+          type: string
+        job_type:
+          type: string
+          enum: [suggest_tags]
+        result:
+          type: object
+          additionalProperties: false
+          required: [suggestions_patch]
+          properties:
+            suggestions_patch:
+              $ref: "#/components/schemas/SuggestionsPatch"
+            warnings:
+              type: array
+              items:
+                type: string
+            metrics:
+              type: object
+              additionalProperties: true
 
     ProcessingResultPatch:
       type: object
@@ -871,4 +1013,34 @@ components:
           items:
             type: string
         source:
+          type: string
+
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [code, message, retryable, correlation_id]
+      properties:
+        code:
+          type: string
+          enum:
+            - FORBIDDEN_SCOPE
+            - FORBIDDEN_ACTOR
+            - STATE_CONFLICT
+            - IDEMPOTENCY_CONFLICT
+            - STALE_LOCK_TOKEN
+            - NAME_COLLISION_EXHAUSTED
+            - PURGED
+            - VALIDATION_FAILED
+            - LOCK_REQUIRED
+            - LOCK_INVALID
+            - RATE_LIMITED
+            - TEMPORARY_UNAVAILABLE
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+        retryable:
+          type: boolean
+        correlation_id:
           type: string
