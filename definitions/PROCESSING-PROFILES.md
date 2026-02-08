@@ -86,7 +86,7 @@ Jobs forbidden :
 * `generate_audio_waveform`
 * `transcribe_audio`
 
-## 3) Résolution auto du profil
+## 3) Résolution auto du profil (normative)
 
 Détection par défaut (override humain autorisé) :
 
@@ -95,6 +95,23 @@ Détection par défaut (override humain autorisé) :
 * `AUDIO` -> `audio_music`
 
 Pour `AUDIO`, l'utilisateur peut forcer `audio_voice` avant claim si transcript requis.
+
+Règles explicites :
+
+* aucune détection implicite par IA/LLM
+* aucune inférence implicite depuis tags non validés
+* seules les métadonnées techniques et le choix humain explicite sont autorisés
+
+## 3.1) Mutation de profil
+
+Avant premier claim de job review :
+
+* mutation autorisée `* -> *` par action humaine explicite
+
+Après premier claim :
+
+* mutation interdite sans reprocess
+* workflow obligatoire : `POST /assets/{uuid}/reprocess` puis mutation de profil puis reprise processing
 
 ## 4) Invariants
 

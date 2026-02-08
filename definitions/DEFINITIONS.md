@@ -297,4 +297,6 @@ Toute implémentation doit respecter strictement ces distinctions.
 
 * [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md)
 * [JOB-TYPES.md](JOB-TYPES.md)
+* [PROCESSING-PROFILES.md](PROCESSING-PROFILES.md)
+* [SIDECAR-RULES.md](SIDECAR-RULES.md)
 * [WORKFLOWS.md](../workflows/WORKFLOWS.md)
