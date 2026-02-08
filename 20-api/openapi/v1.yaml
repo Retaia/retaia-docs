@@ -1,0 +1,253 @@
+openapi: 3.1.0
+
+info:
+  title: Rush Catalog API
+  description: >
+    Central API for managing media inventory, states, and processing jobs
+    in the Rush system. This API is the single source of truth for media
+    lifecycle and agent coordination.
+  version: 0.1.0
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+  - url: https://api.rush.local
+    description: Production (example)
+
+tags:
+  - name: Inventory
+    description: Media inventory and metadata
+  - name: States
+    description: State machine transitions
+  - name: Jobs
+    description: Agent processing jobs
+  - name: Agents
+    description: Agent registration and heartbeat
+
+paths:
+
+  /inventory:
+    get:
+      tags: [Inventory]
+      summary: List media items
+      description: >
+        Returns a paginated list of media items known by the catalog.
+        Does not expose raw media paths.
+      responses:
+        "200":
+          description: List of media items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/MediaItem"
+                  total:
+                    type: integer
+
+  /inventory/{id}:
+    get:
+      tags: [Inventory]
+      summary: Get media item details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Media item details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaItem"
+        "404":
+          description: Media item not found
+
+  /inventory/{id}/state:
+    post:
+      tags: [States]
+      summary: Request a state transition
+      description: >
+        Requests a transition for a media item.
+        The server MUST validate the transition against the state machine.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                target_state:
+                  type: string
+              required: [target_state]
+      responses:
+        "200":
+          description: Transition accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaItem"
+        "409":
+          description: Transition refused (invalid state change)
+
+  /jobs:
+    get:
+      tags: [Jobs]
+      summary: List available jobs for agents
+      description: >
+        Returns jobs that are pending and claimable by an agent.
+      responses:
+        "200":
+          description: List of jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Job"
+
+  /jobs/{id}/claim:
+    post:
+      tags: [Jobs]
+      summary: Claim a job
+      description: >
+        Atomically claims a job for processing by an agent.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Job successfully claimed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "409":
+          description: Job already claimed or unavailable
+
+  /jobs/{id}/complete:
+    post:
+      tags: [Jobs]
+      summary: Complete a job
+      description: >
+        Marks a job as completed and submits derived artifacts metadata.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                output:
+                  type: object
+                  additionalProperties: true
+      responses:
+        "200":
+          description: Job completed
+
+  /agents/register:
+    post:
+      tags: [Agents]
+      summary: Register an agent
+      description: >
+        Registers a processing agent instance.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Agent"
+      responses:
+        "200":
+          description: Agent registered
+
+  /agents/{id}/heartbeat:
+    post:
+      tags: [Agents]
+      summary: Agent heartbeat
+      description: >
+        Keeps the agent marked as alive.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Heartbeat received
+
+components:
+  schemas:
+
+    MediaItem:
+      type: object
+      description: Media item registered in the catalog
+      properties:
+        id:
+          type: string
+        filename:
+          type: string
+        state:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          additionalProperties: true
+      required: [id, filename, state]
+
+    Job:
+      type: object
+      description: Processing job assigned to an agent
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        status:
+          type: string
+          enum: [pending, claimed, completed, failed]
+        media_id:
+          type: string
+        claimed_by:
+          type: string
+          nullable: true
+      required: [id, type, status, media_id]
+
+    Agent:
+      type: object
+      description: Processing agent instance
+      properties:
+        id:
+          type: string
+        hostname:
+          type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+      required: [id, hostname]

@@ -8,8 +8,9 @@ Objectif : fournir une surface stable consommée par :
 * RushIndexer Agent(s)
 * futurs clients (ex: client MCP)
 
-Ce document est **normatif** : si une implémentation contredit ce contrat, l’implémentation est considérée incorrecte.
 
+Cette spécification OpenAPI est **normative**.
+Toute implémentation serveur ou agent doit s’y conformer strictement.
 ---
 
 ## 0) Conventions
