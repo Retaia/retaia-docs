@@ -218,3 +218,36 @@ Dans le repo rush-specs :
 
   Les commits générés avec l’assistance d’une IA sont soumis aux mêmes règles
   et doivent être compris et validés par un humain avant merge.
+
+## Source de vérité et documentation
+
+Le projet Rush repose sur une séparation stricte entre :
+
+- `specs/` (rush-specs) : **source de vérité normative**, cross-project
+- `docs/` dans les repositories applicatifs : **documentation non normative**
+
+### Règles
+
+- Toute règle de comportement du système DOIT être définie dans `rush-specs`.
+- Cela inclut notamment :
+  - API et contrats
+  - machine à états
+  - workflows
+  - job types
+  - capabilities
+  - règles de purge ou de move
+
+- Les dossiers `docs/` des repositories applicatifs sont limités à :
+  - documentation de stack
+  - instructions de développement
+  - runbooks opérationnels
+  - conventions locales d’implémentation
+
+### Interdictions
+
+- Aucune règle métier ou comportementale ne doit être définie dans `docs/`.
+- Aucune documentation locale ne peut contredire ou compléter les specs.
+- Si une règle semble manquer ou ambiguë, la spécification doit être modifiée
+  dans `rush-specs` avant toute implémentation.
+
+Toute violation de cette séparation est considérée comme un changement invalide.
