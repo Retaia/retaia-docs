@@ -60,6 +60,8 @@ Comportement :
 
 `DISCOVERED, READY, PROCESSING_REVIEW, PROCESSED, DECISION_PENDING, DECIDED_KEEP, DECIDED_REJECT, MOVE_QUEUED, ARCHIVED, REJECTED, PURGED`
 
+Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`).
+
 
 ## 1) Auth
 
@@ -85,6 +87,7 @@ Comportement :
 * `purge:execute` (**humain uniquement**)
 
 La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md).
+`openapi/v1.yaml` déclare explicitement les schémas de sécurité (`SessionCookieAuth`, `OAuth2ClientCredentials`) et les scopes requis par endpoint.
 
 
 ## 2) Assets

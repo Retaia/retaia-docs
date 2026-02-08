@@ -78,6 +78,8 @@ Tests obligatoires :
 * conformité des réponses à `api/openapi/v1.yaml`
 * détection de drift `API-CONTRACTS.md` vs OpenAPI en CI
 * payload erreur conforme à `api/ERROR-MODEL.md`
+* enum d’état `AssetState` strict sur les payloads d’assets
+* exigences de sécurité/scopes OpenAPI présentes sur chaque endpoint mutateur
 
 ## 8.1) Authz matrix
 

@@ -28,11 +28,14 @@ paths:
     get:
       tags: [Assets]
       summary: List assets
+      security:
+        - SessionCookieAuth: []
+        - OAuth2ClientCredentials: ["assets:read"]
       parameters:
         - name: state
           in: query
           schema:
-            type: string
+            $ref: "#/components/schemas/AssetState"
         - name: media_type
           in: query
           schema:
@@ -100,6 +103,9 @@ paths:
     get:
       tags: [Assets]
       summary: Get one asset detail
+      security:
+        - SessionCookieAuth: []
+        - OAuth2ClientCredentials: ["assets:read"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
       responses:
@@ -112,6 +118,9 @@ paths:
     patch:
       tags: [Assets]
       summary: Update human metadata on one asset
+      security:
+        - SessionCookieAuth: []
+        - OAuth2ClientCredentials: ["assets:write"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
       requestBody:
@@ -140,6 +149,8 @@ paths:
     post:
       tags: [Agents]
       summary: Register a processing agent
+      security:
+        - OAuth2ClientCredentials: ["jobs:claim"]
       requestBody:
         required: true
         content:
@@ -177,6 +188,9 @@ paths:
     post:
       tags: [Assets]
       summary: Trigger explicit reprocess
+      security:
+        - SessionCookieAuth: []
+        - OAuth2ClientCredentials: ["assets:write"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -194,6 +208,9 @@ paths:
     post:
       tags: [Decisions]
       summary: Set or update a human decision
+      security:
+        - SessionCookieAuth: []
+        - OAuth2ClientCredentials: ["decisions:write"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -222,6 +239,9 @@ paths:
     post:
       tags: [Decisions]
       summary: Reopen archived or rejected asset to decision pending
+      security:
+        - SessionCookieAuth: []
+        - OAuth2ClientCredentials: ["decisions:write"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
       responses:
@@ -234,6 +254,8 @@ paths:
     get:
       tags: [Jobs]
       summary: List claimable jobs for the authenticated agent
+      security:
+        - OAuth2ClientCredentials: ["jobs:claim"]
       description: |
         Returns jobs with status `pending`
         and compatible with the agent capabilities.
@@ -251,6 +273,8 @@ paths:
     post:
       tags: [Jobs]
       summary: Claim a job (atomic lease)
+      security:
+        - OAuth2ClientCredentials: ["jobs:claim"]
       parameters:
         - name: job_id
           in: path
@@ -271,6 +295,8 @@ paths:
     post:
       tags: [Jobs]
       summary: Extend job lease
+      security:
+        - OAuth2ClientCredentials: ["jobs:heartbeat"]
       parameters:
         - name: job_id
           in: path
@@ -303,6 +329,8 @@ paths:
     post:
       tags: [Jobs]
       summary: Submit job result patch
+      security:
+        - OAuth2ClientCredentials: ["jobs:submit"]
       parameters:
         - name: job_id
           in: path
@@ -336,6 +364,8 @@ paths:
     post:
       tags: [Jobs]
       summary: Mark job as failed
+      security:
+        - OAuth2ClientCredentials: ["jobs:submit"]
       parameters:
         - name: job_id
           in: path
@@ -373,6 +403,8 @@ paths:
     post:
       tags: [Derived]
       summary: Initialize derived upload
+      security:
+        - OAuth2ClientCredentials: ["jobs:submit"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -401,6 +433,8 @@ paths:
     post:
       tags: [Derived]
       summary: Upload one part
+      security:
+        - OAuth2ClientCredentials: ["jobs:submit"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
       requestBody:
@@ -423,6 +457,8 @@ paths:
     post:
       tags: [Derived]
       summary: Complete derived upload
+      security:
+        - OAuth2ClientCredentials: ["jobs:submit"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -448,6 +484,9 @@ paths:
     get:
       tags: [Derived]
       summary: List available derived files for one asset
+      security:
+        - SessionCookieAuth: []
+        - OAuth2ClientCredentials: ["assets:read"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
       responses:
@@ -463,6 +502,9 @@ paths:
     get:
       tags: [Derived]
       summary: Fetch one derived file by kind
+      security:
+        - SessionCookieAuth: []
+        - OAuth2ClientCredentials: ["assets:read"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
         - name: kind
@@ -481,6 +523,9 @@ paths:
     post:
       tags: [Batches]
       summary: Preview move batch
+      security:
+        - SessionCookieAuth: []
+        - OAuth2ClientCredentials: ["batches:execute"]
       requestBody:
         required: true
         content:
@@ -502,6 +547,9 @@ paths:
     post:
       tags: [Batches]
       summary: Execute or dry-run move batch
+      security:
+        - SessionCookieAuth: []
+        - OAuth2ClientCredentials: ["batches:execute"]
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
@@ -526,6 +574,9 @@ paths:
     get:
       tags: [Batches]
       summary: Get move batch status and report
+      security:
+        - SessionCookieAuth: []
+        - OAuth2ClientCredentials: ["batches:execute"]
       parameters:
         - name: batch_id
           in: path
@@ -546,6 +597,9 @@ paths:
       tags: [Decisions]
       summary: Preview bulk decisions
       description: Available in v1.1+.
+      security:
+        - SessionCookieAuth: []
+        - OAuth2ClientCredentials: ["decisions:write"]
       requestBody:
         required: true
         content:
@@ -571,6 +625,9 @@ paths:
       tags: [Decisions]
       summary: Apply bulk decisions from preview token
       description: Available in v1.1+.
+      security:
+        - SessionCookieAuth: []
+        - OAuth2ClientCredentials: ["decisions:write"]
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
@@ -594,6 +651,9 @@ paths:
     post:
       tags: [Purge]
       summary: Purge one rejected asset
+      security:
+        - SessionCookieAuth: []
+        - OAuth2ClientCredentials: ["purge:execute"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -622,6 +682,9 @@ paths:
     post:
       tags: [Purge]
       summary: Preview purge impact for one asset
+      security:
+        - SessionCookieAuth: []
+        - OAuth2ClientCredentials: ["purge:execute"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
       responses:
@@ -629,6 +692,27 @@ paths:
           description: Purge preview
 
 components:
+  securitySchemes:
+    SessionCookieAuth:
+      type: apiKey
+      in: cookie
+      name: retaia_session
+    OAuth2ClientCredentials:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: /api/v1/oauth/token
+          scopes:
+            assets:read: Read assets and derived metadata.
+            assets:write: Update human metadata and trigger reprocess.
+            decisions:write: Apply human decisions.
+            jobs:claim: Discover and claim jobs.
+            jobs:heartbeat: Extend job leases.
+            jobs:submit: Submit job completion/failure and derived uploads.
+            suggestions:write: Submit AI-powered suggestions (v1.1+).
+            batches:execute: Preview and execute move batches.
+            purge:execute: Preview and execute purge operations.
+
   parameters:
     UuidPath:
       name: uuid
@@ -644,6 +728,21 @@ components:
         type: string
 
   schemas:
+    AssetState:
+      type: string
+      enum:
+        - DISCOVERED
+        - READY
+        - PROCESSING_REVIEW
+        - PROCESSED
+        - DECISION_PENDING
+        - DECIDED_KEEP
+        - DECIDED_REJECT
+        - MOVE_QUEUED
+        - ARCHIVED
+        - REJECTED
+        - PURGED
+
     AssetSummary:
       type: object
       required: [uuid, media_type, state, created_at]
@@ -655,7 +754,7 @@ components:
           type: string
           enum: [VIDEO, PHOTO, AUDIO]
         state:
-          type: string
+          $ref: "#/components/schemas/AssetState"
         created_at:
           type: string
           format: date-time
@@ -938,7 +1037,7 @@ components:
 
     SubmitSuggest:
       type: object
-      description: AI-powered suggestions submission (available in v1.1+).
+      description: AI-powered suggestions submission (available in v1.1+, requires jobs:submit and suggestions:write).
       additionalProperties: false
       required: [lock_token, job_type, result]
       properties:
