@@ -26,6 +26,7 @@ Retaia Core Server (NAS)
    * taille identique sur **2 scans consécutifs**
    * `mtime` plus ancien que **5–6 minutes**
 6. Passage de l’état `DISCOVERED` à `READY` si conditions remplies.
+7. Attribution d'un `processing_profile` (auto par défaut, modifiable manuellement avant claim).
 
 ### Règles
 
@@ -42,7 +43,7 @@ Permettre à un agent de processing (desktop/laptop/raspberry-pi) de s’identif
 
 ### Acteurs
 
-Retaia Agent Agent, Retaia Core Server
+Retaia Agent, Retaia Core Server
 
 ### Étapes
 
@@ -64,14 +65,15 @@ Attribuer un asset READY à un agent pour produire les éléments nécessaires �
 
 ### Acteurs
 
-Retaia Core Server, Retaia Agent Agent
+Retaia Core Server, Retaia Agent
 
 ### Étapes
 
 1. L’agent récupère les jobs claimables via `GET /jobs`.
 2. L’agent tente un claim atomique via `POST /jobs/{job_id}/claim`.
 3. Le serveur crée une réservation (lock + TTL) et retourne `asset_uuid`, `lock_token`, chemins d’accès et métadonnées nécessaires.
-4. Le job passe en `claimed` et l’asset concerné passe à `PROCESSING_REVIEW`.
+4. Le job passe en `claimed`.
+5. L’asset passe en `PROCESSING_REVIEW` dès qu’au moins un job review est en cours.
 
 ### Règles
 
@@ -88,28 +90,30 @@ Produire tout ce qui rend la review possible dans l’UI : facts + dérivés.
 
 ### Acteur
 
-Retaia Agent Agent
+Retaia Agent
 
 ### Étapes
 
 1. Vérifier que le NAS est monté (SMB/NFS).
 2. Lire le fichier principal et ses sidecars (read-only).
 3. Extraire les facts (métadonnées techniques) et les envoyer au serveur.
-4. Générer les dérivés dans `RUSHES_DB/.derived/{uuid}/...` :
+4. Générer les dérivés en local temporaire côté agent :
 
    * VIDEO : proxy (obligatoire), thumbs
    * AUDIO : proxy (obligatoire), waveform (recommandé)
-   * PHOTO : thumbs
-5. Enregistrer les références de dérivés (paths) côté serveur.
-6. En cas de job long : envoyer des heartbeats pour prolonger le TTL.
-7. Soumettre le résultat final, libérer le lock.
-8. Le serveur passe l’asset à `PROCESSED`.
+   * PHOTO : proxy (obligatoire), thumbs
+5. Uploader les dérivés via l'API (`/assets/{uuid}/derived/upload/*`).
+6. Enregistrer les références de dérivés côté serveur.
+7. En cas de job long : envoyer des heartbeats pour prolonger le TTL.
+8. Soumettre le résultat final, libérer le lock.
+9. Le serveur passe l’asset à `PROCESSED` quand tous les jobs requis par le `processing_profile` sont terminés.
 
 ### Règles
 
 * Aucun move, rename ou suppression.
 * L’agent ne prend jamais de décision KEEP/REJECT.
-* `PROCESSED` exige que les proxies soient présents pour VIDEO/AUDIO.
+* Les agents n'écrivent jamais directement dans `RUSHES_DB/.derived`.
+* `PROCESSED` dépend du `processing_profile` de l'asset.
 
 
 ## Workflow 5 — Jobs secondaires post-review
@@ -120,7 +124,7 @@ Produire des enrichissements non bloquants : transcription et suggestions de tag
 
 ### Acteurs
 
-Retaia Core Server, Retaia Agent Agent (ou autres clients), éventuellement MCP
+Retaia Core Server, Retaia Agent (ou autres clients), éventuellement MCP
 
 ### Étapes
 
@@ -180,24 +184,25 @@ Utilisateur, Retaia Core Server
 1. L’utilisateur déclenche l’action "Apply moves".
 2. Dry-run :
 
-   * liste des assets éligibles (`DECIDED_*` et `PROCESSED`)
+   * liste des assets éligibles (`DECIDED_KEEP` et `DECIDED_REJECT`)
    * détection des collisions de noms
    * liste des sidecars concernés
-3. Lock batch pour éviter la concurrence (no-claim sur assets du batch).
-4. Passage des assets en `MOVE_QUEUED`.
+3. Passage des assets en `MOVE_QUEUED`.
+4. Pour chaque asset : lock exclusif par fichier/rush.
 5. Déplacement des groupes (parent + sidecars) :
 
    * INBOX → ARCHIVE pour KEEP
    * INBOX → REJECTS pour REJECT
-6. Renommage déterministe en cas de collision.
+6. Renommage déterministe en cas de collision avec suffixe `__{short_nonce}`.
 7. Mise à jour du path courant et de l’historique.
-8. Passage à `ARCHIVED` ou `REJECTED`.
-9. Rapport d’exécution (succès / erreurs non bloquantes).
+8. Release du lock de l'asset.
+9. Passage à `ARCHIVED` ou `REJECTED`.
+10. Rapport d’exécution (succès / erreurs non bloquantes).
 
 ### Règles
 
-* Aucun move sans `PROCESSED`.
 * Aucun move sans décision humaine.
+* Un asset locké pour move n'est pas claimable pour processing.
 * Les erreurs sur un asset ne bloquent pas le batch complet.
 
 
@@ -233,19 +238,19 @@ Relancer un processing sans casser l’historique.
 
 ### Acteurs
 
-Utilisateur, Retaia Core Server, Retaia Agent Agent
+Utilisateur, Retaia Core Server, Retaia Agent
 
 ### Étapes
 
 1. L’utilisateur demande un reprocess (action explicite).
-2. Le serveur invalide facts/dérivés (version bump).
-3. L’asset repasse `PROCESSED → READY`.
-4. Un agent reprocess via le job `process_for_review`.
+2. Le serveur invalide toutes les données de processing (facts, dérivés, transcript, suggestions) via version bump.
+3. L’asset repasse `PROCESSED|ARCHIVED|REJECTED → READY`.
+4. Un ou plusieurs agents reprocessent via des jobs atomiques par capability.
 
 ### Règles
 
-* Les decisions humaines ne sont jamais écrasées automatiquement.
-* Les facts et suggestions peuvent être remplacés.
+* Les décisions humaines ne sont jamais écrasées automatiquement.
+* Les données de processing sont reconstruites depuis `READY`.
 
 
 ## Workflow 10 — Purge différée des REJECTED (Clean after 180 days)
@@ -333,7 +338,7 @@ Appliquer le même lifecycle aux photos qu’aux vidéos.
 
 1. Discovery des photos sur le NAS.
 2. Passage `DISCOVERED → READY`.
-3. Processing review (EXIF + thumbs).
+3. Processing review (EXIF + proxy + thumbs).
 4. Décision humaine KEEP/REJECT.
 5. Batch apply.
 

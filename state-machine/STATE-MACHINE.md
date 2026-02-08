@@ -39,18 +39,18 @@ Fichier stable et éligible au processing.
 
 #### Transitions autorisées
 
-* `READY → PROCESSING_REVIEW` (claim job “process_for_review” par un agent)
+* `READY → PROCESSING_REVIEW` (claim d'un premier job atomique de processing review)
 
 
 ### PROCESSING_REVIEW
 
 #### Signification
 
-Traitement “pour review” en cours par un agent : facts + thumbs + proxy (vidéo/audio) + waveform (audio).
+Traitement “pour review” en cours via un ou plusieurs jobs atomiques : facts + thumbs + proxy + éventuels enrichissements requis par profil.
 
 #### Transitions autorisées
 
-* `PROCESSING_REVIEW → PROCESSED`
+* `PROCESSING_REVIEW → PROCESSED` (quand tous les jobs requis par le profil media sont terminés)
 * `PROCESSING_REVIEW → READY` (échec + retry/backoff côté jobs)
 
 #### Règles
@@ -69,13 +69,13 @@ Traitement nécessaire à la review terminé.
 
 * facts extraits et stockés en DB
 * thumbs générés
-* **proxy présent pour VIDEO/AUDIO**
-* waveform présent pour AUDIO (recommandé)
+* proxy généré et disponible pour la review
 * références vers dérivés enregistrées
+* tous les prérequis du `processing_profile` sont satisfaits
 
 #### Transitions autorisées
 
-* `PROCESSED → DECISION_PENDING`
+* `PROCESSED → DECISION_PENDING` (automatique, après exécution des hooks/plugins post-processed)
 * `PROCESSED → READY` (reprocess explicite)
 
 
@@ -130,7 +130,7 @@ Asset planifié pour un batch move (apply).
 
 #### Règles
 
-* Verrou batch : aucun job processing ne peut être claim sur ces assets
+* Verrou par asset (fichier/rush) : aucun job processing ne peut être claim sur ces assets
 
 
 ### ARCHIVED
@@ -142,6 +142,7 @@ Asset déplacé vers ARCHIVE.
 #### Transitions autorisées
 
 * `ARCHIVED → DECISION_PENDING` (réouverture explicite pour re-review et reclasser)
+* `ARCHIVED → READY` (reprocess explicite)
 
 
 ### REJECTED
@@ -153,6 +154,7 @@ Asset déplacé vers REJECTS.
 #### Transitions autorisées
 
 * `REJECTED → DECISION_PENDING` (réouverture explicite, optionnelle)
+* `REJECTED → READY` (reprocess explicite)
 * `REJECTED → PURGED` (purge destructive, explicite ou via politique)
 
 
@@ -164,8 +166,9 @@ Ces flags existent dans la DB et sont mis à jour par les jobs.
 
 * `facts_done` (bool)
 * `thumbs_done` (bool)
-* `proxy_done` (bool) — requis pour VIDEO/AUDIO
-* `waveform_done` (bool) — requis/recommandé pour AUDIO
+* `proxy_done` (bool) — requis
+* `waveform_done` (bool) — requis si `processing_profile` l'exige
+* `processing_profile` (string) — ex: `video_standard`, `audio_music`, `audio_voice`
 * `review_processing_version` (string/int)
 
 ### Transcription (job secondaire)
@@ -187,23 +190,35 @@ Règle : aucune suggestion ne modifie automatiquement les décisions ou tags val
 
 Après `PROCESSED`, le serveur peut rendre éligible :
 
-* `JOB_TRANSCRIBE` (si audio présent et activé)
-* `JOB_SUGGEST_TAGS` (LLM, basé sur transcript + metadata)
+* `transcribe_audio` (si profil audio et activé)
+* `suggest_tags` (LLM, basé sur transcript + metadata)
 
 Ces jobs ne changent pas l’état principal.
+
+## Hooks autour de DECISION_PENDING
+
+Pour permettre les extensions sans casser le lifecycle principal :
+
+* un hook/plugin peut s'exécuter après `PROCESSED` et avant `DECISION_PENDING`
+* un hook/plugin peut s'exécuter à l'entrée de `DECISION_PENDING`
+* ces hooks ne doivent jamais contourner les transitions de la machine à états
+* ces hooks ne doivent jamais prendre de décision KEEP / REJECT
 
 
 ## Reprocess (explicite)
 
-Transition :
+Transitions autorisées :
 
 * `PROCESSED → READY`
+* `ARCHIVED → READY`
+* `REJECTED → READY`
 
 Effets :
 
-* Invalidation des facts/dérivés (via version bump)
-* Regénération des proxies/thumbs/etc.
-* Les décisions humaines existantes ne sont pas appliquées automatiquement
+* Invalidation des données de processing (facts, dérivés, transcript, suggestions) via version bump
+* Retour à un état technique minimal connu (`READY`)
+* Regénération des outputs selon le `processing_profile`
+* Les décisions humaines existantes ne sont pas réappliquées automatiquement
 
 
 ## Suppression différée REJECTED & nettoyage des dérivés
@@ -259,7 +274,7 @@ L’asset a été purgé (suppression définitive des fichiers et dérivés).
 * `PROCESSED → ARCHIVED/REJECTED` (sans décision + batch)
 * `DECISION_PENDING → MOVE_QUEUED`
 * `DECIDED_* → ARCHIVED/REJECTED` (sans batch)
-* `ARCHIVED/REJECTED → READY/PROCESSED` (pas de retour technique direct)
+* `ARCHIVED/REJECTED → PROCESSED` (doit repasser par `READY` via reprocess explicite)
 * `PURGED → *` (état terminal)
 
 Toute transition non listée comme autorisée est interdite par défaut.

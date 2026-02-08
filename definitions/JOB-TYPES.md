@@ -39,25 +39,58 @@ Un job qui ne respecte pas cette structure est invalide.
 
 ## 3. Job types définis
 
-### 3.1 `generate_video_proxies`
+Les jobs de processing review sont atomiques et orchestrés par le serveur selon le `processing_profile` de l'asset.
 
-**Objectif**
-Générer des proxies vidéo à partir d’un média source.
+### 3.1 `extract_facts`
+
+**Objectif**  
+Extraire les métadonnées techniques minimales (durée, codec, format, dimensions, etc.).
 
 **Required capabilities**
 
-* `media.proxies.video@1`
+* `media.facts@1`
 
 **Inputs**
 
 * asset_uuid
 * source_path (read-only)
+
+**Expected outputs**
+
+* facts (JSON)
+
+**Invariants**
+
+* aucune modification du média original
+* output entièrement recréable
+
+**Failure modes**
+
+* source illisible → fatal
+* timeout/OOM → retryable
+
+
+### 3.2 `generate_proxy`
+
+**Objectif**  
+Générer un proxy de review (video, audio ou image) selon le type média.
+
+**Required capabilities**
+
+* `media.proxies.video@1` (VIDEO)
+* `media.proxies.audio@1` (AUDIO)
+* `media.proxies.photo@1` (PHOTO)
+
+**Inputs**
+
+* asset_uuid
+* source_path (read-only)
+* media_type
 * proxy_profile
 
 **Expected outputs**
 
-* proxy_files[]
-* technical_metadata
+* derived_manifest[] (kind + référence upload)
 
 **Invariants**
 
@@ -68,12 +101,12 @@ Générer des proxies vidéo à partir d’un média source.
 **Failure modes**
 
 * source illisible → fatal
-* erreur d’encodage → retryable
+* erreur d’encodage/rendu → retryable
 
 
-### 3.2 `generate_thumbnails`
+### 3.3 `generate_thumbnails`
 
-**Objectif**
+**Objectif**  
 Générer des vignettes à partir d’un média.
 
 **Required capabilities**
@@ -101,10 +134,10 @@ Générer des vignettes à partir d’un média.
 * erreur de rendu → retryable
 
 
-### 3.3 `generate_audio_waveform`
+### 3.4 `generate_audio_waveform`
 
-**Objectif**
-Extraire une waveform audio.
+**Objectif**  
+Extraire une waveform audio quand le `processing_profile` l'exige.
 
 **Required capabilities**
 
@@ -129,36 +162,73 @@ Extraire une waveform audio.
 * piste audio absente → fatal
 
 
-### 3.4 `transcribe_audio`
+### 3.5 `transcribe_audio`
 
 Ce job peut rester indéfiniment en statut pending tant qu’aucun agent ne déclare la capability requise.
 
 **Objectif**  
-Produire une transcription (et éventuellement des timecodes) à partir de l’audio d’un média.
+Produire une transcription (et éventuellement des timecodes) à partir de l’audio d’un média, uniquement pour les profils qui l'exigent.
 
 **Required capabilities**
-- `speech.transcription@1`
+
+* `speech.transcription@1`
 
 **Inputs**
-- asset_uuid
-- source_path (read-only)
-- language (optionnel)
-- transcription_profile (optionnel)
+
+* asset_uuid
+* source_path (read-only)
+* language (optionnel)
+* transcription_profile (optionnel)
 
 **Expected outputs**
-- transcript_text
-- segments[] (optionnel : start_ms, end_ms, text)
-- confidence (optionnel)
+
+* transcript_text
+* segments[] (optionnel : start_ms, end_ms, text)
+* confidence (optionnel)
 
 **Invariants**
-- aucune modification du média original
-- aucune décision KEEP / REJECT
-- output recréable (si le moteur change de manière non rétrocompatible, incrémenter la version de capability)
+
+* aucune modification du média original
+* aucune décision KEEP / REJECT
+* output recréable (si le moteur change de manière non rétrocompatible, incrémenter la version de capability)
 
 **Failure modes**
-- pas de piste audio → fatal
-- timeout / OOM → retryable (selon policy serveur)
-- moteur indisponible → retryable
+
+* pas de piste audio → fatal
+* timeout / OOM → retryable (selon policy serveur)
+* moteur indisponible → retryable
+
+
+### 3.6 `suggest_tags`
+
+**Objectif**  
+Produire des suggestions de tags à partir des facts/transcript/metadata.
+
+**Required capabilities**
+
+* `meta.tags.suggestions@1`
+
+**Inputs**
+
+* asset_uuid
+* facts_ref
+* transcript_ref (optionnel)
+* suggestion_profile (optionnel)
+
+**Expected outputs**
+
+* suggested_tags[]
+* source (model, profile_version, etc.)
+
+**Invariants**
+
+* aucune décision KEEP / REJECT
+* aucune modification automatique des tags humains
+
+**Failure modes**
+
+* modèle indisponible → retryable
+* entrée insuffisante → failed non bloquant
 
 
 ## 4. Règles d’évolution

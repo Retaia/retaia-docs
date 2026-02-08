@@ -32,10 +32,14 @@ Une capability est identifiée par :
 
 Exemples valides :
 
+* `media.facts@1`
 * `media.proxies.video@1`
+* `media.proxies.audio@1`
+* `media.proxies.photo@1`
 * `media.thumbnails@1`
 * `audio.waveform@1`
 * `speech.transcription@1`
+* `meta.tags.suggestions@1`
 
 La version suit une logique **major only** :
 
