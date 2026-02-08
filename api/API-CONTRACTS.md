@@ -4,10 +4,13 @@ Ce document décrit le **contrat API v1** de Retaia Core.
 
 Cette spécification est **normative**. Toute implémentation serveur, agent ou client doit s’y conformer strictement.
 
+Le fichier `openapi/v1.yaml` est la description contractuelle exécutable et fait foi en cas de divergence.
+Ce document doit rester strictement aligné avec `openapi/v1.yaml`.
+
 Objectif : fournir une surface stable consommée par :
 
 * UI web (same-origin, servie par Symfony)
-* Retaia Agent Agent(s)
+* Retaia Agent(s)
 * futurs clients (ex: client MCP)
 
 
@@ -20,6 +23,26 @@ Objectif : fournir une surface stable consommée par :
 * Dates : ISO‑8601 UTC (`YYYY-MM-DDTHH:mm:ssZ`)
 * Pagination : `limit` + `cursor`
 * Idempotence : header `Idempotency-Key` sur endpoints critiques
+
+### Idempotence (règles strictes)
+
+Endpoints avec `Idempotency-Key` obligatoire :
+
+* `POST /assets/{uuid}/reprocess`
+* `POST /assets/{uuid}/decision`
+* `POST /batches/moves` (`mode=EXECUTE`)
+* `POST /decisions/apply`
+* `POST /assets/{uuid}/purge`
+* `POST /jobs/{job_id}/submit`
+* `POST /jobs/{job_id}/fail`
+* `POST /assets/{uuid}/derived/upload/init`
+* `POST /assets/{uuid}/derived/upload/complete`
+
+Comportement :
+
+* même `(actor, method, path, key)` et même body : même réponse rejouée
+* même clé mais body différent : `409 IDEMPOTENCY_CONFLICT`
+* durée de rétention des clés : 24h (configurable)
 
 ### Derived URLs
 
@@ -105,7 +128,8 @@ Déclenche un reprocess explicite.
 
 Effet (normatif) :
 
-* invalide facts/dérivés (version bump)
+* autorisé uniquement si `state in {PROCESSED, ARCHIVED, REJECTED}`
+* invalide les données de processing (facts, dérivés, transcript, suggestions) via version bump
 * transition vers `READY`
 * force la revue : retour à `DECISION_PENDING` après nouveau `PROCESSED`
 
@@ -120,7 +144,7 @@ Body :
 
 Règles (strictes) :
 
-* `KEEP/REJECT` : uniquement si `state == DECISION_PENDING`
+* `KEEP/REJECT` : si `state in {DECISION_PENDING, DECIDED_KEEP, DECIDED_REJECT}`
 * `CLEAR` : uniquement si `state in {DECIDED_KEEP, DECIDED_REJECT}`
 
 ### POST `/assets/{uuid}/reopen`
@@ -205,19 +229,21 @@ Response :
 Body :
 
 * `lock_token`
-* `result: ProcessingResult`
+* `result: ProcessingResultPatch`
 
 Effets :
 
-* `PROCESS_REVIEW` : `PROCESSING_REVIEW → PROCESSED → DECISION_PENDING` (après validation des garanties)
-* `TRANSCRIBE` : mise à jour `transcript_status`
-* `SUGGEST_TAGS` : mise à jour `suggestions_status`
+* `extract_facts | generate_proxy | generate_thumbnails | generate_audio_waveform` :
+  mise à jour des domaines `facts/derived`, puis `PROCESSING_REVIEW → PROCESSED → DECISION_PENDING` quand le profil est complet
+* `transcribe_audio` : mise à jour du domaine `transcript`
+* `suggest_tags` : mise à jour du domaine `suggestions`
 
 Note v1 (important) :
 
-* `ProcessingResult` ne transporte pas les binaires.
+* `ProcessingResultPatch` ne transporte pas les binaires.
 * Les binaires (proxies/thumbs/waveforms) sont uploadés via l’API Derived.
 * `submit` référence les dérivés déjà uploadés.
+* Le serveur applique un merge partiel par domaine ; un job ne peut pas écraser les domaines qu'il ne possède pas.
 
 ### POST `/jobs/{job_id}/fail`
 
@@ -242,7 +268,7 @@ Initialise un upload (permet chunking / reprise).
 
 Body (exemple) :
 
-* `kind: proxy_video | proxy_audio | thumb | waveform`
+* `kind: proxy_video | proxy_audio | proxy_photo | thumb | waveform`
 * `content_type`
 * `size_bytes`
 * `sha256?` (optionnel)
@@ -287,7 +313,7 @@ Retourne les dérivés disponibles et leurs URLs.
 
 ### GET `/assets/{uuid}/derived/{kind}`
 
-`kind = proxy_video | proxy_audio | thumb | waveform`
+`kind = proxy_video | proxy_audio | proxy_photo | thumb | waveform`
 
 Règles :
 
@@ -330,6 +356,14 @@ Response :
 ### GET `/batches/moves/{batch_id}`
 
 Retourne statut + rapport.
+
+### Règles d'exécution batch move
+
+* seuls les assets `DECIDED_KEEP` et `DECIDED_REJECT` sont éligibles
+* lock exclusif par asset (fichier/rush) pendant l'opération filesystem
+* release du lock asset après opération filesystem et avant transition d'état
+* suffixe de collision obligatoire : `__{short_nonce}`
+* un asset locké pour move n'est pas claimable pour processing
 
 
 ## 7.1) Bulk decisions (v1.1)
@@ -398,6 +432,14 @@ Effet :
 * `REJECTED → PURGED`
 * supprime originaux + sidecars + dérivés
 
+## 8.1) Concurrence & verrous (normatif)
+
+* `MOVE_QUEUED` interdit : claim job, reprocess, reopen, decision write, purge
+* `PURGED` interdit toute mutation
+* `reprocess` est refusé si un lock move est actif sur l'asset
+* `purge` est refusé si un job est `claimed` pour l'asset
+* claim job : atomique, lease TTL obligatoire, heartbeat obligatoire pour jobs longs
+
 
 ## 9) Schémas (objets)
 
@@ -427,26 +469,33 @@ Effet :
 ### Job
 
 * `job_id`
-* `job_type`
+* `job_type` (`extract_facts | generate_proxy | generate_thumbnails | generate_audio_waveform | transcribe_audio | suggest_tags`)
 * `asset_uuid`
 * `lock_token`
 * `locked_until`
 * `paths`
 * `derived_target_dir`
 
-### ProcessingResult
+### ProcessingResultPatch
 
-* `facts` (JSON)
-* `derived_manifest` (liste des dérivés attendus/produits avec leurs `kind` et références serveur)
-* `transcript?`
-* `suggestions?`
+* `facts_patch?` (JSON partiel)
+* `derived_patch?` (`derived_manifest` partiel)
+* `transcript_patch?`
+* `suggestions_patch?`
 * `warnings[]`
 * `metrics`
+
+Règles :
+
+* merge par domaine uniquement (pas de replace global)
+* un job ne peut mettre à jour que son domaine autorisé
+* toute clé hors domaine autorisé renvoie `422 VALIDATION_FAILED`
 
 
 ## 10) Codes d’erreur (normatifs)
 
 * `409 STATE_CONFLICT`
+* `409 IDEMPOTENCY_CONFLICT`
 * `423 LOCK_REQUIRED` / `LOCK_INVALID`
 * `410 PURGED`
 * `422 VALIDATION_FAILED`
@@ -459,10 +508,12 @@ Effet :
 * URLs de dérivés : stables (same-origin)
 * Claim jobs : `GET /jobs` pour discovery + `POST /jobs/{job_id}/claim` pour lease atomique
 * Dérivés : upload HTTP, pas d’écriture directe côté client sur le filesystem NAS
-* Batch move : sélection v1 via ids depuis preview
+* Batch move : sélection v1 via ids depuis preview, lock par asset
 * Purge : purge unitaire v1 (+ batch purge plus tard si nécessaire)
 * Scopes : agents strictement limités aux scopes jobs/suggestions, jamais décisions/moves/purge
 * Filtres `tags=` : tags humains uniquement
+* Changement de décision KEEP/REJECT autorisé de façon directe
+* Reprocess autorisé depuis `PROCESSED|ARCHIVED|REJECTED`
 
 ## 12) Décisions actées (v1.1)
 
@@ -472,7 +523,6 @@ Effet :
 ## 13) Points en suspens
 
 * Full-text search : `q=` en v1 (si oui, préciser le comportement exact)
-* Reprocess + décisions existantes : règle exacte si l’asset était déjà `DECIDED_*`
 * Batch purge : si nécessaire plus tard
 
 ## Références associées

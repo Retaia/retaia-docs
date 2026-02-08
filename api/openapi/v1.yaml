@@ -18,8 +18,70 @@ tags:
   - name: Agents
   - name: Jobs
   - name: Derived
+  - name: Batches
+  - name: Decisions
+  - name: Purge
 
 paths:
+  /assets:
+    get:
+      tags: [Assets]
+      summary: List assets
+      responses:
+        "200":
+          description: Asset list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AssetSummary"
+                  next_cursor:
+                    type: string
+                    nullable: true
+
+  /assets/{uuid}:
+    get:
+      tags: [Assets]
+      summary: Get one asset detail
+      parameters:
+        - $ref: "#/components/parameters/UuidPath"
+      responses:
+        "200":
+          description: Asset detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetDetail"
+    patch:
+      tags: [Assets]
+      summary: Update human metadata on one asset
+      parameters:
+        - $ref: "#/components/parameters/UuidPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tags:
+                  type: array
+                  items:
+                    type: string
+                notes:
+                  type: string
+                fields:
+                  type: object
+                  additionalProperties: true
+      responses:
+        "200":
+          description: Asset updated
+        "410":
+          description: Asset is purged
 
   /agents/register:
     post:
@@ -57,6 +119,55 @@ paths:
                     type: string
                   server_policy:
                     type: object
+
+  /assets/{uuid}/reprocess:
+    post:
+      tags: [Assets]
+      summary: Trigger explicit reprocess
+      parameters:
+        - $ref: "#/components/parameters/UuidPath"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: Reprocess accepted
+        "409":
+          description: State conflict or idempotency conflict
+
+  /assets/{uuid}/decision:
+    post:
+      tags: [Decisions]
+      summary: Set or update a human decision
+      parameters:
+        - $ref: "#/components/parameters/UuidPath"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [KEEP, REJECT, CLEAR]
+      responses:
+        "200":
+          description: Decision applied
+        "409":
+          description: State conflict or idempotency conflict
+
+  /assets/{uuid}/reopen:
+    post:
+      tags: [Decisions]
+      summary: Reopen archived or rejected asset to decision pending
+      parameters:
+        - $ref: "#/components/parameters/UuidPath"
+      responses:
+        "200":
+          description: Asset reopened
+        "409":
+          description: State conflict
 
   /jobs:
     get:
@@ -99,6 +210,12 @@ paths:
     post:
       tags: [Jobs]
       summary: Extend job lease
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -124,16 +241,25 @@ paths:
   /jobs/{job_id}/submit:
     post:
       tags: [Jobs]
-      summary: Submit job result
+      summary: Submit job result patch
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/JobResult"
+              $ref: "#/components/schemas/JobSubmitRequest"
       responses:
         "200":
           description: Job completed
+        "409":
+          description: Idempotency conflict
         "423":
           description: Invalid or missing lock
 
@@ -141,6 +267,13 @@ paths:
     post:
       tags: [Jobs]
       summary: Mark job as failed
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
         content:
@@ -160,10 +293,334 @@ paths:
       responses:
         "200":
           description: Job failed recorded
+        "409":
+          description: Idempotency conflict
+
+  /assets/{uuid}/derived/upload/init:
+    post:
+      tags: [Derived]
+      summary: Initialize derived upload
+      parameters:
+        - $ref: "#/components/parameters/UuidPath"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kind, content_type, size_bytes]
+              properties:
+                kind:
+                  type: string
+                  enum: [proxy_video, proxy_audio, proxy_photo, thumb, waveform]
+                content_type:
+                  type: string
+                size_bytes:
+                  type: integer
+                sha256:
+                  type: string
+      responses:
+        "200":
+          description: Upload initialized
+
+  /assets/{uuid}/derived/upload/part:
+    post:
+      tags: [Derived]
+      summary: Upload one part
+      parameters:
+        - $ref: "#/components/parameters/UuidPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [upload_id, part_number]
+              properties:
+                upload_id:
+                  type: string
+                part_number:
+                  type: integer
+      responses:
+        "200":
+          description: Part uploaded
+
+  /assets/{uuid}/derived/upload/complete:
+    post:
+      tags: [Derived]
+      summary: Complete derived upload
+      parameters:
+        - $ref: "#/components/parameters/UuidPath"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [upload_id]
+              properties:
+                upload_id:
+                  type: string
+                parts:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        "200":
+          description: Upload completed
+
+  /assets/{uuid}/derived:
+    get:
+      tags: [Derived]
+      summary: List available derived files for one asset
+      parameters:
+        - $ref: "#/components/parameters/UuidPath"
+      responses:
+        "200":
+          description: Derived list
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /assets/{uuid}/derived/{kind}:
+    get:
+      tags: [Derived]
+      summary: Fetch one derived file by kind
+      parameters:
+        - $ref: "#/components/parameters/UuidPath"
+        - name: kind
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [proxy_video, proxy_audio, proxy_photo, thumb, waveform]
+      responses:
+        "200":
+          description: Derived content
+        "404":
+          description: Not found
+
+  /batches/moves/preview:
+    post:
+      tags: [Batches]
+      summary: Preview move batch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [include]
+              properties:
+                include:
+                  type: string
+                  enum: [KEEP, REJECT, BOTH]
+                limit:
+                  type: integer
+      responses:
+        "200":
+          description: Move preview
+
+  /batches/moves:
+    post:
+      tags: [Batches]
+      summary: Execute or dry-run move batch
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [selection, mode]
+              properties:
+                selection:
+                  type: object
+                  additionalProperties: true
+                mode:
+                  type: string
+                  enum: [DRY_RUN, EXECUTE]
+      responses:
+        "200":
+          description: Batch accepted
+
+  /batches/moves/{batch_id}:
+    get:
+      tags: [Batches]
+      summary: Get move batch status and report
+      parameters:
+        - name: batch_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Batch status
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /decisions/preview:
+    post:
+      tags: [Decisions]
+      summary: Preview bulk decisions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action, filter, max_items]
+              properties:
+                action:
+                  type: string
+                  enum: [KEEP, REJECT]
+                filter:
+                  type: object
+                  additionalProperties: true
+                max_items:
+                  type: integer
+      responses:
+        "200":
+          description: Decision preview
+
+  /decisions/apply:
+    post:
+      tags: [Decisions]
+      summary: Apply bulk decisions from preview token
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [approval_token, confirm]
+              properties:
+                approval_token:
+                  type: string
+                confirm:
+                  type: boolean
+                  enum: [true]
+      responses:
+        "200":
+          description: Decisions applied
+
+  /assets/{uuid}/purge:
+    post:
+      tags: [Purge]
+      summary: Purge one rejected asset
+      parameters:
+        - $ref: "#/components/parameters/UuidPath"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirm]
+              properties:
+                confirm:
+                  type: boolean
+                  enum: [true]
+      responses:
+        "200":
+          description: Purge executed
+
+  /assets/{uuid}/purge/preview:
+    post:
+      tags: [Purge]
+      summary: Preview purge impact for one asset
+      parameters:
+        - $ref: "#/components/parameters/UuidPath"
+      responses:
+        "200":
+          description: Purge preview
 
 components:
+  parameters:
+    UuidPath:
+      name: uuid
+      in: path
+      required: true
+      schema:
+        type: string
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
 
   schemas:
+    AssetSummary:
+      type: object
+      required: [uuid, media_type, state, created_at]
+      properties:
+        uuid:
+          type: string
+        media_type:
+          type: string
+          enum: [VIDEO, PHOTO, AUDIO]
+        state:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        captured_at:
+          type: string
+          format: date-time
+          nullable: true
+        duration:
+          type: number
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        has_proxy:
+          type: boolean
+        thumb_url:
+          type: string
+          nullable: true
+
+    AssetDetail:
+      type: object
+      required: [summary]
+      properties:
+        summary:
+          $ref: "#/components/schemas/AssetSummary"
+        paths:
+          type: object
+          additionalProperties: true
+        processing:
+          type: object
+          additionalProperties: true
+        derived:
+          type: object
+          additionalProperties: true
+        transcript:
+          type: object
+          additionalProperties: true
+        suggestions:
+          type: object
+          additionalProperties: true
+        decisions:
+          type: object
+          additionalProperties: true
+        audit:
+          type: object
+          additionalProperties: true
 
     Job:
       type: object
@@ -179,6 +636,13 @@ components:
           type: string
         job_type:
           type: string
+          enum:
+            - extract_facts
+            - generate_proxy
+            - generate_thumbnails
+            - generate_audio_waveform
+            - transcribe_audio
+            - suggest_tags
         status:
           type: string
           enum: [pending, claimed, completed, failed]
@@ -191,23 +655,42 @@ components:
         claimed_by:
           type: string
           nullable: true
+        lock_token:
+          type: string
+          nullable: true
         locked_until:
           type: string
           format: date-time
           nullable: true
 
-    JobResult:
+    JobSubmitRequest:
       type: object
-      required: [lock_token, success]
+      required: [lock_token, result]
       properties:
         lock_token:
           type: string
-        success:
-          type: boolean
-        output:
+        result:
+          $ref: "#/components/schemas/ProcessingResultPatch"
+
+    ProcessingResultPatch:
+      type: object
+      properties:
+        facts_patch:
           type: object
           additionalProperties: true
-        errors:
+        derived_patch:
+          type: object
+          additionalProperties: true
+        transcript_patch:
+          type: object
+          additionalProperties: true
+        suggestions_patch:
+          type: object
+          additionalProperties: true
+        warnings:
           type: array
           items:
             type: string
+        metrics:
+          type: object
+          additionalProperties: true
