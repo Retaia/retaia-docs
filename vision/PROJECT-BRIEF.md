@@ -95,7 +95,7 @@ Interdictions :
 * aucune décision automatique
 
 
-### Retaia Agent Agent (clients)
+### Retaia Agent (clients)
 
 Rôle : moteur de processing en arrière‑plan.
 

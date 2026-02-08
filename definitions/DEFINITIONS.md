@@ -85,7 +85,7 @@ Caractéristiques :
 
 Un **proxy** est un type de Derived optimisé pour la lecture via l’UI.
 
-* requis pour VIDEO et AUDIO afin d’atteindre l’état `PROCESSED`
+* requis pour atteindre l’état `PROCESSED` (profil dépendant du type de média)
 * utilisé exclusivement pour la review (UI)
 * généré par Retaia Agent
 
@@ -176,7 +176,7 @@ Conditions :
 
 Garanties :
 
-* proxies disponibles pour VIDEO/AUDIO
+* proxies disponibles selon le `processing_profile` (incluant PHOTO/VIDEO/AUDIO)
 * thumbs disponibles
 * facts stockés
 
@@ -220,9 +220,9 @@ Ces états ne déclenchent aucun move immédiat.
 * éligible à purge
 
 
-## Retaia Agent Agent
+## Retaia Agent
 
-Un **Retaia Agent Agent** est un client de processing en arrière-plan.
+Un **Retaia Agent** est un client de processing en arrière-plan.
 
 * tourne sur desktop / laptop / raspberry-pi
 * claim des jobs
