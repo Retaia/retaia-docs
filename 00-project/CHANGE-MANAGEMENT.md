@@ -1,6 +1,6 @@
-# CHANGE MANAGEMENT — RushCatalog + RushIndexer
+# CHANGE MANAGEMENT — Retaia Core + Retaia Agent
 
-Ce document définit les **règles de gestion du changement** du projet RushCatalog + RushIndexer.
+Ce document définit les **règles de gestion du changement** du projet Retaia Core + Retaia Agent.
 
 Il vise à garantir la **stabilité à long terme**, la **prévisibilité du comportement**, et l’absence de surprises lors des évolutions.
 
@@ -122,7 +122,7 @@ Règles :
     * une nouvelle version d’API (`/v2`)
     * une période de transition
 
-L’UI web, RushIndexer et les futurs clients (ex: MCP) consomment la même API.
+L’UI web, Retaia Agent et les futurs clients (ex: MCP) consomment la même API.
 
 
 ## Purge & destruction de données
@@ -182,7 +182,7 @@ Les déploiements sont identifiés par :
 
 ## Commit convention
 
-Tous les repositories du projet Rush (server, agent, cli, infra, specs)
+Tous les repositories du projet Retaia (server, agent, cli, infra, specs)
 DOIVENT utiliser la convention Conventional Commits.
 
 Format obligatoire :
@@ -211,7 +211,7 @@ Exemples valides :
 - fix(agent): prevent double claim on job
 - docs(specs): clarify state transition constraints
 
-Dans le repo rush-specs :
+Dans le repo retaia-docs :
 - toute modification de comportement → feat
 - toute clarification sans changement → docs
 - toute correction d’ambiguïté → fix 
@@ -221,14 +221,14 @@ Dans le repo rush-specs :
 
 ## Source de vérité et documentation
 
-Le projet Rush repose sur une séparation stricte entre :
+Le projet Retaia repose sur une séparation stricte entre :
 
-- `specs/` (rush-specs) : **source de vérité normative**, cross-project
+- `specs/` (retaia-docs) : **source de vérité normative**, cross-project
 - `docs/` dans les repositories applicatifs : **documentation non normative**
 
 ### Règles
 
-- Toute règle de comportement du système DOIT être définie dans `rush-specs`.
+- Toute règle de comportement du système DOIT être définie dans `retaia-docs`.
 - Cela inclut notamment :
   - API et contrats
   - machine à états
@@ -248,6 +248,6 @@ Le projet Rush repose sur une séparation stricte entre :
 - Aucune règle métier ou comportementale ne doit être définie dans `docs/`.
 - Aucune documentation locale ne peut contredire ou compléter les specs.
 - Si une règle semble manquer ou ambiguë, la spécification doit être modifiée
-  dans `rush-specs` avant toute implémentation.
+  dans `retaia-docs` avant toute implémentation.
 
 Toute violation de cette séparation est considérée comme un changement invalide.

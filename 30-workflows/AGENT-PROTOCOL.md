@@ -1,6 +1,6 @@
-# Agent Protocol — RushCatalog ↔ Processing Agents
+# Agent Protocol — Retaia Core ↔ Processing Agents
 
-Ce document définit le **protocole opérationnel** entre le serveur RushCatalog et les agents de processing.
+Ce document définit le **protocole opérationnel** entre le serveur Retaia Core et les agents de processing.
 
 Ces règles sont **normatives**.
 

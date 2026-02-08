@@ -1,6 +1,6 @@
-# CODE QUALITY — RushCatalog & RushIndexer
+# CODE QUALITY — Retaia Core & Retaia Agent
 
-Ce document définit les **règles de qualité de code** pour l’ensemble du projet Rush.
+Ce document définit les **règles de qualité de code** pour l’ensemble du projet Retaia.
 
 Ces règles sont **normatives** : elles s’appliquent à tous les repositories (server, agent, cli, infra, specs).
 Les repositories peuvent ajouter des règles **plus strictes**, mais ne doivent jamais contredire ce document.
@@ -22,7 +22,7 @@ Sont refusés :
 ### Pas de magie
 Tout comportement important doit être :
 - explicite
-- documenté (dans `rush-specs`)
+- documenté (dans `retaia-docs`)
 - testable
 
 

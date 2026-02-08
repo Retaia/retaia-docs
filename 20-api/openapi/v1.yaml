@@ -1,10 +1,10 @@
 openapi: 3.1.0
 
 info:
-  title: RushCatalog API
+  title: Retaia Core API
   version: 1.0.0
   description: |
-    Normative OpenAPI v1 for RushCatalog.
+    Normative OpenAPI v1 for Retaia Core.
 
     This API coordinates assets, processing jobs and agents.
     Agents are non-reliable by design.

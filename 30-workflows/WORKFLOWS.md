@@ -1,6 +1,6 @@
-# WORKFLOWS — RushCatalog + RushIndexer
+# WORKFLOWS — Retaia Core + Retaia Agent
 
-Ce document décrit les **workflows canoniques** du système RushCatalog + RushIndexer.
+Ce document décrit les **workflows canoniques** du système Retaia Core + Retaia Agent.
 
 Ils sont **normatifs** : toute implémentation ou évolution future doit les respecter.
 
@@ -13,7 +13,7 @@ Découvrir les fichiers médias présents sur le NAS sans jamais traiter des fic
 
 ### Acteur
 
-RushCatalog Server (NAS)
+Retaia Core Server (NAS)
 
 ### Étapes
 
@@ -34,7 +34,7 @@ RushCatalog Server (NAS)
 * Le discovery est **read-only**.
 
 
-## Workflow 2 — Enregistrement d’un agent RushIndexer
+## Workflow 2 — Enregistrement d’un agent Retaia Agent
 
 ### Objectif
 
@@ -42,7 +42,7 @@ Permettre à un agent de processing (desktop/laptop/raspberry-pi) de s’identif
 
 ### Acteurs
 
-RushIndexer Agent, RushCatalog Server
+Retaia Agent Agent, Retaia Core Server
 
 ### Étapes
 
@@ -64,7 +64,7 @@ Attribuer un asset READY à un agent pour produire les éléments nécessaires �
 
 ### Acteurs
 
-RushCatalog Server, RushIndexer Agent
+Retaia Core Server, Retaia Agent Agent
 
 ### Étapes
 
@@ -88,7 +88,7 @@ Produire tout ce qui rend la review possible dans l’UI : facts + dérivés.
 
 ### Acteur
 
-RushIndexer Agent
+Retaia Agent Agent
 
 ### Étapes
 
@@ -120,7 +120,7 @@ Produire des enrichissements non bloquants : transcription et suggestions de tag
 
 ### Acteurs
 
-RushCatalog Server, RushIndexer Agent (ou autres clients), éventuellement MCP
+Retaia Core Server, Retaia Agent Agent (ou autres clients), éventuellement MCP
 
 ### Étapes
 
@@ -149,7 +149,7 @@ Permettre à un humain de décider du devenir d’un média via l’UI, après p
 
 ### Acteur
 
-Utilisateur via l’interface RushCatalog
+Utilisateur via l’interface Retaia Core
 
 ### Étapes
 
@@ -173,7 +173,7 @@ Appliquer en une fois les décisions KEEP / REJECT.
 
 ### Acteurs
 
-Utilisateur, RushCatalog Server
+Utilisateur, Retaia Core Server
 
 ### Étapes
 
@@ -233,7 +233,7 @@ Relancer un processing sans casser l’historique.
 
 ### Acteurs
 
-Utilisateur, RushCatalog Server, RushIndexer Agent
+Utilisateur, Retaia Core Server, Retaia Agent Agent
 
 ### Étapes
 
@@ -288,7 +288,7 @@ Utilisateur, outils de montage
 
 ### Étapes
 
-1. Sélection d’assets via RushCatalog (bins, filtres).
+1. Sélection d’assets via Retaia Core (bins, filtres).
 2. Préparation d’un projet local (ex: DaVinci Resolve).
 3. Travail offline (montage, notes).
 4. Reconnexion au NAS.

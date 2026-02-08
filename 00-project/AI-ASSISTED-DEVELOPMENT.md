@@ -1,13 +1,13 @@
 # AI‑Assisted Development
 
-Ce document définit les règles d’utilisation de l’IA (assistant ou agent codeur) dans le projet **Rush**.
+Ce document définit les règles d’utilisation de l’IA (assistant ou agent codeur) dans le projet **Retaia**.
 
 Ces règles sont **normatives**. Toute contribution qui ne les respecte pas peut être refusée, même si le code fonctionne.
 
 
 ## 1. Définition
 
-Le projet Rush autorise le **développement assisté par IA** sous deux formes :
+Le projet Retaia autorise le **développement assisté par IA** sous deux formes :
 
 * **Assistant IA** : outil de suggestion (complétion, explication, refactor local, génération de tests ou de documentation).
 * **Agent codeur** : outil capable de produire des changements multi‑fichiers de manière autonome.
@@ -71,7 +71,7 @@ Toute PR qui impacte :
 * les workflows
 * l’API ou les contrats
 
-**doit inclure** la mise à jour correspondante dans le repository `rush-specs`.
+**doit inclure** la mise à jour correspondante dans le repository `retaia-docs`.
 
 Le code ne fait jamais foi sur les spécifications.
 

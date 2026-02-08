@@ -1,6 +1,6 @@
 # Job Types — Processing Pipeline
 
-Ce document définit les **types de jobs** que le serveur RushCatalog peut créer et confier aux agents de processing.
+Ce document définit les **types de jobs** que le serveur Retaia Core peut créer et confier aux agents de processing.
 
 Ces règles sont **normatives**.
 

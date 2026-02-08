@@ -1,6 +1,6 @@
 # Rush – Specifications
 
-Ce repository est la source de vérité (Single Source of Truth) du projet Rush.
+Ce repository est la source de vérité (Single Source of Truth) du projet Retaia.
 
 Tout comportement du système (serveur, agent, CLI, UI, infrastructure)
 doit être conforme à ces spécifications.

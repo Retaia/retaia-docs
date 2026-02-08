@@ -1,6 +1,6 @@
-# DEFINITIONS — RushCatalog + RushIndexer
+# DEFINITIONS — Retaia Core + Retaia Agent
 
-Ce document définit les **termes normatifs** utilisés dans le projet RushCatalog + RushIndexer.
+Ce document définit les **termes normatifs** utilisés dans le projet Retaia Core + Retaia Agent.
 
 Ces définitions **priment sur tout usage courant** ou interprétation implicite.
 
@@ -87,7 +87,7 @@ Un **proxy** est un type de Derived optimisé pour la lecture via l’UI.
 
 * requis pour VIDEO et AUDIO afin d’atteindre l’état `PROCESSED`
 * utilisé exclusivement pour la review (UI)
-* généré par RushIndexer
+* généré par Retaia Agent
 
 Les proxies ne remplacent jamais les originaux.
 
@@ -163,7 +163,7 @@ Conditions :
 
 ## PROCESSING_REVIEW
 
-État indiquant qu’un agent RushIndexer traite l’asset pour la review.
+État indiquant qu’un agent Retaia Agent traite l’asset pour la review.
 
 * facts
 * thumbs
@@ -220,9 +220,9 @@ Ces états ne déclenchent aucun move immédiat.
 * éligible à purge
 
 
-## RushIndexer Agent
+## Retaia Agent Agent
 
-Un **RushIndexer Agent** est un client de processing en arrière-plan.
+Un **Retaia Agent Agent** est un client de processing en arrière-plan.
 
 * tourne sur desktop / laptop / raspberry-pi
 * claim des jobs
@@ -276,7 +276,7 @@ Un **Batch Move** est une action explicite appliquant plusieurs décisions en un
 
 ## Source de vérité
 
-La **source de vérité** est RushCatalog Server.
+La **source de vérité** est Retaia Core Server.
 
 * décide des états
 * orchestre les moves

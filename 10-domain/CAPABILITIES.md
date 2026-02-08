@@ -1,6 +1,6 @@
 # Capabilities — Processing Agents
 
-Ce document définit le **système de capabilities** utilisé pour décrire, planifier et orchestrer le travail des agents de processing dans le projet **Rush**.
+Ce document définit le **système de capabilities** utilisé pour décrire, planifier et orchestrer le travail des agents de processing dans le projet **Retaia**.
 
 Ces règles sont **normatives**.
 

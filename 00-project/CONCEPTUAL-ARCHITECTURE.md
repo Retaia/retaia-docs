@@ -1,4 +1,4 @@
-# Conceptual Architecture — RushCatalog & RushIndexer
+# Conceptual Architecture — Retaia Core & Retaia Agent
 
 Ce document décrit l’**architecture conceptuelle** du système Rush.
 
@@ -31,7 +31,7 @@ Le système Rush vise à :
 
 ## 3) Composants principaux
 
-### 3.1 RushCatalog (Serveur)
+### 3.1 Retaia Core (Serveur)
 
 Rôle : **orchestrateur central**.
 
@@ -49,10 +49,10 @@ Garanties :
 * refus des transitions non autorisées
 * aucun accès destructif délégué aux agents
 
-RushCatalog **ne traite pas** les médias.
+Retaia Core **ne traite pas** les médias.
 
 
-### 3.2 RushIndexer (Agents de processing)
+### 3.2 Retaia Agent (Agents de processing)
 
 Rôle : **exécuteurs**.
 

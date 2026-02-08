@@ -1,13 +1,13 @@
 # API CONTRACT — v1
 
-Ce document décrit le **contrat API v1** de RushCatalog.
+Ce document décrit le **contrat API v1** de Retaia Core.
 
 Cette spécification est **normative**. Toute implémentation serveur, agent ou client doit s’y conformer strictement.
 
 Objectif : fournir une surface stable consommée par :
 
 * UI web (same-origin, servie par Symfony)
-* RushIndexer Agent(s)
+* Retaia Agent Agent(s)
 * futurs clients (ex: client MCP)
 
 

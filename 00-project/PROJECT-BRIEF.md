@@ -1,13 +1,13 @@
-# PROJECT BRIEF — RushCatalog + RushIndexer
+# PROJECT BRIEF — Retaia Core + Retaia Agent
 
 ## Résumé du projet
 
-RushCatalog + RushIndexer est un système **local-first** de gestion de médiathèque de production (vidéo, photo, audio), conçu pour fonctionner autour d’un **NAS comme centre de vérité**, avec du **processing distribué via des agents**.
+Retaia Core + Retaia Agent est un système **local-first** de gestion de médiathèque de production (vidéo, photo, audio), conçu pour fonctionner autour d’un **NAS comme centre de vérité**, avec du **processing distribué via des agents**.
 
 Le projet sépare strictement :
 
-* la **gestion, l’inventaire, les décisions et les déplacements** (centralisés sur le NAS via RushCatalog)
-* le **processing lourd** (réalisé en arrière-plan par des agents RushIndexer sur desktop/laptop/raspberry‑pi)
+* la **gestion, l’inventaire, les décisions et les déplacements** (centralisés sur le NAS via Retaia Core)
+* le **processing lourd** (réalisé en arrière-plan par des agents Retaia Agent sur desktop/laptop/raspberry‑pi)
 * la **review humaine**, effectuée via une UI web fluide reposant sur des **proxies/dérivés**
 
 L’objectif est de construire un système **fiable, durable et compréhensible dans le temps**, qui respecte la décision humaine et la souveraineté des données.
@@ -64,7 +64,7 @@ Il manque un outil qui respecte :
 
 ## Composants
 
-### RushCatalog Server (NAS)
+### Retaia Core Server (NAS)
 
 Rôle : cerveau logistique et décisionnel.
 
@@ -95,7 +95,7 @@ Interdictions :
 * aucune décision automatique
 
 
-### RushIndexer Agent (clients)
+### Retaia Agent Agent (clients)
 
 Rôle : moteur de processing en arrière‑plan.
 

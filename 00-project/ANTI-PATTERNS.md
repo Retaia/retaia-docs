@@ -1,6 +1,6 @@
-# ANTI-PATTERNS — RushCatalog + RushIndexer
+# ANTI-PATTERNS — Retaia Core + Retaia Agent
 
-Ce document liste les **anti-patterns explicitement interdits** dans le projet RushCatalog + RushIndexer.
+Ce document liste les **anti-patterns explicitement interdits** dans le projet Retaia Core + Retaia Agent.
 
 Toute proposition, implémentation ou évolution qui enfreint ces règles est **considérée invalide par design**, même si elle semble "pratique" à court terme.
 
@@ -171,18 +171,18 @@ Toute purge doit nettoyer :
 
 ### 19) Media server déguisé
 
-❌ Transformer RushCatalog en :
+❌ Transformer Retaia Core en :
 
 * Plex-like
 * DAM cloud-like
 * serveur de streaming généraliste
 
-RushCatalog est un **catalogue de production**, pas un media server.
+Retaia Core est un **catalogue de production**, pas un media server.
 
 
 ### 20) Couplage fort entre composants
 
-❌ RushIndexer qui décide.
+❌ Retaia Agent qui décide.
 ❌ UI qui accède directement au filesystem.
 ❌ Logique métier partagée hors serveur.
 

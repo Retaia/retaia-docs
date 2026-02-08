@@ -1,6 +1,6 @@
-# SUCCESS CRITERIA — RushCatalog + RushIndexer
+# SUCCESS CRITERIA — Retaia Core + Retaia Agent
 
-Ce document définit les **critères de succès mesurables** du projet RushCatalog + RushIndexer.
+Ce document définit les **critères de succès mesurables** du projet Retaia Core + Retaia Agent.
 
 Le succès n’est pas défini par la richesse fonctionnelle, mais par la **confiance d’usage**, la **robustesse dans le temps** et la **réduction des erreurs humaines**.
 
@@ -25,7 +25,7 @@ Le projet est considéré comme réussi si :
 ### 2) Processing automatique et silencieux
 
 * Le processing démarre automatiquement sans action manuelle.
-* RushIndexer fonctionne comme **agent background**.
+* Retaia Agent fonctionne comme **agent background**.
 * Les crashes ou coupures réseau n’entraînent ni corruption ni état incohérent.
 * Les jobs sont repris automatiquement après échec.
 
@@ -83,7 +83,7 @@ Le projet est considéré comme réussi si :
 
 * L’API est versionnée.
 * Toute rupture introduit une nouvelle version.
-* UI, RushIndexer et futurs clients consomment la même API.
+* UI, Retaia Agent et futurs clients consomment la même API.
 
 
 ### 10) Performance maîtrisée
