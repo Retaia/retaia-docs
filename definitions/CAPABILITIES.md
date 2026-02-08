@@ -39,7 +39,7 @@ Exemples valides :
 * `media.thumbnails@1`
 * `audio.waveform@1`
 * `speech.transcription@1`
-* `meta.tags.suggestions@1`
+* `meta.tags.suggestions@1` (**v1.1+**, AI-powered)
 
 La version suit une logique **major only** :
 

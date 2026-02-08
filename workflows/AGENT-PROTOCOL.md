@@ -10,7 +10,7 @@ Ces règles sont **normatives**.
 Le protocole agent vise à :
 
 * permettre la distribution de jobs à des agents **non fiables** (crash, réseau, reboot)
-* garantir l’absence de jobs bloqués indéfiniment
+* garantir l’absence de jobs claimés bloqués indéfiniment (lease avec expiration)
 * rendre les retries sûrs et prévisibles
 * empêcher toute action destructive implicite
 
@@ -93,9 +93,10 @@ Quand le travail est terminé, l’agent soumet un résultat.
 
 Le résultat DOIT inclure :
 
-* `success` (bool)
-* `output` (structure dépendant du job type)
-* `errors[]` (optionnel)
+* `lock_token`
+* `job_type`
+* `result` (patch par domaine, selon le `job_type`)
+* `warnings[]` / `metrics` (optionnels)
 
 Le serveur :
 

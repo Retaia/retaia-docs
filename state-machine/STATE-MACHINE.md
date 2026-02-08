@@ -157,6 +157,16 @@ Asset déplacé vers REJECTS.
 * `REJECTED → READY` (reprocess explicite)
 * `REJECTED → PURGED` (purge destructive, explicite ou via politique)
 
+### PURGED
+
+#### Signification
+
+L’asset a été purgé (suppression définitive des fichiers et dérivés).
+
+#### Transitions autorisées
+
+* Aucune (état terminal)
+
 
 ## Détails de processing (flags/phases, pas des états)
 
@@ -179,6 +189,8 @@ Ces flags existent dans la DB et sont mis à jour par les jobs.
 
 ### Suggestions (tags)
 
+Disponibilité : **v1.1+** (AI-powered).
+
 * `suggestions_status` = `NONE | RUNNING | DONE | FAILED`
 * `suggestions_version`
 * `suggestions_source` (modèle, prompt_version, etc.)
@@ -191,7 +203,7 @@ Règle : aucune suggestion ne modifie automatiquement les décisions ou tags val
 Après `PROCESSED`, le serveur peut rendre éligible :
 
 * `transcribe_audio` (si profil audio et activé)
-* `suggest_tags` (LLM, basé sur transcript + metadata)
+* `suggest_tags` (**v1.1+**, LLM, basé sur transcript + metadata)
 
 Ces jobs ne changent pas l’état principal.
 
@@ -225,46 +237,14 @@ Effets :
 
 Objectif : permettre une option du type “Clean REJECTED after 180 days”.
 
-### État terminal : PURGED
+Règles :
 
-`PURGED` est un état terminal utilisé après suppression destructive.
-
-#### Signification
-
-L’asset a été supprimé (originaux + sidecars) et ses dérivés ont été nettoyés.
-
-#### Garanties
-
-* originaux supprimés
-* sidecars supprimés
-* dérivés supprimés sous `RUSHES_DB/.derived/{uuid}/...`
-* audit minimal conservé (trace de l’existence passée)
-
-#### Transitions autorisées
-
-* `REJECTED → PURGED` (action explicite de purge)
-
-#### Règles
-
-* Toute purge est destructive et doit être explicitement confirmée (UI)
+* Toute purge est destructive et doit être explicitement confirmée (UI), sauf politique auto activée.
 * Une purge automatique (cron) est autorisée uniquement si :
-
-    * l’asset est `REJECTED`
-    * `rejected_at` dépasse le seuil (ex: 180 jours)
-    * la politique de purge est explicitement activée
-
-
-## États principaux (complément)
-
-### PURGED
-
-#### Signification
-
-L’asset a été purgé (suppression définitive des fichiers et dérivés).
-
-#### Transitions autorisées
-
-* Aucune (état terminal)
+  * l’asset est `REJECTED`
+  * `rejected_at` dépasse le seuil (ex: 180 jours)
+  * la politique de purge est explicitement activée
+* La purge supprime originaux + sidecars + dérivés et conserve un audit minimal.
 
 
 ## Transitions interdites (exemples importants)
@@ -298,32 +278,10 @@ DECIDED_KEEP / DECIDED_REJECT
 MOVE_QUEUED
   ↓
 ARCHIVED / REJECTED
-
-
-
-REJECTED
-  ↓
-PURGED (optionnel, destructif)
-
-
-
-DISCOVERED
-  ↓
-READY
-  ↓
-PROCESSING_REVIEW
-  ↓
-PROCESSED
-  ↓
-DECISION_PENDING
-  ↓
-DECIDED_KEEP / DECIDED_REJECT
-  ↓
-MOVE_QUEUED
-  ↓
-ARCHIVED / REJECTED
   ↘
    (REOPEN) → DECISION_PENDING
+  ↘
+   PURGED (optionnel, destructif, si REJECTED)
 ```
 
 

@@ -29,8 +29,8 @@ Jobs required :
 Jobs optional :
 
 * `generate_audio_waveform` (si piste audio exploitable)
-* `transcribe_audio` (si activé)
-* `suggest_tags` (si activé)
+* `transcribe_audio` (si activé, **v1+**)
+* `suggest_tags` (si activé, **v1.1+**)
 
 ### `audio_music`
 
@@ -46,6 +46,7 @@ Jobs required :
 Jobs optional :
 
 * `suggest_tags`
+  (AI-powered, **v1.1+**)
 
 Jobs forbidden :
 
@@ -66,6 +67,7 @@ Jobs required :
 Jobs optional :
 
 * `suggest_tags`
+  (AI-powered, **v1.1+**)
 
 ### `photo_standard`
 
@@ -80,6 +82,7 @@ Jobs required :
 Jobs optional :
 
 * `suggest_tags`
+  (AI-powered, **v1.1+**)
 
 Jobs forbidden :
 

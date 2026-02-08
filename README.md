@@ -10,6 +10,17 @@ les spécifications font foi.
 
 Aucune logique métier ne doit être définie ailleurs.
 
+## Règle d’implémentation (doc → code)
+
+Ordre obligatoire :
+
+1. Mettre à jour la spec dans `retaia-docs`.
+2. Faire relire/valider la spec.
+3. Implémenter dans les repos applicatifs.
+4. Vérifier la conformité code ↔ spec (tests contractuels).
+
+Si le code contredit cette documentation, le code est incorrect.
+
 ## Navigation
 
 * [Vision](vision/PROJECT-BRIEF.md)

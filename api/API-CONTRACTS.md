@@ -24,6 +24,13 @@ Objectif : fournir une surface stable consommée par :
 * Pagination : `limit` + `cursor`
 * Idempotence : header `Idempotency-Key` sur endpoints critiques
 
+### Versioning mineur (v1 / v1.1)
+
+* `v1` = socle stable (ingestion, processing review, transcription, décision humaine, moves, purge, recherche full-text `q`).
+* `v1.1` = extensions compatibles.
+* Toute fonctionnalité AI-powered (ex: `suggest_tags`, filtres `suggested_tags*`) est `v1.1+`.
+* Exception explicite : `transcribe_audio` est disponible dès `v1`.
+
 ### Idempotence (règles strictes)
 
 Endpoints avec `Idempotency-Key` obligatoire :
@@ -31,7 +38,7 @@ Endpoints avec `Idempotency-Key` obligatoire :
 * `POST /assets/{uuid}/reprocess`
 * `POST /assets/{uuid}/decision`
 * `POST /batches/moves` (`mode=EXECUTE`)
-* `POST /decisions/apply`
+* `POST /decisions/apply` (**v1.1+**)
 * `POST /assets/{uuid}/purge`
 * `POST /jobs/{job_id}/submit`
 * `POST /jobs/{job_id}/fail`
@@ -73,7 +80,7 @@ Comportement :
 * `jobs:claim` (**agents uniquement**)
 * `jobs:heartbeat` (**agents uniquement**)
 * `jobs:submit` (**agents uniquement**)
-* `suggestions:write` (agents/MCP)
+* `suggestions:write` (**v1.1+**, agents/MCP)
 * `batches:execute` (**humain uniquement**)
 * `purge:execute` (**humain uniquement**)
 
@@ -95,7 +102,7 @@ Query params (exemples) :
 * `tags_mode=AND|OR` (défaut: AND)
 * `suggested_tags=foo,bar` (**v1.1+**, suggestions uniquement)
 * `suggested_tags_mode=AND|OR` (**v1.1+**, défaut: AND)
-* `q=texte` (optionnel, recherche full-text sur `filename`, `notes`, `transcript_text`)
+* `q=texte` (optionnel, **v1**, recherche full-text sur `filename`, `notes`, `transcript_text`)
 * `sort=-created_at`
 * `limit=50&cursor=...`
 
@@ -244,8 +251,8 @@ Effets :
 
 * `extract_facts | generate_proxy | generate_thumbnails | generate_audio_waveform` :
   mise à jour des domaines `facts/derived`, puis `PROCESSING_REVIEW → PROCESSED → DECISION_PENDING` quand le profil est complet
-* `transcribe_audio` : mise à jour du domaine `transcript`
-* `suggest_tags` : mise à jour du domaine `suggestions`
+* `transcribe_audio` (**v1**) : mise à jour du domaine `transcript`
+* `suggest_tags` (**v1.1+**) : mise à jour du domaine `suggestions`
 
 Note v1 (important) :
 
@@ -257,7 +264,7 @@ Note v1 (important) :
   * `extract_facts` -> `facts_patch`
   * `generate_proxy|generate_thumbnails|generate_audio_waveform` -> `derived_patch`
   * `transcribe_audio` -> `transcript_patch`
-  * `suggest_tags` -> `suggestions_patch`
+  * `suggest_tags` (**v1.1+**) -> `suggestions_patch`
 
 ### POST `/jobs/{job_id}/fail`
 
@@ -478,14 +485,15 @@ Effet :
 * `processing: { facts_done, thumbs_done, proxy_done, waveform_done, review_processing_version }`
 * `derived: { proxy_video_url?, proxy_audio_url?, waveform_url?, thumbs[] }`
 * `transcript: { status, text_preview?, updated_at? }`
-* `suggestions: { status, tags_suggested[], source? }`
+* `suggestions: { status, tags_suggested[], source? }` (**v1.1+**)
 * `decisions: { current?, history[] }`
 * `audit: { path_history[] }`
 
 ### Job
 
 * `job_id`
-* `job_type` (`extract_facts | generate_proxy | generate_thumbnails | generate_audio_waveform | transcribe_audio | suggest_tags`)
+* `job_type` (`extract_facts | generate_proxy | generate_thumbnails | generate_audio_waveform | transcribe_audio`)
+* `job_type` (`suggest_tags`) (**v1.1+**)
 * `asset_uuid`
 * `lock_token`
 * `locked_until`
@@ -497,7 +505,7 @@ Effet :
 * `facts_patch?` (JSON partiel)
 * `derived_patch?` (`derived_manifest` partiel)
 * `transcript_patch?`
-* `suggestions_patch?`
+* `suggestions_patch?` (**v1.1+**)
 * `warnings[]`
 * `metrics`
 
@@ -528,14 +536,18 @@ Le payload d’erreur normatif est défini dans [`ERROR-MODEL.md`](ERROR-MODEL.m
 * Dérivés : upload HTTP, pas d’écriture directe côté client sur le filesystem NAS
 * Batch move : sélection v1 via ids depuis preview, lock par asset
 * Purge : purge unitaire v1 (+ batch purge plus tard si nécessaire)
-* Scopes : agents strictement limités aux scopes jobs/suggestions, jamais décisions/moves/purge
+* Scopes : agents strictement limités aux scopes jobs (jamais décisions/moves/purge)
 * Filtres `tags=` : tags humains uniquement
+* Recherche full-text `q=` disponible
+* Transcription (`transcribe_audio`) disponible
 * Changement de décision KEEP/REJECT autorisé de façon directe
 * Reprocess autorisé depuis `PROCESSED|ARCHIVED|REJECTED`
 
 ## 12) Décisions actées (v1.1)
 
+* Introduction des capacités AI-powered (`suggest_tags`, `suggestions_patch`, bloc `suggestions` dans `AssetDetail`)
 * Introduction de `suggested_tags=` et `suggested_tags_mode=`
+* Scope `suggestions:write` pour les flux AI dédiés
 * Bulk decisions via preview/apply (`/decisions/preview`, `/decisions/apply`)
 
 ## 13) Points en suspens

@@ -164,6 +164,8 @@ Extraire une waveform audio quand le `processing_profile` l'exige.
 
 ### 3.5 `transcribe_audio`
 
+Disponibilité : **v1+**.
+
 Ce job peut rester indéfiniment en statut pending tant qu’aucun agent ne déclare la capability requise.
 
 **Objectif**  
@@ -200,6 +202,8 @@ Produire une transcription (et éventuellement des timecodes) à partir de l’a
 
 
 ### 3.6 `suggest_tags`
+
+Disponibilité : **v1.1+** (AI-powered).
 
 **Objectif**  
 Produire des suggestions de tags à partir des facts/transcript/metadata.

@@ -133,16 +133,6 @@ L’UI web, Retaia Agent et les futurs clients (ex: MCP) consomment la même API
 * Toute purge doit supprimer **originaux + sidecars + dérivés**.
 
 
-## Documentation comme source de vérité
-
-Ordre de priorité :
-
-1. Documentation (machine à états, workflows, définitions)
-2. Implémentation
-
-Si le code contredit la documentation, le code est considéré comme incorrect.
-
-
 ## Règle finale
 
 Si une évolution :

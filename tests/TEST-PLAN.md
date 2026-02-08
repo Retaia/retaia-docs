@@ -86,6 +86,15 @@ Tests obligatoires :
 * chaque endpoint critique vérifie scope, acteur et état
 * refus authz renvoie le bon code (`FORBIDDEN_SCOPE`, `FORBIDDEN_ACTOR`, `STATE_CONFLICT`)
 
+## 8.2) Versioning v1 vs v1.1
+
+Tests obligatoires :
+
+* `q` (full-text) fonctionne en `v1`
+* `transcribe_audio` fonctionne en `v1`
+* `suggest_tags` et `suggested_tags*` ne sont actifs qu'en `v1.1+`
+* endpoints bulk decisions (`/decisions/preview`, `/decisions/apply`) ne sont actifs qu'en `v1.1+`
+
 ## 9) Couverture minimale
 
 Minimum :

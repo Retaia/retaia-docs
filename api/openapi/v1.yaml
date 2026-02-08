@@ -2,13 +2,14 @@ openapi: 3.1.0
 
 info:
   title: Retaia Core API
-  version: 1.0.0
+  version: 1.1.0
   description: |
-    Normative OpenAPI v1 for Retaia Core.
+    Normative OpenAPI v1 for Retaia Core (minor features up to v1.1).
 
     This API coordinates assets, processing jobs and agents.
     Agents are non-reliable by design.
     Jobs may remain pending indefinitely if no compatible agent is available.
+    AI-powered features are available in v1.1+ (except transcription, available in v1).
 
 servers:
   - url: /api/v1
@@ -41,11 +42,44 @@ paths:
           in: query
           schema:
             type: string
+        - name: has_proxy
+          in: query
+          schema:
+            type: boolean
+        - name: tags_mode
+          in: query
+          schema:
+            type: string
+            enum: [AND, OR]
+        - name: suggested_tags
+          in: query
+          schema:
+            type: string
+          description: Suggested tags filter (AI-powered, available in v1.1+).
+        - name: suggested_tags_mode
+          in: query
+          schema:
+            type: string
+            enum: [AND, OR]
+          description: Suggested tags matching mode (available in v1.1+).
         - name: q
           in: query
           schema:
             type: string
-          description: Full-text query over filename, notes and transcript_text.
+          description: Full-text query over filename, notes and transcript_text (available in v1).
+        - name: sort
+          in: query
+          schema:
+            type: string
+            example: -created_at
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: cursor
+          in: query
+          schema:
+            type: string
       responses:
         "200":
           description: Asset list
@@ -511,6 +545,7 @@ paths:
     post:
       tags: [Decisions]
       summary: Preview bulk decisions
+      description: Available in v1.1+.
       requestBody:
         required: true
         content:
@@ -535,6 +570,7 @@ paths:
     post:
       tags: [Decisions]
       summary: Apply bulk decisions from preview token
+      description: Available in v1.1+.
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
@@ -656,6 +692,7 @@ components:
         transcript:
           $ref: "#/components/schemas/AssetTranscript"
         suggestions:
+          description: Available in v1.1+.
           $ref: "#/components/schemas/AssetSuggestions"
         decisions:
           $ref: "#/components/schemas/AssetDecisions"
@@ -728,6 +765,7 @@ components:
 
     AssetSuggestions:
       type: object
+      description: AI-powered suggestions payload (available in v1.1+).
       additionalProperties: false
       properties:
         status:
@@ -788,6 +826,7 @@ components:
           type: string
         job_type:
           type: string
+          description: suggest_tags is available in v1.1+, transcribe_audio is available in v1.
           enum:
             - extract_facts
             - generate_proxy
@@ -899,6 +938,7 @@ components:
 
     SubmitSuggest:
       type: object
+      description: AI-powered suggestions submission (available in v1.1+).
       additionalProperties: false
       required: [lock_token, job_type, result]
       properties:
@@ -933,6 +973,7 @@ components:
         transcript_patch:
           $ref: "#/components/schemas/TranscriptPatch"
         suggestions_patch:
+          description: Available in v1.1+.
           $ref: "#/components/schemas/SuggestionsPatch"
         warnings:
           type: array
@@ -1006,6 +1047,7 @@ components:
 
     SuggestionsPatch:
       type: object
+      description: AI-powered suggestions patch (available in v1.1+).
       additionalProperties: false
       properties:
         suggested_tags:

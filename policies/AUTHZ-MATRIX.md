@@ -38,6 +38,11 @@ Ce document définit la matrice d'autorisation normative par endpoint, scope et 
 * scopes: `jobs:claim|jobs:heartbeat|jobs:submit`
 * acteur: agent uniquement
 
+`POST /decisions/preview`, `POST /decisions/apply` (**v1.1+**)
+
+* scope: `decisions:write`
+* acteur: humain uniquement
+
 `POST /batches/moves`
 
 * scope: `batches:execute`
