@@ -529,5 +529,8 @@ Règles :
 
 * [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md)
 * [JOB-TYPES.md](../definitions/JOB-TYPES.md)
+* [PROCESSING-PROFILES.md](../definitions/PROCESSING-PROFILES.md)
 * [CAPABILITIES.md](../definitions/CAPABILITIES.md)
 * [AGENT-PROTOCOL.md](../workflows/AGENT-PROTOCOL.md)
+* [LOCKING-MATRIX.md](../policies/LOCKING-MATRIX.md)
+* [HOOKS-CONTRACT.md](../policies/HOOKS-CONTRACT.md)

@@ -338,3 +338,5 @@ Si une fonctionnalité nécessite une transition qui n’est pas décrite ici,
 * [WORKFLOWS.md](../workflows/WORKFLOWS.md)
 * [API-CONTRACTS.md](../api/API-CONTRACTS.md)
 * [JOB-TYPES.md](../definitions/JOB-TYPES.md)
+* [PROCESSING-PROFILES.md](../definitions/PROCESSING-PROFILES.md)
+* [LOCKING-MATRIX.md](../policies/LOCKING-MATRIX.md)
