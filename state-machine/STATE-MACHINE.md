@@ -317,3 +317,9 @@ ARCHIVED / REJECTED
 Si une fonctionnalité nécessite une transition qui n’est pas décrite ici,
 
 ➡️ **la machine à états doit être modifiée explicitement avant toute implémentation.**
+
+## Références associées
+
+* [WORKFLOWS.md](../workflows/WORKFLOWS.md)
+* [API-CONTRACTS.md](../20-api/API-CONTRACTS.md)
+* [JOB-TYPES.md](../definitions/JOB-TYPES.md)

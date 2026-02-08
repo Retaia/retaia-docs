@@ -188,3 +188,10 @@ Le système de jobs vise à :
 * rendre l’orchestration explicite
 
 Toute implémentation qui viole ces objectifs est invalide.
+
+## Références associées
+
+* [CAPABILITIES.md](CAPABILITIES.md)
+* [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md)
+* [AGENT-PROTOCOL.md](../workflows/AGENT-PROTOCOL.md)
+* [API-CONTRACTS.md](../20-api/API-CONTRACTS.md)

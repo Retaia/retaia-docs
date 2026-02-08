@@ -292,3 +292,9 @@ La **source de vérité** est Retaia Core Server.
 * PURGED = DELETION
 
 Toute implémentation doit respecter strictement ces distinctions.
+
+## Références associées
+
+* [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md)
+* [JOB-TYPES.md](JOB-TYPES.md)
+* [WORKFLOWS.md](../workflows/WORKFLOWS.md)

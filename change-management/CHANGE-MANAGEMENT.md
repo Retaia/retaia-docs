@@ -74,7 +74,7 @@ Règles :
 
 ## Machine à états
 
-La machine à états définie dans `STATE-MACHINE.md` est **normative**.
+La machine à états définie dans [`STATE-MACHINE.md`](../state-machine/STATE-MACHINE.md) est **normative**.
 
 Règles :
 
@@ -251,3 +251,10 @@ Le projet Retaia repose sur une séparation stricte entre :
   dans `retaia-docs` avant toute implémentation.
 
 Toute violation de cette séparation est considérée comme un changement invalide.
+
+## Références associées
+
+* [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md)
+* [WORKFLOWS.md](../workflows/WORKFLOWS.md)
+* [API-CONTRACTS.md](../20-api/API-CONTRACTS.md)
+* [ANTI-PATTERNS.md](../anti-patterns/ANTI-PATTERNS.md)

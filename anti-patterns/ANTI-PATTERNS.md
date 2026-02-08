@@ -229,3 +229,9 @@ Si une idée :
 * rend le système moins compréhensible après 6 mois
 
 Alors cette idée est un **anti-pattern**, même si elle "fait gagner du temps" aujourd’hui.
+
+## Références associées
+
+* [CONCEPTUAL-ARCHITECTURE.md](../architecture/CONCEPTUAL-ARCHITECTURE.md)
+* [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md)
+* [WORKFLOWS.md](../workflows/WORKFLOWS.md)

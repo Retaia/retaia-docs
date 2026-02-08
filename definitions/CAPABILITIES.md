@@ -109,3 +109,9 @@ Le système de capabilities vise à :
 * rendre le système extensible sans couplage fort
 
 Toute implémentation qui court‑circuite ces objectifs est invalide.
+
+## Références associées
+
+* [JOB-TYPES.md](JOB-TYPES.md)
+* [AGENT-PROTOCOL.md](../workflows/AGENT-PROTOCOL.md)
+* [API-CONTRACTS.md](../20-api/API-CONTRACTS.md)

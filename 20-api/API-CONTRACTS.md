@@ -26,7 +26,7 @@ Objectif : fournir une surface stable consommée par :
 * URLs de dérivés **stables** (same-origin)
 * Accès contrôlé par session cookie (UI) ou bearer token (clients autorisés)
 
-### États (doit matcher STATE-MACHINE.md)
+### États (doit matcher [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md))
 
 `DISCOVERED, READY, PROCESSING_REVIEW, PROCESSED, DECISION_PENDING, DECIDED_KEEP, DECIDED_REJECT, MOVE_QUEUED, ARCHIVED, REJECTED, PURGED`
 
@@ -141,7 +141,7 @@ Body :
 * `agent_name`
 * `agent_version`
 * `platform`
-* `capabilities: string[]` (voir `CAPABILITIES.md`)
+* `capabilities: string[]` (voir [`CAPABILITIES.md`](../definitions/CAPABILITIES.md))
 * `max_parallel_jobs` (suggestion)
 
 Response :
@@ -474,3 +474,10 @@ Effet :
 * Full-text search : `q=` en v1 (si oui, préciser le comportement exact)
 * Reprocess + décisions existantes : règle exacte si l’asset était déjà `DECIDED_*`
 * Batch purge : si nécessaire plus tard
+
+## Références associées
+
+* [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md)
+* [JOB-TYPES.md](../definitions/JOB-TYPES.md)
+* [CAPABILITIES.md](../definitions/CAPABILITIES.md)
+* [AGENT-PROTOCOL.md](../workflows/AGENT-PROTOCOL.md)

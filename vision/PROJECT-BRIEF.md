@@ -152,3 +152,10 @@ Un outil qui :
 * permet de retrouver, trier, réutiliser et nettoyer ses médias sans peur
 
 Si, après un an d’usage réel, l’utilisateur **fait confiance au système** et n’utilise plus de workflows parallèles "par sécurité", alors le projet est réussi.
+
+## Références associées
+
+* [CONCEPTUAL-ARCHITECTURE.md](../architecture/CONCEPTUAL-ARCHITECTURE.md)
+* [WORKFLOWS.md](../workflows/WORKFLOWS.md)
+* [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md)
+* [SUCCESS-CRITERIA.md](../success-criteria/SUCCESS-CRITERIA.md)

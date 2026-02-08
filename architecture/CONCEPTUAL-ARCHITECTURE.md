@@ -153,11 +153,11 @@ Principes :
 
 Ordre de priorité :
 
-1. STATE-MACHINE.md
-2. JOB-TYPES.md
-3. CAPABILITIES.md
-4. AGENT-PROTOCOL.md
-5. API-CONTRACTS.md
+1. [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md)
+2. [JOB-TYPES.md](../definitions/JOB-TYPES.md)
+3. [CAPABILITIES.md](../definitions/CAPABILITIES.md)
+4. [AGENT-PROTOCOL.md](../workflows/AGENT-PROTOCOL.md)
+5. [API-CONTRACTS.md](../20-api/API-CONTRACTS.md)
 6. Implémentation
 
 Si l’implémentation contredit un document de niveau supérieur,

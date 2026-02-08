@@ -131,3 +131,10 @@ Si une fonctionnalité :
 * rend le comportement moins explicable
 
 Alors elle **ne contribue pas au succès du projet**, même si elle semble utile à court terme.
+
+## Références associées
+
+* [PROJECT-BRIEF.md](../vision/PROJECT-BRIEF.md)
+* [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md)
+* [WORKFLOWS.md](../workflows/WORKFLOWS.md)
+* [API-CONTRACTS.md](../20-api/API-CONTRACTS.md)

@@ -386,3 +386,10 @@ Gérer musique et prises son comme des assets de production.
 * Déplacements uniquement en batch
 * Purge destructive uniquement sur `REJECTED` et explicitement configurée
 * Aucune action destructive sans traçabilité
+
+## Références associées
+
+* [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md)
+* [AGENT-PROTOCOL.md](AGENT-PROTOCOL.md)
+* [JOB-TYPES.md](../definitions/JOB-TYPES.md)
+* [API-CONTRACTS.md](../20-api/API-CONTRACTS.md)
