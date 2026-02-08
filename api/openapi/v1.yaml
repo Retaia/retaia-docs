@@ -566,6 +566,7 @@ components:
     AssetSummary:
       type: object
       required: [uuid, media_type, state, created_at]
+      additionalProperties: false
       properties:
         uuid:
           type: string
@@ -597,30 +598,135 @@ components:
     AssetDetail:
       type: object
       required: [summary]
+      additionalProperties: false
       properties:
         summary:
           $ref: "#/components/schemas/AssetSummary"
         paths:
-          type: object
-          additionalProperties: true
+          $ref: "#/components/schemas/AssetPaths"
         processing:
-          type: object
-          additionalProperties: true
+          $ref: "#/components/schemas/AssetProcessing"
         derived:
-          type: object
-          additionalProperties: true
+          $ref: "#/components/schemas/AssetDerived"
         transcript:
-          type: object
-          additionalProperties: true
+          $ref: "#/components/schemas/AssetTranscript"
         suggestions:
-          type: object
-          additionalProperties: true
+          $ref: "#/components/schemas/AssetSuggestions"
         decisions:
-          type: object
-          additionalProperties: true
+          $ref: "#/components/schemas/AssetDecisions"
         audit:
-          type: object
-          additionalProperties: true
+          $ref: "#/components/schemas/AssetAudit"
+
+    AssetPaths:
+      type: object
+      additionalProperties: false
+      properties:
+        original_relative:
+          type: string
+        sidecars_relative:
+          type: array
+          items:
+            type: string
+
+    AssetProcessing:
+      type: object
+      additionalProperties: false
+      properties:
+        facts_done:
+          type: boolean
+        thumbs_done:
+          type: boolean
+        proxy_done:
+          type: boolean
+        waveform_done:
+          type: boolean
+        processing_profile:
+          type: string
+        review_processing_version:
+          type: string
+
+    AssetDerived:
+      type: object
+      additionalProperties: false
+      properties:
+        proxy_video_url:
+          type: string
+          nullable: true
+        proxy_audio_url:
+          type: string
+          nullable: true
+        proxy_photo_url:
+          type: string
+          nullable: true
+        waveform_url:
+          type: string
+          nullable: true
+        thumbs:
+          type: array
+          items:
+            type: string
+
+    AssetTranscript:
+      type: object
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          enum: [NONE, RUNNING, DONE, FAILED]
+        text_preview:
+          type: string
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    AssetSuggestions:
+      type: object
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          enum: [NONE, RUNNING, DONE, FAILED]
+        tags_suggested:
+          type: array
+          items:
+            type: string
+        source:
+          type: string
+          nullable: true
+
+    AssetDecisions:
+      type: object
+      additionalProperties: false
+      properties:
+        current:
+          type: string
+          enum: [KEEP, REJECT]
+          nullable: true
+        history:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              action:
+                type: string
+                enum: [KEEP, REJECT, CLEAR]
+              at:
+                type: string
+                format: date-time
+              by:
+                type: string
+
+    AssetAudit:
+      type: object
+      additionalProperties: false
+      properties:
+        path_history:
+          type: array
+          items:
+            type: string
 
     Job:
       type: object
@@ -631,6 +737,7 @@ components:
         - status
         - asset_uuid
         - required_capabilities
+      additionalProperties: false
       properties:
         job_id:
           type: string
@@ -666,6 +773,7 @@ components:
     JobSubmitRequest:
       type: object
       required: [lock_token, result]
+      additionalProperties: false
       properties:
         lock_token:
           type: string
@@ -674,19 +782,16 @@ components:
 
     ProcessingResultPatch:
       type: object
+      additionalProperties: false
       properties:
         facts_patch:
-          type: object
-          additionalProperties: true
+          $ref: "#/components/schemas/FactsPatch"
         derived_patch:
-          type: object
-          additionalProperties: true
+          $ref: "#/components/schemas/DerivedPatch"
         transcript_patch:
-          type: object
-          additionalProperties: true
+          $ref: "#/components/schemas/TranscriptPatch"
         suggestions_patch:
-          type: object
-          additionalProperties: true
+          $ref: "#/components/schemas/SuggestionsPatch"
         warnings:
           type: array
           items:
@@ -694,3 +799,76 @@ components:
         metrics:
           type: object
           additionalProperties: true
+
+    FactsPatch:
+      type: object
+      additionalProperties: false
+      properties:
+        duration_ms:
+          type: integer
+        media_format:
+          type: string
+        video_codec:
+          type: string
+        audio_codec:
+          type: string
+        width:
+          type: integer
+        height:
+          type: integer
+        fps:
+          type: number
+
+    DerivedPatch:
+      type: object
+      additionalProperties: false
+      properties:
+        derived_manifest:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [kind, ref]
+            properties:
+              kind:
+                type: string
+                enum: [proxy_video, proxy_audio, proxy_photo, thumb, waveform]
+              ref:
+                type: string
+              size_bytes:
+                type: integer
+              sha256:
+                type: string
+
+    TranscriptPatch:
+      type: object
+      additionalProperties: false
+      properties:
+        transcript_text:
+          type: string
+        confidence:
+          type: number
+        segments:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [start_ms, end_ms, text]
+            properties:
+              start_ms:
+                type: integer
+              end_ms:
+                type: integer
+              text:
+                type: string
+
+    SuggestionsPatch:
+      type: object
+      additionalProperties: false
+      properties:
+        suggested_tags:
+          type: array
+          items:
+            type: string
+        source:
+          type: string
