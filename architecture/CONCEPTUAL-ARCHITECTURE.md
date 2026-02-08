@@ -1,6 +1,6 @@
 # Conceptual Architecture — Retaia Core & Retaia Agent
 
-Ce document décrit l’**architecture conceptuelle** du système Rush.
+Ce document décrit l’**architecture conceptuelle** du système Retaia.
 
 Il définit les **rôles**, les **responsabilités** et les **frontières** entre les composants.
 Il ne décrit **pas** les détails d’implémentation.
@@ -10,7 +10,7 @@ Ces règles sont **normatives**.
 
 ## 1) Objectifs
 
-Le système Rush vise à :
+Le système Retaia vise à :
 
 * cataloguer et suivre le cycle de vie des médias (assets)
 * orchestrer des traitements asynchrones via des agents **non fiables**
@@ -166,7 +166,7 @@ elle est considérée comme invalide.
 
 ## 6) Anti-objectifs
 
-Le système Rush **ne doit pas** :
+Le système Retaia **ne doit pas** :
 
 * déplacer ou supprimer des fichiers sans validation humaine
 * prendre des décisions de tri automatiquement
@@ -177,7 +177,7 @@ Le système Rush **ne doit pas** :
 
 ## 7) Résumé
 
-Rush est un système :
+Retaia est un système :
 
 * orchestré par un serveur central
 * exécuté par des agents interchangeables

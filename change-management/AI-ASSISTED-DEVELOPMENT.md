@@ -102,7 +102,7 @@ L’IA n’est jamais responsable d’un bug, d’une régression ou d’une vio
 
 ## 10. Objectif
 
-L’objectif du développement assisté par IA dans Rush est :
+L’objectif du développement assisté par IA dans Retaia est :
 
 * d’augmenter la vitesse d’exécution
 * sans réduire la lisibilité

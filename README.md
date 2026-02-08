@@ -1,4 +1,4 @@
-# Rush – Specifications
+# Retaia – Specifications
 
 Ce repository est la source de vérité (Single Source of Truth) du projet Retaia.
 
