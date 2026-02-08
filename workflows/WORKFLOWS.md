@@ -398,4 +398,7 @@ Gérer musique et prises son comme des assets de production.
 * [AGENT-PROTOCOL.md](AGENT-PROTOCOL.md)
 * [JOB-TYPES.md](../definitions/JOB-TYPES.md)
 * [PROCESSING-PROFILES.md](../definitions/PROCESSING-PROFILES.md)
+* [SIDECAR-RULES.md](../definitions/SIDECAR-RULES.md)
+* [NAMING-AND-NONCE.md](../policies/NAMING-AND-NONCE.md)
+* [LOCK-LIFECYCLE.md](../policies/LOCK-LIFECYCLE.md)
 * [API-CONTRACTS.md](../api/API-CONTRACTS.md)
