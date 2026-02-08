@@ -153,6 +153,33 @@ Si une évolution :
 
 Alors cette évolution est **refusée par design**.
 
+
+## Branching & déploiement
+
+La branche principale du projet est **`master`**.
+
+Règles :
+
+- `master` est **toujours déployable**.
+- Aucun push direct n’est autorisé sur `master`.
+- Tout changement passe par une Pull Request.
+- Les branches `feature/*` sont de courte durée.
+- Les branches `hotfix/*` sont créées depuis `master` pour les correctifs urgents.
+
+Le projet adopte une stratégie **trunk-based** :
+
+- Les fonctionnalités stables sont mergées dès qu’elles sont prêtes.
+- Le système peut être déployé plusieurs fois par jour.
+- Les fonctionnalités incomplètes ne doivent jamais casser `master` et doivent être protégées
+  (feature flags, endpoints non exposés, configuration).
+
+Chaque merge sur `master` rend le déploiement possible immédiatement.
+
+Les déploiements sont identifiés par :
+
+- le hash Git
+- et/ou un tag de type `deploy-YYYYMMDD-HHMM`.
+
 ## Commit convention
 
 Tous les repositories du projet Rush (server, agent, cli, infra, specs)
@@ -187,4 +214,7 @@ Exemples valides :
 Dans le repo rush-specs :
 - toute modification de comportement → feat
 - toute clarification sans changement → docs
-- toute correction d’ambiguïté → fix
+- toute correction d’ambiguïté → fix 
+
+  Les commits générés avec l’assistance d’une IA sont soumis aux mêmes règles
+  et doivent être compris et validés par un humain avant merge.
