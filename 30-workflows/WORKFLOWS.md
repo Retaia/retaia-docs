@@ -46,8 +46,8 @@ RushIndexer Agent, RushCatalog Server
 
 ### Étapes
 
-1. L’agent se déclare auprès du serveur (client_id, version, hostname).
-2. L’agent annonce ses capacités (ex: proxy vidéo OK, transcription OK/NOK).
+1. L’agent se déclare auprès du serveur (`agent_name`, `agent_version`, `platform`).
+2. L’agent annonce ses capabilities déclaratives (ex: `media.proxies.video@1`, `speech.transcription@1`).
 3. Le serveur enregistre l’agent et lui attribue des paramètres (quota, priorités).
 
 ### Règles
@@ -68,10 +68,10 @@ RushCatalog Server, RushIndexer Agent
 
 ### Étapes
 
-1. L’agent demande un job `process_for_review`.
-2. Le serveur choisit un asset éligible (`READY`) et crée une réservation (lock + TTL).
-3. Le serveur retourne : UUID, lock_token, chemins (pour SMB/NFS), liste des sidecars.
-4. L’état passe à `PROCESSING_REVIEW`.
+1. L’agent récupère les jobs claimables via `GET /jobs`.
+2. L’agent tente un claim atomique via `POST /jobs/{job_id}/claim`.
+3. Le serveur crée une réservation (lock + TTL) et retourne `asset_uuid`, `lock_token`, chemins d’accès et métadonnées nécessaires.
+4. Le job passe en `claimed` et l’asset concerné passe à `PROCESSING_REVIEW`.
 
 ### Règles
 

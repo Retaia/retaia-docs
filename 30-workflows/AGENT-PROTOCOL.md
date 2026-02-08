@@ -31,9 +31,10 @@ Un agent DOIT s’enregistrer avant de pouvoir claim des jobs.
 
 Champs minimum :
 
-* `agent_id`
-* `hostname`
+* `agent_name`
+* `agent_version`
 * `capabilities[]`
+* `platform` (optionnel)
 
 Le serveur peut refuser l’enregistrement si la déclaration est invalide.
 
@@ -42,7 +43,7 @@ Le serveur peut refuser l’enregistrement si la déclaration est invalide.
 
 ### 4.1 Découverte
 
-L’agent récupère la liste des jobs claimables.
+L’agent récupère la liste des jobs claimables via `GET /jobs`.
 
 Le serveur ne renvoie que :
 
@@ -63,7 +64,7 @@ Un job `pending` n’est ni en erreur, ni bloqué, ni abandonné.
 
 ### 4.3 Claim (lease)
 
-L’agent claim un job de manière atomique.
+L’agent claim un job de manière atomique via `POST /jobs/{job_id}/claim`.
 
 Le claim crée une **lease** (verrou temporaire) :
 

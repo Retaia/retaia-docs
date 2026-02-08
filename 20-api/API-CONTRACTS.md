@@ -170,23 +170,30 @@ Response :
 * Un job peut rester **`pending` indéfiniment** s’il n’existe aucun agent disponible avec les capabilities requises.
 * Un job `pending` n’est ni une erreur, ni un état bloqué.
 
-### POST `/jobs/claim`
+### GET `/jobs`
 
-Claim un job.
-
-Body :
-
-* `job_type: PROCESS_REVIEW | TRANSCRIBE | SUGGEST_TAGS`
-* `agent_id`
+Retourne les jobs `pending` compatibles avec l’agent authentifié (capabilities + policy serveur).
 
 Response :
 
-* `Job` si un job est attribué
-* sinon : `200 { job: null, retry_after_seconds: number }`
+* `Job[]`
 
 Règles :
 
 * ne jamais retourner un asset `MOVE_QUEUED`
+* le serveur peut limiter la liste (pagination, quotas)
+
+### POST `/jobs/{job_id}/claim`
+
+Claim atomique d’un job.
+
+Response :
+
+* `200` + `Job` (avec `lock_token`, `locked_until`) si claim accepté
+* `409 STATE_CONFLICT` si job déjà claimé, non compatible ou non claimable
+
+Règles :
+
 * lock + TTL obligatoires
 
 ### POST `/jobs/{job_id}/heartbeat`
@@ -463,7 +470,7 @@ Effet :
 ## 11) Décisions actées (v1)
 
 * URLs de dérivés : stables (same-origin)
-* Claim jobs : réponse **200 + retry_after_seconds** si aucun job
+* Claim jobs : `GET /jobs` pour discovery + `POST /jobs/{job_id}/claim` pour lease atomique
 * Dérivés : upload HTTP, pas d’écriture directe côté client sur le filesystem NAS
 * Batch move : sélection v1 via ids depuis preview
 * Purge : purge unitaire v1 (+ batch purge plus tard si nécessaire)

@@ -28,7 +28,7 @@ Un job n’est **pas** :
 Chaque job est défini par :
 
 * `job_type`
-* `media_id`
+* `asset_uuid`
 * `required_capabilities[]`
 * `inputs`
 * `expected_outputs`
@@ -50,7 +50,7 @@ Générer des proxies vidéo à partir d’un média source.
 
 **Inputs**
 
-* media_id
+* asset_uuid
 * source_path (read-only)
 * proxy_profile
 
@@ -82,7 +82,7 @@ Générer des vignettes à partir d’un média.
 
 **Inputs**
 
-* media_id
+* asset_uuid
 * source_path (read-only)
 * thumbnail_profile
 
@@ -112,7 +112,7 @@ Extraire une waveform audio.
 
 **Inputs**
 
-* media_id
+* asset_uuid
 * source_path (read-only)
 
 **Expected outputs**
@@ -140,7 +140,7 @@ Produire une transcription (et éventuellement des timecodes) à partir de l’a
 - `speech.transcription@1`
 
 **Inputs**
-- media_id
+- asset_uuid
 - source_path (read-only)
 - language (optionnel)
 - transcription_profile (optionnel)
