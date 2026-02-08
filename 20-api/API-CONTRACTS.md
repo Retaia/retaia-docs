@@ -10,7 +10,6 @@ Objectif : fournir une surface stable consommée par :
 * RushIndexer Agent(s)
 * futurs clients (ex: client MCP)
 
----
 
 ## 0) Conventions
 
@@ -31,7 +30,6 @@ Objectif : fournir une surface stable consommée par :
 
 `DISCOVERED, READY, PROCESSING_REVIEW, PROCESSED, DECISION_PENDING, DECIDED_KEEP, DECIDED_REJECT, MOVE_QUEUED, ARCHIVED, REJECTED, PURGED`
 
----
 
 ## 1) Auth
 
@@ -56,7 +54,6 @@ Objectif : fournir une surface stable consommée par :
 * `batches:execute` (**humain uniquement**)
 * `purge:execute` (**humain uniquement**)
 
----
 
 ## 2) Assets
 
@@ -112,7 +109,6 @@ Effet (normatif) :
 * transition vers `READY`
 * force la revue : retour à `DECISION_PENDING` après nouveau `PROCESSED`
 
----
 
 ## 3) Decisions (humain)
 
@@ -133,7 +129,6 @@ Effet :
 
 * `ARCHIVED|REJECTED → DECISION_PENDING`
 
----
 
 ## 4) Agents
 
@@ -159,7 +154,6 @@ Response :
   * `allowed_job_types[]`
   * (optionnel) `quiet_hours`
 
----
 
 ## 5) Jobs
 
@@ -234,7 +228,6 @@ Body :
 * `message`
 * `retryable: boolean`
 
----
 
 ## 6) Derived (proxies/dérivés)
 
@@ -301,7 +294,6 @@ Règles :
 * support Range requests pour proxies
 * 404 si `state == PURGED`
 
----
 
 ## 7) Batch moves
 
@@ -339,7 +331,6 @@ Response :
 
 Retourne statut + rapport.
 
----
 
 ## 7.1) Bulk decisions (v1.1)
 
@@ -387,7 +378,6 @@ Règles :
 * `approval_token` expire rapidement
 * l’apply est idempotent (Idempotency-Key)
 
----
 
 ## 8) Purge (destructif)
 
@@ -408,7 +398,6 @@ Effet :
 * `REJECTED → PURGED`
 * supprime originaux + sidecars + dérivés
 
----
 
 ## 9) Schémas (objets)
 
@@ -454,7 +443,6 @@ Effet :
 * `warnings[]`
 * `metrics`
 
----
 
 ## 10) Codes d’erreur (normatifs)
 
@@ -465,7 +453,6 @@ Effet :
 * `429 RATE_LIMITED`
 * `503 TEMPORARY_UNAVAILABLE`
 
----
 
 ## 11) Décisions actées (v1)
 

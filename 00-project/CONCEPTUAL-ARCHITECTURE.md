@@ -7,7 +7,6 @@ Il ne décrit **pas** les détails d’implémentation.
 
 Ces règles sont **normatives**.
 
----
 
 ## 1) Objectifs
 
@@ -19,7 +18,6 @@ Le système Rush vise à :
 * éviter toute action destructive implicite
 * rester robuste face aux pannes, au matériel hétérogène et au réseau
 
----
 
 ## 2) Principes structurants
 
@@ -30,7 +28,6 @@ Le système Rush vise à :
 * **Capabilities explicites** : aucun pouvoir implicite côté agent
 * **Humain au centre** : aucune décision métier automatisée
 
----
 
 ## 3) Composants principaux
 
@@ -54,7 +51,6 @@ Garanties :
 
 RushCatalog **ne traite pas** les médias.
 
----
 
 ### 3.2 RushIndexer (Agents de processing)
 
@@ -80,7 +76,6 @@ Un agent peut être :
 
 Les capacités réelles d’un agent sont décrites uniquement par ses **capabilities déclarées**.
 
----
 
 ### 3.3 NAS / Storage
 
@@ -94,7 +89,6 @@ Principes :
 
 Le NAS n’implémente aucune logique métier.
 
----
 
 ### 3.4 UI Web
 
@@ -113,7 +107,6 @@ Contraintes :
 
 La spécification UI est volontairement hors scope de ce document.
 
----
 
 ## 4) Flux principaux
 
@@ -123,7 +116,6 @@ La spécification UI est volontairement hors scope de ce document.
 2. Enregistrement comme asset (`DISCOVERED → READY`)
 3. Création des jobs de processing initiaux
 
----
 
 ### 4.2 Processing asynchrone
 
@@ -135,7 +127,6 @@ La spécification UI est volontairement hors scope de ce document.
 
 Un job peut rester `pending` indéfiniment si aucun agent compatible n’est disponible.
 
----
 
 ### 4.3 Décision humaine
 
@@ -145,7 +136,6 @@ Un job peut rester `pending` indéfiniment si aucun agent compatible n’est dis
 
 Aucune automatisation ne peut produire cette décision.
 
----
 
 ### 4.4 Actions destructives
 
@@ -158,7 +148,6 @@ Principes :
 * toujours confirmées
 * jamais exécutées par un agent
 
----
 
 ## 5) Contrats et hiérarchie normative
 
@@ -174,7 +163,6 @@ Ordre de priorité :
 Si l’implémentation contredit un document de niveau supérieur,
 elle est considérée comme invalide.
 
----
 
 ## 6) Anti-objectifs
 
@@ -186,7 +174,6 @@ Le système Rush **ne doit pas** :
 * masquer des états ou des erreurs
 * "corriger" silencieusement une situation incohérente
 
----
 
 ## 7) Résumé
 
