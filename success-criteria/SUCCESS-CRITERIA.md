@@ -137,4 +137,4 @@ Alors elle **ne contribue pas au succès du projet**, même si elle semble utile
 * [PROJECT-BRIEF.md](../vision/PROJECT-BRIEF.md)
 * [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md)
 * [WORKFLOWS.md](../workflows/WORKFLOWS.md)
-* [API-CONTRACTS.md](../20-api/API-CONTRACTS.md)
+* [API-CONTRACTS.md](../api/API-CONTRACTS.md)

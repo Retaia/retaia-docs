@@ -157,7 +157,7 @@ Ordre de priorité :
 2. [JOB-TYPES.md](../definitions/JOB-TYPES.md)
 3. [CAPABILITIES.md](../definitions/CAPABILITIES.md)
 4. [AGENT-PROTOCOL.md](../workflows/AGENT-PROTOCOL.md)
-5. [API-CONTRACTS.md](../20-api/API-CONTRACTS.md)
+5. [API-CONTRACTS.md](../api/API-CONTRACTS.md)
 6. Implémentation
 
 Si l’implémentation contredit un document de niveau supérieur,

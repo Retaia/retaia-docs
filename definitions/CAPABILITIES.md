@@ -114,4 +114,4 @@ Toute implémentation qui court‑circuite ces objectifs est invalide.
 
 * [JOB-TYPES.md](JOB-TYPES.md)
 * [AGENT-PROTOCOL.md](../workflows/AGENT-PROTOCOL.md)
-* [API-CONTRACTS.md](../20-api/API-CONTRACTS.md)
+* [API-CONTRACTS.md](../api/API-CONTRACTS.md)

@@ -25,4 +25,4 @@ Aucune logique métier ne doit être définie ailleurs.
 * [Change management](change-management/CHANGE-MANAGEMENT.md)
 * [AI-assisted development](change-management/AI-ASSISTED-DEVELOPMENT.md)
 * [Code quality](change-management/CODE-QUALITY.md)
-* [API contracts](20-api/API-CONTRACTS.md)
+* [API contracts](api/API-CONTRACTS.md)

@@ -392,4 +392,4 @@ Gérer musique et prises son comme des assets de production.
 * [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md)
 * [AGENT-PROTOCOL.md](AGENT-PROTOCOL.md)
 * [JOB-TYPES.md](../definitions/JOB-TYPES.md)
-* [API-CONTRACTS.md](../20-api/API-CONTRACTS.md)
+* [API-CONTRACTS.md](../api/API-CONTRACTS.md)

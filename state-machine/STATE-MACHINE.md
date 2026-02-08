@@ -321,5 +321,5 @@ Si une fonctionnalité nécessite une transition qui n’est pas décrite ici,
 ## Références associées
 
 * [WORKFLOWS.md](../workflows/WORKFLOWS.md)
-* [API-CONTRACTS.md](../20-api/API-CONTRACTS.md)
+* [API-CONTRACTS.md](../api/API-CONTRACTS.md)
 * [JOB-TYPES.md](../definitions/JOB-TYPES.md)

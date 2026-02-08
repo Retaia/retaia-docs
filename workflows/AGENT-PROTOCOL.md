@@ -174,4 +174,4 @@ Toute implémentation qui contourne ce protocole est invalide.
 * [WORKFLOWS.md](WORKFLOWS.md)
 * [JOB-TYPES.md](../definitions/JOB-TYPES.md)
 * [CAPABILITIES.md](../definitions/CAPABILITIES.md)
-* [API-CONTRACTS.md](../20-api/API-CONTRACTS.md)
+* [API-CONTRACTS.md](../api/API-CONTRACTS.md)

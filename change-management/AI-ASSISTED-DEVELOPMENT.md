@@ -40,7 +40,7 @@ L’utilisation de l’IA est **autorisée** pour :
 L’IA (assistant ou agent) **ne doit jamais** :
 
 * modifier la machine à états sans modification explicite de [`STATE-MACHINE.md`](../state-machine/STATE-MACHINE.md)
-* modifier l’API sans mise à jour de [`API-CONTRACTS.md`](../20-api/API-CONTRACTS.md) et/ou OpenAPI
+* modifier l’API sans mise à jour de [`API-CONTRACTS.md`](../api/API-CONTRACTS.md) et/ou OpenAPI
 * introduire des décisions métier implicites
 * effectuer des opérations destructives non documentées (move, delete, purge)
 * pousser directement sur la branche `master`

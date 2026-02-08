@@ -256,5 +256,5 @@ Toute violation de cette séparation est considérée comme un changement invali
 
 * [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md)
 * [WORKFLOWS.md](../workflows/WORKFLOWS.md)
-* [API-CONTRACTS.md](../20-api/API-CONTRACTS.md)
+* [API-CONTRACTS.md](../api/API-CONTRACTS.md)
 * [ANTI-PATTERNS.md](../anti-patterns/ANTI-PATTERNS.md)
