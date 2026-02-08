@@ -1,112 +1,70 @@
 openapi: 3.1.0
 
 info:
-  title: Rush Catalog API
-  description: >
-    Central API for managing media inventory, states, and processing jobs
-    in the Rush system. This API is the single source of truth for media
-    lifecycle and agent coordination.
-  version: 0.1.0
+  title: RushCatalog API
+  version: 1.0.0
+  description: |
+    Normative OpenAPI v1 for RushCatalog.
+
+    This API coordinates assets, processing jobs and agents.
+    Agents are non-reliable by design.
+    Jobs may remain pending indefinitely if no compatible agent is available.
 
 servers:
-  - url: http://localhost:8080
-    description: Local development
-  - url: https://api.rush.local
-    description: Production (example)
+  - url: /api/v1
 
 tags:
-  - name: Inventory
-    description: Media inventory and metadata
-  - name: States
-    description: State machine transitions
-  - name: Jobs
-    description: Agent processing jobs
+  - name: Assets
   - name: Agents
-    description: Agent registration and heartbeat
+  - name: Jobs
+  - name: Derived
 
 paths:
 
-  /inventory:
-    get:
-      tags: [Inventory]
-      summary: List media items
-      description: >
-        Returns a paginated list of media items known by the catalog.
-        Does not expose raw media paths.
-      responses:
-        "200":
-          description: List of media items
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/MediaItem"
-                  total:
-                    type: integer
-
-  /inventory/{id}:
-    get:
-      tags: [Inventory]
-      summary: Get media item details
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Media item details
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/MediaItem"
-        "404":
-          description: Media item not found
-
-  /inventory/{id}/state:
+  /agents/register:
     post:
-      tags: [States]
-      summary: Request a state transition
-      description: >
-        Requests a transition for a media item.
-        The server MUST validate the transition against the state machine.
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      tags: [Agents]
+      summary: Register a processing agent
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required: [agent_name, agent_version, capabilities]
               properties:
-                target_state:
+                agent_name:
                   type: string
-              required: [target_state]
+                agent_version:
+                  type: string
+                platform:
+                  type: string
+                capabilities:
+                  type: array
+                  items:
+                    type: string
+                max_parallel_jobs:
+                  type: integer
       responses:
         "200":
-          description: Transition accepted
+          description: Agent registered
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MediaItem"
-        "409":
-          description: Transition refused (invalid state change)
+                type: object
+                properties:
+                  agent_id:
+                    type: string
+                  server_policy:
+                    type: object
 
   /jobs:
     get:
       tags: [Jobs]
-      summary: List available jobs for agents
-      description: >
-        Returns jobs that are pending and claimable by an agent.
+      summary: List claimable jobs for the authenticated agent
+      description: |
+        Returns jobs with status `pending`
+        and compatible with the agent capabilities.
       responses:
         "200":
           description: List of jobs
@@ -117,137 +75,139 @@ paths:
                 items:
                   $ref: "#/components/schemas/Job"
 
-  /jobs/{id}/claim:
+  /jobs/{job_id}/claim:
     post:
       tags: [Jobs]
-      summary: Claim a job
-      description: >
-        Atomically claims a job for processing by an agent.
+      summary: Claim a job (atomic lease)
       parameters:
-        - name: id
+        - name: job_id
           in: path
           required: true
           schema:
             type: string
       responses:
         "200":
-          description: Job successfully claimed
+          description: Job claimed
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Job"
         "409":
-          description: Job already claimed or unavailable
+          description: Job not claimable
 
-  /jobs/{id}/complete:
+  /jobs/{job_id}/heartbeat:
     post:
       tags: [Jobs]
-      summary: Complete a job
-      description: >
-        Marks a job as completed and submits derived artifacts metadata.
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      summary: Extend job lease
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required: [lock_token]
               properties:
-                success:
-                  type: boolean
-                output:
-                  type: object
-                  additionalProperties: true
+                lock_token:
+                  type: string
       responses:
         "200":
-          description: Job completed
+          description: Lease extended
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  locked_until:
+                    type: string
+                    format: date-time
 
-  /agents/register:
+  /jobs/{job_id}/submit:
     post:
-      tags: [Agents]
-      summary: Register an agent
-      description: >
-        Registers a processing agent instance.
+      tags: [Jobs]
+      summary: Submit job result
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Agent"
+              $ref: "#/components/schemas/JobResult"
       responses:
         "200":
-          description: Agent registered
+          description: Job completed
+        "423":
+          description: Invalid or missing lock
 
-  /agents/{id}/heartbeat:
+  /jobs/{job_id}/fail:
     post:
-      tags: [Agents]
-      summary: Agent heartbeat
-      description: >
-        Keeps the agent marked as alive.
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      tags: [Jobs]
+      summary: Mark job as failed
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lock_token, error_code, retryable]
+              properties:
+                lock_token:
+                  type: string
+                error_code:
+                  type: string
+                message:
+                  type: string
+                retryable:
+                  type: boolean
       responses:
-        "204":
-          description: Heartbeat received
+        "200":
+          description: Job failed recorded
 
 components:
-  schemas:
 
-    MediaItem:
-      type: object
-      description: Media item registered in the catalog
-      properties:
-        id:
-          type: string
-        filename:
-          type: string
-        state:
-          type: string
-        created_at:
-          type: string
-          format: date-time
-        metadata:
-          type: object
-          additionalProperties: true
-      required: [id, filename, state]
+  schemas:
 
     Job:
       type: object
-      description: Processing job assigned to an agent
+      description: Processing job
+      required:
+        - job_id
+        - job_type
+        - status
+        - asset_uuid
+        - required_capabilities
       properties:
-        id:
+        job_id:
           type: string
-        type:
+        job_type:
           type: string
         status:
           type: string
           enum: [pending, claimed, completed, failed]
-        media_id:
+        asset_uuid:
           type: string
-        claimed_by:
-          type: string
-          nullable: true
-      required: [id, type, status, media_id]
-
-    Agent:
-      type: object
-      description: Processing agent instance
-      properties:
-        id:
-          type: string
-        hostname:
-          type: string
-        capabilities:
+        required_capabilities:
           type: array
           items:
             type: string
-      required: [id, hostname]
+        claimed_by:
+          type: string
+          nullable: true
+        locked_until:
+          type: string
+          format: date-time
+          nullable: true
+
+    JobResult:
+      type: object
+      required: [lock_token, success]
+      properties:
+        lock_token:
+          type: string
+        success:
+          type: boolean
+        output:
+          type: object
+          additionalProperties: true
+        errors:
+          type: array
+          items:
+            type: string

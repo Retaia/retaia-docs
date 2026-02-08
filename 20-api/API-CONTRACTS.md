@@ -2,15 +2,14 @@
 
 Ce document décrit le **contrat API v1** de RushCatalog.
 
+Cette spécification est **normative**. Toute implémentation serveur, agent ou client doit s’y conformer strictement.
+
 Objectif : fournir une surface stable consommée par :
 
 * UI web (same-origin, servie par Symfony)
 * RushIndexer Agent(s)
 * futurs clients (ex: client MCP)
 
-
-Cette spécification OpenAPI est **normative**.
-Toute implémentation serveur ou agent doit s’y conformer strictement.
 ---
 
 ## 0) Conventions
@@ -18,15 +17,15 @@ Toute implémentation serveur ou agent doit s’y conformer strictement.
 ### Base
 
 * Base path : `/api/v1`
-* Identité : **UUID** partout (jamais de path comme identité)
-* Dates : ISO-8601 UTC (`YYYY-MM-DDTHH:mm:ssZ`)
+* Identité : **UUID** partout
+* Dates : ISO‑8601 UTC (`YYYY-MM-DDTHH:mm:ssZ`)
 * Pagination : `limit` + `cursor`
 * Idempotence : header `Idempotency-Key` sur endpoints critiques
 
 ### Derived URLs
 
-* URLs de dérivés **stables** (Option A same-origin)
-* Accès contrôlé par session cookie (UI) ou token (clients autorisés)
+* URLs de dérivés **stables** (same-origin)
+* Accès contrôlé par session cookie (UI) ou bearer token (clients autorisés)
 
 ### États (doit matcher STATE-MACHINE.md)
 
@@ -48,40 +47,14 @@ Toute implémentation serveur ou agent doit s’y conformer strictement.
 #### Scopes (base)
 
 * `assets:read`
-
-* `assets:write` (tags/fields/notes humains — **interdit aux agents**)
-
+* `assets:write` (**humain uniquement**) — tags/fields/notes humains
 * `decisions:write` (**humain uniquement**)
-
 * `jobs:claim` (**agents uniquement**)
-
 * `jobs:heartbeat` (**agents uniquement**)
-
 * `jobs:submit` (**agents uniquement**)
-
 * `suggestions:write` (agents/MCP)
-
 * `batches:execute` (**humain uniquement**)
-
 * `purge:execute` (**humain uniquement**)
-
-* `assets:read`
-
-* `assets:write` (tags/fields/notes humains)
-
-* `decisions:write`
-
-* `jobs:claim`
-
-* `jobs:heartbeat`
-
-* `jobs:submit`
-
-* `suggestions:write`
-
-* `batches:execute`
-
-* `purge:execute`
 
 ---
 
@@ -173,27 +146,29 @@ Body :
 * `agent_name`
 * `agent_version`
 * `platform`
-* `capabilities: { review_processing: boolean, transcribe: boolean, suggest_tags: boolean }`
+* `capabilities: string[]` (voir `CAPABILITIES.md`)
 * `max_parallel_jobs` (suggestion)
 
 Response :
 
 * `agent_id`
-
 * `server_policy` (quotas et règles serveur), incluant au minimum :
 
-    * `min_poll_interval_seconds`
-    * `max_parallel_jobs_allowed`
-    * `allowed_job_types[]`
-    * (optionnel) `quiet_hours`
-
-* `agent_id`
-
-* `server_policy` (quotas, intervalles)
+  * `min_poll_interval_seconds`
+  * `max_parallel_jobs_allowed`
+  * `allowed_job_types[]`
+  * (optionnel) `quiet_hours`
 
 ---
 
 ## 5) Jobs
+
+### Règles générales
+
+* Les agents sont considérés comme **non fiables**.
+* Les jobs sont **idempotents**.
+* Un job peut rester **`pending` indéfiniment** s’il n’existe aucun agent disponible avec les capabilities requises.
+* Un job `pending` n’est ni une erreur, ni un état bloqué.
 
 ### POST `/jobs/claim`
 
@@ -208,11 +183,6 @@ Response :
 
 * `Job` si un job est attribué
 * sinon : `200 { job: null, retry_after_seconds: number }`
-
-Règles :
-
-* ne jamais retourner un asset `MOVE_QUEUED`
-* lock + TTL obligatoires
 
 Règles :
 
@@ -375,8 +345,6 @@ Principe :
 
 ### POST `/decisions/preview` (v1.1)
 
-Prépare une décision en masse.
-
 Body :
 
 * `action: KEEP | REJECT`
@@ -397,8 +365,6 @@ Règles :
 
 ### POST `/decisions/apply` (v1.1)
 
-Applique la décision après confirmation.
-
 Body :
 
 * `approval_token`
@@ -416,7 +382,7 @@ Règles :
 
 ---
 
-## 8) Purge (destructif) (destructif)
+## 8) Purge (destructif)
 
 ### POST `/assets/{uuid}/purge/preview`
 
@@ -496,21 +462,21 @@ Effet :
 
 ## 11) Décisions actées (v1)
 
-* URLs de dérivés : **stables** (Option A same-origin)
+* URLs de dérivés : stables (same-origin)
 * Claim jobs : réponse **200 + retry_after_seconds** si aucun job
-* Dérivés : **upload HTTP**, pas d’écriture directe côté client sur le filesystem NAS
-* Batch move : sélection v1 via **ids depuis preview**
+* Dérivés : upload HTTP, pas d’écriture directe côté client sur le filesystem NAS
+* Batch move : sélection v1 via ids depuis preview
 * Purge : purge unitaire v1 (+ batch purge plus tard si nécessaire)
 * Scopes : agents strictement limités aux scopes jobs/suggestions, jamais décisions/moves/purge
-* Filtres `tags=` : **tags humains uniquement**
+* Filtres `tags=` : tags humains uniquement
 
 ## 12) Décisions actées (v1.1)
 
-* Introduction de `suggested_tags=` et `suggested_tags_mode=` (filtres distincts)
+* Introduction de `suggested_tags=` et `suggested_tags_mode=`
 * Bulk decisions via preview/apply (`/decisions/preview`, `/decisions/apply`)
 
 ## 13) Points en suspens
 
 * Full-text search : `q=` en v1 (si oui, préciser le comportement exact)
-* Reprocess + décisions existantes : règle exacte si l’asset était déjà `DECIDED_*` (actuellement : reprocess ne réapplique pas la décision automatiquement)
-* Bulk decisions : la v1.1 introduit preview/apply (ci-dessus).
+* Reprocess + décisions existantes : règle exacte si l’asset était déjà `DECIDED_*`
+* Batch purge : si nécessaire plus tard
