@@ -35,6 +35,7 @@ Tests obligatoires :
 * `transcribe_audio` n'efface jamais `facts/derived`
 * `extract_facts` n'efface jamais `transcript`
 * clés hors domaine autorisé renvoient `422 VALIDATION_FAILED`
+* `job_type` vs domaine patch suit strictement l'ownership spécifié
 
 ## 5) Batch move
 
@@ -54,6 +55,14 @@ Tests obligatoires :
 * purge supprime originaux + sidecars + dérivés
 * purge idempotente avec `Idempotency-Key`
 
+## 6.1) Lock lifecycle recovery
+
+Tests obligatoires :
+
+* crash après filesystem op et avant transition d'état -> recovery idempotent
+* `fencing_token` obsolète renvoie `409 STALE_LOCK_TOKEN`
+* expiration lock move/purge récupérée par watchdog
+
 ## 7) Idempotence API
 
 Tests obligatoires :
@@ -68,6 +77,14 @@ Tests obligatoires :
 
 * conformité des réponses à `api/openapi/v1.yaml`
 * détection de drift `API-CONTRACTS.md` vs OpenAPI en CI
+* payload erreur conforme à `api/ERROR-MODEL.md`
+
+## 8.1) Authz matrix
+
+Tests obligatoires :
+
+* chaque endpoint critique vérifie scope, acteur et état
+* refus authz renvoie le bon code (`FORBIDDEN_SCOPE`, `FORBIDDEN_ACTOR`, `STATE_CONFLICT`)
 
 ## 9) Couverture minimale
 
@@ -80,5 +97,9 @@ Minimum :
 
 * [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md)
 * [JOB-TYPES.md](../definitions/JOB-TYPES.md)
+* [PROCESSING-PROFILES.md](../definitions/PROCESSING-PROFILES.md)
 * [API-CONTRACTS.md](../api/API-CONTRACTS.md)
+* [ERROR-MODEL.md](../api/ERROR-MODEL.md)
+* [AUTHZ-MATRIX.md](../policies/AUTHZ-MATRIX.md)
+* [LOCK-LIFECYCLE.md](../policies/LOCK-LIFECYCLE.md)
 * [CODE-QUALITY.md](../change-management/CODE-QUALITY.md)
