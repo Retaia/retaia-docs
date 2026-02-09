@@ -106,6 +106,8 @@ Tests obligatoires :
 * flag désactivé => la feature est refusée explicitement avec un code normatif
 * activation du flag active la feature sans régression sur les flux `v1`
 * `server_policy` expose l’état effectif des flags utiles aux agents
+* mapping des flags v1.1 conforme : `features.ai.suggest_tags`, `features.ai.suggested_tags_filters`, `features.decisions.bulk`
+* `job_type=suggest_tags` sur `/jobs/{job_id}/submit` exige `jobs:submit` + `suggestions:write`
 
 ## 9) Couverture minimale
 

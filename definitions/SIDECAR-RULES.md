@@ -55,7 +55,13 @@ VIDEO (legacy / non canonique de base) :
 
 AUDIO :
 
-* sidecars audio spécifiques explicitement listés par politique locale (pas de wildcard implicite)
+* aucun sidecar audio actif en v1 (base actuelle)
+
+## 3.1) Politique locale active (base actuelle)
+
+* `video_legacy_sidecars_enabled = false` (`.lrv`, `.thm` désactivés par défaut)
+* `audio_sidecars_enabled = false` (aucun sidecar audio attachable en v1)
+* tout fichier sidecar hors liste active reste `UNMATCHED_SIDECAR`
 
 ## 4) Conflits et ambiguïtés
 

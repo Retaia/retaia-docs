@@ -55,7 +55,7 @@ Exemples :
 * `.SRT`, `.LRF` pour des vidéos (base DJI Air 3)
 * `.LRV`, `.THM` en legacy uniquement si politique locale explicite
 * `.XMP` pour des photos
-* fichiers audio associés
+* aucun sidecar audio en v1 (base actuelle)
 
 Les sidecars :
 

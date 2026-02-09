@@ -41,6 +41,12 @@ Objectif : fournir une surface stable consommée par :
 * L’activation d’un flag ne DOIT pas modifier le comportement des fonctionnalités `v1`.
 * Le statut effectif des flags applicables DOIT être exposé dans `server_policy` retourné à l’enregistrement agent.
 
+Mapping normatif v1.1 (base actuelle) :
+
+* `features.ai.suggest_tags` -> `job_type=suggest_tags`, `suggestions_patch`, bloc `suggestions` dans `AssetDetail`
+* `features.ai.suggested_tags_filters` -> query params `suggested_tags`, `suggested_tags_mode`
+* `features.decisions.bulk` -> endpoints `/decisions/preview`, `/decisions/apply`
+
 ### Idempotence (règles strictes)
 
 Endpoints avec `Idempotency-Key` obligatoire :
@@ -278,6 +284,11 @@ Note v1 (important) :
   * `generate_proxy|generate_thumbnails|generate_audio_waveform` -> `derived_patch`
   * `transcribe_audio` -> `transcript_patch`
   * `suggest_tags` (**v1.1+**) -> `suggestions_patch`
+
+Règle authz complémentaire :
+
+* pour `job_type=suggest_tags`, l'acteur DOIT avoir `jobs:submit` **et** `suggestions:write`
+* pour `job_type=suggest_tags`, le flag `features.ai.suggest_tags` DOIT être actif
 
 ### POST `/jobs/{job_id}/fail`
 

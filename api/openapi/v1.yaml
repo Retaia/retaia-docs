@@ -329,6 +329,10 @@ paths:
     post:
       tags: [Jobs]
       summary: Submit job result patch
+      description: |
+        Submits one job result patch.
+        For `job_type=suggest_tags` (v1.1+), server enforces both scopes `jobs:submit` and `suggestions:write`,
+        and requires feature flag `features.ai.suggest_tags` to be enabled.
       security:
         - OAuth2ClientCredentials: ["jobs:submit"]
       parameters:
