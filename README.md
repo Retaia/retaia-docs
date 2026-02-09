@@ -37,6 +37,7 @@ Si le code contredit cette documentation, le code est incorrect.
 * [Hooks contract](policies/HOOKS-CONTRACT.md)
 * [Lock lifecycle](policies/LOCK-LIFECYCLE.md)
 * [Authz matrix](policies/AUTHZ-MATRIX.md)
+* [I18N & localization policy](policies/I18N-LOCALIZATION.md)
 * [Test plan](tests/TEST-PLAN.md)
 * [Anti-patterns](anti-patterns/ANTI-PATTERNS.md)
 * [Success criteria](success-criteria/SUCCESS-CRITERIA.md)
