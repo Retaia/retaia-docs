@@ -52,7 +52,8 @@ Un **sidecar** est un fichier associé à un MediaAsset.
 
 Exemples :
 
-* `.SRT`, `.LRV`, `.THM` pour des vidéos
+* `.SRT`, `.LRF` pour des vidéos (base DJI Air 3)
+* `.LRV`, `.THM` en legacy uniquement si politique locale explicite
 * `.XMP` pour des photos
 * fichiers audio associés
 

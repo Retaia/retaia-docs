@@ -31,6 +31,16 @@ Objectif : fournir une surface stable consommée par :
 * Toute fonctionnalité AI-powered (ex: `suggest_tags`, filtres `suggested_tags*`) est `v1.1+`.
 * Exception explicite : `transcribe_audio` est disponible dès `v1`.
 
+### Feature flags (normatif)
+
+* Toute nouvelle fonctionnalité DOIT être protégée par un feature flag serveur dès son introduction.
+* Les fonctionnalités `v1.1+` suivent la même règle et restent inactives tant que leur flag n'est pas activé.
+* Convention de nommage : `features.<domaine>.<fonction>` (ex: `features.ai.suggest_tags`).
+* Valeur par défaut : `false` tant que la feature n’est pas explicitement activée.
+* Quand un flag est `false`, l’endpoint reste stable et la feature est refusée de façon explicite (`403 FORBIDDEN_SCOPE` ou `409 STATE_CONFLICT` selon le cas).
+* L’activation d’un flag ne DOIT pas modifier le comportement des fonctionnalités `v1`.
+* Le statut effectif des flags applicables DOIT être exposé dans `server_policy` retourné à l’enregistrement agent.
+
 ### Idempotence (règles strictes)
 
 Endpoints avec `Idempotency-Key` obligatoire :

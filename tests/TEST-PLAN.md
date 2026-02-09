@@ -97,6 +97,16 @@ Tests obligatoires :
 * `suggest_tags` et `suggested_tags*` ne sont actifs qu'en `v1.1+`
 * endpoints bulk decisions (`/decisions/preview`, `/decisions/apply`) ne sont actifs qu'en `v1.1+`
 
+## 8.3) Feature flags (général)
+
+Tests obligatoires :
+
+* toute nouvelle feature est introduite derrière un flag
+* toute feature `v1.1+` est désactivée par défaut
+* flag désactivé => la feature est refusée explicitement avec un code normatif
+* activation du flag active la feature sans régression sur les flux `v1`
+* `server_policy` expose l’état effectif des flags utiles aux agents
+
 ## 9) Couverture minimale
 
 Minimum :

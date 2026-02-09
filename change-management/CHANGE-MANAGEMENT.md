@@ -160,8 +160,8 @@ Le projet adopte une stratégie **trunk-based** :
 
 - Les fonctionnalités stables sont mergées dès qu’elles sont prêtes.
 - Le système peut être déployé plusieurs fois par jour.
-- Les fonctionnalités incomplètes ne doivent jamais casser `master` et doivent être protégées
-  (feature flags, endpoints non exposés, configuration).
+- Toute nouvelle feature doit être protégée par feature flag dès son introduction, pour permettre un merge rapide sur `master` sans dérive de branche.
+- Les fonctionnalités incomplètes ne doivent jamais casser `master` et restent isolées derrière leurs feature flags (ou endpoints non exposés si nécessaire).
 
 Chaque merge sur `master` rend le déploiement possible immédiatement.
 

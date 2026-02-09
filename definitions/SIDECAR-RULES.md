@@ -2,6 +2,19 @@
 
 Ce document définit les règles déterministes d'association sidecar <-> MediaAsset.
 
+## 0) Base de travail par défaut (normative)
+
+Sauf mention explicite contraire, les règles de ce document sont calibrées pour la base matérielle suivante :
+
+* caméras principales : Panasonic, Canon
+* drone : DJI Air 3
+* audio/micro : Rode Wireless Pro
+
+Conséquence :
+
+* toute extension sidecar hors de cette base doit être ajoutée explicitement avant implémentation
+* aucune heuristique “best-effort” n'est autorisée pour des formats non listés
+
 ## 1) Principe
 
 Un sidecar est associé par règles explicites, jamais par heuristique implicite non documentée.
@@ -31,10 +44,14 @@ PHOTO :
 
 * `.xmp`
 
-VIDEO (drone DJI et assimilés) :
+VIDEO (DJI Air 3 et famille DJI compatible) :
 
 * `.srt` (metadata/telemetry)
 * `.lrf` (proxy sidecar constructeur)
+
+VIDEO (legacy / non canonique de base) :
+
+* `.lrv`, `.thm` uniquement si activés explicitement par politique locale/documentée
 
 AUDIO :
 
