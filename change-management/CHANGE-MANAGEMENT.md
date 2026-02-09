@@ -124,6 +124,19 @@ Règles :
 
 L’UI web, Retaia Agent et les futurs clients (ex: MCP) consomment la même API.
 
+## Adoption multilingue (priorités)
+
+Pour maximiser l'adoption produit, l'ordre d'implémentation i18n DOIT être :
+
+1. Parcours critiques d'abord : review, décision, move, purge.
+2. Ensuite seulement les écrans secondaires.
+
+Règles associées :
+
+* toute release incluant i18n DOIT couvrir les parcours critiques avant extension de périmètre
+* la complétude des traductions `en` + `fr` est un gate CI bloquant
+* les libellés à risque (actions destructives) DOIVENT être revus avant release
+
 
 ## Purge & destruction de données
 

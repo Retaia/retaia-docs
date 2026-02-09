@@ -117,3 +117,11 @@ Une contribution est refusée si elle :
 - introduit une action destructive implicite
 - affaiblit le contrôle humain
 - contourne les specs ou les tests
+
+## 9) Gate qualité i18n
+
+Pour tout changement touchant l'UI :
+
+- les catalogues de traduction `en` et `fr` DOIVENT rester synchronisés sur les clés requises
+- le pipeline CI DOIT échouer en cas de clé manquante sur une locale obligatoire
+- les textes d'actions destructives DOIVENT être relus pour éliminer toute ambiguïté utilisateur

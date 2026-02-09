@@ -116,6 +116,15 @@ Minimum :
 * scénarios P0 ci-dessus à 100%
 * chemins critiques move/purge/lock couverts avant merge
 
+## 10) I18N / L10N (parcours critiques)
+
+Tests obligatoires :
+
+* les parcours review, décision, move et purge sont entièrement traduits en `en` et `fr`
+* fallback `locale utilisateur -> en -> clé brute` conforme à la policy i18n
+* les clés manquantes `en` ou `fr` échouent le pipeline CI (gate bloquant)
+* les libellés d'actions destructives sont validés sans ambiguïté avant release
+
 ## Références associées
 
 * [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md)
@@ -126,3 +135,4 @@ Minimum :
 * [AUTHZ-MATRIX.md](../policies/AUTHZ-MATRIX.md)
 * [LOCK-LIFECYCLE.md](../policies/LOCK-LIFECYCLE.md)
 * [CODE-QUALITY.md](../change-management/CODE-QUALITY.md)
+* [I18N-LOCALIZATION.md](../policies/I18N-LOCALIZATION.md)
