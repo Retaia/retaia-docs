@@ -111,6 +111,56 @@ Le projet est considéré comme réussi si :
 * Aucune action destructive n’est cachée.
 
 
+## Critères de succès d'adoption
+
+### 13) Time-to-first-value court
+
+* Un nouvel utilisateur atteint sa première review utile en moins de 15 minutes.
+* Le parcours d'onboarding guide explicitement jusqu'à la première valeur visible.
+
+
+### 14) Onboarding vérifié et actionnable
+
+* Les prérequis critiques (NAS, permissions, agent, storage dérivés) sont vérifiés automatiquement.
+* Tout échec onboarding fournit une cause explicite et une action de correction.
+
+
+### 15) Defaults sûrs et compréhensibles
+
+* Les actions à risque sont opt-in et jamais implicites.
+* Les parcours destructifs exposent systématiquement un dry-run lisible avant confirmation.
+
+
+### 16) UX de confiance sur actions critiques
+
+* Les écrans décision/move/purge affichent clairement : ce qui va être fait, impact, rollback possible.
+* Les confirmations critiques réduisent les ambiguïtés de formulation.
+
+
+### 17) Observabilité orientée action
+
+* L'utilisateur voit en priorité les blocages actionnables (jobs bloqués, assets en attente, erreurs exploitables).
+* Le système propose la prochaine action recommandée sur les files critiques.
+
+
+### 18) Boucle de feedback produit
+
+* L'UI permet de signaler un problème de compréhension, pertinence ou performance avec contexte associé.
+* Les retours sont exploitables pour prioriser les améliorations de confiance.
+
+
+### 19) Performance perçue sur parcours clés
+
+* Les parcours review et navigation (liste, filtrage, scrub) restent fluides sur jeux de données réalistes.
+* Les optimisations priorisent la latence perçue avant l'ajout de fonctionnalités secondaires.
+
+
+### 20) Migration sans surprise
+
+* Toute évolution structurelle expose impact utilisateur, compatibilité, rollback et checklist opérateur.
+* Aucune release n'introduit de changement comportemental implicite sur les parcours critiques.
+
+
 ## Critères d’échec (signaux d’alerte)
 
 Le projet est en échec si :

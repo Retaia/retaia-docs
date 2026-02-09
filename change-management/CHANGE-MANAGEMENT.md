@@ -137,6 +137,18 @@ Règles associées :
 * la complétude des traductions `en` + `fr` est un gate CI bloquant
 * les libellés à risque (actions destructives) DOIVENT être revus avant release
 
+## Adoption produit (règles transverses)
+
+Pour maximiser l'adoption, toute évolution produit significative DOIT respecter :
+
+* `time-to-first-value` prioritaire : la première review utile doit rester atteignable rapidement
+* onboarding instrumenté : checks automatiques des prérequis critiques avant usage réel
+* defaults sûrs : aucune action à risque activée implicitement
+* UX explicite sur parcours critiques : décision, move, purge
+* observabilité orientée action : erreurs et blocages immédiatement actionnables
+* feedback intégré : collecte structurée des frictions utilisateur
+* migration explicite : impact, compatibilité, rollback et checklist opérateur à chaque changement structurel
+
 
 ## Purge & destruction de données
 
