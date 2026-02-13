@@ -9,8 +9,9 @@ Ce document doit rester strictement aligné avec `openapi/v1.yaml`.
 
 Objectif : fournir une surface stable consommée par :
 
-* client UI (Rust/Tauri)
+* client UI (`UI_RUST`, Rust/Tauri)
 * client Agent
+* client MCP
 
 
 ## 0) Conventions
@@ -32,7 +33,7 @@ Objectif : fournir une surface stable consommée par :
 
 ### Feature flags (normatif)
 
-* Source de vérité : les flags sont pilotés par **Retaia Core** au runtime. Les clients (UI, agents) NE DOIVENT PAS hardcoder un état de flag.
+* Source de vérité : les flags sont pilotés par **Retaia Core** au runtime. Les clients (UI, agents, MCP) NE DOIVENT PAS hardcoder un état de flag.
 * Toute nouvelle fonctionnalité DOIT être protégée par un feature flag serveur dès son introduction.
 * Les fonctionnalités `v1.1+` suivent la même règle et restent inactives tant que leur flag n'est pas activé.
 * Convention de nommage : `features.<domaine>.<fonction>` (ex: `features.ai.suggest_tags`).
@@ -62,7 +63,7 @@ Mapping normatif v1.1 (base actuelle, obligatoire pour tous les consommateurs) :
   * autorise `POST /decisions/preview` et `POST /decisions/apply`
   * client: OFF => interdire toute UI/action bulk decisions et tout appel API associé ; ON => disponible sans redéploiement
 
-Règles client (normatives, UI/agents) :
+Règles client (normatives, UI/agents/MCP) :
 
 * feature OFF => appel API de la feature interdit et UI correspondante masquée/désactivée
 * feature ON => feature disponible immédiatement, sans déploiement client supplémentaire
@@ -103,25 +104,25 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 
 ### Typologie des acteurs (normatif)
 
-* `USER_INTERACTIVE` : utilisateur humain connecté via client `UI` (Rust/Tauri) ou client `AGENT` en mode interactif
+* `USER_INTERACTIVE` : utilisateur humain connecté via client `UI_RUST` (Rust/Tauri) ou client `AGENT` en mode interactif
 * `CLIENT_TECHNICAL` : client non-humain authentifié par `client_id + secret_key`
 * `AGENT_TECHNICAL` : agent non-interactif (daemon/service) authentifié par `client_id + secret_key` ou client-credentials OAuth2
-* `client_kind` est strictement borné à `UI` ou `AGENT`
+* `client_kind` interactif est borné à `UI_RUST` ou `AGENT`; le mode technique autorise `AGENT` et `MCP`
 
 ### UI (humain)
 
 * Bearer token utilisateur obtenu via login (`POST /auth/login`)
 * l'interface de login est normative pour permettre l'obtention du token utilisateur
-* l’UI DOIT être implémentée en Rust/Tauri (Electron non supporté)
+* le `client_kind=UI_RUST` DOIT être implémenté en Rust/Tauri (Electron non supporté)
 * le token UI est non exportable dans l'interface (jamais affiché en clair)
 * un utilisateur ne peut pas invalider son token UI depuis l'UI (anti lock-out)
 * l'UI DOIT supporter l'enrôlement 2FA TOTP via app externe (Authy, Google Authenticator, etc.)
 
-### Agents
+### Agents / MCP
 
 * modes non interactifs : bearer technique (`OAuth2ClientCredentials`)
 * modes interactifs (agent CLI/GUI opéré par un humain) : bearer utilisateur via `POST /auth/login`
-* mode client applicatif non-interactif : `client_id + secret_key` pour obtenir un bearer token via `POST /auth/clients/token`
+* mode client applicatif non-interactif (`AGENT`, `MCP`) : `client_id + secret_key` pour obtenir un bearer token via `POST /auth/clients/token`
 
 Règle de cardinalité des tokens (obligatoire) :
 
@@ -137,7 +138,7 @@ Règle de cardinalité des tokens (obligatoire) :
 * `jobs:claim` (**agents uniquement**)
 * `jobs:heartbeat` (**agents uniquement**)
 * `jobs:submit` (**agents uniquement**)
-* `suggestions:write` (**v1.1+**, agents)
+* `suggestions:write` (**v1.1+**, agents/MCP)
 * `batches:execute` (**humain uniquement**)
 * `purge:execute` (**humain uniquement**)
 
@@ -148,7 +149,7 @@ Migration obligatoire (anti dette technique) :
 
 * `SessionCookieAuth` est retiré du contrat et est interdit pour toute nouvelle implémentation.
 * Core DOIT supprimer le code runtime lié au cookie session auth (`SessionCookieAuth`).
-* UI et Agent DOIVENT migrer vers Bearer-only et supprimer toute dépendance cookie.
+* UI, Agent et MCP DOIVENT migrer vers Bearer-only et supprimer toute dépendance cookie.
 
 ### Endpoints auth applicatifs (normatif)
 
@@ -263,7 +264,7 @@ Migration obligatoire (anti dette technique) :
 * security: `UserBearerAuth`
 * prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
 * effet: invalide les bearer tokens actifs du client ciblé (pas d'arrêt de process)
-* contrainte: un `client_kind=UI` est protégé et NE DOIT PAS être révocable via cet endpoint
+* contrainte: un `client_kind=UI_RUST` est protégé et NE DOIT PAS être révocable via cet endpoint
 * réponses:
   * `200` token(s) invalide(s)
   * `401 UNAUTHORIZED`
@@ -274,7 +275,7 @@ Migration obligatoire (anti dette technique) :
 
 * security: aucune (`security: []`)
 * body requis: `{ client_id, client_kind, secret_key }`
-* `client_kind` autorisé: `AGENT` (UI exclu)
+* `client_kind` autorisés: `AGENT | MCP` (`UI_RUST` exclu)
 * effet: émet un bearer token client
 * règle stricte: **1 token actif par client_id** (mint d’un nouveau token => révocation de l’ancien token pour ce client)
 * réponses:
@@ -301,7 +302,7 @@ Règle d'erreur (obligatoire) :
 
 Règle d’unification clients (obligatoire) :
 
-* le flux login utilisateur (`POST /auth/login`) et `UserBearerAuth` DOIVENT être communs pour les clients `UI` et `AGENT` en mode interactif
+* le flux login utilisateur (`POST /auth/login`) et `UserBearerAuth` DOIVENT être communs pour les clients interactifs `UI_RUST` et `AGENT`
 
 
 ## 2) Assets
@@ -800,7 +801,7 @@ Objectif :
 
 * détecter tout changement de `api/openapi/v1.yaml` même sans version bump (`info.version` inchangé)
 
-Règles normatives (tous les repos consommateurs : UI, core, agents, tooling CI) :
+Règles normatives (tous les repos consommateurs : UI, core, agents, MCP, tooling CI) :
 
 * chaque repo consommateur DOIT versionner un snapshot de contrat dans `contracts/`
 * fichier minimum requis : `contracts/openapi-v1.sha256`

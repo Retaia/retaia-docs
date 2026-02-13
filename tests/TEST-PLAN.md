@@ -72,14 +72,14 @@ Tests obligatoires :
   * bearer absent/invalide => `401 UNAUTHORIZED`
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
   * `client_id` invalide => `422 VALIDATION_FAILED`
-  * `client_id` de type `UI` protégé => `403` (non révocable via cet endpoint)
+  * `client_id` de type `UI_RUST` protégé => `403` (non révocable via cet endpoint)
 * `POST /auth/clients/token`:
-  * `client_id + client_kind=AGENT + secret_key` valides => `200` + bearer token client
+  * `client_id + client_kind in {AGENT, MCP} + secret_key` valides => `200` + bearer token client
   * credentials client invalides => `401 UNAUTHORIZED`
   * body invalide => `422 VALIDATION_FAILED`
   * rate limit => `429 TOO_MANY_ATTEMPTS`
   * invariant: nouveau token minté pour un client révoque l’ancien token (1 token actif / client)
-  * `client_kind=UI` refusé (422/403 selon policy)
+  * `client_kind=UI_RUST` refusé (422/403 selon policy)
 * `POST /auth/clients/{client_id}/rotate-secret`:
   * bearer admin valide + `client_id` valide => `200` + nouvelle `secret_key` (retournée une fois)
   * bearer absent/invalide => `401 UNAUTHORIZED`
@@ -88,8 +88,8 @@ Tests obligatoires :
   * rotation invalide immédiatement les tokens actifs du client
 * toutes réponses d’erreur 4xx/5xx auth conformes au schéma `ErrorResponse`
 * endpoints humains mutateurs exigent un bearer token (`UserBearerAuth`) conforme à la spec
-* même flux login/token validé sur clients interactifs: `UI` et `AGENT`
-* compatibilité desktop validée: client UI Rust/Tauri utilise `POST /auth/login` + `Authorization: Bearer`
+* même flux login/token validé sur clients interactifs: `UI_RUST` et `AGENT`
+* compatibilité desktop validée: client `UI_RUST` (Rust/Tauri) utilise `POST /auth/login` + `Authorization: Bearer`
 * anti lock-out: l'UI n'expose jamais le token en clair et n'offre pas d'action d'auto-révocation du token UI actif
 * régression interdite: aucun endpoint runtime n'accepte encore `SessionCookieAuth` (Bearer-only)
 
@@ -100,6 +100,7 @@ Tests obligatoires :
 * `CLI` agent fonctionne en Linux headless (sans dépendance GUI)
 * `GUI` agent (quand présent) utilise le même moteur de processing que `CLI` (mêmes capabilities et mêmes résultats)
 * client `AGENT` validé dans les deux modes d’auth: interactif (`/auth/login`) et technique (`/auth/clients/token` ou OAuth2)
+* client `MCP` validé en mode technique (`/auth/clients/token` ou OAuth2), sans login interactif
 * mode service non-interactif redémarre sans login humain sur Linux/macOS/Windows
 * stockage secret conforme OS (Keychain macOS, Credential Manager/DPAPI Windows, secret store Linux)
 * rotation de secret client n’exige pas de réinstallation agent

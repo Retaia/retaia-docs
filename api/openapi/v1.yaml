@@ -29,7 +29,7 @@ paths:
     post:
       tags: [Auth]
       summary: User login with email and password
-      description: Interactive login endpoint for the only supported clients (`UI` on Rust/Tauri and `AGENT`). Supports optional TOTP 2FA code when enabled.
+      description: Interactive login endpoint for supported human-operated clients (`UI_RUST` and `AGENT`). Supports optional TOTP 2FA code when enabled.
       security: []
       requestBody:
         required: true
@@ -1360,12 +1360,12 @@ components:
     ClientKind:
       type: string
       description: Form factor identifier for interactive login flows.
-      enum: [UI, AGENT]
+      enum: [UI_RUST, AGENT]
 
     NonUiClientKind:
       type: string
       description: Allowed client kinds for technical secret-key token minting.
-      enum: [AGENT]
+      enum: [AGENT, MCP]
 
     AuthRotateClientSecretResponse:
       type: object
