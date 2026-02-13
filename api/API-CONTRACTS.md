@@ -107,12 +107,20 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 * Bearer token utilisateur obtenu via login (`POST /auth/login`)
 * l'interface de login est normative pour permettre l'obtention du token utilisateur
 * la même authentification DOIT rester valable si l’UI est empaquetée en app desktop (Electron ou Rust Tauri)
+* le token UI est non exportable dans l'interface (jamais affiché en clair)
+* un utilisateur ne peut pas invalider son token UI depuis l'UI (anti lock-out)
 
 ### Agents / MCP
 
 * modes non interactifs : bearer technique (`OAuth2ClientCredentials`)
 * modes interactifs (agent CLI/GUI opéré par un humain) : bearer utilisateur via `POST /auth/login`
 * mode client applicatif : `client_id + secret_key` pour obtenir un bearer token via `POST /auth/clients/token`
+
+Règle de cardinalité des tokens (obligatoire) :
+
+* un même utilisateur PEUT avoir plusieurs tokens actifs simultanément sur des clients différents
+* contrainte stricte : **1 token actif par client** (clé logique : `(user_id, client_id)`)
+* émission d'un nouveau token pour le même `(user_id, client_id)` => révocation immédiate du token précédent
 
 #### Scopes (base)
 
@@ -208,20 +216,22 @@ La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.m
 * security: `UserBearerAuth`
 * prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
 * effet: invalide les bearer tokens actifs du client ciblé (pas d'arrêt de process)
+* contrainte: un client `UI` est protégé et NE DOIT PAS être révocable via cet endpoint
 * réponses:
   * `200` token(s) invalide(s)
   * `401 UNAUTHORIZED`
-  * `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE` (selon matrice)
+  * `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE` (selon matrice, incluant le cas token UI protégé)
   * `422 VALIDATION_FAILED`
 
 `POST /auth/clients/token`
 
 * security: aucune (`security: []`)
-* body requis: `{ client_id, secret_key }`
+* body requis: `{ client_id, client_kind, secret_key }`
+* `client_kind` autorisés: `AGENT_CLI | AGENT_GUI | ELECTRON | TAURI | MCP` (UI exclu)
 * effet: émet un bearer token client
-* règle stricte: **1 token actif par client** (mint d’un nouveau token => révocation de l’ancien token)
+* règle stricte: **1 token actif par client** (mint d’un nouveau token => révocation de l’ancien token pour ce client)
 * réponses:
-  * `200` token client (`access_token`, `token_type=Bearer`, `expires_in?`)
+  * `200` token client (`access_token`, `token_type=Bearer`, `expires_in?`, `client_id`, `client_kind`)
   * `401 UNAUTHORIZED` (credentials client invalides)
   * `422 VALIDATION_FAILED`
   * `429 TOO_MANY_ATTEMPTS`

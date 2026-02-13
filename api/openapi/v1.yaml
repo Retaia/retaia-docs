@@ -273,7 +273,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "403":
-          description: Forbidden actor or scope (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`)
+          description: Forbidden actor or scope (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`). UI client token is protected and cannot be revoked here.
           content:
             application/json:
               schema:
@@ -292,6 +292,7 @@ paths:
       description: |
         Exchanges `(client_id, secret_key)` for a bearer token.
         Normative rule: one active token per client; minting a new token revokes the previous one.
+        This endpoint is for non-UI clients only.
       security: []
       requestBody:
         required: true
@@ -1093,6 +1094,11 @@ components:
           format: email
         password:
           type: string
+        client_id:
+          type: string
+          description: Optional client identifier. If omitted, server derives one from runtime client identity.
+        client_kind:
+          $ref: "#/components/schemas/ClientKind"
 
     AuthLoginSuccess:
       type: object
@@ -1109,6 +1115,11 @@ components:
           description: Access token lifetime in seconds.
         refresh_token:
           type: string
+        client_id:
+          type: string
+          description: Effective client identifier bound to this token.
+        client_kind:
+          $ref: "#/components/schemas/ClientKind"
 
     AuthEmailRequest:
       type: object
@@ -1172,20 +1183,24 @@ components:
     AuthClientTokenRequest:
       type: object
       additionalProperties: false
-      required: [client_id, secret_key]
+      required: [client_id, client_kind, secret_key]
       properties:
         client_id:
           type: string
+        client_kind:
+          $ref: "#/components/schemas/NonUiClientKind"
         secret_key:
           type: string
 
     AuthClientTokenSuccess:
       type: object
       additionalProperties: false
-      required: [client_id, access_token, token_type]
+      required: [client_id, client_kind, access_token, token_type]
       properties:
         client_id:
           type: string
+        client_kind:
+          $ref: "#/components/schemas/NonUiClientKind"
         access_token:
           type: string
         token_type:
@@ -1194,6 +1209,14 @@ components:
         expires_in:
           type: integer
           description: Access token lifetime in seconds.
+
+    ClientKind:
+      type: string
+      enum: [UI, AGENT_CLI, AGENT_GUI, ELECTRON, TAURI, MCP]
+
+    NonUiClientKind:
+      type: string
+      enum: [AGENT_CLI, AGENT_GUI, ELECTRON, TAURI, MCP]
 
     AuthRotateClientSecretResponse:
       type: object

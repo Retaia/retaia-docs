@@ -16,6 +16,7 @@ Tests obligatoires :
 
 * `POST /auth/login`:
   * succès `200` avec body valide (`email`, `password`) et émission d'un bearer token (`access_token`, `token_type=Bearer`)
+  * le token est lié à un `client_id` effectif; un nouveau login sur le même `client_id` invalide le token précédent
   * credentials invalides => `401 UNAUTHORIZED`
   * email non vérifié => `403 EMAIL_NOT_VERIFIED`
   * body invalide => `422 VALIDATION_FAILED`
@@ -52,12 +53,14 @@ Tests obligatoires :
   * bearer absent/invalide => `401 UNAUTHORIZED`
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
   * `client_id` invalide => `422 VALIDATION_FAILED`
+  * `client_id` de type `UI` protégé => `403` (non révocable via cet endpoint)
 * `POST /auth/clients/token`:
-  * `client_id + secret_key` valides => `200` + bearer token client
+  * `client_id + client_kind(non-UI) + secret_key` valides => `200` + bearer token client
   * credentials client invalides => `401 UNAUTHORIZED`
   * body invalide => `422 VALIDATION_FAILED`
   * rate limit => `429 TOO_MANY_ATTEMPTS`
   * invariant: nouveau token minté pour un client révoque l’ancien token (1 token actif / client)
+  * `client_kind=UI` refusé (422/403 selon policy)
 * `POST /auth/clients/{client_id}/rotate-secret`:
   * bearer admin valide + `client_id` valide => `200` + nouvelle `secret_key` (retournée une fois)
   * bearer absent/invalide => `401 UNAUTHORIZED`
@@ -68,6 +71,7 @@ Tests obligatoires :
 * endpoints humains mutateurs exigent un bearer token (`UserBearerAuth`) conforme à la spec
 * même flux login/token validé sur clients interactifs: UI web, agent CLI, agent GUI
 * compatibilité desktop validée: client UI empaqueté Electron ou Rust Tauri utilise le même `POST /auth/login` + `Authorization: Bearer`
+* anti lock-out: l'UI n'expose jamais le token en clair et n'offre pas d'action d'auto-révocation du token UI actif
 
 ## 2) Jobs & leases
 
