@@ -326,7 +326,7 @@ Tests obligatoires :
 * claims token minimales présentes (`sub`, `principal_type`, `client_id`, `client_kind`, `scope`, `jti`, `exp`) et absence de PII sensible
 * chiffrement au repos activé pour données sensibles et backups
 * flux auth sensibles soumis au rate-limit (login, lost-password, verify-email, token mint, device flow)
-* actions sécurité critiques auditées (login/logout, revoke-token, rotate-secret, 2FA enable/disable, device approval)
+* actions sécurité critiques auditées (login/logout, revoke-token, rotate-secret, 2FA enable/disable, device approval, `PATCH /app/features`)
 * régression interdite: aucune réintroduction de `SessionCookieAuth`
 
 ## 8.8) GPG/OpenPGP standardisation
