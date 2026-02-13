@@ -60,6 +60,11 @@ Tests obligatoires :
   * bearer client technique valide (`OAuth2ClientCredentials`) => `200`
   * bearer absent/invalide => `401 UNAUTHORIZED`
   * la liste providers/modèles n'est jamais hardcodée côté client (source runtime opposable)
+* `GET /app/policy`:
+  * bearer utilisateur valide => `200` + `server_policy.feature_flags`
+  * bearer client technique valide (`OAuth2ClientCredentials`) => `200`
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+  * endpoint runtime canonique pour `UI_RUST`, `AGENT`, `MCP`
 * `POST /auth/lost-password/request`:
   * body valide (`email`) => `202`
   * body invalide => `422 VALIDATION_FAILED`
@@ -247,7 +252,7 @@ Tests obligatoires :
 * toute nouvelle feature est introduite derrière un flag
 * toute feature `v1.1+` est désactivée par défaut
 * source de vérité des flags = payload runtime de Core (`server_policy.feature_flags`), jamais un hardcode client
-* canal runtime flags défini et testé pour `UI_RUST`, `AGENT`, `MCP` (pas seulement `POST /agents/register`)
+* canal runtime flags défini et testé pour `UI_RUST`, `AGENT`, `MCP` via `GET /app/policy` (pas seulement `POST /agents/register`)
 * distinction opposable: `capabilities` (agent/client), `feature_flags` (Core) et `app_feature_enabled` (application) sont testées séparément
 * règle AND validée: capability + flag requis pour exécuter une action feature
 * règle AND IA validée: `feature_flags` Core + `app_feature_enabled` requis pour disponibilité IA effective

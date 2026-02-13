@@ -49,6 +49,12 @@ Acteurs normatifs :
 * scope: `UserBearerAuth` ou `OAuth2ClientCredentials`
 * portée: retourne le catalogue runtime providers/modèles LLM
 
+`GET /app/policy`
+
+* acteur: `USER_INTERACTIVE` ou `CLIENT_TECHNICAL`
+* scope: `UserBearerAuth` ou `OAuth2ClientCredentials`
+* portée: retourne la policy runtime (`server_policy.feature_flags`)
+
 `POST /auth/verify-email/admin-confirm`
 
 * acteur: `ADMIN_INTERACTIVE`

@@ -301,6 +301,30 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /app/policy:
+    get:
+      tags: [Auth]
+      summary: Get runtime app policy
+      description: |
+        Returns runtime `server_policy` including `feature_flags`.
+        This endpoint is the canonical runtime policy transport for UI_RUST, AGENT, and MCP clients.
+      security:
+        - UserBearerAuth: []
+        - OAuth2ClientCredentials: []
+      responses:
+        "200":
+          description: Runtime app policy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppPolicyResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /auth/lost-password/request:
     post:
       tags: [Auth]
@@ -1821,6 +1845,14 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ModelProviderCatalogEntry"
+
+    AppPolicyResponse:
+      type: object
+      additionalProperties: false
+      required: [server_policy]
+      properties:
+        server_policy:
+          $ref: "#/components/schemas/ServerPolicy"
 
     AssetState:
       type: string
