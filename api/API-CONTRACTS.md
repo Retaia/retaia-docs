@@ -33,19 +33,40 @@ Objectif : fournir une surface stable consommée par :
 
 ### Feature flags (normatif)
 
+* Source de vérité : les flags sont pilotés par **Retaia Core** au runtime. Les clients (UI, agents, MCP) NE DOIVENT PAS hardcoder un état de flag.
 * Toute nouvelle fonctionnalité DOIT être protégée par un feature flag serveur dès son introduction.
 * Les fonctionnalités `v1.1+` suivent la même règle et restent inactives tant que leur flag n'est pas activé.
 * Convention de nommage : `features.<domaine>.<fonction>` (ex: `features.ai.suggest_tags`).
-* Valeur par défaut : `false` tant que la feature n’est pas explicitement activée.
+* Contrat de transport : l’état effectif des flags DOIT être transporté dans un payload standard `server_policy.feature_flags` (au minimum via `POST /agents/register`).
+* Distinction normative (sans ambiguïté) :
+  * `feature_flags` = activation runtime des fonctionnalités côté Core
+  * `capabilities` = aptitudes techniques déclarées par les agents pour exécuter des jobs
+  * `contracts/` = snapshots versionnés pour détecter un drift du contrat OpenAPI
+* Sémantique stricte :
+  * flag absent = `false`
+  * flag inconnu côté client = ignoré
+  * comportement safe-by-default : sans signal explicite `true` renvoyé par Core, la feature reste indisponible
 * Quand un flag est `false`, l’endpoint reste stable et la feature est refusée de façon explicite (`403 FORBIDDEN_SCOPE` ou `409 STATE_CONFLICT` selon le cas).
 * L’activation d’un flag ne DOIT pas modifier le comportement des fonctionnalités `v1`.
-* Le statut effectif des flags applicables DOIT être exposé dans `server_policy` retourné à l’enregistrement agent.
 
-Mapping normatif v1.1 (base actuelle) :
+Mapping normatif v1.1 (base actuelle, obligatoire pour tous les consommateurs) :
 
-* `features.ai.suggest_tags` -> `job_type=suggest_tags`, `suggestions_patch`, bloc `suggestions` dans `AssetDetail`
-* `features.ai.suggested_tags_filters` -> query params `suggested_tags`, `suggested_tags_mode`
-* `features.decisions.bulk` -> endpoints `/decisions/preview`, `/decisions/apply`
+* `features.ai.suggest_tags` :
+  * autorise `job_type=suggest_tags` sur `POST /jobs/{job_id}/submit`
+  * autorise `suggestions_patch`
+  * autorise le bloc `suggestions` dans `AssetDetail`
+  * client: OFF => ne pas afficher/exécuter les actions liées à la suggestion AI ; ON => disponible sans redéploiement
+* `features.ai.suggested_tags_filters` :
+  * autorise les query params `suggested_tags`, `suggested_tags_mode` sur `GET /assets`
+  * client: OFF => ne pas exposer ces filtres ni les envoyer ; ON => disponible sans redéploiement
+* `features.decisions.bulk` :
+  * autorise `POST /decisions/preview` et `POST /decisions/apply`
+  * client: OFF => interdire toute UI/action bulk decisions et tout appel API associé ; ON => disponible sans redéploiement
+
+Règles client (normatives, UI/agents/MCP) :
+
+* feature OFF => appel API de la feature interdit et UI correspondante masquée/désactivée
+* feature ON => feature disponible immédiatement, sans déploiement client supplémentaire
 
 ### Idempotence (règles strictes)
 
@@ -210,6 +231,7 @@ Response :
   * `min_poll_interval_seconds`
   * `max_parallel_jobs_allowed`
   * `allowed_job_types[]`
+  * `feature_flags` (map runtime `flag_name -> boolean`, source de vérité Core)
   * (optionnel) `quiet_hours`
 
 
@@ -578,6 +600,57 @@ Le payload d’erreur normatif est défini dans [`ERROR-MODEL.md`](ERROR-MODEL.m
 
 * Batch purge : si nécessaire plus tard
 
+## 14) Contrat snapshot local (`contracts/`) pour détecter le drift OpenAPI
+
+Objectif :
+
+* détecter tout changement de `api/openapi/v1.yaml` même sans version bump (`info.version` inchangé)
+
+Règles normatives (tous les repos consommateurs : UI, core, agents, MCP, tooling CI) :
+
+* chaque repo consommateur DOIT versionner un snapshot de contrat dans `contracts/`
+* fichier minimum requis : `contracts/openapi-v1.sha256`
+* la valeur DOIT être le hash SHA-256 calculé depuis `api/openapi/v1.yaml` de `retaia-docs`
+* la CI DOIT échouer si le hash versionné localement ne correspond plus au hash de la spec courante (drift détecté)
+* la mise à jour du hash DOIT être explicite dans une PR, via une commande dédiée (pas d’update implicite en pipeline)
+
+Notes d'interprétation :
+
+* ce mécanisme détecte les changements contractuels OpenAPI même si la version API ne change pas
+* il ne remplace pas le versioning majeur (`/v2`) en cas de rupture de compatibilité
+
+## 15) Adoption (repos consommateurs)
+
+Checklist minimale d’implémentation :
+
+* créer le dossier `contracts/` à la racine du repo consommateur
+* ajouter une commande dédiée de refresh (ex: `make contracts-refresh`) qui :
+  * récupère `api/openapi/v1.yaml` depuis `retaia-docs` (révision de référence)
+  * calcule le hash SHA-256 du fichier
+  * écrit uniquement la valeur hash dans `contracts/openapi-v1.sha256`
+* ajouter une commande CI de vérification (ex: `make contracts-check`) qui :
+  * recalcule le hash du `v1.yaml` de référence
+  * compare avec `contracts/openapi-v1.sha256`
+  * échoue (exit code non nul) en cas de mismatch
+* exiger dans la PR la trace explicite du refresh (`contracts/openapi-v1.sha256` modifié + justification migration)
+
+Exemple de scripts (POSIX) :
+
+```bash
+# Refresh contrôlé
+shasum -a 256 api/openapi/v1.yaml | awk '{print $1}' > contracts/openapi-v1.sha256
+
+# Check CI bloquant
+test "$(cat contracts/openapi-v1.sha256)" = "$(shasum -a 256 api/openapi/v1.yaml | awk '{print $1}')"
+```
+
+Procédure de refresh contrôlé :
+
+* étape 1 : mettre à jour `retaia-docs`
+* étape 2 : exécuter la commande dédiée de refresh dans chaque repo consommateur impacté
+* étape 3 : documenter l’impact consommateur (flags/capabilities/migration) dans la PR
+* étape 4 : faire passer le gate CI `contract drift` avant merge
+
 ## Références associées
 
 * [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md)
@@ -592,3 +665,4 @@ Le payload d’erreur normatif est défini dans [`ERROR-MODEL.md`](ERROR-MODEL.m
 * [AUTHZ-MATRIX.md](../policies/AUTHZ-MATRIX.md)
 * [HOOKS-CONTRACT.md](../policies/HOOKS-CONTRACT.md)
 * [ERROR-MODEL.md](ERROR-MODEL.md)
+* [CODE-QUALITY.md](../change-management/CODE-QUALITY.md)
