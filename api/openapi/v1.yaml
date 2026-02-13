@@ -1739,12 +1739,21 @@ components:
         app.features.ai.provider.ollama.enabled:
           type: boolean
           default: true
+          description: |
+            App-level switch for provider `ollama`.
+            Effective only if Core flag `features.ai.provider.ollama=true`.
         app.features.ai.provider.chatgpt.enabled:
           type: boolean
           default: true
+          description: |
+            App-level switch for provider `chatgpt`.
+            Effective only if Core flag `features.ai.provider.chatgpt=true`.
         app.features.ai.provider.claude.enabled:
           type: boolean
           default: true
+          description: |
+            App-level switch for provider `claude`.
+            Effective only if Core flag `features.ai.provider.claude=true`.
 
     AppFeaturesResponse:
       type: object

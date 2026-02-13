@@ -77,6 +77,12 @@ Mapping normatif v1.1 (base actuelle, obligatoire pour tous les consommateurs) :
 * `app.features.ai.suggest_tags.enabled` :
   * switch applicatif dédié `suggest_tags`
   * OFF => Core DOIT empêcher `job_type=suggest_tags` pour le scope applicatif
+* `app.features.ai.provider.ollama.enabled` :
+  * switch applicatif provider `ollama`
+* `app.features.ai.provider.chatgpt.enabled` :
+  * switch applicatif provider `chatgpt`
+* `app.features.ai.provider.claude.enabled` :
+  * switch applicatif provider `claude`
 * `features.ai.suggested_tags_filters` :
   * autorise les query params `suggested_tags`, `suggested_tags_mode` sur `GET /assets`
   * client: OFF => ne pas exposer ces filtres ni les envoyer ; ON => disponible sans redéploiement
@@ -91,6 +97,13 @@ Règles client (normatives, UI/agents/MCP) :
 * `UI_RUST`, `AGENT` et `MCP` DOIVENT tous consommer les `feature_flags` runtime pilotés par Core
 * aucun client ne DOIT hardcoder l’état d’un flag ni dépendre d’un flag local statique
 * toute décision de disponibilité fonctionnelle côté client DOIT être dérivée du dernier payload runtime reçu
+
+Précédence provider (obligatoire) :
+
+* provider autorisé uniquement si `features.ai.provider.<name>=true` **ET** `app.features.ai.provider.<name>.enabled=true`
+* `app.features.ai.enabled=false` => tous les providers IA sont effectifs OFF
+* `app.features.ai.suggest_tags.enabled=false` => aucun provider `suggest_tags` n'est effectif
+* un switch applicatif provider ne PEUT PAS outrepasser un `feature_flag` Core à `false`
 
 Gouvernance des `app_feature_enabled` (opposable) :
 

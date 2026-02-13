@@ -268,6 +268,11 @@ Cas OFF/ON minimum :
 * `features.ai.provider.chatgpt=OFF` : provider `chatgpt` refusé (`FORBIDDEN_SCOPE`)
 * `features.ai.provider.claude=OFF` : provider `claude` refusé (`FORBIDDEN_SCOPE`)
 * activation progressive `chatgpt`/`claude` via flag runtime sans rebuild client
+* `features.ai.provider.ollama=ON` + `app.features.ai.provider.ollama.enabled=OFF` : provider `ollama` refusé (`FORBIDDEN_SCOPE`)
+* `features.ai.provider.chatgpt=ON` + `app.features.ai.provider.chatgpt.enabled=ON` : provider `chatgpt` autorisé
+* `features.ai.provider.chatgpt=OFF` + `app.features.ai.provider.chatgpt.enabled=ON` : provider `chatgpt` refusé (`FORBIDDEN_SCOPE`)
+* `app.features.ai.enabled=OFF` : tous les providers IA effectifs OFF
+* `app.features.ai.suggest_tags.enabled=OFF` : aucun provider `suggest_tags` effectif
 * `features.ai.suggested_tags_filters=OFF` : filtres `suggested_tags*` non exposés/non envoyés
 * `features.ai.suggested_tags_filters=ON` : filtres `suggested_tags*` utilisables
 * flag ON + capability manquante côté agent => job non exécutable (`pending`/refus selon policy)
