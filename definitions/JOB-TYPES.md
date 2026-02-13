@@ -222,6 +222,7 @@ Produire des suggestions de tags à partir des facts/transcript/metadata.
 * transcript_ref (optionnel)
 * suggestion_profile (optionnel)
 * llm_provider (optionnel, runtime policy; valeurs: `ollama|chatgpt|anthropic`)
+* llm_model (recommandé; valeur issue du catalogue runtime choisi par l'utilisateur)
 
 **Expected outputs**
 
@@ -238,6 +239,7 @@ Produire des suggestions de tags à partir des facts/transcript/metadata.
 * modèle indisponible → retryable
 * entrée insuffisante → failed non bloquant
 * provider indisponible → fallback provider ou retryable selon policy serveur
+* modèle absent du catalogue runtime autorisé → `failed` non bloquant (validation configuration)
 
 
 ## 4. Règles d’évolution

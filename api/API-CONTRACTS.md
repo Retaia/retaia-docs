@@ -39,15 +39,9 @@ Objectif : fournir une surface stable consommée par :
 * Convention de nommage : `features.<domaine>.<fonction>` (ex: `features.ai.suggest_tags`).
 * Contrat de transport : l’état effectif des flags DOIT être transporté dans un payload standard `server_policy.feature_flags` pour tous les clients (`UI_RUST`, `AGENT`, `MCP`), avec endpoint d’accès runtime dédié ou payload équivalent.
 * Distinction normative (sans ambiguïté) :
-  * `feature_flags` = activation runtime globale des fonctionnalités côté Core
-  * `app_feature_enabled` = préférences utilisateur d’activation applicative, pilotées depuis l'UI
+  * `feature_flags` = activation runtime des fonctionnalités côté Core
   * `capabilities` = aptitudes techniques déclarées par les agents pour exécuter des jobs
   * `contracts/` = snapshots versionnés pour détecter un drift du contrat OpenAPI
-* Règle de combinaison (obligatoire) :
-  * exécution autorisée uniquement si `capability requise présente` **ET** `feature_flag(s) requis actif(s)`
-  * pour les features IA interactives: disponibilité effective = `feature_flag Core` **ET** `app_feature_enabled utilisateur`
-  * capability présente + flag OFF => refus normatif (`403 FORBIDDEN_SCOPE`/équivalent policy)
-  * flag ON + capability absente => non exécutable (`pending`, `403` ou `409` selon endpoint/policy)
 * Sémantique stricte :
   * flag absent = `false`
   * flag inconnu côté client = ignoré
@@ -62,20 +56,6 @@ Mapping normatif v1.1 (base actuelle, obligatoire pour tous les consommateurs) :
   * autorise `suggestions_patch`
   * autorise le bloc `suggestions` dans `AssetDetail`
   * client: OFF => ne pas afficher/exécuter les actions liées à la suggestion AI ; ON => disponible sans redéploiement
-* `features.ai.provider.ollama` :
-  * autorise le provider `ollama` pour `suggest_tags`
-  * rollout initial: ON
-* `features.ai.provider.chatgpt` :
-  * autorise le provider `chatgpt` pour `suggest_tags`
-  * rollout initial: OFF (activation progressive)
-* `features.ai.provider.claude` :
-  * autorise le provider `claude` pour `suggest_tags`
-  * rollout initial: OFF (activation progressive)
-* `app.features.ai.enabled` :
-  * switch utilisateur global pour activer/désactiver les features IA côté application
-* `app.features.ai.suggest_tags.enabled` :
-  * switch utilisateur dédié à la suggestion de tags
-  * OFF => Core NE DOIT PAS planifier de jobs `suggest_tags` pour ce scope utilisateur
 * `features.ai.suggested_tags_filters` :
   * autorise les query params `suggested_tags`, `suggested_tags_mode` sur `GET /assets`
   * client: OFF => ne pas exposer ces filtres ni les envoyer ; ON => disponible sans redéploiement
@@ -153,14 +133,9 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 * modes non interactifs : bearer technique (`OAuth2ClientCredentials`)
 * modes interactifs (agent CLI/GUI opéré par un humain) : bearer utilisateur via `POST /auth/login`
 * mode client applicatif non-interactif (`AGENT`, `MCP`) : `client_id + secret_key` pour obtenir un bearer token via `POST /auth/clients/token`
-* `MCP` PEUT piloter/orchestrer l'agent (configuration, déclenchement, supervision) mais NE DOIT JAMAIS exécuter de traitement média
-* `MCP` est interdit sur les endpoints de processing `/jobs/*` (`claim`, `heartbeat`, `submit`) avec refus `403 FORBIDDEN_ACTOR`
-* pour les workflows AI `suggest_tags` côté `AGENT`: `ollama` en phase 1; `chatgpt` et `claude` en phase 2 derrière feature flags
+* pour les workflows AI `suggest_tags` côté `AGENT`, les clients LLM minimum obligatoires sont `ollama`, `chatgpt`, `anthropic`
 * pour `UI_RUST`, `AGENT` et `MCP`, la liste des modèles LLM DOIT être lue dynamiquement (runtime policy/catalog) et ne DOIT PAS être hardcodée
 * le modèle LLM effectif DOIT être choisi explicitement par l'utilisateur (UI/CLI/config utilisateur), puis appliqué par le client
-* stratégie AI/transcription: local-first obligatoire pour `UI_RUST`, `AGENT`, `MCP`
-* transcription locale minimum actuelle: `Whisper.cpp`
-* backend distant autorisé uniquement en opt-in explicite utilisateur/policy (jamais par défaut implicite)
 
 Règles 2FA par client (obligatoire) :
 
@@ -264,26 +239,6 @@ Baseline sécurité/fuite (normatif) :
 * réponses:
   * `200` utilisateur courant
   * `401 UNAUTHORIZED`
-
-`GET /app/features`
-
-* security: `UserBearerAuth`
-* effet: retourne les switches applicatifs pilotés par l'utilisateur courant (`app_feature_enabled`)
-* réponses:
-  * `200` switches applicatifs utilisateur
-  * `401 UNAUTHORIZED`
-
-`PATCH /app/features`
-
-* security: `UserBearerAuth` + policy admin
-* body requis: `{ app_feature_enabled: { ... } }`
-* effet: met à jour les switches applicatifs (admin-only)
-* règle: si IA désactivée via `app_feature_enabled`, Core DOIT arrêter la planification des jobs IA correspondants (ex: `suggest_tags`) pour ce scope
-* réponses:
-  * `200` switches applicatifs mis à jour
-  * `401 UNAUTHORIZED`
-  * `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
-  * `422 VALIDATION_FAILED`
 
 `POST /auth/lost-password/request`
 
@@ -623,7 +578,6 @@ Règle authz complémentaire :
 
 * pour `job_type=suggest_tags`, l'acteur DOIT avoir `jobs:submit` **et** `suggestions:write`
 * pour `job_type=suggest_tags`, le flag `features.ai.suggest_tags` DOIT être actif
-* pour `job_type=suggest_tags`, le provider demandé DOIT être activé (`features.ai.provider.<provider>=true`)
 
 ### POST `/jobs/{job_id}/fail`
 

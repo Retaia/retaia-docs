@@ -46,15 +46,6 @@ Tests obligatoires :
 * `GET /auth/me`:
   * bearer valide => `200` + payload utilisateur courant
   * bearer absent/invalide => `401 UNAUTHORIZED`
-* `GET /app/features`:
-  * bearer valide => `200` + `app_feature_enabled`
-  * bearer absent/invalide => `401 UNAUTHORIZED`
-* `PATCH /app/features`:
-  * bearer admin valide + body valide => `200` + flags mis à jour
-  * bearer absent/invalide => `401 UNAUTHORIZED`
-  * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
-  * body invalide => `422 VALIDATION_FAILED`
-  * `app.features.ai.suggest_tags.enabled=OFF` => Core ne planifie plus de jobs `suggest_tags` pour ce scope utilisateur
 * `POST /auth/lost-password/request`:
   * body valide (`email`) => `202`
   * body invalide => `422 VALIDATION_FAILED`
@@ -128,13 +119,11 @@ Tests obligatoires :
 * `GUI` agent (quand présent) utilise le même moteur de processing que `CLI` (mêmes capabilities et mêmes résultats)
 * client `AGENT` validé dans les deux modes d’auth: interactif (`/auth/login`) et technique (`/auth/clients/token` ou OAuth2)
 * client `MCP` validé en mode technique (`/auth/clients/token` ou OAuth2), sans login interactif
-* client `MCP` peut piloter/orchestrer l'agent sans exécuter de processing
-* client `MCP` ne peut pas `claim/heartbeat/submit` de job (`/jobs/*` => `403 FORBIDDEN_ACTOR`)
 * mode service non-interactif redémarre sans login humain sur Linux/macOS/Windows
 * stockage secret conforme OS (Keychain macOS, Credential Manager/DPAPI Windows, secret store Linux)
 * rotation de secret client n’exige pas de réinstallation agent
 * cible Linux headless Raspberry Pi (Kodi/Plex) validée en non-régression
-* rollout providers `suggest_tags`: `ollama` phase 1; `chatgpt` et `claude` phase 2 sous feature flags
+* agent AI `suggest_tags` supporte au minimum les clients LLM `ollama`, `chatgpt`, `anthropic`
 * sélection provider LLM pilotée par config/runtime policy (pas de hardcode implicite)
 * indisponibilité d’un provider LLM n’arrête pas l’agent: fallback provider ou retryable contrôlé
 * pour une policy identique, le routing provider reste déterministe (non flaky)
@@ -142,10 +131,6 @@ Tests obligatoires :
 * modèle LLM effectif choisi explicitement par l’utilisateur (UI/CLI/config utilisateur)
 * changement de modèle par l’utilisateur appliqué sans rebuild client
 * modèle hors catalogue runtime rejeté proprement (erreur explicite, sans crash)
-* stratégie local-first vérifiée sur `UI_RUST`, `AGENT`, `MCP` pour workloads AI/transcription
-* transcription locale via `Whisper.cpp` validée en non-régression
-* backend distant de transcription refusé sans opt-in explicite utilisateur/policy
-* quand local compatible est disponible, aucun basculement implicite vers distant
 
 ## 2) Jobs & leases
 
@@ -243,17 +228,12 @@ Tests obligatoires :
 * toute feature `v1.1+` est désactivée par défaut
 * source de vérité des flags = payload runtime de Core (`server_policy.feature_flags`), jamais un hardcode client
 * canal runtime flags défini et testé pour `UI_RUST`, `AGENT`, `MCP` (pas seulement `POST /agents/register`)
-* distinction opposable: `capabilities` (agent/client) et `feature_flags` (Core) sont testées séparément
-* distinction opposable: `app_feature_enabled` (préférences utilisateur) testées séparément des `feature_flags` Core
-* règle AND validée: capability + flag requis pour exécuter une action feature
-* règle AND IA validée: `feature_flag Core` + `app_feature_enabled` requis pour exécuter/planifier une feature IA
 * flag absent dans le payload runtime => traité comme `false`
 * flags inconnus côté client => ignorés sans erreur
 * flag désactivé => la feature est refusée explicitement avec un code normatif
 * activation du flag active la feature sans régression sur les flux `v1`
 * `server_policy` expose l’état effectif des flags utiles aux agents
 * mapping des flags v1.1 conforme : `features.ai.suggest_tags`, `features.ai.suggested_tags_filters`, `features.decisions.bulk`
-* mapping providers conforme : `features.ai.provider.ollama`, `features.ai.provider.chatgpt`, `features.ai.provider.claude`
 * `job_type=suggest_tags` sur `/jobs/{job_id}/submit` exige `jobs:submit` + `suggestions:write`
 * client feature OFF => UI/action API de la feature interdite
 * client feature ON => disponibilité immédiate sans redéploiement
@@ -263,15 +243,8 @@ Cas OFF/ON minimum :
 
 * `features.ai.suggest_tags=OFF` : refus `job_type=suggest_tags`, `suggestions_patch` et actions UI associées
 * `features.ai.suggest_tags=ON` : `suggest_tags` opérationnel sans impact sur les flux `v1`
-* `app.features.ai.enabled=OFF` : features IA désactivées pour l'utilisateur (UI + planification jobs IA)
-* `app.features.ai.suggest_tags.enabled=OFF` : jobs `suggest_tags` non planifiés pour ce scope utilisateur
-* `features.ai.provider.ollama=ON` (phase 1) : provider `ollama` autorisé
-* `features.ai.provider.chatgpt=OFF` : provider `chatgpt` refusé (`FORBIDDEN_SCOPE`)
-* `features.ai.provider.claude=OFF` : provider `claude` refusé (`FORBIDDEN_SCOPE`)
-* activation progressive `chatgpt`/`claude` via flag runtime sans rebuild client
 * `features.ai.suggested_tags_filters=OFF` : filtres `suggested_tags*` non exposés/non envoyés
 * `features.ai.suggested_tags_filters=ON` : filtres `suggested_tags*` utilisables
-* flag ON + capability manquante côté agent => job non exécutable (`pending`/refus selon policy)
 * `features.decisions.bulk=OFF` : `/decisions/preview` et `/decisions/apply` non utilisables
 * `features.decisions.bulk=ON` : flux preview/apply utilisable
 * `UI_RUST` : OFF masque/neutralise la feature, ON l’active au prochain refresh flags

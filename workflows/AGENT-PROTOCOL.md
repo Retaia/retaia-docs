@@ -85,6 +85,9 @@ Règles :
 * sélection provider explicite via config/runtime policy (pas de hardcode implicite)
 * indisponibilité d'un provider => fallback vers un provider disponible ou retryable (pas de crash global agent)
 * comportement déterministe du routing provider pour une même policy d'exécution
+* liste des modèles DOIT être lue depuis la policy/catalog runtime (pas de liste statique embarquée)
+* modèle effectif DOIT provenir d'un choix utilisateur explicite (CLI/GUI/config utilisateur)
+* en mode non-interactif, le modèle choisi par l'utilisateur DOIT rester traçable et réutilisable jusqu'à changement explicite
 
 
 ## 4. Cycle de vie d’un job
