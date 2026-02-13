@@ -34,6 +34,7 @@ Objectif : fournir une surface stable consommée par :
 
 * Source de vérité : les flags sont pilotés par **Retaia Core** au runtime. Les clients (UI, agents, MCP) NE DOIVENT PAS hardcoder un état de flag.
 * Toute nouvelle fonctionnalité DOIT être protégée par un feature flag serveur dès son introduction.
+* Une feature stabilisée DOIT être assimilée au comportement nominal puis son feature flag DOIT être supprimé (pas de flag permanent hors kill-switch explicite).
 * Les fonctionnalités `v1.1+` suivent la même règle et restent inactives tant que leur flag n'est pas activé.
 * Convention de nommage : `features.<domaine>.<fonction>`.
 * Contrat de transport : l’état effectif des flags DOIT être transporté dans un payload standard `server_policy.feature_flags` pour tous les clients (`UI_RUST`, `AGENT`, `MCP`) via `GET /app/policy`.
@@ -52,6 +53,7 @@ Objectif : fournir une surface stable consommée par :
   * comportement safe-by-default : sans signal explicite `true` renvoyé par Core, la feature reste indisponible
 * Quand un flag est `false`, l’endpoint reste stable et la feature est refusée de façon explicite (`403 FORBIDDEN_SCOPE` ou `409 STATE_CONFLICT` selon le cas).
 * L’activation d’un flag ne DOIT pas modifier le comportement des fonctionnalités `v1`.
+* Le cycle de vie complet des flags est normé dans [`FEATURE-FLAG-LIFECYCLE.md`](../change-management/FEATURE-FLAG-LIFECYCLE.md).
 
 Mapping normatif v1.1 (base actuelle, obligatoire pour tous les consommateurs) :
 
