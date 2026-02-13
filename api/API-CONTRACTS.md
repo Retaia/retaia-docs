@@ -109,6 +109,7 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 * la même authentification DOIT rester valable si l’UI est empaquetée en app desktop (Electron ou Rust Tauri)
 * le token UI est non exportable dans l'interface (jamais affiché en clair)
 * un utilisateur ne peut pas invalider son token UI depuis l'UI (anti lock-out)
+* l'UI DOIT supporter l'enrôlement 2FA TOTP via app externe (Authy, Google Authenticator, etc.)
 
 ### Agents / MCP
 
@@ -143,12 +144,46 @@ La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.m
 
 * security: aucune (`security: []`)
 * body requis: `{ email, password }`
+* body optionnel: `otp_code` (obligatoire si 2FA active)
 * réponses:
   * `200` succès + bearer token (`access_token`, `token_type=Bearer`, `expires_in?`, `refresh_token?`)
-  * `401 UNAUTHORIZED` (credentials invalides)
+  * `401 UNAUTHORIZED` (credentials invalides), `MFA_REQUIRED` (2FA active sans OTP), `INVALID_2FA_CODE` (OTP invalide)
   * `403 EMAIL_NOT_VERIFIED`
   * `422 VALIDATION_FAILED`
   * `429 TOO_MANY_ATTEMPTS`
+
+`POST /auth/2fa/setup`
+
+* security: `UserBearerAuth`
+* effet: génère le matériel d'enrôlement TOTP (`secret`, `otpauth_uri`, `qr_svg?`) pour app externe
+* réponses:
+  * `200` setup généré
+  * `401 UNAUTHORIZED`
+  * `409 MFA_ALREADY_ENABLED`
+
+`POST /auth/2fa/enable`
+
+* security: `UserBearerAuth`
+* body requis: `{ otp_code }`
+* effet: active la 2FA TOTP pour l'utilisateur courant
+* réponses:
+  * `200` succès
+  * `400 INVALID_2FA_CODE`
+  * `401 UNAUTHORIZED`
+  * `409 MFA_ALREADY_ENABLED`
+  * `422 VALIDATION_FAILED`
+
+`POST /auth/2fa/disable`
+
+* security: `UserBearerAuth`
+* body requis: `{ otp_code }`
+* effet: désactive la 2FA TOTP pour l'utilisateur courant
+* réponses:
+  * `200` succès
+  * `400 INVALID_2FA_CODE`
+  * `401 UNAUTHORIZED`
+  * `409 MFA_NOT_ENABLED`
+  * `422 VALIDATION_FAILED`
 
 `POST /auth/logout`
 
@@ -698,8 +733,11 @@ Règles :
 * `403 FORBIDDEN_SCOPE` / `FORBIDDEN_ACTOR`
 * `403 EMAIL_NOT_VERIFIED`
 * `404 USER_NOT_FOUND`
+* `400 INVALID_2FA_CODE`
+* `401 MFA_REQUIRED`
 * `409 STATE_CONFLICT`
 * `409 IDEMPOTENCY_CONFLICT`
+* `409 MFA_ALREADY_ENABLED` / `MFA_NOT_ENABLED`
 * `423 LOCK_REQUIRED` / `LOCK_INVALID`
 * `410 PURGED`
 * `422 VALIDATION_FAILED`

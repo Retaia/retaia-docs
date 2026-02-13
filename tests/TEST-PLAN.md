@@ -18,9 +18,28 @@ Tests obligatoires :
   * succès `200` avec body valide (`email`, `password`) et émission d'un bearer token (`access_token`, `token_type=Bearer`)
   * le token est lié à un `client_id` effectif; un nouveau login sur le même `client_id` invalide le token précédent
   * credentials invalides => `401 UNAUTHORIZED`
+  * 2FA active sans `otp_code` => `401 MFA_REQUIRED`
+  * 2FA active avec `otp_code` invalide => `401 INVALID_2FA_CODE`
+  * 2FA active avec `otp_code` valide => `200`
   * email non vérifié => `403 EMAIL_NOT_VERIFIED`
   * body invalide => `422 VALIDATION_FAILED`
   * dépassement tentative => `429 TOO_MANY_ATTEMPTS`
+* `POST /auth/2fa/setup`:
+  * bearer valide + 2FA inactive => `200` + `otpauth_uri` / `secret` pour app externe (Authy...)
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+  * 2FA déjà active => `409 MFA_ALREADY_ENABLED`
+* `POST /auth/2fa/enable`:
+  * bearer valide + `otp_code` valide => `200`
+  * `otp_code` invalide => `400 INVALID_2FA_CODE`
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+  * 2FA déjà active => `409 MFA_ALREADY_ENABLED`
+  * body invalide => `422 VALIDATION_FAILED`
+* `POST /auth/2fa/disable`:
+  * bearer valide + `otp_code` valide => `200`
+  * `otp_code` invalide => `400 INVALID_2FA_CODE`
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+  * 2FA non active => `409 MFA_NOT_ENABLED`
+  * body invalide => `422 VALIDATION_FAILED`
 * `POST /auth/logout`:
   * bearer valide => `200`
   * bearer absent/invalide => `401 UNAUTHORIZED`
