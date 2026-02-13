@@ -126,12 +126,25 @@ Pour tout changement touchant l'UI :
 - le pipeline CI DOIT échouer en cas de clé manquante sur une locale obligatoire
 - les textes d'actions destructives DOIVENT être relus pour éliminer toute ambiguïté utilisateur
 
-## 10) Gate qualité contrat API (contract drift)
+## 10) Gate PR obligatoire: contract drift OpenAPI
 
 Pour tout repository consommateur de l'API Retaia :
 
 - un snapshot `contracts/openapi-v1.sha256` DOIT être versionné
-- le pipeline PR DOIT exécuter un check bloquant de drift entre ce snapshot et `api/openapi/v1.yaml`
-- toute mise à jour du snapshot DOIT passer par une commande dédiée et une modification explicite dans la PR
+- la CI de PR DOIT exécuter un check bloquant de drift entre ce snapshot et `api/openapi/v1.yaml`
+- la PR DOIT échouer si le hash snapshot ne correspond pas à la spec courante
+- la mise à jour du snapshot DOIT se faire via une commande dédiée et rester explicite dans le diff de PR
 
-Référence normative : [`API-CONTRACTS.md`](../api/API-CONTRACTS.md), section `contracts/`.
+## 11) Gouvernance des modifications OpenAPI
+
+Toute PR qui modifie `api/openapi/v1.yaml` DOIT inclure :
+
+- une analyse explicite de l'impact flags (`server_policy.feature_flags`) et/ou capabilities (si concerné)
+- les règles de comportement client associées (feature OFF/ON, safe-by-default)
+- un volet migration/adoption des consommateurs (UI, core, agents, MCP), incluant refresh du snapshot `contracts/openapi-v1.sha256` si nécessaire
+- la stratégie de non-régression sur les comportements `v1` existants
+
+Références normatives :
+
+- [`API-CONTRACTS.md`](../api/API-CONTRACTS.md)
+- [`TEST-PLAN.md`](../tests/TEST-PLAN.md)
