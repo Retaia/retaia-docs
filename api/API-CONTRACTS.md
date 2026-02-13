@@ -47,7 +47,8 @@ Objectif : fournir une surface stable consommée par :
   * si la version client n'est pas supportée: `426` + `ErrorResponse.code=UNSUPPORTED_FEATURE_FLAGS_CONTRACT_VERSION`
 * Fenêtre d'acceptance minimale:
   * au moins **2 versions client stables** (UI/Agent/MCP) ou **90 jours** après introduction de la version de contrat (le plus long des deux)
-  * tombstones `false` conservés au moins **30 jours** après fermeture de la fenêtre d'acceptance
+  * tombstones `false` purgés automatiquement après fermeture de la fenêtre d'acceptance + **30 jours**
+  * fallback opérationnel: si l'automatisation de purge échoue, conservation maximale **6 mois**, puis purge manuelle obligatoire
 * Distinction normative (sans ambiguïté) :
   * `feature_flags` = activation runtime des fonctionnalités côté Core
   * `app_feature_enabled` = activation applicative effective (switches niveau application, gouvernés par admin)

@@ -32,7 +32,8 @@ Règles:
 * si la version client est non supportée, Core DOIT répondre `426` avec `UNSUPPORTED_FEATURE_FLAGS_CONTRACT_VERSION`
 * ownership: la liste `accepted_feature_flags_contract_versions[]` est pilotée par release/config Core, pas par endpoint admin runtime
 * fenêtre d'acceptance minimale: `max(2 versions client stables, 90 jours)`
-* rétention tombstones après fermeture acceptance: minimum 30 jours
+* rétention tombstones: purge automatique après fermeture acceptance + 30 jours
+* fallback si automatisation indisponible/en échec: conservation maximale 6 mois, puis purge manuelle obligatoire
 
 ## 3) Assimilation au mainline
 
@@ -46,7 +47,7 @@ Action de retrait:
 
 * supprimer le flag de la version latest
 * conserver tombstone `false` dans les profils `COMPAT` encore acceptés
-* retirer tombstone une fois la fenêtre d'acceptance fermée
+* retirer tombstone automatiquement après fermeture acceptance + 30 jours
 
 ## 4) Gates PR obligatoires
 

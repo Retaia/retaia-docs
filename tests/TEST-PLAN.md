@@ -300,7 +300,8 @@ Tests obligatoires :
 * client version non supportée => `426 UNSUPPORTED_FEATURE_FLAGS_CONTRACT_VERSION`
 * retrait d’un flag latest conserve un tombstone `false` pour profils `COMPAT` encore acceptés
 * fenêtre d’acceptance respectée: `max(2 versions stables, 90 jours)`
-* tombstones retirés uniquement après `>=30 jours` post-acceptance
+* tombstones purgés automatiquement après `>=30 jours` post-acceptance
+* fallback si automatisation de purge en échec: conservation `<=6 mois`, puis purge manuelle obligatoire
 * `accepted_feature_flags_contract_versions[]` non modifiable via endpoint admin runtime
 * continuous development validé: suppression d’un flag n’interrompt pas UI/Agent/MCP déjà déployés dans la fenêtre d’acceptance
 * continuous deployment validé: une release Core avec retrait de flag passe les gates CD sans exiger upgrade client synchronisée
