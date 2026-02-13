@@ -289,6 +289,7 @@ Tests obligatoires :
 * distinction opposable: `capabilities` (agent/client), `feature_flags` (Core), `app_feature_enabled` (application) et `user_feature_enabled` (utilisateur) sont testées séparément
 * règle AND validée: capability + flag requis pour exécuter une action feature
 * ordre d’arbitrage validé: `feature_flags` -> `app_feature_enabled` -> `user_feature_enabled` -> dépendances/escalade
+* calcul `effective_feature_enabled` conforme à [`FEATURE-RESOLUTION-ENGINE.md`](../policies/FEATURE-RESOLUTION-ENGINE.md)
 * flag absent dans le payload runtime => traité comme `false`
 * flags inconnus côté client => ignorés sans erreur
 * flag désactivé => la feature est refusée explicitement avec un code normatif
