@@ -1838,6 +1838,7 @@ components:
       description: |
         User-level feature switches.
         Only non-core features can be disabled at user scope.
+        Missing key is interpreted as `true` (migration-safe default).
       additionalProperties:
         type: boolean
 
@@ -1845,6 +1846,7 @@ components:
       type: object
       description: |
         Effective availability after all gates (`feature_flags`, `app_feature_enabled`, `user_feature_enabled`, dependencies).
+        Evaluation order is strict: feature_flags -> app_feature_enabled -> user_feature_enabled -> dependency/escalation rules.
       additionalProperties:
         type: boolean
 

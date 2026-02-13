@@ -111,6 +111,7 @@ Gouvernance des `user_feature_enabled` (opposable) :
 * contrainte : les features classées `CORE_V1_GLOBAL` NE DOIVENT PAS être désactivables au scope utilisateur
 * tentative de désactivation d’une feature `CORE_V1_GLOBAL` => `403 FORBIDDEN_SCOPE`
 * effet runtime obligatoire : `user_feature_enabled=false` DOIT désactiver la feature pour l’utilisateur et appliquer la cascade de dépendances
+* valeur par défaut (migration-safe) : absence de clé `user_feature_enabled.<feature>` DOIT être interprétée comme `true`
 
 Catalogue de dépendances et escalade (opposable) :
 
@@ -119,6 +120,13 @@ Catalogue de dépendances et escalade (opposable) :
 * règle de dépendance : si une dépendance est OFF, la feature dépendante devient OFF dans `effective_feature_enabled`
 * règle d’escalade : désactiver une feature parent DOIT désactiver toutes les features listées dans `disable_escalation[]`
 * règle de sûreté v1 globale : les features socle v1 (`CORE_V1_GLOBAL`) restent disponibles et ne sont pas impactées par des opt-out utilisateur
+
+Arbitrage admin/user (opposable) :
+
+* priorité d’évaluation: `feature_flags` -> `app_feature_enabled` -> `user_feature_enabled` -> dépendances/escalade
+* `app_feature_enabled=false` domine toujours (feature OFF pour tous les utilisateurs)
+* `app_feature_enabled=true` n’annule pas un opt-out utilisateur (`user_feature_enabled=false`)
+* `CORE_V1_GLOBAL` : toujours ON dans `effective_feature_enabled` (hors indisponibilité technique majeure hors scope flags/user)
 
 ### Idempotence (règles strictes)
 
