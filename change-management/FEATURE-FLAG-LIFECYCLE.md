@@ -1,51 +1,74 @@
 # Feature Flag Lifecycle (Normatif)
 
-Objectif: éviter la dette technique liée aux flags long-terme.
+Objectif: supprimer la dette technique des flags sans casser les clients UI/Agent/MCP.
 
-Règle principale:
+## 1) Règles de base
 
-* un feature flag est **temporaire**
-* une fois la feature stabilisée et intégrée au comportement nominal (`main/master`), le flag DOIT être supprimé
-* la suppression inclut le flag runtime, les branches conditionnelles mortes, les tests obsolètes et la doc de transition
+* un feature flag est temporaire par défaut
+* une feature stabilisée DOIT être assimilée au mainline
+* après assimilation, le flag DOIT être retiré (runtime + code conditionnel + tests/doc transitoires)
+* exception autorisée: kill-switch sécurité/opérations avec owner explicite
 
-## 1) Phases obligatoires
+## 2) Versionnement/acceptance obligatoire
 
-1. **Introduction**
-* définir le nom du flag (`features.<domaine>.<fonction>`)
-* définir le comportement OFF/ON et le owner
-* ajouter tests OFF + ON
+Le Core DOIT implémenter un contrat de compatibilité de flags:
 
-2. **Rollout**
-* activer progressivement (environnement/cible)
-* observer les métriques et erreurs
-* corriger les écarts
+* client -> Core: `client_feature_flags_contract_version`
+  * `GET /app/policy` (query)
+  * `POST /agents/register` (body, optionnel)
+* Core -> client:
+  * `feature_flags_contract_version` (latest)
+  * `accepted_feature_flags_contract_versions[]`
+  * `effective_feature_flags_contract_version`
+  * `feature_flags_compatibility_mode` (`STRICT|COMPAT`)
 
-3. **Stabilisation**
-* feature considérée nominale
-* plus aucun rollback produit attendu via ce flag
+Règles:
 
-4. **Assimilation au mainline**
-* remplacer la branche conditionnelle par le comportement final unique
-* supprimer le flag du payload runtime (`server_policy.feature_flags`)
-* supprimer les switches applicatifs corrélés (`app_feature_enabled`) devenus inutiles
-* supprimer tests/doc purement liés au mode transitoire
+* si la version client est acceptée mais non-latest, Core DOIT répondre en mode `COMPAT`
+* mode `COMPAT` NE DOIT PAS casser les clients existants
+* un flag retiré du mainline DOIT rester servi en tombstone `false` tant qu'une version acceptée peut encore le lire
+* un client qui ne transmet pas de version DOIT recevoir un profil non cassant
 
-## 2) Gates PR obligatoires
+## 3) Assimilation au mainline
 
-Une PR qui finalise une feature flaggée DOIT contenir:
+Préconditions avant retrait définitif d'un flag:
 
-* suppression explicite du flag dans OpenAPI/contrats/policy runtime
-* suppression du code mort OFF/ON devenu inutile
-* mise à jour des tests de non-régression sur le comportement final unique
-* note d’impact consommateurs (`core/ui/agent/mcp`)
+* observabilité montre l'absence de clients dépendants d'une version ancienne
+* période de compatibilité minimale écoulée
+* tests `STRICT` et `COMPAT` verts
 
-## 3) Anti-patterns interdits
+Action de retrait:
+
+* supprimer le flag de la version latest
+* conserver tombstone `false` dans les profils `COMPAT` encore acceptés
+* retirer tombstone une fois la fenêtre d'acceptance fermée
+
+## 4) Gates PR obligatoires
+
+Une PR qui retire un flag DOIT inclure:
+
+* mise à jour OpenAPI/contrats (`ServerPolicy` versions + mode compat)
+* mise à jour tests UI/Agent/MCP (non-régression en `COMPAT`)
+* note d'impact consommateurs (`core/ui/agent/mcp`)
+* plan de cutover et date de fin d'acceptance
+
+## 5) Continuous development (obligatoire)
+
+* les équipes DOIVENT pouvoir livrer en continu sans freeze client
+* toute évolution de flag DOIT rester non cassante pour les versions clientes acceptées
+* l'enchaînement "introduire -> activer -> assimiler -> retirer" DOIT être répétable à chaque itération
+* le mode `COMPAT` est un mécanisme de continuous development, pas un legacy permanent
+
+## 6) Continuous deployment (obligatoire)
+
+* chaque déploiement Core DOIT être éligible à production sans migration client immédiate
+* un retrait de flag n'est déployable que si les profils `COMPAT` requis sont servis
+* la pipeline CD DOIT bloquer un retrait de flag si la fenêtre d'acceptance n'est pas satisfaite
+* la rollback strategy DOIT préserver la négociation de version des flags
+
+## 7) Anti-patterns interdits
 
 * conserver un flag actif "au cas où" après stabilisation
 * empiler plusieurs flags pour une même feature stabilisée
 * garder des chemins OFF/ON non testés en CI
 * utiliser un flag temporaire comme permission permanente
-
-## 4) Exception
-
-Seuls les kill-switches de sécurité/opérations peuvent rester permanents, avec justification écrite et owner explicite.
