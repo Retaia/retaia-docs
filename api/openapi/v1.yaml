@@ -28,7 +28,8 @@ paths:
   /auth/login:
     post:
       tags: [Auth]
-      summary: Login with email and password
+      summary: User login with email and password
+      description: Interactive login endpoint for UI web and user-facing clients (agent CLI/GUI, Electron, Tauri).
       security: []
       requestBody:
         required: true
@@ -925,6 +926,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+      description: User bearer token used by interactive clients (UI web, agent CLI/GUI, Electron, Tauri).
     SessionCookieAuth:
       type: apiKey
       in: cookie

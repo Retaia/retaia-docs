@@ -49,6 +49,8 @@ Tests obligatoires :
   * body invalide => `422 VALIDATION_FAILED`
 * toutes réponses d’erreur 4xx/5xx auth conformes au schéma `ErrorResponse`
 * endpoints humains mutateurs exigent un bearer token (`UserBearerAuth`) conforme à la spec
+* même flux login/token validé sur clients interactifs: UI web, agent CLI, agent GUI
+* compatibilité desktop validée: client UI empaqueté Electron ou Rust Tauri utilise le même `POST /auth/login` + `Authorization: Bearer`
 
 ## 2) Jobs & leases
 

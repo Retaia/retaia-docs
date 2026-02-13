@@ -106,10 +106,12 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 
 * Bearer token utilisateur obtenu via login (`POST /auth/login`)
 * l'interface de login est normative pour permettre l'obtention du token utilisateur
+* la même authentification DOIT rester valable si l’UI est empaquetée en app desktop (Electron ou Rust Tauri)
 
 ### Agents / MCP
 
-* Bearer token
+* modes non interactifs : bearer technique (`OAuth2ClientCredentials`)
+* modes interactifs (agent CLI/GUI opéré par un humain) : bearer utilisateur via `POST /auth/login`
 
 #### Scopes (base)
 
@@ -203,6 +205,10 @@ La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.m
 Règle d'erreur (obligatoire) :
 
 * toute réponse 4xx/5xx de ces endpoints DOIT retourner le schéma `ErrorResponse`
+
+Règle d’unification clients (obligatoire) :
+
+* le flux login utilisateur (`POST /auth/login`) et `UserBearerAuth` DOIVENT être communs pour UI web, agent CLI/GUI et futures apps desktop Electron/Tauri
 
 
 ## 2) Assets
