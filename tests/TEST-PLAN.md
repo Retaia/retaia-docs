@@ -397,6 +397,18 @@ Tests obligatoires :
 Tests obligatoires :
 
 * conformité au standard [`GPG-OPENPGP-STANDARD.md`](../policies/GPG-OPENPGP-STANDARD.md) sur tous les clients (`UI_RUST`, `AGENT`, `MCP`)
+
+## 8.9) Observabilité feature governance
+
+Tests obligatoires :
+
+* update admin de `app_feature_enabled` produit un audit event `app_feature_enabled.updated`
+* update user de `user_feature_enabled` produit un audit event `user_feature_enabled.updated`
+* refus `FORBIDDEN_SCOPE` produit un audit event `feature_access.denied` avec `reason_code`
+* calcul de `effective_feature_enabled` produit `feature_effective.resolved` traçable par `request_id`/`trace_id`
+* métriques `feature_toggle_admin_total`, `feature_toggle_user_total`, `feature_denied_total`, `feature_effective_off_total` exposées
+* histogramme `feature_resolution_duration_ms` exposé
+* logs/traces ne contiennent ni token, ni secret, ni PII en clair
 * roundtrip encrypt/decrypt valide avec librairie OpenPGP autorisée par stack
 * signature/verification valide pour payloads sensibles signés
 * rejet explicite des algorithmes interdits (SHA-1, RSA < 3072, DSA legacy)
@@ -406,7 +418,7 @@ Tests obligatoires :
 * mode avancé: intégration `gpg-agent`/clés existantes fonctionne quand activée
 * fallback sûr: indisponibilité du mode avancé ne bloque pas l'usage standard
 
-## 8.9) Crypto + RGPD (leak-resilience)
+## 8.10) Crypto + RGPD (leak-resilience)
 
 Tests obligatoires :
 
@@ -418,7 +430,7 @@ Tests obligatoires :
 * exercice de notification fuite RGPD exécuté et tracé (SLA 72h vérifié en simulation)
 * rotation/rekey crypto n'introduit pas de perte d'accès légitime ni de régression authz
 
-## 8.10) Full-text + filtres localisation sur données chiffrées
+## 8.11) Full-text + filtres localisation sur données chiffrées
 
 Tests obligatoires :
 
