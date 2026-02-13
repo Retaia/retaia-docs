@@ -55,6 +55,11 @@ Tests obligatoires :
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
   * body invalide => `422 VALIDATION_FAILED`
   * `app.features.ai.enabled=OFF` ou `app.features.ai.suggest_tags.enabled=OFF` => arrêt planification jobs IA correspondants côté Core
+* `GET /app/model-catalog`:
+  * bearer utilisateur valide => `200` + providers/modèles runtime
+  * bearer client technique valide (`OAuth2ClientCredentials`) => `200`
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+  * la liste providers/modèles n'est jamais hardcodée côté client (source runtime opposable)
 * `POST /auth/lost-password/request`:
   * body valide (`email`) => `202`
   * body invalide => `422 VALIDATION_FAILED`
