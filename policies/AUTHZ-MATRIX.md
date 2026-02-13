@@ -35,11 +35,13 @@ Acteurs normatifs :
 
 * acteur: `USER_INTERACTIVE`
 * scope: session utilisateur valide (`UserBearerAuth`)
+* portée: retourne les switches applicatifs effectifs (globaux application)
 
 `PATCH /app/features`
 
 * acteur: `ADMIN_INTERACTIVE`
 * scope: policy admin (sinon `403 FORBIDDEN_ACTOR` / `FORBIDDEN_SCOPE`)
+* portée: met à jour les switches applicatifs globaux
 
 `POST /auth/verify-email/admin-confirm`
 
