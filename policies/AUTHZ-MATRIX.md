@@ -43,17 +43,17 @@ Acteurs normatifs :
 * scope: policy admin (sinon `403 FORBIDDEN_ACTOR` / `FORBIDDEN_SCOPE`)
 * portée: met à jour les switches applicatifs globaux
 
-`GET /app/policy`
-
-* acteur: `USER_INTERACTIVE` ou `CLIENT_TECHNICAL`
-* scope: `UserBearerAuth` ou `OAuth2ClientCredentials`
-* portée: retourne la policy runtime (`server_policy.feature_flags`)
-
 `GET /app/model-catalog`
 
 * acteur: `USER_INTERACTIVE` ou `CLIENT_TECHNICAL`
 * scope: `UserBearerAuth` ou `OAuth2ClientCredentials`
 * portée: retourne le catalogue runtime providers/modèles LLM
+
+`GET /app/policy`
+
+* acteur: `USER_INTERACTIVE` ou `CLIENT_TECHNICAL`
+* scope: `UserBearerAuth` ou `OAuth2ClientCredentials`
+* portée: retourne la policy runtime (`server_policy.feature_flags`)
 
 `POST /auth/verify-email/admin-confirm`
 

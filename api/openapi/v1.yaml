@@ -277,31 +277,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /app/policy:
-    get:
-      tags: [Auth]
-      summary: Get runtime app policy
-      description: |
-        Returns runtime `server_policy` including `feature_flags`.
-        This endpoint is the canonical runtime policy transport for UI_RUST, AGENT, and MCP clients.
-
-      security:
-        - UserBearerAuth: []
-        - OAuth2ClientCredentials: []
-      responses:
-        "200":
-          description: Runtime app policy
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppPolicyResponse"
-        "401":
-          description: Unauthorized (`UNAUTHORIZED`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
   /app/model-catalog:
     get:
       tags: [Auth]
@@ -319,6 +294,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ModelCatalogResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /app/policy:
+    get:
+      tags: [Auth]
+      summary: Get runtime app policy
+      description: |
+        Returns runtime `server_policy` including `feature_flags`.
+        This endpoint is the canonical runtime policy transport for UI_RUST, AGENT, and MCP clients.
+      security:
+        - UserBearerAuth: []
+        - OAuth2ClientCredentials: []
+      responses:
+        "200":
+          description: Runtime app policy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppPolicyResponse"
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
           content:
@@ -1788,12 +1787,21 @@ components:
         app.features.ai.provider.ollama.enabled:
           type: boolean
           default: true
+          description: |
+            App-level switch for provider `ollama`.
+            Effective only if Core flag `features.ai.provider.ollama=true`.
         app.features.ai.provider.chatgpt.enabled:
           type: boolean
           default: true
+          description: |
+            App-level switch for provider `chatgpt`.
+            Effective only if Core flag `features.ai.provider.chatgpt=true`.
         app.features.ai.provider.claude.enabled:
           type: boolean
           default: true
+          description: |
+            App-level switch for provider `claude`.
+            Effective only if Core flag `features.ai.provider.claude=true`.
 
     AppFeaturesResponse:
       type: object

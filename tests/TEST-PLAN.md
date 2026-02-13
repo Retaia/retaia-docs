@@ -55,17 +55,16 @@ Tests obligatoires :
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
   * body invalide => `422 VALIDATION_FAILED`
   * `app.features.ai.enabled=OFF` ou `app.features.ai.suggest_tags.enabled=OFF` => arrêt planification jobs IA correspondants côté Core
-* `GET /app/policy`:
-  * bearer utilisateur valide => `200` + `server_policy.feature_flags`
-  * bearer client technique valide (`OAuth2ClientCredentials`) => `200`
-  * bearer absent/invalide => `401 UNAUTHORIZED`
-  * endpoint runtime canonique pour `UI_RUST`, `AGENT`, `MCP`
-
 * `GET /app/model-catalog`:
   * bearer utilisateur valide => `200` + providers/modèles runtime
   * bearer client technique valide (`OAuth2ClientCredentials`) => `200`
   * bearer absent/invalide => `401 UNAUTHORIZED`
   * la liste providers/modèles n'est jamais hardcodée côté client (source runtime opposable)
+* `GET /app/policy`:
+  * bearer utilisateur valide => `200` + `server_policy.feature_flags`
+  * bearer client technique valide (`OAuth2ClientCredentials`) => `200`
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+  * endpoint runtime canonique pour `UI_RUST`, `AGENT`, `MCP`
 * `POST /auth/lost-password/request`:
   * body valide (`email`) => `202`
   * body invalide => `422 VALIDATION_FAILED`
@@ -279,6 +278,11 @@ Cas OFF/ON minimum :
 * `features.ai.provider.chatgpt=OFF` : provider `chatgpt` refusé (`FORBIDDEN_SCOPE`)
 * `features.ai.provider.claude=OFF` : provider `claude` refusé (`FORBIDDEN_SCOPE`)
 * activation progressive `chatgpt`/`claude` via flag runtime sans rebuild client
+* `features.ai.provider.ollama=ON` + `app.features.ai.provider.ollama.enabled=OFF` : provider `ollama` refusé (`FORBIDDEN_SCOPE`)
+* `features.ai.provider.chatgpt=ON` + `app.features.ai.provider.chatgpt.enabled=ON` : provider `chatgpt` autorisé
+* `features.ai.provider.chatgpt=OFF` + `app.features.ai.provider.chatgpt.enabled=ON` : provider `chatgpt` refusé (`FORBIDDEN_SCOPE`)
+* `app.features.ai.enabled=OFF` : tous les providers IA effectifs OFF
+* `app.features.ai.suggest_tags.enabled=OFF` : aucun provider `suggest_tags` effectif
 * `features.ai.suggested_tags_filters=OFF` : filtres `suggested_tags*` non exposés/non envoyés
 * `features.ai.suggested_tags_filters=ON` : filtres `suggested_tags*` utilisables
 * flag ON + capability manquante côté agent => job non exécutable (`pending`/refus selon policy)
@@ -327,7 +331,7 @@ Tests obligatoires :
 * claims token minimales présentes (`sub`, `principal_type`, `client_id`, `client_kind`, `scope`, `jti`, `exp`) et absence de PII sensible
 * chiffrement au repos activé pour données sensibles et backups
 * flux auth sensibles soumis au rate-limit (login, lost-password, verify-email, token mint, device flow)
-* actions sécurité critiques auditées (login/logout, revoke-token, rotate-secret, 2FA enable/disable, device approval)
+* actions sécurité critiques auditées (login/logout, revoke-token, rotate-secret, 2FA enable/disable, device approval, `PATCH /app/features`)
 * régression interdite: aucune réintroduction de `SessionCookieAuth`
 
 ## 8.8) GPG/OpenPGP standardisation
