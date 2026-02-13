@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  branch-up-to-date:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify branch contains latest master
+        run: |
+          git fetch origin master
+          MASTER_SHA="$(git rev-parse origin/master)"
+          if git merge-base --is-ancestor "$MASTER_SHA" HEAD; then
+            echo "Branch is up to date with master."
+          else
+            echo "Branch is not up to date with master. Rebase on master is required."
+            exit 1
+          fi

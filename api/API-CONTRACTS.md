@@ -1066,6 +1066,7 @@ Règles opposables (UI, core, agents, MCP, tooling) :
 * les merge commits de synchronisation (`Merge branch 'master' into ...`) sont interdits
 * l'historique PR DOIT rester linéaire avant merge
 * en cas de conflit, la résolution DOIT être faite pendant le rebase
+* gate CI obligatoire: job `branch-up-to-date` vert sur la PR avant merge
 * la CI DOIT pouvoir bloquer une PR contenant un commit de merge de synchronisation
 
 Exemple de scripts (POSIX) :
