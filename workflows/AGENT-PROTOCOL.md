@@ -70,6 +70,8 @@ Feature flags runtime :
 * l’agent DOIT consommer les `feature_flags` renvoyés par Core (au minimum via `POST /agents/register`)
 * l’agent NE DOIT PAS hardcoder l’état des flags
 * un changement runtime de flag DOIT être appliqué sans rebuild agent
+* `feature_flags` ne remplacent pas les `capabilities` déclarées de l'agent
+* une action agent n'est valide que si capability requise + flag(s) actif(s)
 
 Secrets :
 

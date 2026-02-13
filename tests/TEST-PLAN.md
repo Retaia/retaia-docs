@@ -234,6 +234,8 @@ Tests obligatoires :
 * toute feature `v1.1+` est désactivée par défaut
 * source de vérité des flags = payload runtime de Core (`server_policy.feature_flags`), jamais un hardcode client
 * canal runtime flags défini et testé pour `UI_RUST`, `AGENT`, `MCP` (pas seulement `POST /agents/register`)
+* distinction opposable: `capabilities` (agent/client) et `feature_flags` (Core) sont testées séparément
+* règle AND validée: capability + flag requis pour exécuter une action feature
 * flag absent dans le payload runtime => traité comme `false`
 * flags inconnus côté client => ignorés sans erreur
 * flag désactivé => la feature est refusée explicitement avec un code normatif
@@ -256,6 +258,7 @@ Cas OFF/ON minimum :
 * activation progressive `chatgpt`/`claude` via flag runtime sans rebuild client
 * `features.ai.suggested_tags_filters=OFF` : filtres `suggested_tags*` non exposés/non envoyés
 * `features.ai.suggested_tags_filters=ON` : filtres `suggested_tags*` utilisables
+* flag ON + capability manquante côté agent => job non exécutable (`pending`/refus selon policy)
 * `features.decisions.bulk=OFF` : `/decisions/preview` et `/decisions/apply` non utilisables
 * `features.decisions.bulk=ON` : flux preview/apply utilisable
 * `UI_RUST` : OFF masque/neutralise la feature, ON l’active au prochain refresh flags
