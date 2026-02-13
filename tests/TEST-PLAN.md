@@ -62,6 +62,7 @@ Tests obligatoires :
   * bearer absent/invalide => `401 UNAUTHORIZED`
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
   * body invalide => `422 VALIDATION_FAILED`
+  * `app_feature_enabled.features.ai=false` => `MCP` désactivé globalement
 * `GET /app/policy`:
   * bearer utilisateur valide => `200` + `server_policy.feature_flags`
   * bearer client technique valide (`OAuth2ClientCredentials`) => `200`
@@ -101,8 +102,10 @@ Tests obligatoires :
   * rate limit => `429 TOO_MANY_ATTEMPTS`
   * invariant: nouveau token minté pour un client révoque l’ancien token (1 token actif / client)
   * `client_kind=UI_RUST` refusé (`403 FORBIDDEN_ACTOR`)
+  * `client_kind=MCP` + `app_feature_enabled.features.ai=false` => `403 FORBIDDEN_SCOPE`
 * `POST /auth/clients/device/start`:
   * `client_kind in {AGENT, MCP}` => `200` + `device_code`, `user_code`, `verification_uri`, `verification_uri_complete`
+  * `client_kind=MCP` + `app_feature_enabled.features.ai=false` => `403 FORBIDDEN_SCOPE`
   * body invalide => `422 VALIDATION_FAILED`
   * rate limit => `429 TOO_MANY_ATTEMPTS`
 * `POST /auth/clients/device/poll`:
@@ -290,6 +293,8 @@ Cas OFF/ON minimum :
 * `UI_RUST` : OFF masque/neutralise la feature, ON l’active au prochain refresh flags
 * `AGENT` : OFF interdit job/patch liés à la feature, ON les autorise sans rebuild agent
 * `MCP` : OFF interdit les commandes/actions liées à la feature, ON les autorise sans redéploiement MCP
+* `app_feature_enabled.features.ai=OFF` : client `MCP` entièrement désactivé (bootstrap/token/appels runtime refusés)
+* `app_feature_enabled.features.ai=ON` : client `MCP` autorisé selon matrice authz et capabilities
 * assimilation flag->mainline validée: après stabilisation, le flag disparaît de `server_policy.feature_flags` et le comportement final reste couvert par des tests non conditionnels
 * aucun code/test/doc OFF/ON obsolète persistant après retrait du flag (hors kill-switchs explicitement documentés)
 
