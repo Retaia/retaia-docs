@@ -37,7 +37,11 @@ Objectif : fournir une surface stable consommée par :
 * Toute nouvelle fonctionnalité DOIT être protégée par un feature flag serveur dès son introduction.
 * Les fonctionnalités `v1.1+` suivent la même règle et restent inactives tant que leur flag n'est pas activé.
 * Convention de nommage : `features.<domaine>.<fonction>` (ex: `features.ai.suggest_tags`).
-* Contrat de transport : l’état effectif des flags DOIT être transporté dans un payload standard `server_policy.feature_flags` (au minimum via `POST /agents/register`, et dans tout endpoint de configuration/capabilities exposé aux clients).
+* Contrat de transport : l’état effectif des flags DOIT être transporté dans un payload standard `server_policy.feature_flags` (au minimum via `POST /agents/register`).
+* Distinction normative (sans ambiguïté) :
+  * `feature_flags` = activation runtime des fonctionnalités côté Core
+  * `capabilities` = aptitudes techniques déclarées par les agents pour exécuter des jobs
+  * `contracts/` = snapshots versionnés pour détecter un drift du contrat OpenAPI
 * Sémantique stricte :
   * flag absent = `false`
   * flag inconnu côté client = ignoré
