@@ -82,8 +82,8 @@ Secrets :
 Pour les workloads AI `suggest_tags` (`meta.tags.suggestions@1`), l'agent DOIT supporter au minimum :
 
 * `ollama`
-* `chatgpt`
-* `anthropic`
+* `chatgpt` (phase 2, sous flag)
+* `claude` (phase 2, sous flag)
 
 Règles :
 
@@ -93,6 +93,7 @@ Règles :
 * liste des modèles DOIT être lue depuis la policy/catalog runtime (pas de liste statique embarquée)
 * modèle effectif DOIT provenir d'un choix utilisateur explicite (CLI/GUI/config utilisateur)
 * en mode non-interactif, le modèle choisi par l'utilisateur DOIT rester traçable et réutilisable jusqu'à changement explicite
+* phase rollout: `ollama` activé en premier; `chatgpt` et `claude` activés uniquement derrière feature flags runtime
 
 ### 3.5 Local-first AI/transcription (normatif)
 

@@ -216,8 +216,8 @@ Produire des suggestions de tags à partir des facts/transcript/metadata.
 
 * `meta.tags.suggestions@1`
 * `llm.client.ollama@1`
-* `llm.client.chatgpt@1`
-* `llm.client.anthropic@1`
+* `llm.client.chatgpt@1` (optionnel, sous flag)
+* `llm.client.claude@1` (optionnel, sous flag)
 
 **Inputs**
 
@@ -225,7 +225,7 @@ Produire des suggestions de tags à partir des facts/transcript/metadata.
 * facts_ref
 * transcript_ref (optionnel)
 * suggestion_profile (optionnel)
-* llm_provider (optionnel, runtime policy; valeurs: `ollama|chatgpt|anthropic`)
+* llm_provider (optionnel, runtime policy; valeurs: `ollama|chatgpt|claude`)
 * llm_model (recommandé; valeur issue du catalogue runtime choisi par l'utilisateur)
 
 **Expected outputs**
@@ -244,6 +244,7 @@ Produire des suggestions de tags à partir des facts/transcript/metadata.
 * entrée insuffisante → failed non bloquant
 * provider indisponible → fallback provider ou retryable selon policy serveur
 * modèle absent du catalogue runtime autorisé → `failed` non bloquant (validation configuration)
+* provider désactivé par feature flag runtime -> `failed` non bloquant (`FORBIDDEN_SCOPE`)
 
 
 ## 4. Règles d’évolution

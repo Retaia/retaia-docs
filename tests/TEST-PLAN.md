@@ -125,7 +125,7 @@ Tests obligatoires :
 * stockage secret conforme OS (Keychain macOS, Credential Manager/DPAPI Windows, secret store Linux)
 * rotation de secret client n’exige pas de réinstallation agent
 * cible Linux headless Raspberry Pi (Kodi/Plex) validée en non-régression
-* agent AI `suggest_tags` supporte au minimum les clients LLM `ollama`, `chatgpt`, `anthropic`
+* rollout providers `suggest_tags`: `ollama` phase 1; `chatgpt` et `claude` phase 2 sous feature flags
 * sélection provider LLM pilotée par config/runtime policy (pas de hardcode implicite)
 * indisponibilité d’un provider LLM n’arrête pas l’agent: fallback provider ou retryable contrôlé
 * pour une policy identique, le routing provider reste déterministe (non flaky)
@@ -240,6 +240,7 @@ Tests obligatoires :
 * activation du flag active la feature sans régression sur les flux `v1`
 * `server_policy` expose l’état effectif des flags utiles aux agents
 * mapping des flags v1.1 conforme : `features.ai.suggest_tags`, `features.ai.suggested_tags_filters`, `features.decisions.bulk`
+* mapping providers conforme : `features.ai.provider.ollama`, `features.ai.provider.chatgpt`, `features.ai.provider.claude`
 * `job_type=suggest_tags` sur `/jobs/{job_id}/submit` exige `jobs:submit` + `suggestions:write`
 * client feature OFF => UI/action API de la feature interdite
 * client feature ON => disponibilité immédiate sans redéploiement
@@ -249,6 +250,10 @@ Cas OFF/ON minimum :
 
 * `features.ai.suggest_tags=OFF` : refus `job_type=suggest_tags`, `suggestions_patch` et actions UI associées
 * `features.ai.suggest_tags=ON` : `suggest_tags` opérationnel sans impact sur les flux `v1`
+* `features.ai.provider.ollama=ON` (phase 1) : provider `ollama` autorisé
+* `features.ai.provider.chatgpt=OFF` : provider `chatgpt` refusé (`FORBIDDEN_SCOPE`)
+* `features.ai.provider.claude=OFF` : provider `claude` refusé (`FORBIDDEN_SCOPE`)
+* activation progressive `chatgpt`/`claude` via flag runtime sans rebuild client
 * `features.ai.suggested_tags_filters=OFF` : filtres `suggested_tags*` non exposés/non envoyés
 * `features.ai.suggested_tags_filters=ON` : filtres `suggested_tags*` utilisables
 * `features.decisions.bulk=OFF` : `/decisions/preview` et `/decisions/apply` non utilisables
