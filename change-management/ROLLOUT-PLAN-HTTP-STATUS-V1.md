@@ -4,17 +4,13 @@ Objectif:
 
 * deployer l'alignement HTTP sans casser les clients existants UI_RUST, AGENT, MCP
 
-## 1) Compat temporaire Core (feature flag)
-
-Flag runtime recommande:
-
-* `features.auth.device_flow.compat_legacy_http`
+## 1) Politique pre-publication v1 (sans legacy)
 
 Regles:
 
-* `true` (phase compat): autorise une couche de compatibilite serveur strictement temporaire
-* `false` (phase cible): comportement final status-driven uniquement
-* ce flag DOIT etre retire apres cutover complet (pas de legacy permanent)
+* aucun mode legacy n'est autorise avant publication v1
+* aucun feature flag de compatibilite legacy ne DOIT etre introduit
+* comportement cible status-driven applique directement
 
 ## 2) Observabilite obligatoire
 
@@ -23,13 +19,11 @@ Metriques minimales:
 * volume de `POST /auth/clients/device/poll` par `status` (`PENDING`, `APPROVED`, `DENIED`, `EXPIRED`)
 * taux `400 INVALID_DEVICE_CODE`
 * taux `429 SLOW_DOWN|TOO_MANY_ATTEMPTS`
-* nombre de clients encore dependants d'un comportement legacy (si detecte)
 * volume de rejets `POST /auth/clients/token` avec `403 FORBIDDEN_ACTOR` pour `client_kind=UI_RUST`
 
 Logs/audit:
 
-* journaliser le mode de compat actif/inactif
-* tracer les transitions de phase (compat -> cutover -> retrait)
+* tracer les transitions de phase (pre-release -> cutover -> post-cutover)
 
 ## 3) Cutover
 
@@ -41,26 +35,22 @@ Prerequis:
 Execution:
 
 1. activer instrumentation + dashboard rollout
-2. deployer Core en mode compat (`compat_legacy_http=true`)
+2. deployer Core directement en mode cible status-driven
 3. deployer UI_RUST, AGENT, MCP compatibles status-driven
-4. verifier baisse a zero des signaux legacy
-5. basculer `compat_legacy_http=false`
+4. verifier stabilite des metriques et absence d'incident auth/device
 
-## 4) Retrait compat (obligatoire)
+## 4) Stabilisation post-cutover
 
 Conditions de sortie:
 
-* aucune dependance legacy observee sur une fenetre stabilisee
 * aucun incident auth/device actif
 
 Actions:
 
-* supprimer code de compat legacy cote Core
-* supprimer le flag `features.auth.device_flow.compat_legacy_http`
 * conserver uniquement le comportement cible documente en v1
+* verrouiller les tests de non-regression associes
 
 ## 5) Rollback
 
-* rollback court-terme autorise en reactivate `compat_legacy_http=true`
-* rollback version applicative possible UI_RUST/AGENT/MCP si incident critique
+* rollback version Core/UI_RUST/AGENT/MCP possible si incident critique
 * toute activation de rollback DOIT etre auditee et post-analysee
