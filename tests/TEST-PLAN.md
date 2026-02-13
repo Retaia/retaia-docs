@@ -57,6 +57,7 @@ Tests obligatoires :
 * `GET /app/features`:
   * bearer valide => `200` + payload `app_feature_enabled`
   * réponse inclut `feature_governance[]` (`key`, `tier`, `user_can_disable`, `dependencies[]`, `disable_escalation[]`)
+  * réponse inclut `core_v1_global_features[]` (registre canonique des features non désactivables)
   * bearer absent/invalide => `401 UNAUTHORIZED`
 * `PATCH /app/features`:
   * bearer admin valide + body valide => `200` + payload `app_feature_enabled` mis à jour
@@ -66,6 +67,7 @@ Tests obligatoires :
   * `app_feature_enabled.features.ai=false` => `MCP` désactivé globalement
 * `GET /auth/me/features`:
   * bearer valide => `200` + `user_feature_enabled` + `effective_feature_enabled` + `feature_governance`
+  * réponse inclut `core_v1_global_features[]`
   * bearer absent/invalide => `401 UNAUTHORIZED`
 * `PATCH /auth/me/features`:
   * bearer valide + body valide => `200` + préférences utilisateur mises à jour
@@ -310,6 +312,7 @@ Cas OFF/ON minimum :
 * `app_feature_enabled.features.ai=ON` : client `MCP` autorisé selon matrice authz et capabilities
 * `user_feature_enabled.features.ai=OFF` : fonctionnalités AI désactivées pour l’utilisateur courant sans impact global
 * tentative d’opt-out utilisateur sur une feature `CORE_V1_GLOBAL` => refus `403 FORBIDDEN_SCOPE`
+* pour chaque clé de `core_v1_global_features[]`, la ligne `feature_governance.key` correspondante expose `tier=CORE_V1_GLOBAL` et `user_can_disable=false`
 * assimilation flag->mainline validée: après stabilisation, le flag disparaît de `server_policy.feature_flags` et le comportement final reste couvert par des tests non conditionnels
 * aucun code/test/doc OFF/ON obsolète persistant après retrait du flag (hors kill-switchs explicitement documentés)
 
