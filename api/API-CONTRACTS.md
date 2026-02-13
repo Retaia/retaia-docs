@@ -600,6 +600,57 @@ Le payload d’erreur normatif est défini dans [`ERROR-MODEL.md`](ERROR-MODEL.m
 
 * Batch purge : si nécessaire plus tard
 
+## 14) Contrat snapshot local (`contracts/`) pour détecter le drift OpenAPI
+
+Objectif :
+
+* détecter tout changement de `api/openapi/v1.yaml` même sans version bump (`info.version` inchangé)
+
+Règles normatives (tous les repos consommateurs : UI, core, agents, MCP, tooling CI) :
+
+* chaque repo consommateur DOIT versionner un snapshot de contrat dans `contracts/`
+* fichier minimum requis : `contracts/openapi-v1.sha256`
+* la valeur DOIT être le hash SHA-256 calculé depuis `api/openapi/v1.yaml` de `retaia-docs`
+* la CI DOIT échouer si le hash versionné localement ne correspond plus au hash de la spec courante (drift détecté)
+* la mise à jour du hash DOIT être explicite dans une PR, via une commande dédiée (pas d’update implicite en pipeline)
+
+Notes d'interprétation :
+
+* ce mécanisme détecte les changements contractuels OpenAPI même si la version API ne change pas
+* il ne remplace pas le versioning majeur (`/v2`) en cas de rupture de compatibilité
+
+## 15) Adoption (repos consommateurs)
+
+Checklist minimale d’implémentation :
+
+* créer le dossier `contracts/` à la racine du repo consommateur
+* ajouter une commande dédiée de refresh (ex: `make contracts-refresh`) qui :
+  * récupère `api/openapi/v1.yaml` depuis `retaia-docs` (révision de référence)
+  * calcule le hash SHA-256 du fichier
+  * écrit uniquement la valeur hash dans `contracts/openapi-v1.sha256`
+* ajouter une commande CI de vérification (ex: `make contracts-check`) qui :
+  * recalcule le hash du `v1.yaml` de référence
+  * compare avec `contracts/openapi-v1.sha256`
+  * échoue (exit code non nul) en cas de mismatch
+* exiger dans la PR la trace explicite du refresh (`contracts/openapi-v1.sha256` modifié + justification migration)
+
+Exemple de scripts (POSIX) :
+
+```bash
+# Refresh contrôlé
+shasum -a 256 api/openapi/v1.yaml | awk '{print $1}' > contracts/openapi-v1.sha256
+
+# Check CI bloquant
+test "$(cat contracts/openapi-v1.sha256)" = "$(shasum -a 256 api/openapi/v1.yaml | awk '{print $1}')"
+```
+
+Procédure de refresh contrôlé :
+
+* étape 1 : mettre à jour `retaia-docs`
+* étape 2 : exécuter la commande dédiée de refresh dans chaque repo consommateur impacté
+* étape 3 : documenter l’impact consommateur (flags/capabilities/migration) dans la PR
+* étape 4 : faire passer le gate CI `contract drift` avant merge
+
 ## Références associées
 
 * [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md)
@@ -614,3 +665,4 @@ Le payload d’erreur normatif est défini dans [`ERROR-MODEL.md`](ERROR-MODEL.m
 * [AUTHZ-MATRIX.md](../policies/AUTHZ-MATRIX.md)
 * [HOOKS-CONTRACT.md](../policies/HOOKS-CONTRACT.md)
 * [ERROR-MODEL.md](ERROR-MODEL.md)
+* [CODE-QUALITY.md](../change-management/CODE-QUALITY.md)
