@@ -277,23 +277,49 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /app/model-catalog:
+  /app/ai-defaults:
     get:
       tags: [Auth]
-      summary: Get runtime model catalog
+      summary: Get global AI defaults and authorized models
       description: |
-        Returns the runtime model catalog used by clients to let users choose an LLM model.
-        Clients MUST NOT hardcode providers/models and MUST consume this catalog dynamically.
+        Returns global AI defaults configured by admin and Core authorization policy.
+        Core does not discover or manage local model catalogs; the agent remains model/provider owner.
       security:
         - UserBearerAuth: []
-        - OAuth2ClientCredentials: ["models:read"]
       responses:
         "200":
-          description: Runtime model catalog
+          description: Global AI defaults and authorization policy
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ModelCatalogResponse"
+                $ref: "#/components/schemas/AppAiDefaultsResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      tags: [Auth]
+      summary: Update global AI defaults and authorized models
+      description: |
+        Admin-only update of global AI defaults and authorized models.
+        Agent capabilities tied to unavailable or unauthorized provider/model combinations must be invalidated.
+      security:
+        - UserBearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppAiDefaultsUpdateRequest"
+      responses:
+        "200":
+          description: Updated global AI defaults and authorization policy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppAiDefaultsResponse"
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
           content:
@@ -301,7 +327,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "403":
-          description: Forbidden scope (`FORBIDDEN_SCOPE`)
+          description: Forbidden actor or scope (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
           content:
             application/json:
               schema:
@@ -860,6 +892,10 @@ paths:
                   type: array
                   items:
                     type: string
+                model_inventory:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/AgentModelInventoryEntry"
                 max_parallel_jobs:
                   type: integer
       responses:
@@ -872,6 +908,14 @@ paths:
                 properties:
                   agent_id:
                     type: string
+                  effective_capabilities:
+                    type: array
+                    items:
+                      type: string
+                  capability_warnings:
+                    type: array
+                    items:
+                      type: string
                   server_policy:
                     $ref: "#/components/schemas/ServerPolicy"
 
@@ -1393,7 +1437,6 @@ components:
             assets:read: Read assets and derived metadata.
             assets:write: Update human metadata and trigger reprocess.
             decisions:write: Apply human decisions.
-            models:read: Read runtime model catalog.
             jobs:claim: Discover and claim jobs.
             jobs:heartbeat: Extend job leases.
             jobs:submit: Submit job completion/failure and derived uploads.
@@ -1814,32 +1857,65 @@ components:
         app_feature_enabled:
           $ref: "#/components/schemas/AppFeatureEnabled"
 
-    ModelProviderCatalogEntry:
+    AppAiDefaults:
       type: object
       additionalProperties: false
-      required: [provider, models]
+      required:
+        - default_llm_provider
+        - default_llm_model
+        - default_stt_provider
+        - default_stt_model
       properties:
-        provider:
+        default_llm_provider:
           type: string
           enum: [ollama, chatgpt, claude]
-        models:
-          type: array
-          items:
-            type: string
-        default_model:
+        default_llm_model:
           type: string
+        default_stt_provider:
+          type: string
+          enum: [whispercpp]
+        default_stt_model:
+          type: string
+        authorized_models:
+          type: object
+          description: Provider/model allowlist enforced by Core policy.
+          additionalProperties:
+            type: array
+            items:
+              type: string
 
-    ModelCatalogResponse:
+    AppAiDefaultsResponse:
       type: object
       additionalProperties: false
-      required: [catalog_version, providers]
+      required: [app_ai_defaults]
       properties:
-        catalog_version:
+        app_ai_defaults:
+          $ref: "#/components/schemas/AppAiDefaults"
+
+    AppAiDefaultsUpdateRequest:
+      type: object
+      additionalProperties: false
+      required: [app_ai_defaults]
+      properties:
+        app_ai_defaults:
+          $ref: "#/components/schemas/AppAiDefaults"
+
+    AgentModelInventoryEntry:
+      type: object
+      additionalProperties: false
+      required: [kind, provider, model, installed]
+      properties:
+        kind:
           type: string
-        providers:
-          type: array
-          items:
-            $ref: "#/components/schemas/ModelProviderCatalogEntry"
+          enum: [llm, stt]
+        provider:
+          type: string
+        model:
+          type: string
+        installed:
+          type: boolean
+        install_supported:
+          type: boolean
 
     AppPolicyResponse:
       type: object

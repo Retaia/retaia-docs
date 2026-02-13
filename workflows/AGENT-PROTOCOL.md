@@ -92,10 +92,13 @@ Règles :
 * sélection provider explicite via config/runtime policy (pas de hardcode implicite)
 * indisponibilité d'un provider => fallback vers un provider disponible ou retryable (pas de crash global agent)
 * comportement déterministe du routing provider pour une même policy d'exécution
-* liste des modèles DOIT être lue depuis la policy/catalog runtime (pas de liste statique embarquée)
+* inventaire provider/modèle DOIT être publié par l'agent (pas de liste statique embarquée côté UI/Core)
 * modèle effectif DOIT provenir d'un choix utilisateur explicite (CLI/GUI/config utilisateur)
 * en mode non-interactif, le modèle choisi par l'utilisateur DOIT rester traçable et réutilisable jusqu'à changement explicite
 * phase rollout: `ollama` activé en premier; `chatgpt` et `claude` activés uniquement derrière feature flags runtime
+* si le provider/modèle requis n'est pas trouvé localement, l'agent DOIT invalider les capabilities associées
+* si le provider/modèle local est hors policy Core, l'agent DOIT invalider les capabilities associées
+* si le provider est géré localement, l'agent PEUT supporter l'installation de modèle
 
 ### 3.5 Local-first AI/transcription (normatif)
 
