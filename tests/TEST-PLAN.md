@@ -286,6 +286,33 @@ Tests obligatoires :
 * rejet explicite des algorithmes interdits (SHA-1, RSA < 3072, DSA legacy)
 * adresses, coordonnées GPS, transcriptions non lisibles en clair dans dump DB/backups
 * rotation/rekey OpenPGP sans perte d'accès légitime
+* mode transparent par défaut: aucun setup PGP manuel requis pour un utilisateur standard
+* mode avancé: intégration `gpg-agent`/clés existantes fonctionne quand activée
+* fallback sûr: indisponibilité du mode avancé ne bloque pas l'usage standard
+
+## 8.8) Crypto + RGPD (leak-resilience)
+
+Tests obligatoires :
+
+* adresses, coordonnées GPS et transcriptions non lisibles en clair dans dump DB
+* adresses, coordonnées GPS et transcriptions non lisibles en clair dans backups/extracts
+* logs/traces/crash reports ne contiennent jamais ces données en clair
+* export de données personnelles traçable et conforme au workflow RGPD
+* effacement RGPD (quand applicable) purge les données selon la policy de retention
+* exercice de notification fuite RGPD exécuté et tracé (SLA 72h vérifié en simulation)
+* rotation/rekey crypto n'introduit pas de perte d'accès légitime ni de régression authz
+
+## 8.9) Full-text + filtres localisation sur données chiffrées
+
+Tests obligatoires :
+
+* `q` fonctionne en v1 sans plaintext indexé pour la transcription
+* `location_country` fonctionne sur index dérivé
+* `location_city` fonctionne sur index dérivé
+* `geo_bbox` fonctionne sur index spatial dérivé
+* combinaison `q + filtres localisation + autres filtres` conserve la sémantique attendue
+* dump DB/backups de l'index de recherche ne révèle pas adresse, GPS, transcription en clair
+* reindex après rotation de clés conserve les résultats attendus sans fuite de plaintext
 
 ## 9) Couverture minimale
 
@@ -313,6 +340,9 @@ Tests obligatoires :
 * [AUTHZ-MATRIX.md](../policies/AUTHZ-MATRIX.md)
 * [SECURITY-BASELINE.md](../policies/SECURITY-BASELINE.md)
 * [GPG-OPENPGP-STANDARD.md](../policies/GPG-OPENPGP-STANDARD.md)
+* [CRYPTO-SECURITY-MODEL.md](../policies/CRYPTO-SECURITY-MODEL.md)
+* [SEARCH-PRIVACY-INDEX.md](../policies/SEARCH-PRIVACY-INDEX.md)
+* [RGPD-DATA-PROTECTION.md](../policies/RGPD-DATA-PROTECTION.md)
 * [LOCK-LIFECYCLE.md](../policies/LOCK-LIFECYCLE.md)
 * [CODE-QUALITY.md](../change-management/CODE-QUALITY.md)
 * [I18N-LOCALIZATION.md](../policies/I18N-LOCALIZATION.md)

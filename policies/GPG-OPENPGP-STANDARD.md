@@ -36,14 +36,29 @@ Objectif: en cas de fuite DB/logs/backups, les donnees sensibles restent inutili
 * rotation reguliere et rotation d'urgence documentees
 * revocation certificate genere pour chaque identite de cle
 
-## 5) Regles d'usage par donnee (MUST)
+## 5) Experience utilisateur et modes d'integration (MUST)
+
+Mode par defaut (obligatoire):
+
+* setup PGP transparent pour l'utilisateur final (aucune etape manuelle requise pour demarrer)
+* generation, stockage et rotation des cles geres par la plateforme
+* l'utilisateur n'a pas besoin de comprendre OpenPGP pour utiliser l'app
+
+Mode avance (optionnel):
+
+* l'utilisateur PEUT connecter un agent PGP externe (`gpg-agent`/equivalent)
+* l'utilisateur PEUT utiliser ses cles existantes et son flux mail OpenPGP (import/publication/verification)
+* ce mode NE DOIT PAS etre pre-requis pour les parcours standard
+* si necessaire, ce mode peut etre livre en phase ulterieure sans bloquer la securite by default
+
+## 6) Regles d'usage par donnee (MUST)
 
 * adresse, GPS, transcription: chiffrement OpenPGP ou envelope equivalent obligatoire
 * export de donnees sensibles: chiffre et signe
 * backup sensible: chiffre avant ecriture
 * logs/traces/crash reports: jamais de plaintext de ces donnees
 
-## 6) Interoperabilite et libs autorisees (MUST)
+## 7) Interoperabilite et libs autorisees (MUST)
 
 Chaque application DOIT utiliser une librairie OpenPGP reconnue et maintenue:
 
@@ -58,22 +73,25 @@ Conditions:
 * aucune implementation crypto maison
 * toute exception de librairie DOIT etre validee securite
 
-## 7) Cycle de vie et gouvernance (MUST)
+## 8) Cycle de vie et gouvernance (MUST)
 
 * fingerprint de cle reference versionne
 * mapping `key_id -> owner -> usage -> expiration` obligatoire
 * rotation planifiee max 180 jours pour cles de chiffrement donnees sensibles
 * key compromise: rotation immediate + re-encrypt workflow + audit incident
 
-## 8) Tests de conformite (MUST)
+## 9) Tests de conformite (MUST)
 
 * test roundtrip encrypt/decrypt par client type (`UI_RUST`, `AGENT`, `MCP`)
 * test signature verify pour payload sensible signe
 * test rejet d'algorithmes interdits
 * test DB dump/backups: adresse, GPS, transcription non lisibles en clair
 * test rekey/re-encrypt sans perte de donnees autorisees
+* test mode transparent: premier login/utilisation sans setup PGP manuel
+* test mode avance: branchement `gpg-agent`/cles existantes sans regression
+* test fallback: indisponibilite du mode avance ne bloque pas le mode transparent
 
-## 9) Critere de non-conformite
+## 10) Critere de non-conformite
 
 Non conforme si un des cas suivants est observe:
 
