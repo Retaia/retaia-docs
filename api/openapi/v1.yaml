@@ -441,6 +441,111 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /auth/clients/device/start:
+    post:
+      tags: [Auth]
+      summary: Start device authorization flow for technical client bootstrap
+      description: |
+        Starts a browser-assisted authorization flow (GitHub-style) for `AGENT`/`MCP`.
+        User validation (and optional 2FA) happens via `verification_uri`.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthDeviceStartRequest"
+      responses:
+        "200":
+          description: Device flow started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthDeviceStartResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many attempts (`TOO_MANY_ATTEMPTS`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/clients/device/poll:
+    post:
+      tags: [Auth]
+      summary: Poll device authorization status
+      description: |
+        Polls authorization status for a previously started device flow.
+        On approval, returns one-shot `secret_key`.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthDevicePollRequest"
+      responses:
+        "200":
+          description: Device authorization status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthDevicePollResponse"
+        "400":
+          description: Invalid or expired device code (`INVALID_TOKEN`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Polling too fast (`TOO_MANY_ATTEMPTS`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/clients/device/cancel:
+    post:
+      tags: [Auth]
+      summary: Cancel an in-progress device authorization flow
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthDeviceCancelRequest"
+      responses:
+        "200":
+          description: Device flow canceled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthDeviceCancelResponse"
+        "400":
+          description: Invalid device code (`INVALID_TOKEN`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /auth/clients/{client_id}/rotate-secret:
     post:
       tags: [Auth]
@@ -1380,6 +1485,112 @@ components:
         rotated_at:
           type: string
           format: date-time
+
+    AuthDeviceStartRequest:
+      type: object
+      additionalProperties: false
+      required: [client_kind]
+      properties:
+        client_kind:
+          $ref: "#/components/schemas/NonUiClientKind"
+        client_label:
+          type: string
+
+    AuthDeviceStartResponse:
+      type: object
+      additionalProperties: false
+      required: [device_code, user_code, verification_uri, verification_uri_complete, expires_in, interval]
+      properties:
+        device_code:
+          type: string
+        user_code:
+          type: string
+        verification_uri:
+          type: string
+          format: uri
+        verification_uri_complete:
+          type: string
+          format: uri
+        expires_in:
+          type: integer
+        interval:
+          type: integer
+
+    AuthDevicePollRequest:
+      type: object
+      additionalProperties: false
+      required: [device_code]
+      properties:
+        device_code:
+          type: string
+
+    AuthDevicePollResponse:
+      oneOf:
+        - $ref: "#/components/schemas/AuthDevicePollPending"
+        - $ref: "#/components/schemas/AuthDevicePollApproved"
+        - $ref: "#/components/schemas/AuthDevicePollDenied"
+        - $ref: "#/components/schemas/AuthDevicePollExpired"
+
+    AuthDevicePollPending:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [PENDING]
+        interval:
+          type: integer
+
+    AuthDevicePollApproved:
+      type: object
+      additionalProperties: false
+      required: [status, client_id, client_kind, secret_key]
+      properties:
+        status:
+          type: string
+          enum: [APPROVED]
+        client_id:
+          type: string
+        client_kind:
+          $ref: "#/components/schemas/NonUiClientKind"
+        secret_key:
+          type: string
+          description: One-shot credential shown only once after approval.
+
+    AuthDevicePollDenied:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [DENIED]
+
+    AuthDevicePollExpired:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [EXPIRED]
+
+    AuthDeviceCancelRequest:
+      type: object
+      additionalProperties: false
+      required: [device_code]
+      properties:
+        device_code:
+          type: string
+
+    AuthDeviceCancelResponse:
+      type: object
+      additionalProperties: false
+      required: [canceled]
+      properties:
+        canceled:
+          type: boolean
 
     ServerPolicy:
       type: object
