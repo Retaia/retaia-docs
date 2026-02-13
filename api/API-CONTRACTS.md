@@ -91,7 +91,7 @@ Comportement :
 ### Derived URLs
 
 * URLs de dérivés **stables** (same-origin)
-* Accès contrôlé par session cookie (UI) ou bearer token (clients autorisés)
+* Accès contrôlé par bearer token (`Authorization: Bearer ...`) pour tous les clients
 
 ### États (doit matcher [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md))
 
@@ -104,12 +104,24 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 
 ### UI (humain)
 
-* Session cookie HttpOnly (same-origin)
-* CSRF sur méthodes mutantes
+* Bearer token utilisateur obtenu via login (`POST /auth/login`)
+* l'interface de login est normative pour permettre l'obtention du token utilisateur
+* la même authentification DOIT rester valable si l’UI est empaquetée en app desktop (Electron ou Rust Tauri)
+* le token UI est non exportable dans l'interface (jamais affiché en clair)
+* un utilisateur ne peut pas invalider son token UI depuis l'UI (anti lock-out)
+* l'UI DOIT supporter l'enrôlement 2FA TOTP via app externe (Authy, Google Authenticator, etc.)
 
 ### Agents / MCP
 
-* Bearer token
+* modes non interactifs : bearer technique (`OAuth2ClientCredentials`)
+* modes interactifs (agent CLI/GUI opéré par un humain) : bearer utilisateur via `POST /auth/login`
+* mode client applicatif : `client_id + secret_key` pour obtenir un bearer token via `POST /auth/clients/token`
+
+Règle de cardinalité des tokens (obligatoire) :
+
+* un même utilisateur PEUT avoir plusieurs tokens actifs simultanément sur des clients différents
+* contrainte stricte : **1 token actif par client** (clé logique : `(user_id, client_id)`)
+* émission d'un nouveau token pour le même `(user_id, client_id)` => révocation immédiate du token précédent
 
 #### Scopes (base)
 
@@ -124,7 +136,159 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 * `purge:execute` (**humain uniquement**)
 
 La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md).
-`openapi/v1.yaml` déclare explicitement les schémas de sécurité (`SessionCookieAuth`, `OAuth2ClientCredentials`) et les scopes requis par endpoint.
+`openapi/v1.yaml` déclare explicitement les schémas de sécurité (`UserBearerAuth`, `OAuth2ClientCredentials`) et les scopes requis par endpoint.
+
+### Endpoints auth applicatifs (normatif)
+
+`POST /auth/login`
+
+* security: aucune (`security: []`)
+* body requis: `{ email, password }`
+* body optionnel: `otp_code` (obligatoire si 2FA active)
+* réponses:
+  * `200` succès + bearer token (`access_token`, `token_type=Bearer`, `expires_in?`, `refresh_token?`)
+  * `401 UNAUTHORIZED` (credentials invalides), `MFA_REQUIRED` (2FA active sans OTP), `INVALID_2FA_CODE` (OTP invalide)
+  * `403 EMAIL_NOT_VERIFIED`
+  * `422 VALIDATION_FAILED`
+  * `429 TOO_MANY_ATTEMPTS`
+
+`POST /auth/2fa/setup`
+
+* security: `UserBearerAuth`
+* effet: génère le matériel d'enrôlement TOTP (`secret`, `otpauth_uri`, `qr_svg?`) pour app externe
+* réponses:
+  * `200` setup généré
+  * `401 UNAUTHORIZED`
+  * `409 MFA_ALREADY_ENABLED`
+
+`POST /auth/2fa/enable`
+
+* security: `UserBearerAuth`
+* body requis: `{ otp_code }`
+* effet: active la 2FA TOTP pour l'utilisateur courant
+* réponses:
+  * `200` succès
+  * `400 INVALID_2FA_CODE`
+  * `401 UNAUTHORIZED`
+  * `409 MFA_ALREADY_ENABLED`
+  * `422 VALIDATION_FAILED`
+
+`POST /auth/2fa/disable`
+
+* security: `UserBearerAuth`
+* body requis: `{ otp_code }`
+* effet: désactive la 2FA TOTP pour l'utilisateur courant
+* réponses:
+  * `200` succès
+  * `400 INVALID_2FA_CODE`
+  * `401 UNAUTHORIZED`
+  * `409 MFA_NOT_ENABLED`
+  * `422 VALIDATION_FAILED`
+
+`POST /auth/logout`
+
+* security: `UserBearerAuth`
+* réponses:
+  * `200` succès
+  * `401 UNAUTHORIZED`
+
+`GET /auth/me`
+
+* security: `UserBearerAuth`
+* réponses:
+  * `200` utilisateur courant
+  * `401 UNAUTHORIZED`
+
+`POST /auth/lost-password/request`
+
+* security: aucune (`security: []`)
+* body requis: `{ email }`
+* réponses:
+  * `202` accepté
+  * `422 VALIDATION_FAILED`
+  * `429 TOO_MANY_ATTEMPTS`
+
+`POST /auth/lost-password/reset`
+
+* security: aucune (`security: []`)
+* body requis: `{ token, new_password }`
+* réponses:
+  * `200` succès
+  * `400 INVALID_TOKEN`
+  * `422 VALIDATION_FAILED`
+
+`POST /auth/verify-email/request`
+
+* security: aucune (`security: []`)
+* body requis: `{ email }`
+* réponses:
+  * `202` accepté
+  * `422 VALIDATION_FAILED`
+  * `429 TOO_MANY_ATTEMPTS`
+
+`POST /auth/verify-email/confirm`
+
+* security: aucune (`security: []`)
+* body requis: `{ token }`
+* réponses:
+  * `200` succès
+  * `400 INVALID_TOKEN`
+  * `422 VALIDATION_FAILED`
+
+`POST /auth/verify-email/admin-confirm`
+
+* security: `UserBearerAuth`
+* prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
+* body requis: `{ email }`
+* réponses:
+  * `200` succès
+  * `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE` (selon matrice)
+  * `404 USER_NOT_FOUND`
+  * `422 VALIDATION_FAILED`
+
+`POST /auth/clients/{client_id}/revoke-token`
+
+* security: `UserBearerAuth`
+* prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
+* effet: invalide les bearer tokens actifs du client ciblé (pas d'arrêt de process)
+* contrainte: un client `UI` est protégé et NE DOIT PAS être révocable via cet endpoint
+* réponses:
+  * `200` token(s) invalide(s)
+  * `401 UNAUTHORIZED`
+  * `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE` (selon matrice, incluant le cas token UI protégé)
+  * `422 VALIDATION_FAILED`
+
+`POST /auth/clients/token`
+
+* security: aucune (`security: []`)
+* body requis: `{ client_id, client_kind, secret_key }`
+* `client_kind` autorisés: `AGENT_CLI | AGENT_GUI | ELECTRON | TAURI | MCP` (UI exclu)
+* effet: émet un bearer token client
+* règle stricte: **1 token actif par client** (mint d’un nouveau token => révocation de l’ancien token pour ce client)
+* réponses:
+  * `200` token client (`access_token`, `token_type=Bearer`, `expires_in?`, `client_id`, `client_kind`)
+  * `401 UNAUTHORIZED` (credentials client invalides)
+  * `422 VALIDATION_FAILED`
+  * `429 TOO_MANY_ATTEMPTS`
+
+`POST /auth/clients/{client_id}/rotate-secret`
+
+* security: `UserBearerAuth`
+* prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
+* effet: régénère la `secret_key` et invalide les tokens actifs du client ciblé
+* réponses:
+  * `200` nouvelle `secret_key` (retournée une seule fois à la rotation)
+  * `401 UNAUTHORIZED`
+  * `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE` (selon matrice)
+  * `422 VALIDATION_FAILED`
+
+Règle d'erreur (obligatoire) :
+
+* toute réponse 4xx/5xx de ces endpoints DOIT retourner le schéma `ErrorResponse`
+
+Règle d’unification clients (obligatoire) :
+
+* le flux login utilisateur (`POST /auth/login`) et `UserBearerAuth` DOIVENT être communs pour UI web, agent CLI/GUI et futures apps desktop Electron/Tauri
 
 
 ## 2) Assets
@@ -564,11 +728,20 @@ Règles :
 
 ## 10) Codes d’erreur (normatifs)
 
+* `400 INVALID_TOKEN`
+* `401 UNAUTHORIZED`
+* `403 FORBIDDEN_SCOPE` / `FORBIDDEN_ACTOR`
+* `403 EMAIL_NOT_VERIFIED`
+* `404 USER_NOT_FOUND`
+* `400 INVALID_2FA_CODE`
+* `401 MFA_REQUIRED`
 * `409 STATE_CONFLICT`
 * `409 IDEMPOTENCY_CONFLICT`
+* `409 MFA_ALREADY_ENABLED` / `MFA_NOT_ENABLED`
 * `423 LOCK_REQUIRED` / `LOCK_INVALID`
 * `410 PURGED`
 * `422 VALIDATION_FAILED`
+* `429 TOO_MANY_ATTEMPTS`
 * `429 RATE_LIMITED`
 * `503 TEMPORARY_UNAVAILABLE`
 
