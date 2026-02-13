@@ -15,6 +15,7 @@ servers:
   - url: /api/v1
 
 tags:
+  - name: Auth
   - name: Assets
   - name: Agents
   - name: Jobs
@@ -24,6 +25,240 @@ tags:
   - name: Purge
 
 paths:
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Authenticate user and create session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthLoginRequest"
+      responses:
+        "200":
+          description: Login success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthLoginSuccess"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthError"
+        "403":
+          description: Email not verified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthError"
+        "422":
+          description: Missing email/password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthError"
+        "429":
+          description: Too many attempts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthRateLimitError"
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: End authenticated session
+      security:
+        - SessionCookieAuth: []
+      responses:
+        "200":
+          description: Logout success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthLogoutSuccess"
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current authenticated user profile
+      security:
+        - SessionCookieAuth: []
+      responses:
+        "200":
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUserProfile"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthError"
+
+  /auth/lost-password/request:
+    post:
+      tags: [Auth]
+      summary: Request password reset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthEmailRequest"
+      responses:
+        "202":
+          description: Request accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthAcceptedResponse"
+        "422":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthError"
+        "429":
+          description: Too many attempts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthRateLimitErrorSeconds"
+
+  /auth/lost-password/reset:
+    post:
+      tags: [Auth]
+      summary: Reset password with token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthResetPasswordRequest"
+      responses:
+        "200":
+          description: Password reset completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthPasswordResetSuccess"
+        "400":
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthError"
+        "422":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthError"
+
+  /auth/verify-email/request:
+    post:
+      tags: [Auth]
+      summary: Request email verification token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthEmailRequest"
+      responses:
+        "202":
+          description: Request accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthAcceptedResponse"
+        "422":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthError"
+        "429":
+          description: Too many attempts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthRateLimitErrorSeconds"
+
+  /auth/verify-email/confirm:
+    post:
+      tags: [Auth]
+      summary: Confirm email verification token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthTokenRequest"
+      responses:
+        "200":
+          description: Email verification confirmed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthEmailVerifiedSuccess"
+        "400":
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthError"
+        "422":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthError"
+
+  /auth/verify-email/admin-confirm:
+    post:
+      tags: [Auth]
+      summary: Admin-only force email verification by email
+      security:
+        - SessionCookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthEmailRequest"
+      responses:
+        "200":
+          description: Email verification forced
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthEmailVerifiedSuccess"
+        "403":
+          description: Forbidden actor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthError"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthError"
+        "422":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthError"
+
   /assets:
     get:
       tags: [Assets]
@@ -733,6 +968,131 @@ components:
         type: string
 
   schemas:
+    AuthLoginRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    AuthUserProfile:
+      type: object
+      additionalProperties: false
+      required: [id, email, roles]
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+
+    AuthLoginSuccess:
+      type: object
+      additionalProperties: false
+      required: [authenticated, user]
+      properties:
+        authenticated:
+          type: boolean
+          enum: [true]
+        user:
+          $ref: "#/components/schemas/AuthUserProfile"
+
+    AuthLogoutSuccess:
+      type: object
+      additionalProperties: false
+      required: [authenticated]
+      properties:
+        authenticated:
+          type: boolean
+          enum: [false]
+
+    AuthEmailRequest:
+      type: object
+      additionalProperties: false
+      required: [email]
+      properties:
+        email:
+          type: string
+
+    AuthTokenRequest:
+      type: object
+      additionalProperties: false
+      required: [token]
+      properties:
+        token:
+          type: string
+
+    AuthResetPasswordRequest:
+      type: object
+      additionalProperties: false
+      required: [token, new_password]
+      properties:
+        token:
+          type: string
+        new_password:
+          type: string
+
+    AuthAcceptedResponse:
+      type: object
+      additionalProperties: true
+      required: [accepted]
+      properties:
+        accepted:
+          type: boolean
+          enum: [true]
+
+    AuthPasswordResetSuccess:
+      type: object
+      additionalProperties: false
+      required: [password_reset]
+      properties:
+        password_reset:
+          type: boolean
+          enum: [true]
+
+    AuthEmailVerifiedSuccess:
+      type: object
+      additionalProperties: false
+      required: [email_verified]
+      properties:
+        email_verified:
+          type: boolean
+          enum: [true]
+
+    AuthError:
+      type: object
+      additionalProperties: true
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+
+    AuthRateLimitError:
+      allOf:
+        - $ref: "#/components/schemas/AuthError"
+        - type: object
+          additionalProperties: true
+          properties:
+            retry_in_minutes:
+              type: integer
+
+    AuthRateLimitErrorSeconds:
+      allOf:
+        - $ref: "#/components/schemas/AuthError"
+        - type: object
+          additionalProperties: true
+          properties:
+            retry_in_seconds:
+              type: integer
+
     ServerPolicy:
       type: object
       description: |
