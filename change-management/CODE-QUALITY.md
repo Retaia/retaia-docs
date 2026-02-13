@@ -125,3 +125,13 @@ Pour tout changement touchant l'UI :
 - les catalogues de traduction `en` et `fr` DOIVENT rester synchronisés sur les clés requises
 - le pipeline CI DOIT échouer en cas de clé manquante sur une locale obligatoire
 - les textes d'actions destructives DOIVENT être relus pour éliminer toute ambiguïté utilisateur
+
+## 10) Gate qualité contrat API (contract drift)
+
+Pour tout repository consommateur de l'API Retaia :
+
+- un snapshot `contracts/openapi-v1.sha256` DOIT être versionné
+- le pipeline PR DOIT exécuter un check bloquant de drift entre ce snapshot et `api/openapi/v1.yaml`
+- toute mise à jour du snapshot DOIT passer par une commande dédiée et une modification explicite dans la PR
+
+Référence normative : [`API-CONTRACTS.md`](../api/API-CONTRACTS.md), section `contracts/`.
