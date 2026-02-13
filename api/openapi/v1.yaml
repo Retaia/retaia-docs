@@ -1706,6 +1706,15 @@ components:
         features.ai.suggest_tags:
           type: boolean
           default: false
+        features.ai.provider.ollama:
+          type: boolean
+          default: true
+        features.ai.provider.chatgpt:
+          type: boolean
+          default: false
+        features.ai.provider.claude:
+          type: boolean
+          default: false
         features.ai.suggested_tags_filters:
           type: boolean
           default: false
