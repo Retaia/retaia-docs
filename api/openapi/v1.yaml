@@ -402,7 +402,6 @@ paths:
         Exchanges `(client_id, secret_key)` for a bearer token.
         Normative rule: one active token per technical client_id; minting a new token revokes the previous one.
         This endpoint is for technical non-interactive clients only.
-        Legacy client_kind aliases (`ELECTRON`, `TAURI`) are accepted for compatibility but should migrate to explicit UI or agent kinds.
       security: []
       requestBody:
         required: true
@@ -1158,11 +1157,6 @@ components:
       scheme: bearer
       bearerFormat: JWT
       description: User bearer token used by human-operated interactive clients.
-    SessionCookieAuth:
-      type: apiKey
-      in: cookie
-      name: retaia_session
-      description: Deprecated in favor of UserBearerAuth.
     OAuth2ClientCredentials:
       type: oauth2
       flows:
@@ -1365,13 +1359,13 @@ components:
 
     ClientKind:
       type: string
-      description: Form factor identifier for interactive login flows. Legacy aliases (`UI`, `ELECTRON`, `TAURI`) are accepted for backward compatibility.
-      enum: [UI_WEB, UI_ELECTRON, UI_TAURI, AGENT_CLI, AGENT_GUI, UI, ELECTRON, TAURI]
+      description: Form factor identifier for interactive login flows.
+      enum: [UI_WEB, UI_ELECTRON, UI_TAURI, AGENT_CLI, AGENT_GUI]
 
     NonUiClientKind:
       type: string
-      description: Allowed client kinds for technical secret-key token minting. Legacy aliases (`ELECTRON`, `TAURI`) are accepted for backward compatibility.
-      enum: [AGENT_CLI, AGENT_GUI, MCP, ELECTRON, TAURI]
+      description: Allowed client kinds for technical secret-key token minting.
+      enum: [AGENT_CLI, AGENT_GUI, MCP]
 
     AuthRotateClientSecretResponse:
       type: object

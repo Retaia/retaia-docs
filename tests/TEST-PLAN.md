@@ -72,14 +72,14 @@ Tests obligatoires :
   * bearer absent/invalide => `401 UNAUTHORIZED`
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
   * `client_id` invalide => `422 VALIDATION_FAILED`
-  * `client_id` de type `UI_WEB|UI_ELECTRON|UI_TAURI` (et alias legacy `UI|ELECTRON|TAURI`) protégé => `403` (non révocable via cet endpoint)
+  * `client_id` de type `UI_WEB|UI_ELECTRON|UI_TAURI` protégé => `403` (non révocable via cet endpoint)
 * `POST /auth/clients/token`:
   * `client_id + client_kind(non-UI: AGENT_CLI|AGENT_GUI|MCP) + secret_key` valides => `200` + bearer token client
   * credentials client invalides => `401 UNAUTHORIZED`
   * body invalide => `422 VALIDATION_FAILED`
   * rate limit => `429 TOO_MANY_ATTEMPTS`
   * invariant: nouveau token minté pour un client révoque l’ancien token (1 token actif / client)
-  * `client_kind=UI_WEB|UI_ELECTRON|UI_TAURI` (et alias legacy `UI|ELECTRON|TAURI`) refusé (422/403 selon policy)
+  * `client_kind=UI_WEB|UI_ELECTRON|UI_TAURI` refusé (422/403 selon policy)
 * `POST /auth/clients/{client_id}/rotate-secret`:
   * bearer admin valide + `client_id` valide => `200` + nouvelle `secret_key` (retournée une fois)
   * bearer absent/invalide => `401 UNAUTHORIZED`

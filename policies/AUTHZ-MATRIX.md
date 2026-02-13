@@ -40,13 +40,13 @@ Acteurs normatifs :
 
 * acteur: `ADMIN_INTERACTIVE`
 * scope: policy admin
-* contrainte: `client_kind in {UI_WEB, UI_ELECTRON, UI_TAURI}` (aliases legacy `UI|ELECTRON|TAURI`) => révocation refusée (`403`)
+* contrainte: `client_kind in {UI_WEB, UI_ELECTRON, UI_TAURI}` => révocation refusée (`403`)
 
 `POST /auth/clients/token`
 
 * acteur: `CLIENT_TECHNICAL|AGENT_TECHNICAL`
 * scope: aucun (auth par `client_id + secret_key`)
-* contrainte: `client_kind in {AGENT_CLI, AGENT_GUI, MCP}` uniquement (aliases legacy `ELECTRON|TAURI` acceptés en compatibilité)
+* contrainte: `client_kind in {AGENT_CLI, AGENT_GUI, MCP}` uniquement
 
 ### Assets / Derived
 

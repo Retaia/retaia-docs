@@ -258,7 +258,7 @@ La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.m
 * security: `UserBearerAuth`
 * prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
 * effet: invalide les bearer tokens actifs du client ciblé (pas d'arrêt de process)
-* contrainte: un `client_kind` UI (`UI_WEB`, `UI_ELECTRON`, `UI_TAURI`, alias legacy `UI|ELECTRON|TAURI`) est protégé et NE DOIT PAS être révocable via cet endpoint
+* contrainte: un `client_kind` UI (`UI_WEB`, `UI_ELECTRON`, `UI_TAURI`) est protégé et NE DOIT PAS être révocable via cet endpoint
 * réponses:
   * `200` token(s) invalide(s)
   * `401 UNAUTHORIZED`
@@ -269,7 +269,7 @@ La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.m
 
 * security: aucune (`security: []`)
 * body requis: `{ client_id, client_kind, secret_key }`
-* `client_kind` autorisés: `AGENT_CLI | AGENT_GUI | MCP` (UI exclu, alias legacy `ELECTRON|TAURI` tolérés pour compatibilité)
+* `client_kind` autorisés: `AGENT_CLI | AGENT_GUI | MCP` (UI exclu)
 * effet: émet un bearer token client
 * règle stricte: **1 token actif par client_id** (mint d’un nouveau token => révocation de l’ancien token pour ce client)
 * réponses:
