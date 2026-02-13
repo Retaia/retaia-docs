@@ -51,3 +51,18 @@ Si le code contredit cette documentation, le code est incorrect.
 * [Code quality](change-management/CODE-QUALITY.md)
 * [API contracts](api/API-CONTRACTS.md)
 * [Error model](api/ERROR-MODEL.md)
+
+## Repos enfants (consommateurs de la spec)
+
+Ce repo (`retaia-docs`) est la source de vérité contractuelle.
+Les repos ci-dessous DOIVENT implémenter ces specs sans divergence.
+
+* `retaia-core` : backend/API, auth, policy runtime, orchestration jobs
+* `retaia-ui` : client UI (web/Rust UI app), UX admin/user, application des policies runtime
+* `retaia-agent` : client agent Rust (CLI obligatoire, GUI optionnelle), exécution processing (si repo séparé)
+* `retaia-mcp` : client MCP (pilotage/orchestration uniquement, sans processing) (si repo séparé)
+
+Notes de structure actuelle :
+
+* dans ce workspace local, `retaia-core` et `retaia-ui` sont présents
+* si `agent`/`mcp` ne sont pas des repos séparés, leurs implémentations restent soumises aux mêmes normes documentées ici
