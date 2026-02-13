@@ -297,6 +297,9 @@ Baseline sécurité/fuite (normatif) :
 `GET /app/policy`
 
 * security: `UserBearerAuth` ou `OAuth2ClientCredentials`
+`GET /app/policy`
+
+* security: `UserBearerAuth` ou `OAuth2ClientCredentials`
 * effet: retourne `server_policy` (incluant `feature_flags`) pour clients interactifs et techniques
 * règle: `UI_RUST`, `AGENT` et `MCP` DOIVENT consommer cet endpoint pour la disponibilité runtime des features
 * réponses:
