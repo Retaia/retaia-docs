@@ -127,6 +127,15 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 * modes interactifs (agent CLI/GUI opéré par un humain) : bearer utilisateur via `POST /auth/login`
 * mode client applicatif non-interactif (`AGENT`, `MCP`) : `client_id + secret_key` pour obtenir un bearer token via `POST /auth/clients/token`
 
+Règles 2FA par client (obligatoire) :
+
+* la 2FA est optionnelle au niveau compte utilisateur
+* `UI_RUST` : login utilisateur (`/auth/login`) avec 2FA obligatoire uniquement si activée sur le compte
+* `AGENT` / `MCP` en mode technique (`/auth/clients/token`) : pas de 2FA directe au runtime
+* création d’un `secret_key` pour `AGENT`/`MCP` : DOIT passer par une validation utilisateur via UI
+* si 2FA est activée sur ce compte utilisateur, la validation UI de création `secret_key` DOIT exiger la 2FA
+* flow cible pour `AGENT`/`MCP` : type GitHub device authorization (ouverture URL navigateur, auth UI, validation 2FA optionnelle, approval explicite)
+
 Règle de cardinalité des tokens (obligatoire) :
 
 * `USER_INTERACTIVE` : un même utilisateur PEUT avoir plusieurs tokens actifs simultanément sur des clients différents, avec contrainte stricte **1 token actif par `(user_id, client_id)`**
