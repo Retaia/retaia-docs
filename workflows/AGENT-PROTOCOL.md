@@ -60,6 +60,12 @@ Contrainte d’implémentation :
 * mode interactif opéré par un humain (CLI/GUI): login utilisateur via `POST /auth/login` (+ 2FA si active)
 * un agent non-interactif NE DOIT PAS dépendre d’un login UI pour redémarrer
 
+Feature flags runtime :
+
+* l’agent DOIT consommer les `feature_flags` renvoyés par Core (au minimum via `POST /agents/register`)
+* l’agent NE DOIT PAS hardcoder l’état des flags
+* un changement runtime de flag DOIT être appliqué sans rebuild agent
+
 Secrets :
 
 * `secret_key` ne DOIT jamais être loggée

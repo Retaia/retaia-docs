@@ -210,6 +210,7 @@ Tests obligatoires :
 * `job_type=suggest_tags` sur `/jobs/{job_id}/submit` exige `jobs:submit` + `suggestions:write`
 * client feature OFF => UI/action API de la feature interdite
 * client feature ON => disponibilité immédiate sans redéploiement
+* `UI_RUST`, `AGENT` et `MCP` appliquent tous les `feature_flags` runtime du Core
 
 Cas OFF/ON minimum :
 
@@ -219,6 +220,9 @@ Cas OFF/ON minimum :
 * `features.ai.suggested_tags_filters=ON` : filtres `suggested_tags*` utilisables
 * `features.decisions.bulk=OFF` : `/decisions/preview` et `/decisions/apply` non utilisables
 * `features.decisions.bulk=ON` : flux preview/apply utilisable
+* `UI_RUST` : OFF masque/neutralise la feature, ON l’active au prochain refresh flags
+* `AGENT` : OFF interdit job/patch liés à la feature, ON les autorise sans rebuild agent
+* `MCP` : OFF interdit les commandes/actions liées à la feature, ON les autorise sans redéploiement MCP
 
 ## 8.4) Transition runtime des flags
 

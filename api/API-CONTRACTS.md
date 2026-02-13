@@ -67,6 +67,9 @@ Règles client (normatives, UI/agents/MCP) :
 
 * feature OFF => appel API de la feature interdit et UI correspondante masquée/désactivée
 * feature ON => feature disponible immédiatement, sans déploiement client supplémentaire
+* `UI_RUST`, `AGENT` et `MCP` DOIVENT tous consommer les `feature_flags` runtime pilotés par Core
+* aucun client ne DOIT hardcoder l’état d’un flag ni dépendre d’un flag local statique
+* toute décision de disponibilité fonctionnelle côté client DOIT être dérivée du dernier payload runtime reçu
 
 ### Idempotence (règles strictes)
 
