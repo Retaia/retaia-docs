@@ -39,6 +39,7 @@ Si le code contredit cette documentation, le code est incorrect.
 * [Authz matrix](policies/AUTHZ-MATRIX.md)
 * [Security baseline](policies/SECURITY-BASELINE.md)
 * [Crypto security model](policies/CRYPTO-SECURITY-MODEL.md)
+* [Search privacy index](policies/SEARCH-PRIVACY-INDEX.md)
 * [RGPD data protection](policies/RGPD-DATA-PROTECTION.md)
 * [I18N & localization policy](policies/I18N-LOCALIZATION.md)
 * [Test plan](tests/TEST-PLAN.md)
