@@ -63,10 +63,11 @@ Objectif : fournir une surface stable consommée par :
 * Distinction normative (sans ambiguïté) :
   * `feature_flags` = activation runtime des fonctionnalités côté Core
   * `app_feature_enabled` = activation applicative effective (switches niveau application, gouvernés par admin)
+  * `user_feature_enabled` = préférences utilisateur (opt-out individuel, hors features core v1 globales)
   * `capabilities` = aptitudes techniques déclarées par les agents pour exécuter des jobs
   * `contracts/` = snapshots versionnés pour détecter un drift du contrat OpenAPI
 * Règle de combinaison (obligatoire) :
-  * exécution autorisée uniquement si `capability requise présente` **ET** `feature_flag(s) requis actif(s)`
+  * exécution autorisée uniquement si `capability requise présente` **ET** `feature_flag(s) requis actif(s)` **ET** `app_feature_enabled` **ET** `user_feature_enabled`
   * capability présente + flag OFF => refus normatif (`403 FORBIDDEN_SCOPE`/équivalent policy)
   * flag ON + capability absente => non exécutable (`pending`, `403` ou `409` selon endpoint/policy)
 * Sémantique stricte :
@@ -103,6 +104,30 @@ Gouvernance des `app_feature_enabled` (opposable) :
 * portée : switches applicatifs globaux (pas des préférences locales client)
 * effet runtime obligatoire : un switch applicatif désactivé DOIT empêcher l’exécution des fonctionnalités associées pour le scope applicatif
 * règle MCP obligatoire : `app_feature_enabled.features.ai=false` DOIT désactiver le client `MCP` (bootstrap, token mint et appels authentifiés MCP refusés)
+
+Gouvernance des `user_feature_enabled` (opposable) :
+
+* lecture/modification : utilisateur authentifié sur lui-même via `GET/PATCH /auth/me/features`
+* portée : préférences utilisateur (opt-out local à l’utilisateur courant)
+* contrainte : les features classées `CORE_V1_GLOBAL` NE DOIVENT PAS être désactivables au scope utilisateur
+* tentative de désactivation d’une feature `CORE_V1_GLOBAL` => `403 FORBIDDEN_SCOPE`
+* effet runtime obligatoire : `user_feature_enabled=false` DOIT désactiver la feature pour l’utilisateur et appliquer la cascade de dépendances
+* valeur par défaut (migration-safe) : absence de clé `user_feature_enabled.<feature>` DOIT être interprétée comme `true`
+
+Catalogue de dépendances et escalade (opposable) :
+
+* Core DOIT exposer la liste normative via `feature_governance[]` (dans `GET /app/features` et `GET /auth/me/features`)
+* chaque entrée DOIT inclure : `key`, `tier`, `user_can_disable`, `dependencies[]`, `disable_escalation[]`
+* règle de dépendance : si une dépendance est OFF, la feature dépendante devient OFF dans `effective_feature_enabled`
+* règle d’escalade : désactiver une feature parent DOIT désactiver toutes les features listées dans `disable_escalation[]`
+* règle de sûreté v1 globale : les features socle v1 (`CORE_V1_GLOBAL`) restent disponibles et ne sont pas impactées par des opt-out utilisateur
+
+Arbitrage admin/user (opposable) :
+
+* priorité d’évaluation: `feature_flags` -> `app_feature_enabled` -> `user_feature_enabled` -> dépendances/escalade
+* `app_feature_enabled=false` domine toujours (feature OFF pour tous les utilisateurs)
+* `app_feature_enabled=true` n’annule pas un opt-out utilisateur (`user_feature_enabled=false`)
+* `CORE_V1_GLOBAL` : toujours ON dans `effective_feature_enabled` (hors indisponibilité technique majeure hors scope flags/user)
 
 ### Idempotence (règles strictes)
 
@@ -290,7 +315,7 @@ Normalisation HTTP (normatif) :
 `GET /app/features`
 
 * security: `UserBearerAuth`
-* effet: retourne les switches applicatifs effectifs (`app_feature_enabled`)
+* effet: retourne les switches applicatifs (`app_feature_enabled`) + métadonnées de gouvernance (`feature_governance`)
 * réponses:
   * `200` succès
   * `401 UNAUTHORIZED`
@@ -306,6 +331,27 @@ Normalisation HTTP (normatif) :
   * `200` succès
   * `401 UNAUTHORIZED`
   * `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
+  * `422 VALIDATION_FAILED`
+
+`GET /auth/me/features`
+
+* security: `UserBearerAuth`
+* effet: retourne les préférences feature de l’utilisateur (`user_feature_enabled`) et l’état effectif (`effective_feature_enabled`)
+* inclut `feature_governance` pour appliquer localement dépendances et escalade
+* réponses:
+  * `200` succès
+  * `401 UNAUTHORIZED`
+
+`PATCH /auth/me/features`
+
+* security: `UserBearerAuth`
+* body requis: `{ user_feature_enabled: { ... } }`
+* effet: met à jour les préférences feature de l’utilisateur courant
+* contrainte: tentative de désactivation d’une feature `CORE_V1_GLOBAL` refusée (`403 FORBIDDEN_SCOPE`)
+* réponses:
+  * `200` succès
+  * `401 UNAUTHORIZED`
+  * `403 FORBIDDEN_SCOPE`
   * `422 VALIDATION_FAILED`
 
 `GET /app/policy`

@@ -45,6 +45,13 @@ Acteurs normatifs :
 * scope: policy admin (sinon `403 FORBIDDEN_ACTOR` / `FORBIDDEN_SCOPE`)
 * portée: met à jour les switches applicatifs globaux
 
+`GET /auth/me/features`, `PATCH /auth/me/features`
+
+* acteur: `USER_INTERACTIVE`
+* scope: session utilisateur valide (`UserBearerAuth`)
+* portée: préférences feature de l'utilisateur courant
+* contrainte: désactivation d'une feature `CORE_V1_GLOBAL` interdite (`403 FORBIDDEN_SCOPE`)
+
 `GET /app/policy`
 
 * acteur: `USER_INTERACTIVE` ou `CLIENT_TECHNICAL`

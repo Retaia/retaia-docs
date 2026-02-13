@@ -214,13 +214,77 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /auth/me/features:
+    get:
+      tags: [Auth]
+      summary: Get current user feature preferences
+      description: |
+        Returns user-level feature preferences (`user_feature_enabled`) and effective availability.
+        Effective availability is computed with AND semantics:
+        `feature_flags` AND `app_feature_enabled` AND `user_feature_enabled` AND dependency constraints.
+      security:
+        - UserBearerAuth: []
+      responses:
+        "200":
+          description: Current user feature preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserFeaturesResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      tags: [Auth]
+      summary: Update current user feature preferences
+      description: |
+        Updates user-level feature preferences (`user_feature_enabled`) for the current authenticated user.
+        Core v1 global features are protected and cannot be disabled at user scope.
+      security:
+        - UserBearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserFeaturesUpdateRequest"
+      responses:
+        "200":
+          description: Updated current user feature preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserFeaturesResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden scope (`FORBIDDEN_SCOPE`) when disabling protected core feature(s)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /app/features:
     get:
       tags: [Auth]
       summary: Get effective app feature switches
       description: |
         Returns effective app switches (`app_feature_enabled`).
-        Effective feature availability requires Core `feature_flags` AND `app_feature_enabled`.
+        Also returns dependency/escalation metadata for deterministic client behavior.
+        Effective feature availability requires Core `feature_flags` AND `app_feature_enabled` AND user preferences.
         Normative gate: when `app_feature_enabled.features.ai=false`, `client_kind=MCP` is disabled at runtime.
       security:
         - UserBearerAuth: []
@@ -1779,6 +1843,46 @@ components:
       additionalProperties:
         type: boolean
 
+    UserFeatureEnabled:
+      type: object
+      description: |
+        User-level feature switches.
+        Only non-core features can be disabled at user scope.
+        Missing key is interpreted as `true` (migration-safe default).
+      additionalProperties:
+        type: boolean
+
+    EffectiveFeatureEnabled:
+      type: object
+      description: |
+        Effective availability after all gates (`feature_flags`, `app_feature_enabled`, `user_feature_enabled`, dependencies).
+        Evaluation order is strict: feature_flags -> app_feature_enabled -> user_feature_enabled -> dependency/escalation rules.
+      additionalProperties:
+        type: boolean
+
+    FeatureGovernanceRule:
+      type: object
+      additionalProperties: false
+      required: [key, tier, user_can_disable, dependencies, disable_escalation]
+      properties:
+        key:
+          type: string
+        tier:
+          type: string
+          enum: [CORE_V1_GLOBAL, OPTIONAL]
+        user_can_disable:
+          type: boolean
+        dependencies:
+          type: array
+          items:
+            type: string
+        disable_escalation:
+          type: array
+          description: |
+            Features automatically disabled when this feature is disabled at app/user scope.
+          items:
+            type: string
+
     AppFeaturesResponse:
       type: object
       additionalProperties: false
@@ -1786,6 +1890,14 @@ components:
       properties:
         app_feature_enabled:
           $ref: "#/components/schemas/AppFeatureEnabled"
+        user_feature_enabled:
+          $ref: "#/components/schemas/UserFeatureEnabled"
+        effective_feature_enabled:
+          $ref: "#/components/schemas/EffectiveFeatureEnabled"
+        feature_governance:
+          type: array
+          items:
+            $ref: "#/components/schemas/FeatureGovernanceRule"
 
     AppFeaturesUpdateRequest:
       type: object
@@ -1794,6 +1906,28 @@ components:
       properties:
         app_feature_enabled:
           $ref: "#/components/schemas/AppFeatureEnabled"
+
+    UserFeaturesResponse:
+      type: object
+      additionalProperties: false
+      required: [user_feature_enabled, effective_feature_enabled, feature_governance]
+      properties:
+        user_feature_enabled:
+          $ref: "#/components/schemas/UserFeatureEnabled"
+        effective_feature_enabled:
+          $ref: "#/components/schemas/EffectiveFeatureEnabled"
+        feature_governance:
+          type: array
+          items:
+            $ref: "#/components/schemas/FeatureGovernanceRule"
+
+    UserFeaturesUpdateRequest:
+      type: object
+      additionalProperties: false
+      required: [user_feature_enabled]
+      properties:
+        user_feature_enabled:
+          $ref: "#/components/schemas/UserFeatureEnabled"
 
     AppPolicyResponse:
       type: object

@@ -56,6 +56,7 @@ Tests obligatoires :
   * bearer absent/invalide => `401 UNAUTHORIZED`
 * `GET /app/features`:
   * bearer valide => `200` + payload `app_feature_enabled`
+  * réponse inclut `feature_governance[]` (`key`, `tier`, `user_can_disable`, `dependencies[]`, `disable_escalation[]`)
   * bearer absent/invalide => `401 UNAUTHORIZED`
 * `PATCH /app/features`:
   * bearer admin valide + body valide => `200` + payload `app_feature_enabled` mis à jour
@@ -63,6 +64,17 @@ Tests obligatoires :
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
   * body invalide => `422 VALIDATION_FAILED`
   * `app_feature_enabled.features.ai=false` => `MCP` désactivé globalement
+* `GET /auth/me/features`:
+  * bearer valide => `200` + `user_feature_enabled` + `effective_feature_enabled` + `feature_governance`
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+* `PATCH /auth/me/features`:
+  * bearer valide + body valide => `200` + préférences utilisateur mises à jour
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+  * tentative de désactivation d’une feature `CORE_V1_GLOBAL` => `403 FORBIDDEN_SCOPE`
+  * body invalide => `422 VALIDATION_FAILED`
+  * désactivation d’une feature parent => `disable_escalation[]` appliquée dans `effective_feature_enabled`
+  * dépendance OFF => feature dépendante OFF dans `effective_feature_enabled`
+  * clé absente dans `user_feature_enabled` => traitée comme `true` (pas de régression pour utilisateurs existants)
 * `GET /app/policy`:
   * bearer utilisateur valide => `200` + `server_policy.feature_flags`
   * bearer client technique valide (`OAuth2ClientCredentials`) => `200`
@@ -272,8 +284,9 @@ Tests obligatoires :
 * toute feature `v1.1+` est désactivée par défaut
 * source de vérité des flags = payload runtime de Core (`server_policy.feature_flags`), jamais un hardcode client
 * canal runtime flags défini et testé pour `AGENT` en v1, puis `UI_RUST` et `MCP` en v1.1 global via `GET /app/policy` (pas seulement `POST /agents/register`)
-* distinction opposable: `capabilities` (agent/client), `feature_flags` (Core) et `app_feature_enabled` (application) sont testées séparément
+* distinction opposable: `capabilities` (agent/client), `feature_flags` (Core), `app_feature_enabled` (application) et `user_feature_enabled` (utilisateur) sont testées séparément
 * règle AND validée: capability + flag requis pour exécuter une action feature
+* ordre d’arbitrage validé: `feature_flags` -> `app_feature_enabled` -> `user_feature_enabled` -> dépendances/escalade
 * flag absent dans le payload runtime => traité comme `false`
 * flags inconnus côté client => ignorés sans erreur
 * flag désactivé => la feature est refusée explicitement avec un code normatif
@@ -295,6 +308,8 @@ Cas OFF/ON minimum :
 * `MCP` : OFF interdit les commandes/actions liées à la feature, ON les autorise sans redéploiement MCP
 * `app_feature_enabled.features.ai=OFF` : client `MCP` entièrement désactivé (bootstrap/token/appels runtime refusés)
 * `app_feature_enabled.features.ai=ON` : client `MCP` autorisé selon matrice authz et capabilities
+* `user_feature_enabled.features.ai=OFF` : fonctionnalités AI désactivées pour l’utilisateur courant sans impact global
+* tentative d’opt-out utilisateur sur une feature `CORE_V1_GLOBAL` => refus `403 FORBIDDEN_SCOPE`
 * assimilation flag->mainline validée: après stabilisation, le flag disparaît de `server_policy.feature_flags` et le comportement final reste couvert par des tests non conditionnels
 * aucun code/test/doc OFF/ON obsolète persistant après retrait du flag (hors kill-switchs explicitement documentés)
 
