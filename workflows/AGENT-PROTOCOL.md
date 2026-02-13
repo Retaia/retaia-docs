@@ -72,6 +72,20 @@ Secrets :
 * stockage secret DOIT utiliser le magasin sécurisé OS (Linux Secret Service/file perms stricts, macOS Keychain, Windows Credential Manager/DPAPI)
 * rotation `POST /auth/clients/{client_id}/rotate-secret` DOIT être supportée sans réinstallation complète
 
+### 3.4 Clients LLM minimum (normatif)
+
+Pour les workloads AI `suggest_tags` (`meta.tags.suggestions@1`), l'agent DOIT supporter au minimum :
+
+* `ollama`
+* `chatgpt`
+* `anthropic`
+
+Règles :
+
+* sélection provider explicite via config/runtime policy (pas de hardcode implicite)
+* indisponibilité d'un provider => fallback vers un provider disponible ou retryable (pas de crash global agent)
+* comportement déterministe du routing provider pour une même policy d'exécution
+
 
 ## 4. Cycle de vie d’un job
 

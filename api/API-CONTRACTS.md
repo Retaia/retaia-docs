@@ -133,6 +133,7 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 * modes non interactifs : bearer technique (`OAuth2ClientCredentials`)
 * modes interactifs (agent CLI/GUI opéré par un humain) : bearer utilisateur via `POST /auth/login`
 * mode client applicatif non-interactif (`AGENT`, `MCP`) : `client_id + secret_key` pour obtenir un bearer token via `POST /auth/clients/token`
+* pour les workflows AI `suggest_tags` côté `AGENT`, les clients LLM minimum obligatoires sont `ollama`, `chatgpt`, `anthropic`
 
 Règles 2FA par client (obligatoire) :
 
@@ -906,6 +907,16 @@ Checklist minimale d’implémentation :
   * compare avec `contracts/openapi-v1.sha256`
   * échoue (exit code non nul) en cas de mismatch
 * exiger dans la PR la trace explicite du refresh (`contracts/openapi-v1.sha256` modifié + justification migration)
+
+## 16) Workflow Git normatif (repos consommateurs)
+
+Règles opposables (UI, core, agents, MCP, tooling) :
+
+* toute branche de travail DOIT être synchronisée via `rebase` sur `master`
+* les merge commits de synchronisation (`Merge branch 'master' into ...`) sont interdits
+* l'historique PR DOIT rester linéaire avant merge
+* en cas de conflit, la résolution DOIT être faite pendant le rebase
+* la CI DOIT pouvoir bloquer une PR contenant un commit de merge de synchronisation
 
 Exemple de scripts (POSIX) :
 

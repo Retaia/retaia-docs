@@ -211,6 +211,9 @@ Produire des suggestions de tags à partir des facts/transcript/metadata.
 **Required capabilities**
 
 * `meta.tags.suggestions@1`
+* `llm.client.ollama@1`
+* `llm.client.chatgpt@1`
+* `llm.client.anthropic@1`
 
 **Inputs**
 
@@ -218,6 +221,7 @@ Produire des suggestions de tags à partir des facts/transcript/metadata.
 * facts_ref
 * transcript_ref (optionnel)
 * suggestion_profile (optionnel)
+* llm_provider (optionnel, runtime policy; valeurs: `ollama|chatgpt|anthropic`)
 
 **Expected outputs**
 
@@ -233,6 +237,7 @@ Produire des suggestions de tags à partir des facts/transcript/metadata.
 
 * modèle indisponible → retryable
 * entrée insuffisante → failed non bloquant
+* provider indisponible → fallback provider ou retryable selon policy serveur
 
 
 ## 4. Règles d’évolution
