@@ -48,6 +48,18 @@ Acteurs normatifs :
 * scope: aucun (auth par `client_id + secret_key`)
 * contrainte: `client_kind in {AGENT, MCP}` uniquement
 
+`POST /auth/clients/device/start|poll|cancel`
+
+* acteur: `CLIENT_TECHNICAL|AGENT_TECHNICAL`
+* scope: aucun
+* contrainte: `client_kind in {AGENT, MCP}` uniquement
+
+Validation UI du device flow (`verification_uri*`)
+
+* acteur: `USER_INTERACTIVE`
+* scope: session utilisateur valide (`UserBearerAuth`)
+* si 2FA est activée pour le compte utilisateur, validation OTP obligatoire avant approval
+
 ### Assets / Derived
 
 * scopes: `assets:read`
