@@ -62,6 +62,9 @@ Tests obligatoires :
     * `default_llm_model=mistral:latest`
     * `default_stt_provider=whispercpp`
     * `default_stt_model=ggml-large-v3-turbo.bin`
+    * `llm_quality_profile=quality`
+    * `stt_quality_profile=quality`
+    * `prioritize_quality_over_latency=true`
   * bearer absent/invalide => `401 UNAUTHORIZED`
 * `PATCH /app/ai-defaults`:
   * bearer admin valide + body valide => `200`

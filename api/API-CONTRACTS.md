@@ -187,6 +187,9 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
   * `default_llm_model=mistral:latest`
   * `default_stt_provider=whispercpp`
   * `default_stt_model=ggml-large-v3-turbo.bin`
+  * `llm_quality_profile=quality`
+  * `stt_quality_profile=quality`
+  * `prioritize_quality_over_latency=true`
 * stratégie AI/transcription: local-first obligatoire pour `UI_RUST`, `AGENT`, `MCP`
 * transcription locale minimum actuelle: `Whisper.cpp`
 * backend distant autorisé uniquement en opt-in explicite utilisateur/policy (jamais par défaut implicite)
@@ -339,7 +342,7 @@ Normalisation HTTP (normatif) :
 
 * security: `UserBearerAuth`
 * prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
-* body requis: `{ app_ai_defaults: { default_llm_provider, default_llm_model, default_stt_provider, default_stt_model, authorized_models } }`
+* body requis: `{ app_ai_defaults: { default_llm_provider, default_llm_model, default_stt_provider, default_stt_model, llm_quality_profile, stt_quality_profile, prioritize_quality_over_latency, authorized_models } }`
 * effet: met à jour les defaults globaux IA et la policy d’autorisation modèle
 * règle: un agent qui ne trouve pas le provider/modèle requis ou qui n’est pas autorisé DOIT invalider les capabilities liées
 * réponses:

@@ -1880,6 +1880,17 @@ components:
         default_stt_model:
           type: string
           default: ggml-large-v3-turbo.bin
+        llm_quality_profile:
+          type: string
+          enum: [quality, balanced, speed]
+          default: quality
+        stt_quality_profile:
+          type: string
+          enum: [quality, balanced, speed]
+          default: quality
+        prioritize_quality_over_latency:
+          type: boolean
+          default: true
         authorized_models:
           type: object
           description: Provider/model allowlist enforced by Core policy.
