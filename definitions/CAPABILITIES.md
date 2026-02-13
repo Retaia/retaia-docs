@@ -4,6 +4,14 @@ Ce document définit le **système de capabilities** utilisé pour décrire, pla
 
 Ces règles sont **normatives**.
 
+## 0. Distinction normative (capabilities vs feature flags)
+
+* `capabilities` = capacités techniques déclarées par un client/agent (ce qu'il sait faire)
+* `feature_flags` = activation fonctionnelle globale pilotée par Core (ce qui est autorisé maintenant)
+* une capability n'active jamais une feature globale à elle seule
+* une feature flag n'accorde jamais une capacité technique absente
+* disponibilité effective d'une action = `capability requise` AND `feature_flag actif`
+
 
 ## 1. Définition
 

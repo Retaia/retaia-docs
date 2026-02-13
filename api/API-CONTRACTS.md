@@ -42,6 +42,10 @@ Objectif : fournir une surface stable consommée par :
   * `feature_flags` = activation runtime des fonctionnalités côté Core
   * `capabilities` = aptitudes techniques déclarées par les agents pour exécuter des jobs
   * `contracts/` = snapshots versionnés pour détecter un drift du contrat OpenAPI
+* Règle de combinaison (obligatoire) :
+  * exécution autorisée uniquement si `capability requise présente` **ET** `feature_flag(s) requis actif(s)`
+  * capability présente + flag OFF => refus normatif (`403 FORBIDDEN_SCOPE`/équivalent policy)
+  * flag ON + capability absente => non exécutable (`pending`, `403` ou `409` selon endpoint/policy)
 * Sémantique stricte :
   * flag absent = `false`
   * flag inconnu côté client = ignoré
