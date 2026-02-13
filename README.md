@@ -38,6 +38,7 @@ Si le code contredit cette documentation, le code est incorrect.
 * [Lock lifecycle](policies/LOCK-LIFECYCLE.md)
 * [Authz matrix](policies/AUTHZ-MATRIX.md)
 * [Security baseline](policies/SECURITY-BASELINE.md)
+* [GPG/OpenPGP standard](policies/GPG-OPENPGP-STANDARD.md)
 * [Crypto security model](policies/CRYPTO-SECURITY-MODEL.md)
 * [Search privacy index](policies/SEARCH-PRIVACY-INDEX.md)
 * [RGPD data protection](policies/RGPD-DATA-PROTECTION.md)

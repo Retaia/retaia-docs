@@ -276,7 +276,21 @@ Tests obligatoires :
 * actions sécurité critiques auditées (login/logout, revoke-token, rotate-secret, 2FA enable/disable, device approval)
 * régression interdite: aucune réintroduction de `SessionCookieAuth`
 
-## 8.7) Crypto + RGPD (leak-resilience)
+## 8.7) GPG/OpenPGP standardisation
+
+Tests obligatoires :
+
+* conformité au standard [`GPG-OPENPGP-STANDARD.md`](../policies/GPG-OPENPGP-STANDARD.md) sur tous les clients (`UI_RUST`, `AGENT`, `MCP`)
+* roundtrip encrypt/decrypt valide avec librairie OpenPGP autorisée par stack
+* signature/verification valide pour payloads sensibles signés
+* rejet explicite des algorithmes interdits (SHA-1, RSA < 3072, DSA legacy)
+* adresses, coordonnées GPS, transcriptions non lisibles en clair dans dump DB/backups
+* rotation/rekey OpenPGP sans perte d'accès légitime
+* mode transparent par défaut: aucun setup PGP manuel requis pour un utilisateur standard
+* mode avancé: intégration `gpg-agent`/clés existantes fonctionne quand activée
+* fallback sûr: indisponibilité du mode avancé ne bloque pas l'usage standard
+
+## 8.8) Crypto + RGPD (leak-resilience)
 
 Tests obligatoires :
 
@@ -288,7 +302,7 @@ Tests obligatoires :
 * exercice de notification fuite RGPD exécuté et tracé (SLA 72h vérifié en simulation)
 * rotation/rekey crypto n'introduit pas de perte d'accès légitime ni de régression authz
 
-## 8.8) Full-text + filtres localisation sur données chiffrées
+## 8.9) Full-text + filtres localisation sur données chiffrées
 
 Tests obligatoires :
 
@@ -325,6 +339,7 @@ Tests obligatoires :
 * [ERROR-MODEL.md](../api/ERROR-MODEL.md)
 * [AUTHZ-MATRIX.md](../policies/AUTHZ-MATRIX.md)
 * [SECURITY-BASELINE.md](../policies/SECURITY-BASELINE.md)
+* [GPG-OPENPGP-STANDARD.md](../policies/GPG-OPENPGP-STANDARD.md)
 * [CRYPTO-SECURITY-MODEL.md](../policies/CRYPTO-SECURITY-MODEL.md)
 * [SEARCH-PRIVACY-INDEX.md](../policies/SEARCH-PRIVACY-INDEX.md)
 * [RGPD-DATA-PROTECTION.md](../policies/RGPD-DATA-PROTECTION.md)

@@ -6,6 +6,7 @@ Ce document definit la gestion normative des cles cryptographiques et des secret
 
 * cles de signature token (JWT)
 * cles de chiffrement donnees applicatives (KMS/HSM)
+* cles OpenPGP/GPG pour payloads et donnees sensibles
 * secrets runtime sensibles utilises par Core
 
 ## 2) Exigences MUST
@@ -58,9 +59,11 @@ En cas de compromission suspectee/averee:
 * rotation JWT sans downtime verification
 * invalidation effective des tokens lors emergency rotation
 * audit event present pour create/rotate/revoke de cle
+* rotation OpenPGP sans perte de decryptabilite autorisee
 
 ## References associees
 
 * [SECURITY-BASELINE.md](SECURITY-BASELINE.md)
 * [THREAT-MODEL.md](THREAT-MODEL.md)
+* [GPG-OPENPGP-STANDARD.md](GPG-OPENPGP-STANDARD.md)
 * [API-CONTRACTS.md](../api/API-CONTRACTS.md)
