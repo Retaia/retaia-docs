@@ -74,6 +74,7 @@ Tests obligatoires :
   * body invalide => `422 VALIDATION_FAILED`
   * désactivation d’une feature parent => `disable_escalation[]` appliquée dans `effective_feature_enabled`
   * dépendance OFF => feature dépendante OFF dans `effective_feature_enabled`
+  * clé absente dans `user_feature_enabled` => traitée comme `true` (pas de régression pour utilisateurs existants)
 * `GET /app/policy`:
   * bearer utilisateur valide => `200` + `server_policy.feature_flags`
   * bearer client technique valide (`OAuth2ClientCredentials`) => `200`
@@ -285,6 +286,7 @@ Tests obligatoires :
 * canal runtime flags défini et testé pour `AGENT` en v1, puis `UI_RUST` et `MCP` en v1.1 global via `GET /app/policy` (pas seulement `POST /agents/register`)
 * distinction opposable: `capabilities` (agent/client), `feature_flags` (Core), `app_feature_enabled` (application) et `user_feature_enabled` (utilisateur) sont testées séparément
 * règle AND validée: capability + flag requis pour exécuter une action feature
+* ordre d’arbitrage validé: `feature_flags` -> `app_feature_enabled` -> `user_feature_enabled` -> dépendances/escalade
 * flag absent dans le payload runtime => traité comme `false`
 * flags inconnus côté client => ignorés sans erreur
 * flag désactivé => la feature est refusée explicitement avec un code normatif
