@@ -163,6 +163,12 @@ Migration obligatoire (anti dette technique) :
 * Core DOIT supprimer le code runtime lié au cookie session auth (`SessionCookieAuth`).
 * UI, Agent et MCP DOIVENT migrer vers Bearer-only et supprimer toute dépendance cookie.
 
+Baseline sécurité/fuite (normatif) :
+
+* la baseline security "assume breach" est définie dans [`SECURITY-BASELINE.md`](../policies/SECURITY-BASELINE.md)
+* toute implémentation Core/UI/Agent/MCP DOIT appliquer les exigences MUST de cette baseline
+* en cas de conflit d'interprétation, le modèle le plus restrictif s'applique
+
 ### Endpoints auth applicatifs (normatif)
 
 `POST /auth/login`
@@ -918,6 +924,7 @@ Procédure de refresh contrôlé :
 * [LOCK-LIFECYCLE.md](../policies/LOCK-LIFECYCLE.md)
 * [NAMING-AND-NONCE.md](../policies/NAMING-AND-NONCE.md)
 * [AUTHZ-MATRIX.md](../policies/AUTHZ-MATRIX.md)
+* [SECURITY-BASELINE.md](../policies/SECURITY-BASELINE.md)
 * [HOOKS-CONTRACT.md](../policies/HOOKS-CONTRACT.md)
 * [ERROR-MODEL.md](ERROR-MODEL.md)
 * [CODE-QUALITY.md](../change-management/CODE-QUALITY.md)
