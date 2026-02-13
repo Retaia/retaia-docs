@@ -127,6 +127,10 @@ Tests obligatoires :
 * sélection provider LLM pilotée par config/runtime policy (pas de hardcode implicite)
 * indisponibilité d’un provider LLM n’arrête pas l’agent: fallback provider ou retryable contrôlé
 * pour une policy identique, le routing provider reste déterministe (non flaky)
+* liste des modèles LLM lue dynamiquement depuis runtime policy/catalog (pas de hardcode client)
+* modèle LLM effectif choisi explicitement par l’utilisateur (UI/CLI/config utilisateur)
+* changement de modèle par l’utilisateur appliqué sans rebuild client
+* modèle hors catalogue runtime rejeté proprement (erreur explicite, sans crash)
 
 ## 2) Jobs & leases
 
