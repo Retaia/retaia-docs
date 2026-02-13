@@ -65,3 +65,10 @@ Une PR qui retire un flag DOIT inclure:
 * un retrait de flag n'est déployable que si les profils `COMPAT` requis sont servis
 * la pipeline CD DOIT bloquer un retrait de flag si la fenêtre d'acceptance n'est pas satisfaite
 * la rollback strategy DOIT préserver la négociation de version des flags
+
+## 7) Anti-patterns interdits
+
+* conserver un flag actif "au cas où" après stabilisation
+* empiler plusieurs flags pour une même feature stabilisée
+* garder des chemins OFF/ON non testés en CI
+* utiliser un flag temporaire comme permission permanente
