@@ -52,4 +52,5 @@ Ce document definit la classification des donnees et les controles minimums asso
 
 * [SECURITY-BASELINE.md](SECURITY-BASELINE.md)
 * [THREAT-MODEL.md](THREAT-MODEL.md)
+* [GPG-OPENPGP-STANDARD.md](GPG-OPENPGP-STANDARD.md)
 * [ERROR-MODEL.md](../api/ERROR-MODEL.md)

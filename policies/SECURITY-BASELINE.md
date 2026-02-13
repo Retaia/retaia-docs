@@ -63,6 +63,7 @@ Objectif: en cas d'exfiltration partielle (DB, logs, token, backup), les donnée
 
 * minimisation: ne collecter et ne stocker que les données nécessaires au service
 * chiffrement au repos pour données sensibles et backups
+* standard crypto applicatif cross-client: GPG/OpenPGP selon [`GPG-OPENPGP-STANDARD.md`](GPG-OPENPGP-STANDARD.md)
 * séparation logique des données opérationnelles et des secrets
 * exports/dumps de prod DOIVENT être chiffrés et tracés
 * données de debug en prod DOIVENT être minimisées et redigées
@@ -96,4 +97,5 @@ Une livraison est non conforme si au moins un point ci-dessous échoue:
 * [API-CONTRACTS.md](../api/API-CONTRACTS.md)
 * [ERROR-MODEL.md](../api/ERROR-MODEL.md)
 * [AUTHZ-MATRIX.md](AUTHZ-MATRIX.md)
+* [GPG-OPENPGP-STANDARD.md](GPG-OPENPGP-STANDARD.md)
 * [TEST-PLAN.md](../tests/TEST-PLAN.md)

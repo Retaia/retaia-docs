@@ -38,6 +38,7 @@ Si le code contredit cette documentation, le code est incorrect.
 * [Lock lifecycle](policies/LOCK-LIFECYCLE.md)
 * [Authz matrix](policies/AUTHZ-MATRIX.md)
 * [Security baseline](policies/SECURITY-BASELINE.md)
+* [GPG/OpenPGP standard](policies/GPG-OPENPGP-STANDARD.md)
 * [I18N & localization policy](policies/I18N-LOCALIZATION.md)
 * [Test plan](tests/TEST-PLAN.md)
 * [Anti-patterns](anti-patterns/ANTI-PATTERNS.md)

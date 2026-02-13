@@ -276,6 +276,17 @@ Tests obligatoires :
 * actions sécurité critiques auditées (login/logout, revoke-token, rotate-secret, 2FA enable/disable, device approval)
 * régression interdite: aucune réintroduction de `SessionCookieAuth`
 
+## 8.7) GPG/OpenPGP standardisation
+
+Tests obligatoires :
+
+* conformité au standard [`GPG-OPENPGP-STANDARD.md`](../policies/GPG-OPENPGP-STANDARD.md) sur tous les clients (`UI_RUST`, `AGENT`, `MCP`)
+* roundtrip encrypt/decrypt valide avec librairie OpenPGP autorisée par stack
+* signature/verification valide pour payloads sensibles signés
+* rejet explicite des algorithmes interdits (SHA-1, RSA < 3072, DSA legacy)
+* adresses, coordonnées GPS, transcriptions non lisibles en clair dans dump DB/backups
+* rotation/rekey OpenPGP sans perte d'accès légitime
+
 ## 9) Couverture minimale
 
 Minimum :
@@ -301,6 +312,7 @@ Tests obligatoires :
 * [ERROR-MODEL.md](../api/ERROR-MODEL.md)
 * [AUTHZ-MATRIX.md](../policies/AUTHZ-MATRIX.md)
 * [SECURITY-BASELINE.md](../policies/SECURITY-BASELINE.md)
+* [GPG-OPENPGP-STANDARD.md](../policies/GPG-OPENPGP-STANDARD.md)
 * [LOCK-LIFECYCLE.md](../policies/LOCK-LIFECYCLE.md)
 * [CODE-QUALITY.md](../change-management/CODE-QUALITY.md)
 * [I18N-LOCALIZATION.md](../policies/I18N-LOCALIZATION.md)
