@@ -80,6 +80,19 @@ Tests obligatoires :
   * rate limit => `429 TOO_MANY_ATTEMPTS`
   * invariant: nouveau token minté pour un client révoque l’ancien token (1 token actif / client)
   * `client_kind=UI_RUST` refusé (422/403 selon policy)
+* `POST /auth/clients/device/start`:
+  * `client_kind in {AGENT, MCP}` => `200` + `device_code`, `user_code`, `verification_uri`, `verification_uri_complete`
+  * body invalide => `422 VALIDATION_FAILED`
+  * rate limit => `429 TOO_MANY_ATTEMPTS`
+* `POST /auth/clients/device/poll`:
+  * avant validation UI => statut `PENDING`
+  * après approval UI => statut `APPROVED` + `secret_key` one-shot
+  * approval refusée par utilisateur => statut/code `DENIED`/`ACCESS_DENIED`
+  * code expiré => statut/code `EXPIRED`/`EXPIRED_DEVICE_CODE`
+  * polling trop fréquent => `429 SLOW_DOWN`/`TOO_MANY_ATTEMPTS`
+* `POST /auth/clients/device/cancel`:
+  * flow en cours => `200` canceled
+  * `device_code` invalide/expiré => `400 INVALID_DEVICE_CODE|EXPIRED_DEVICE_CODE`
 * `POST /auth/clients/{client_id}/rotate-secret`:
   * bearer admin valide + `client_id` valide => `200` + nouvelle `secret_key` (retournée une fois)
   * bearer absent/invalide => `401 UNAUTHORIZED`
@@ -92,6 +105,11 @@ Tests obligatoires :
 * compatibilité desktop validée: client `UI_RUST` (Rust/Tauri) utilise `POST /auth/login` + `Authorization: Bearer`
 * anti lock-out: l'UI n'expose jamais le token en clair et n'offre pas d'action d'auto-révocation du token UI actif
 * régression interdite: aucun endpoint runtime n'accepte encore `SessionCookieAuth` (Bearer-only)
+* 2FA optionnelle: compte sans 2FA active ne requiert pas OTP
+* création de secret `AGENT`/`MCP` via UI:
+  * sans 2FA active => approval UI sans OTP
+  * avec 2FA active => OTP obligatoire à l’étape d’approval
+  * sans validation UI => aucun `secret_key` ne peut être émise
 
 ## 1.2) Agent runtime (CLI/GUI, cross-platform)
 
