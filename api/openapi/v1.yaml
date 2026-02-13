@@ -47,25 +47,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthError"
+                $ref: "#/components/schemas/ErrorResponse"
         "403":
           description: Email not verified
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthError"
+                $ref: "#/components/schemas/ErrorResponse"
         "422":
           description: Missing email/password
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthError"
+                $ref: "#/components/schemas/ErrorResponse"
         "429":
           description: Too many attempts
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthRateLimitError"
+                $ref: "#/components/schemas/ErrorResponse"
 
   /auth/logout:
     post:
@@ -99,7 +99,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthError"
+                $ref: "#/components/schemas/ErrorResponse"
 
   /auth/lost-password/request:
     post:
@@ -123,13 +123,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthError"
+                $ref: "#/components/schemas/ErrorResponse"
         "429":
           description: Too many attempts
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthRateLimitErrorSeconds"
+                $ref: "#/components/schemas/ErrorResponse"
 
   /auth/lost-password/reset:
     post:
@@ -153,13 +153,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthError"
+                $ref: "#/components/schemas/ErrorResponse"
         "422":
           description: Validation failed
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthError"
+                $ref: "#/components/schemas/ErrorResponse"
 
   /auth/verify-email/request:
     post:
@@ -183,13 +183,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthError"
+                $ref: "#/components/schemas/ErrorResponse"
         "429":
           description: Too many attempts
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthRateLimitErrorSeconds"
+                $ref: "#/components/schemas/ErrorResponse"
 
   /auth/verify-email/confirm:
     post:
@@ -213,13 +213,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthError"
+                $ref: "#/components/schemas/ErrorResponse"
         "422":
           description: Validation failed
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthError"
+                $ref: "#/components/schemas/ErrorResponse"
 
   /auth/verify-email/admin-confirm:
     post:
@@ -245,19 +245,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthError"
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: User not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthError"
+                $ref: "#/components/schemas/ErrorResponse"
         "422":
           description: Validation failed
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthError"
+                $ref: "#/components/schemas/ErrorResponse"
 
   /assets:
     get:
@@ -559,6 +559,18 @@ paths:
                   locked_until:
                     type: string
                     format: date-time
+        "409":
+          description: State conflict or idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "423":
+          description: Invalid or missing lock
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /jobs/{job_id}/submit:
     post:
@@ -634,6 +646,12 @@ paths:
           description: Job failed recorded
         "409":
           description: Idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "423":
+          description: Invalid or missing lock
           content:
             application/json:
               schema:
@@ -1570,16 +1588,23 @@ components:
         code:
           type: string
           enum:
+            - UNAUTHORIZED
             - FORBIDDEN_SCOPE
             - FORBIDDEN_ACTOR
+            - EMAIL_NOT_VERIFIED
             - STATE_CONFLICT
             - IDEMPOTENCY_CONFLICT
+            - MISSING_IDEMPOTENCY_KEY
             - STALE_LOCK_TOKEN
             - NAME_COLLISION_EXHAUSTED
             - PURGED
+            - NOT_FOUND
+            - INVALID_TOKEN
+            - USER_NOT_FOUND
             - VALIDATION_FAILED
             - LOCK_REQUIRED
             - LOCK_INVALID
+            - TOO_MANY_ATTEMPTS
             - RATE_LIMITED
             - TEMPORARY_UNAVAILABLE
         message:
