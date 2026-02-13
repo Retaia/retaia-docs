@@ -286,6 +286,8 @@ paths:
         Also returns dependency/escalation metadata for deterministic client behavior.
         Effective feature availability requires Core `feature_flags` AND `app_feature_enabled` AND user preferences.
         Normative gate: when `app_feature_enabled.features.ai=false`, `client_kind=MCP` is disabled at runtime.
+        Runtime payload contract is stable: `app_feature_enabled`, `user_feature_enabled`,
+        `effective_feature_enabled`, `feature_governance`, `core_v1_global_features`.
       security:
         - UserBearerAuth: []
       responses:
@@ -1887,7 +1889,12 @@ components:
     AppFeaturesResponse:
       type: object
       additionalProperties: false
-      required: [app_feature_enabled, core_v1_global_features]
+      required:
+        - app_feature_enabled
+        - user_feature_enabled
+        - effective_feature_enabled
+        - feature_governance
+        - core_v1_global_features
       properties:
         app_feature_enabled:
           $ref: "#/components/schemas/AppFeatureEnabled"

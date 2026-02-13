@@ -56,6 +56,7 @@ Tests obligatoires :
   * bearer absent/invalide => `401 UNAUTHORIZED`
 * `GET /app/features`:
   * bearer valide => `200` + payload `app_feature_enabled`
+  * payload stable obligatoire: `app_feature_enabled`, `user_feature_enabled`, `effective_feature_enabled`, `feature_governance`, `core_v1_global_features`
   * réponse inclut `feature_governance[]` (`key`, `tier`, `user_can_disable`, `dependencies[]`, `disable_escalation[]`)
   * réponse inclut `core_v1_global_features[]` (registre canonique des features non désactivables)
   * bearer absent/invalide => `401 UNAUTHORIZED`
@@ -67,6 +68,7 @@ Tests obligatoires :
   * `app_feature_enabled.features.ai=false` => `MCP` désactivé globalement
 * `GET /auth/me/features`:
   * bearer valide => `200` + `user_feature_enabled` + `effective_feature_enabled` + `feature_governance`
+  * payload stable obligatoire: `user_feature_enabled`, `effective_feature_enabled`, `feature_governance`, `core_v1_global_features`
   * réponse inclut `core_v1_global_features[]`
   * bearer absent/invalide => `401 UNAUTHORIZED`
 * `PATCH /auth/me/features`:
