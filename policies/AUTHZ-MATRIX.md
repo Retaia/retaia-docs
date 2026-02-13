@@ -35,8 +35,8 @@ Acteurs normatifs :
 
 `GET /app/features`
 
-* acteur: `USER_INTERACTIVE`
-* scope: session utilisateur valide (`UserBearerAuth`)
+* acteur: `ADMIN_INTERACTIVE`
+* scope: policy admin (sinon `403 FORBIDDEN_ACTOR` / `FORBIDDEN_SCOPE`)
 * portée: retourne les switches applicatifs effectifs (globaux application)
 
 `PATCH /app/features`

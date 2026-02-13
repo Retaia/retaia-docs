@@ -26,3 +26,16 @@ jobs:
             echo "Branch is not up to date with master. Rebase on master is required."
             exit 1
           fi
+
+  contract-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify OpenAPI contract snapshot
+        run: |
+          test -f contracts/openapi-v1.sha256
+          EXPECTED="$(cat contracts/openapi-v1.sha256)"
+          CURRENT="$(shasum -a 256 api/openapi/v1.yaml | awk '{print $1}')"
+          test "$EXPECTED" = "$CURRENT"

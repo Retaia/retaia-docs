@@ -102,7 +102,7 @@ Règles client (normatives, UI/agents/MCP) :
 
 Gouvernance des `app_feature_enabled` (opposable) :
 
-* lecture (`GET /app/features`) : utilisateurs authentifiés (`UserBearerAuth`) ; retourne l’état effectif des switches applicatifs
+* lecture (`GET /app/features`) : admin uniquement (`UserBearerAuth` + policy admin)
 * modification (`PATCH /app/features`) : admin uniquement (`403 FORBIDDEN_ACTOR` / `FORBIDDEN_SCOPE` sinon)
 * portée : switches applicatifs globaux (pas des préférences locales client)
 * effet runtime obligatoire : un switch applicatif désactivé DOIT empêcher l’exécution des fonctionnalités associées pour le scope applicatif
@@ -333,15 +333,15 @@ Normalisation HTTP (normatif) :
 
 * security: `UserBearerAuth`
 * effet: retourne les switches applicatifs (`app_feature_enabled`) + métadonnées de gouvernance (`feature_governance`) + registre canonique `core_v1_global_features`
+* prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
 * contrat payload stable obligatoire:
   * `app_feature_enabled`
-  * `user_feature_enabled`
-  * `effective_feature_enabled`
   * `feature_governance`
   * `core_v1_global_features`
 * réponses:
   * `200` succès
   * `401 UNAUTHORIZED`
+  * `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
 
 `PATCH /app/features`
 

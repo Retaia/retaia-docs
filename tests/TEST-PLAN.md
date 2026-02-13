@@ -55,8 +55,9 @@ Tests obligatoires :
   * bearer valide => `200` + payload utilisateur courant
   * bearer absent/invalide => `401 UNAUTHORIZED`
 * `GET /app/features`:
-  * bearer valide => `200` + payload `app_feature_enabled`
-  * payload stable obligatoire: `app_feature_enabled`, `user_feature_enabled`, `effective_feature_enabled`, `feature_governance`, `core_v1_global_features`
+  * bearer admin valide => `200` + payload `app_feature_enabled`
+  * bearer user non-admin => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
+  * payload stable obligatoire: `app_feature_enabled`, `feature_governance`, `core_v1_global_features`
   * réponse inclut `feature_governance[]` (`key`, `tier`, `user_can_disable`, `dependencies[]`, `disable_escalation[]`)
   * réponse inclut `core_v1_global_features[]` (registre canonique des features non désactivables)
   * bearer absent/invalide => `401 UNAUTHORIZED`

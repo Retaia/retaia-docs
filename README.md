@@ -59,10 +59,10 @@ Les repos ci-dessous DOIVENT implémenter ces specs sans divergence.
 
 * `retaia-core` : backend/API, auth, policy runtime, orchestration jobs
 * `retaia-ui` : client UI (web/Rust UI app), UX admin/user, application des policies runtime
-* `retaia-agent` : client agent Rust (CLI obligatoire, GUI optionnelle), exécution processing (si repo séparé)
-* `retaia-mcp` : client MCP (pilotage/orchestration uniquement, sans processing) (si repo séparé)
+* `retaia-agent` : client agent Rust (CLI obligatoire, GUI optionnelle), exécution processing (repo séparé, à créer)
+* `retaia-mcp` : client MCP (pilotage/orchestration uniquement, sans processing) (repo séparé, à créer)
 
 Notes de structure actuelle :
 
 * dans ce workspace local, `retaia-core` et `retaia-ui` sont présents
-* si `agent`/`mcp` ne sont pas des repos séparés, leurs implémentations restent soumises aux mêmes normes documentées ici
+* `retaia-agent` et `retaia-mcp` sont planifiés comme repos dédiés

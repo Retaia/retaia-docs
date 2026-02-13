@@ -282,12 +282,12 @@ paths:
       tags: [Auth]
       summary: Get effective app feature switches
       description: |
-        Returns effective app switches (`app_feature_enabled`).
+        Returns global app switches (`app_feature_enabled`).
         Also returns dependency/escalation metadata for deterministic client behavior.
-        Effective feature availability requires Core `feature_flags` AND `app_feature_enabled` AND user preferences.
+        Effective global availability requires Core `feature_flags` AND `app_feature_enabled`.
         Normative gate: when `app_feature_enabled.features.ai=false`, `client_kind=MCP` is disabled at runtime.
-        Runtime payload contract is stable: `app_feature_enabled`, `user_feature_enabled`,
-        `effective_feature_enabled`, `feature_governance`, `core_v1_global_features`.
+        Admin-only endpoint.
+        Runtime payload contract is stable: `app_feature_enabled`, `feature_governance`, `core_v1_global_features`.
       security:
         - UserBearerAuth: []
       responses:
@@ -299,6 +299,12 @@ paths:
                 $ref: "#/components/schemas/AppFeaturesResponse"
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden actor or scope (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`)
           content:
             application/json:
               schema:
@@ -1891,8 +1897,6 @@ components:
       additionalProperties: false
       required:
         - app_feature_enabled
-        - user_feature_enabled
-        - effective_feature_enabled
         - feature_governance
         - core_v1_global_features
       properties:
@@ -1900,10 +1904,6 @@ components:
           $ref: "#/components/schemas/AppFeatureEnabled"
         core_v1_global_features:
           $ref: "#/components/schemas/CoreV1GlobalFeatures"
-        user_feature_enabled:
-          $ref: "#/components/schemas/UserFeatureEnabled"
-        effective_feature_enabled:
-          $ref: "#/components/schemas/EffectiveFeatureEnabled"
         feature_governance:
           type: array
           items:
