@@ -31,6 +31,11 @@ Acteurs normatifs :
 * acteur: `USER_INTERACTIVE`
 * scope: session utilisateur valide (`UserBearerAuth`)
 
+`GET|PATCH /auth/me/ui-feature-flags`
+
+* acteur: `USER_INTERACTIVE`
+* scope: session utilisateur valide (`UserBearerAuth`)
+
 `POST /auth/verify-email/admin-confirm`
 
 * acteur: `ADMIN_INTERACTIVE`
