@@ -9,9 +9,9 @@ Ce document doit rester strictement aligné avec `openapi/v1.yaml`.
 
 Objectif : fournir une surface stable consommée par :
 
-* UI web (same-origin, servie par Symfony)
-* Retaia Agent(s)
-* futurs clients (ex: client MCP)
+* client UI (`UI_RUST`, Rust/Tauri)
+* client Agent
+* client MCP
 
 
 ## 0) Conventions
@@ -37,7 +37,7 @@ Objectif : fournir une surface stable consommée par :
 * Toute nouvelle fonctionnalité DOIT être protégée par un feature flag serveur dès son introduction.
 * Les fonctionnalités `v1.1+` suivent la même règle et restent inactives tant que leur flag n'est pas activé.
 * Convention de nommage : `features.<domaine>.<fonction>` (ex: `features.ai.suggest_tags`).
-* Contrat de transport : l’état effectif des flags DOIT être transporté dans un payload standard `server_policy.feature_flags` (au minimum via `POST /agents/register`).
+* Contrat de transport : l’état effectif des flags DOIT être transporté dans un payload standard `server_policy.feature_flags` pour tous les clients (`UI_RUST`, `AGENT`, `MCP`), avec endpoint d’accès runtime dédié ou payload équivalent.
 * Distinction normative (sans ambiguïté) :
   * `feature_flags` = activation runtime des fonctionnalités côté Core
   * `capabilities` = aptitudes techniques déclarées par les agents pour exécuter des jobs
@@ -67,6 +67,9 @@ Règles client (normatives, UI/agents/MCP) :
 
 * feature OFF => appel API de la feature interdit et UI correspondante masquée/désactivée
 * feature ON => feature disponible immédiatement, sans déploiement client supplémentaire
+* `UI_RUST`, `AGENT` et `MCP` DOIVENT tous consommer les `feature_flags` runtime pilotés par Core
+* aucun client ne DOIT hardcoder l’état d’un flag ni dépendre d’un flag local statique
+* toute décision de disponibilité fonctionnelle côté client DOIT être dérivée du dernier payload runtime reçu
 
 ### Idempotence (règles strictes)
 
@@ -91,7 +94,7 @@ Comportement :
 ### Derived URLs
 
 * URLs de dérivés **stables** (same-origin)
-* Accès contrôlé par session cookie (UI) ou bearer token (clients autorisés)
+* Accès contrôlé par bearer token (`Authorization: Bearer ...`) pour tous les clients
 
 ### États (doit matcher [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md))
 
@@ -102,14 +105,42 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 
 ## 1) Auth
 
+### Typologie des acteurs (normatif)
+
+* `USER_INTERACTIVE` : utilisateur humain connecté via client `UI_RUST` (Rust/Tauri) ou client `AGENT` en mode interactif
+* `CLIENT_TECHNICAL` : client non-humain authentifié par `client_id + secret_key`
+* `AGENT_TECHNICAL` : agent non-interactif (daemon/service) authentifié par `client_id + secret_key` ou client-credentials OAuth2
+* `client_kind` interactif est borné à `UI_RUST` ou `AGENT`; le mode technique autorise `AGENT` et `MCP`
+
 ### UI (humain)
 
-* Session cookie HttpOnly (same-origin)
-* CSRF sur méthodes mutantes
+* Bearer token utilisateur obtenu via login (`POST /auth/login`)
+* l'interface de login est normative pour permettre l'obtention du token utilisateur
+* le `client_kind=UI_RUST` DOIT être implémenté en Rust/Tauri (Electron non supporté)
+* le token UI est non exportable dans l'interface (jamais affiché en clair)
+* un utilisateur ne peut pas invalider son token UI depuis l'UI (anti lock-out)
+* l'UI DOIT supporter l'enrôlement 2FA TOTP via app externe (Authy, Google Authenticator, etc.)
 
 ### Agents / MCP
 
-* Bearer token
+* modes non interactifs : bearer technique (`OAuth2ClientCredentials`)
+* modes interactifs (agent CLI/GUI opéré par un humain) : bearer utilisateur via `POST /auth/login`
+* mode client applicatif non-interactif (`AGENT`, `MCP`) : `client_id + secret_key` pour obtenir un bearer token via `POST /auth/clients/token`
+
+Règles 2FA par client (obligatoire) :
+
+* la 2FA est optionnelle au niveau compte utilisateur
+* `UI_RUST` : login utilisateur (`/auth/login`) avec 2FA obligatoire uniquement si activée sur le compte
+* `AGENT` / `MCP` en mode technique (`/auth/clients/token`) : pas de 2FA directe au runtime
+* création d’un `secret_key` pour `AGENT`/`MCP` : DOIT passer par une validation utilisateur via UI
+* si 2FA est activée sur ce compte utilisateur, la validation UI de création `secret_key` DOIT exiger la 2FA
+* flow cible pour `AGENT`/`MCP` : type GitHub device authorization (ouverture URL navigateur, auth UI, validation 2FA optionnelle, approval explicite)
+
+Règle de cardinalité des tokens (obligatoire) :
+
+* `USER_INTERACTIVE` : un même utilisateur PEUT avoir plusieurs tokens actifs simultanément sur des clients différents, avec contrainte stricte **1 token actif par `(user_id, client_id)`**
+* `CLIENT_TECHNICAL` / `AGENT_TECHNICAL` : contrainte stricte **1 token actif par `client_id`**
+* émission d'un nouveau token pour la même clé de cardinalité => révocation immédiate du token précédent
 
 #### Scopes (base)
 
@@ -124,7 +155,220 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 * `purge:execute` (**humain uniquement**)
 
 La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md).
-`openapi/v1.yaml` déclare explicitement les schémas de sécurité (`SessionCookieAuth`, `OAuth2ClientCredentials`) et les scopes requis par endpoint.
+`openapi/v1.yaml` déclare explicitement les schémas de sécurité (`UserBearerAuth`, `OAuth2ClientCredentials`) et les scopes requis par endpoint.
+
+Migration obligatoire (anti dette technique) :
+
+* `SessionCookieAuth` est retiré du contrat et est interdit pour toute nouvelle implémentation.
+* Core DOIT supprimer le code runtime lié au cookie session auth (`SessionCookieAuth`).
+* UI, Agent et MCP DOIVENT migrer vers Bearer-only et supprimer toute dépendance cookie.
+
+Baseline sécurité/fuite (normatif) :
+
+* la baseline security "assume breach" est définie dans [`SECURITY-BASELINE.md`](../policies/SECURITY-BASELINE.md)
+* toute implémentation Core/UI/Agent/MCP DOIT appliquer les exigences MUST de cette baseline
+* en cas de conflit d'interprétation, le modèle le plus restrictif s'applique
+
+### Endpoints auth applicatifs (normatif)
+
+`POST /auth/login`
+
+* security: aucune (`security: []`)
+* body requis: `{ email, password }`
+* body optionnel: `client_id`, `client_kind`, `otp_code` (`otp_code` obligatoire si 2FA active)
+* réponses:
+  * `200` succès + bearer token (`access_token`, `token_type=Bearer`, `expires_in?`, `refresh_token?`, `client_id`, `client_kind`)
+  * `401 UNAUTHORIZED` (credentials invalides), `MFA_REQUIRED` (2FA active sans OTP), `INVALID_2FA_CODE` (OTP invalide)
+  * `403 EMAIL_NOT_VERIFIED`
+  * `422 VALIDATION_FAILED`
+  * `429 TOO_MANY_ATTEMPTS`
+
+`POST /auth/2fa/setup`
+
+* security: `UserBearerAuth`
+* effet: génère le matériel d'enrôlement TOTP (`secret`, `otpauth_uri`, `qr_svg?`) pour app externe
+* réponses:
+  * `200` setup généré
+  * `401 UNAUTHORIZED`
+  * `409 MFA_ALREADY_ENABLED`
+
+`POST /auth/2fa/enable`
+
+* security: `UserBearerAuth`
+* body requis: `{ otp_code }`
+* effet: active la 2FA TOTP pour l'utilisateur courant
+* réponses:
+  * `200` succès
+  * `400 INVALID_2FA_CODE`
+  * `401 UNAUTHORIZED`
+  * `409 MFA_ALREADY_ENABLED`
+  * `422 VALIDATION_FAILED`
+
+`POST /auth/2fa/disable`
+
+* security: `UserBearerAuth`
+* body requis: `{ otp_code }`
+* effet: désactive la 2FA TOTP pour l'utilisateur courant
+* réponses:
+  * `200` succès
+  * `400 INVALID_2FA_CODE`
+  * `401 UNAUTHORIZED`
+  * `409 MFA_NOT_ENABLED`
+  * `422 VALIDATION_FAILED`
+
+`POST /auth/logout`
+
+* security: `UserBearerAuth`
+* réponses:
+  * `200` succès
+  * `401 UNAUTHORIZED`
+
+`GET /auth/me`
+
+* security: `UserBearerAuth`
+* réponses:
+  * `200` utilisateur courant
+  * `401 UNAUTHORIZED`
+
+`POST /auth/lost-password/request`
+
+* security: aucune (`security: []`)
+* body requis: `{ email }`
+* réponses:
+  * `202` accepté
+  * `422 VALIDATION_FAILED`
+  * `429 TOO_MANY_ATTEMPTS`
+
+`POST /auth/lost-password/reset`
+
+* security: aucune (`security: []`)
+* body requis: `{ token, new_password }`
+* réponses:
+  * `200` succès
+  * `400 INVALID_TOKEN`
+  * `422 VALIDATION_FAILED`
+
+`POST /auth/verify-email/request`
+
+* security: aucune (`security: []`)
+* body requis: `{ email }`
+* réponses:
+  * `202` accepté
+  * `422 VALIDATION_FAILED`
+  * `429 TOO_MANY_ATTEMPTS`
+
+`POST /auth/verify-email/confirm`
+
+* security: aucune (`security: []`)
+* body requis: `{ token }`
+* réponses:
+  * `200` succès
+  * `400 INVALID_TOKEN`
+  * `422 VALIDATION_FAILED`
+
+`POST /auth/verify-email/admin-confirm`
+
+* security: `UserBearerAuth`
+* prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
+* body requis: `{ email }`
+* réponses:
+  * `200` succès
+  * `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE` (selon matrice)
+  * `404 USER_NOT_FOUND`
+  * `422 VALIDATION_FAILED`
+
+`POST /auth/clients/{client_id}/revoke-token`
+
+* security: `UserBearerAuth`
+* prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
+* effet: invalide les bearer tokens actifs du client ciblé (pas d'arrêt de process)
+* contrainte: un `client_kind=UI_RUST` est protégé et NE DOIT PAS être révocable via cet endpoint
+* réponses:
+  * `200` token(s) invalide(s)
+  * `401 UNAUTHORIZED`
+  * `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE` (selon matrice, incluant le cas token UI protégé)
+  * `422 VALIDATION_FAILED`
+
+`POST /auth/clients/token`
+
+* security: aucune (`security: []`)
+* body requis: `{ client_id, client_kind, secret_key }`
+* `client_kind` autorisés: `AGENT | MCP` (`UI_RUST` exclu)
+* effet: émet un bearer token client
+* règle stricte: **1 token actif par client_id** (mint d’un nouveau token => révocation de l’ancien token pour ce client)
+* réponses:
+  * `200` token client (`access_token`, `token_type=Bearer`, `expires_in?`, `client_id`, `client_kind`)
+  * `401 UNAUTHORIZED` (credentials client invalides)
+  * `403 FORBIDDEN_ACTOR` (`client_kind` interactif refusé)
+  * `422 VALIDATION_FAILED`
+  * `429 TOO_MANY_ATTEMPTS`
+
+`POST /auth/clients/device/start`
+
+* security: aucune (`security: []`)
+* body requis: `{ client_kind }` avec `client_kind in {AGENT, MCP}`
+* effet: démarre un flow d’autorisation device type GitHub
+* réponses:
+  * `200` (`device_code`, `user_code`, `verification_uri`, `verification_uri_complete`, `expires_in`, `interval`)
+  * `401 UNAUTHORIZED`
+  * `422 VALIDATION_FAILED`
+  * `429 TOO_MANY_ATTEMPTS`
+
+`POST /auth/clients/device/poll`
+
+* security: aucune (`security: []`)
+* body requis: `{ device_code }`
+* effet: récupère l’état du flow device
+* réponses:
+  * `200` avec `status in {PENDING, APPROVED, DENIED, EXPIRED}`
+  * `APPROVED` retourne `client_id`, `client_kind`, `secret_key` (one-shot)
+  * `400 INVALID_DEVICE_CODE` ou `EXPIRED_DEVICE_CODE`
+  * `401 AUTHORIZATION_PENDING`
+  * `403 ACCESS_DENIED`
+  * `429 SLOW_DOWN` ou `TOO_MANY_ATTEMPTS` (poll trop fréquent)
+
+`POST /auth/clients/device/cancel`
+
+* security: aucune (`security: []`)
+* body requis: `{ device_code }`
+* effet: annule un flow device en cours
+* réponses:
+  * `200` canceled
+  * `400 INVALID_DEVICE_CODE` ou `EXPIRED_DEVICE_CODE`
+  * `422 VALIDATION_FAILED`
+
+Séquence normative bootstrap `AGENT/MCP` (obligatoire) :
+
+1. client technique lance `POST /auth/clients/device/start`
+2. client ouvre `verification_uri` (ou `verification_uri_complete`) dans le navigateur
+3. utilisateur se connecte via UI
+4. si 2FA est activée sur le compte, validation OTP obligatoire
+5. utilisateur approuve explicitement la création de credential technique
+6. client technique poll `POST /auth/clients/device/poll` jusqu’à `APPROVED`/`DENIED`/`EXPIRED`
+7. en cas `APPROVED`, `secret_key` est retournée une seule fois, puis utilisée sur `POST /auth/clients/token`
+
+Règle de sécurité :
+
+* création de `secret_key` `AGENT/MCP` sans validation UI utilisateur est interdite
+
+`POST /auth/clients/{client_id}/rotate-secret`
+
+* security: `UserBearerAuth`
+* prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
+* effet: régénère la `secret_key` et invalide les tokens actifs du client ciblé
+* réponses:
+  * `200` nouvelle `secret_key` (retournée une seule fois à la rotation)
+  * `401 UNAUTHORIZED`
+  * `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE` (selon matrice)
+  * `422 VALIDATION_FAILED`
+
+Règle d'erreur (obligatoire) :
+
+* toute réponse 4xx/5xx de ces endpoints DOIT retourner le schéma `ErrorResponse`
+
+Règle d’unification clients (obligatoire) :
+
+* le flux login utilisateur (`POST /auth/login`) et `UserBearerAuth` DOIVENT être communs pour les clients interactifs `UI_RUST` et `AGENT`
 
 
 ## 2) Assets
@@ -233,6 +477,14 @@ Response :
   * `allowed_job_types[]`
   * `feature_flags` (map runtime `flag_name -> boolean`, source de vérité Core)
   * (optionnel) `quiet_hours`
+
+Normes d’exécution agent (obligatoires) :
+
+* un agent DOIT fournir un binaire `CLI` (mode headless Linux obligatoire)
+* un agent PEUT fournir une `GUI` pour usage desktop
+* si une `GUI` existe, elle DOIT déléguer au même moteur que la `CLI` (mêmes capabilities, mêmes contraintes protocole)
+* l’auth non-interactive agent DOIT fonctionner sans login humain (service/daemon)
+* support plateforme cible : Linux headless (Raspberry Pi Kodi/Plex), macOS laptop, Windows desktop
 
 
 ## 5) Jobs
@@ -436,7 +688,7 @@ Retourne statut + rapport.
 
 ## 7.1) Bulk decisions (v1.1)
 
-Objectif : permettre à un client (ex: MCP) de **préparer** une action de décision en masse, sans laisser l’automatisation décider silencieusement.
+Objectif : permettre à un client d’automatisation de **préparer** une action de décision en masse, sans laisser l’automatisation décider silencieusement.
 
 Principe :
 
@@ -564,11 +816,20 @@ Règles :
 
 ## 10) Codes d’erreur (normatifs)
 
+* `400 INVALID_TOKEN`
+* `401 UNAUTHORIZED`
+* `403 FORBIDDEN_SCOPE` / `FORBIDDEN_ACTOR`
+* `403 EMAIL_NOT_VERIFIED`
+* `404 USER_NOT_FOUND`
+* `400 INVALID_2FA_CODE`
+* `401 MFA_REQUIRED`
 * `409 STATE_CONFLICT`
 * `409 IDEMPOTENCY_CONFLICT`
+* `409 MFA_ALREADY_ENABLED` / `MFA_NOT_ENABLED`
 * `423 LOCK_REQUIRED` / `LOCK_INVALID`
 * `410 PURGED`
 * `422 VALIDATION_FAILED`
+* `429 TOO_MANY_ATTEMPTS`
 * `429 RATE_LIMITED`
 * `503 TEMPORARY_UNAVAILABLE`
 
@@ -663,6 +924,7 @@ Procédure de refresh contrôlé :
 * [LOCK-LIFECYCLE.md](../policies/LOCK-LIFECYCLE.md)
 * [NAMING-AND-NONCE.md](../policies/NAMING-AND-NONCE.md)
 * [AUTHZ-MATRIX.md](../policies/AUTHZ-MATRIX.md)
+* [SECURITY-BASELINE.md](../policies/SECURITY-BASELINE.md)
 * [HOOKS-CONTRACT.md](../policies/HOOKS-CONTRACT.md)
 * [ERROR-MODEL.md](ERROR-MODEL.md)
 * [CODE-QUALITY.md](../change-management/CODE-QUALITY.md)

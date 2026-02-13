@@ -28,7 +28,9 @@ paths:
   /auth/login:
     post:
       tags: [Auth]
-      summary: Authenticate user and create session
+      summary: User login with email and password
+      description: Interactive login endpoint for supported human-operated clients (`UI_RUST` and `AGENT`). Supports optional TOTP 2FA code when enabled.
+      security: []
       requestBody:
         required: true
         content:
@@ -43,25 +45,134 @@ paths:
               schema:
                 $ref: "#/components/schemas/AuthLoginSuccess"
         "401":
-          description: Invalid credentials
+          description: Invalid credentials or 2FA challenge failure (`UNAUTHORIZED`, `MFA_REQUIRED`, `INVALID_2FA_CODE`)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "403":
-          description: Email not verified
+          description: Email not verified (`EMAIL_NOT_VERIFIED`)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "422":
-          description: Missing email/password
+          description: Validation failed (`VALIDATION_FAILED`)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "429":
-          description: Too many attempts
+          description: Too many attempts (`TOO_MANY_ATTEMPTS`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/2fa/setup:
+    post:
+      tags: [Auth]
+      summary: Setup TOTP 2FA for current user
+      description: |
+        Starts TOTP enrollment for external authenticator apps (Authy, Google Authenticator, 1Password, etc.).
+        Returns provisioning material (`otpauth://` URI and secret) to be confirmed by `/auth/2fa/enable`.
+      security:
+        - UserBearerAuth: []
+      responses:
+        "200":
+          description: TOTP enrollment material generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Auth2faSetupResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: 2FA already enabled (`MFA_ALREADY_ENABLED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/2fa/enable:
+    post:
+      tags: [Auth]
+      summary: Confirm and enable TOTP 2FA
+      security:
+        - UserBearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Auth2faOtpRequest"
+      responses:
+        "200":
+          description: 2FA enabled
+        "400":
+          description: Invalid TOTP code (`INVALID_2FA_CODE`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: 2FA already enabled (`MFA_ALREADY_ENABLED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/2fa/disable:
+    post:
+      tags: [Auth]
+      summary: Disable TOTP 2FA
+      security:
+        - UserBearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Auth2faOtpRequest"
+      responses:
+        "200":
+          description: 2FA disabled
+        "400":
+          description: Invalid TOTP code (`INVALID_2FA_CODE`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: 2FA is not enabled (`MFA_NOT_ENABLED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
           content:
             application/json:
               schema:
@@ -70,32 +181,34 @@ paths:
   /auth/logout:
     post:
       tags: [Auth]
-      summary: End authenticated session
+      summary: Logout current user token session
       security:
-        - SessionCookieAuth: []
+        - UserBearerAuth: []
       responses:
         "200":
           description: Logout success
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthLogoutSuccess"
+                $ref: "#/components/schemas/ErrorResponse"
 
   /auth/me:
     get:
       tags: [Auth]
-      summary: Get current authenticated user profile
+      summary: Get current authenticated user
       security:
-        - SessionCookieAuth: []
+        - UserBearerAuth: []
       responses:
         "200":
-          description: Current user profile
+          description: Current user
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthUserProfile"
+                $ref: "#/components/schemas/AuthCurrentUser"
         "401":
-          description: Authentication required
+          description: Unauthorized (`UNAUTHORIZED`)
           content:
             application/json:
               schema:
@@ -104,7 +217,8 @@ paths:
   /auth/lost-password/request:
     post:
       tags: [Auth]
-      summary: Request password reset
+      summary: Request lost password reset email
+      security: []
       requestBody:
         required: true
         content:
@@ -114,18 +228,14 @@ paths:
       responses:
         "202":
           description: Request accepted
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AuthAcceptedResponse"
         "422":
-          description: Validation failed
+          description: Validation failed (`VALIDATION_FAILED`)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "429":
-          description: Too many attempts
+          description: Too many attempts (`TOO_MANY_ATTEMPTS`)
           content:
             application/json:
               schema:
@@ -135,27 +245,24 @@ paths:
     post:
       tags: [Auth]
       summary: Reset password with token
+      security: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AuthResetPasswordRequest"
+              $ref: "#/components/schemas/AuthLostPasswordResetRequest"
       responses:
         "200":
-          description: Password reset completed
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AuthPasswordResetSuccess"
+          description: Password reset success
         "400":
-          description: Invalid token
+          description: Invalid token (`INVALID_TOKEN`)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "422":
-          description: Validation failed
+          description: Validation failed (`VALIDATION_FAILED`)
           content:
             application/json:
               schema:
@@ -164,7 +271,8 @@ paths:
   /auth/verify-email/request:
     post:
       tags: [Auth]
-      summary: Request email verification token
+      summary: Request verification email
+      security: []
       requestBody:
         required: true
         content:
@@ -174,18 +282,14 @@ paths:
       responses:
         "202":
           description: Request accepted
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AuthAcceptedResponse"
         "422":
-          description: Validation failed
+          description: Validation failed (`VALIDATION_FAILED`)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "429":
-          description: Too many attempts
+          description: Too many attempts (`TOO_MANY_ATTEMPTS`)
           content:
             application/json:
               schema:
@@ -195,6 +299,7 @@ paths:
     post:
       tags: [Auth]
       summary: Confirm email verification token
+      security: []
       requestBody:
         required: true
         content:
@@ -203,19 +308,15 @@ paths:
               $ref: "#/components/schemas/AuthTokenRequest"
       responses:
         "200":
-          description: Email verification confirmed
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AuthEmailVerifiedSuccess"
+          description: Email verified
         "400":
-          description: Invalid token
+          description: Invalid token (`INVALID_TOKEN`)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "422":
-          description: Validation failed
+          description: Validation failed (`VALIDATION_FAILED`)
           content:
             application/json:
               schema:
@@ -224,9 +325,10 @@ paths:
   /auth/verify-email/admin-confirm:
     post:
       tags: [Auth]
-      summary: Admin-only force email verification by email
+      summary: Admin confirms user email verification
+      description: Requires an authenticated admin actor, per AUTHZ matrix (FORBIDDEN_ACTOR or FORBIDDEN_SCOPE on authz failure).
       security:
-        - SessionCookieAuth: []
+        - UserBearerAuth: []
       requestBody:
         required: true
         content:
@@ -235,25 +337,259 @@ paths:
               $ref: "#/components/schemas/AuthEmailRequest"
       responses:
         "200":
-          description: Email verification forced
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AuthEmailVerifiedSuccess"
+          description: Email verified by admin
         "403":
-          description: Forbidden actor
+          description: Forbidden actor or scope (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "404":
-          description: User not found
+          description: User not found (`USER_NOT_FOUND`)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "422":
-          description: Validation failed
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/clients/{client_id}/revoke-token:
+    post:
+      tags: [Auth]
+      summary: Revoke one technical client token access
+      description: |
+        Admin-only endpoint for base UI operations.
+        Invalidates active bearer token(s) for the targeted technical client.
+      security:
+        - UserBearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ClientIdPath"
+      responses:
+        "200":
+          description: Client token(s) revoked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthRevokeClientTokenResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden actor or scope (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`). UI interactive client token is protected and cannot be revoked here.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/clients/token:
+    post:
+      tags: [Auth]
+      summary: Mint client bearer token from secret key
+      description: |
+        Exchanges `(client_id, secret_key)` for a bearer token.
+        Normative rule: one active token per technical client_id; minting a new token revokes the previous one.
+        This endpoint is for technical non-interactive clients only.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthClientTokenRequest"
+      responses:
+        "200":
+          description: Client token minted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthClientTokenSuccess"
+        "401":
+          description: Invalid client credentials (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden client kind for this flow (`FORBIDDEN_ACTOR`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many attempts (`TOO_MANY_ATTEMPTS`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/clients/device/start:
+    post:
+      tags: [Auth]
+      summary: Start device authorization flow for technical client bootstrap
+      description: |
+        Starts a browser-assisted authorization flow (GitHub-style) for `AGENT`/`MCP`.
+        User validation (and optional 2FA) happens via `verification_uri`.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthDeviceStartRequest"
+      responses:
+        "200":
+          description: Device flow started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthDeviceStartResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many attempts (`TOO_MANY_ATTEMPTS`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/clients/device/poll:
+    post:
+      tags: [Auth]
+      summary: Poll device authorization status
+      description: |
+        Polls authorization status for a previously started device flow.
+        On approval, returns one-shot `secret_key`.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthDevicePollRequest"
+      responses:
+        "200":
+          description: Device authorization status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthDevicePollResponse"
+        "400":
+          description: Invalid or expired device code (`INVALID_DEVICE_CODE` or `EXPIRED_DEVICE_CODE`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authorization pending (`AUTHORIZATION_PENDING`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Access denied by user (`ACCESS_DENIED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Polling too fast (`SLOW_DOWN` or `TOO_MANY_ATTEMPTS`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/clients/device/cancel:
+    post:
+      tags: [Auth]
+      summary: Cancel an in-progress device authorization flow
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthDeviceCancelRequest"
+      responses:
+        "200":
+          description: Device flow canceled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthDeviceCancelResponse"
+        "400":
+          description: Invalid or expired device code (`INVALID_DEVICE_CODE` or `EXPIRED_DEVICE_CODE`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/clients/{client_id}/rotate-secret:
+    post:
+      tags: [Auth]
+      summary: Rotate client secret key
+      description: |
+        Admin-only operation.
+        Rotates secret key for one client and invalidates active bearer token(s).
+      security:
+        - UserBearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ClientIdPath"
+      responses:
+        "200":
+          description: Client secret rotated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthRotateClientSecretResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden actor or scope (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
           content:
             application/json:
               schema:
@@ -264,7 +600,7 @@ paths:
       tags: [Assets]
       summary: List assets
       security:
-        - SessionCookieAuth: []
+        - UserBearerAuth: []
         - OAuth2ClientCredentials: ["assets:read"]
       parameters:
         - name: state
@@ -339,7 +675,7 @@ paths:
       tags: [Assets]
       summary: Get one asset detail
       security:
-        - SessionCookieAuth: []
+        - UserBearerAuth: []
         - OAuth2ClientCredentials: ["assets:read"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
@@ -354,8 +690,7 @@ paths:
       tags: [Assets]
       summary: Update human metadata on one asset
       security:
-        - SessionCookieAuth: []
-        - OAuth2ClientCredentials: ["assets:write"]
+        - UserBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
       requestBody:
@@ -424,8 +759,7 @@ paths:
       tags: [Assets]
       summary: Trigger explicit reprocess
       security:
-        - SessionCookieAuth: []
-        - OAuth2ClientCredentials: ["assets:write"]
+        - UserBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -444,8 +778,7 @@ paths:
       tags: [Decisions]
       summary: Set or update a human decision
       security:
-        - SessionCookieAuth: []
-        - OAuth2ClientCredentials: ["decisions:write"]
+        - UserBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -475,8 +808,7 @@ paths:
       tags: [Decisions]
       summary: Reopen archived or rejected asset to decision pending
       security:
-        - SessionCookieAuth: []
-        - OAuth2ClientCredentials: ["decisions:write"]
+        - UserBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
       responses:
@@ -559,18 +891,6 @@ paths:
                   locked_until:
                     type: string
                     format: date-time
-        "409":
-          description: State conflict or idempotency conflict
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "423":
-          description: Invalid or missing lock
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
 
   /jobs/{job_id}/submit:
     post:
@@ -646,12 +966,6 @@ paths:
           description: Job failed recorded
         "409":
           description: Idempotency conflict
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "423":
-          description: Invalid or missing lock
           content:
             application/json:
               schema:
@@ -743,7 +1057,7 @@ paths:
       tags: [Derived]
       summary: List available derived files for one asset
       security:
-        - SessionCookieAuth: []
+        - UserBearerAuth: []
         - OAuth2ClientCredentials: ["assets:read"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
@@ -761,7 +1075,7 @@ paths:
       tags: [Derived]
       summary: Fetch one derived file by kind
       security:
-        - SessionCookieAuth: []
+        - UserBearerAuth: []
         - OAuth2ClientCredentials: ["assets:read"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
@@ -782,8 +1096,7 @@ paths:
       tags: [Batches]
       summary: Preview move batch
       security:
-        - SessionCookieAuth: []
-        - OAuth2ClientCredentials: ["batches:execute"]
+        - UserBearerAuth: []
       requestBody:
         required: true
         content:
@@ -806,8 +1119,7 @@ paths:
       tags: [Batches]
       summary: Execute or dry-run move batch
       security:
-        - SessionCookieAuth: []
-        - OAuth2ClientCredentials: ["batches:execute"]
+        - UserBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
@@ -833,8 +1145,7 @@ paths:
       tags: [Batches]
       summary: Get move batch status and report
       security:
-        - SessionCookieAuth: []
-        - OAuth2ClientCredentials: ["batches:execute"]
+        - UserBearerAuth: []
       parameters:
         - name: batch_id
           in: path
@@ -856,8 +1167,7 @@ paths:
       summary: Preview bulk decisions
       description: Available in v1.1+ when `features.decisions.bulk=true`.
       security:
-        - SessionCookieAuth: []
-        - OAuth2ClientCredentials: ["decisions:write"]
+        - UserBearerAuth: []
       requestBody:
         required: true
         content:
@@ -884,8 +1194,7 @@ paths:
       summary: Apply bulk decisions from preview token
       description: Available in v1.1+ when `features.decisions.bulk=true`.
       security:
-        - SessionCookieAuth: []
-        - OAuth2ClientCredentials: ["decisions:write"]
+        - UserBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
@@ -910,8 +1219,7 @@ paths:
       tags: [Purge]
       summary: Purge one rejected asset
       security:
-        - SessionCookieAuth: []
-        - OAuth2ClientCredentials: ["purge:execute"]
+        - UserBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -941,8 +1249,7 @@ paths:
       tags: [Purge]
       summary: Preview purge impact for one asset
       security:
-        - SessionCookieAuth: []
-        - OAuth2ClientCredentials: ["purge:execute"]
+        - UserBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
       responses:
@@ -951,10 +1258,11 @@ paths:
 
 components:
   securitySchemes:
-    SessionCookieAuth:
-      type: apiKey
-      in: cookie
-      name: retaia_session
+    UserBearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: User bearer token used by human-operated interactive clients.
     OAuth2ClientCredentials:
       type: oauth2
       flows:
@@ -984,6 +1292,12 @@ components:
       required: true
       schema:
         type: string
+    ClientIdPath:
+      name: client_id
+      in: path
+      required: true
+      schema:
+        type: string
 
   schemas:
     AuthLoginRequest:
@@ -993,42 +1307,38 @@ components:
       properties:
         email:
           type: string
+          format: email
         password:
           type: string
-
-    AuthUserProfile:
-      type: object
-      additionalProperties: false
-      required: [id, email, roles]
-      properties:
-        id:
-          type: integer
-        email:
+        client_id:
           type: string
-        roles:
-          type: array
-          items:
-            type: string
+          description: Optional client identifier. If omitted, server derives one from runtime client identity.
+        client_kind:
+          $ref: "#/components/schemas/ClientKind"
+        otp_code:
+          type: string
+          description: 6-digit TOTP code when 2FA is enabled on account.
 
     AuthLoginSuccess:
       type: object
       additionalProperties: false
-      required: [authenticated, user]
+      required: [access_token, token_type]
       properties:
-        authenticated:
-          type: boolean
-          enum: [true]
-        user:
-          $ref: "#/components/schemas/AuthUserProfile"
-
-    AuthLogoutSuccess:
-      type: object
-      additionalProperties: false
-      required: [authenticated]
-      properties:
-        authenticated:
-          type: boolean
-          enum: [false]
+        access_token:
+          type: string
+        token_type:
+          type: string
+          enum: [Bearer]
+        expires_in:
+          type: integer
+          description: Access token lifetime in seconds.
+        refresh_token:
+          type: string
+        client_id:
+          type: string
+          description: Effective client identifier bound to this token.
+        client_kind:
+          $ref: "#/components/schemas/ClientKind"
 
     AuthEmailRequest:
       type: object
@@ -1037,6 +1347,7 @@ components:
       properties:
         email:
           type: string
+          format: email
 
     AuthTokenRequest:
       type: object
@@ -1046,7 +1357,7 @@ components:
         token:
           type: string
 
-    AuthResetPasswordRequest:
+    AuthLostPasswordResetRequest:
       type: object
       additionalProperties: false
       required: [token, new_password]
@@ -1056,60 +1367,231 @@ components:
         new_password:
           type: string
 
-    AuthAcceptedResponse:
+    AuthCurrentUser:
       type: object
       additionalProperties: true
-      required: [accepted]
+      required: [email]
       properties:
-        accepted:
-          type: boolean
-          enum: [true]
-
-    AuthPasswordResetSuccess:
-      type: object
-      additionalProperties: false
-      required: [password_reset]
-      properties:
-        password_reset:
-          type: boolean
-          enum: [true]
-
-    AuthEmailVerifiedSuccess:
-      type: object
-      additionalProperties: false
-      required: [email_verified]
-      properties:
+        uuid:
+          type: string
+        email:
+          type: string
+          format: email
+        display_name:
+          type: string
         email_verified:
           type: boolean
-          enum: [true]
+        roles:
+          type: array
+          items:
+            type: string
+        mfa_enabled:
+          type: boolean
 
-    AuthError:
+    Auth2faOtpRequest:
       type: object
-      additionalProperties: true
-      required: [code, message]
+      additionalProperties: false
+      required: [otp_code]
       properties:
-        code:
+        otp_code:
           type: string
-        message:
+          pattern: "^[0-9]{6}$"
+
+    Auth2faSetupResponse:
+      type: object
+      additionalProperties: false
+      required: [method, issuer, account_name, secret, otpauth_uri]
+      properties:
+        method:
+          type: string
+          enum: [TOTP]
+        issuer:
+          type: string
+        account_name:
+          type: string
+          description: Login identifier shown in authenticator app.
+        secret:
+          type: string
+          description: Base32 TOTP secret (show once during setup).
+        otpauth_uri:
+          type: string
+          description: Provisioning URI for authenticator apps.
+        qr_svg:
+          type: string
+          description: Optional inline SVG QR code payload.
+
+    AuthRevokeClientTokenResponse:
+      type: object
+      additionalProperties: false
+      required: [client_id, revoked]
+      properties:
+        client_id:
+          type: string
+        revoked:
+          type: boolean
+        revoked_at:
+          type: string
+          format: date-time
+
+    AuthClientTokenRequest:
+      type: object
+      additionalProperties: false
+      required: [client_id, client_kind, secret_key]
+      properties:
+        client_id:
+          type: string
+        client_kind:
+          $ref: "#/components/schemas/NonUiClientKind"
+        secret_key:
           type: string
 
-    AuthRateLimitError:
-      allOf:
-        - $ref: "#/components/schemas/AuthError"
-        - type: object
-          additionalProperties: true
-          properties:
-            retry_in_minutes:
-              type: integer
+    AuthClientTokenSuccess:
+      type: object
+      additionalProperties: false
+      required: [client_id, client_kind, access_token, token_type]
+      properties:
+        client_id:
+          type: string
+        client_kind:
+          $ref: "#/components/schemas/NonUiClientKind"
+        access_token:
+          type: string
+        token_type:
+          type: string
+          enum: [Bearer]
+        expires_in:
+          type: integer
+          description: Access token lifetime in seconds.
 
-    AuthRateLimitErrorSeconds:
-      allOf:
-        - $ref: "#/components/schemas/AuthError"
-        - type: object
-          additionalProperties: true
-          properties:
-            retry_in_seconds:
-              type: integer
+    ClientKind:
+      type: string
+      description: Form factor identifier for interactive login flows.
+      enum: [UI_RUST, AGENT]
+
+    NonUiClientKind:
+      type: string
+      description: Allowed client kinds for technical secret-key token minting.
+      enum: [AGENT, MCP]
+
+    AuthRotateClientSecretResponse:
+      type: object
+      additionalProperties: false
+      required: [client_id, secret_key]
+      properties:
+        client_id:
+          type: string
+        secret_key:
+          type: string
+          description: Returned once at rotation time.
+        rotated_at:
+          type: string
+          format: date-time
+
+    AuthDeviceStartRequest:
+      type: object
+      additionalProperties: false
+      required: [client_kind]
+      properties:
+        client_kind:
+          $ref: "#/components/schemas/NonUiClientKind"
+        client_label:
+          type: string
+
+    AuthDeviceStartResponse:
+      type: object
+      additionalProperties: false
+      required: [device_code, user_code, verification_uri, verification_uri_complete, expires_in, interval]
+      properties:
+        device_code:
+          type: string
+        user_code:
+          type: string
+        verification_uri:
+          type: string
+          format: uri
+        verification_uri_complete:
+          type: string
+          format: uri
+        expires_in:
+          type: integer
+        interval:
+          type: integer
+
+    AuthDevicePollRequest:
+      type: object
+      additionalProperties: false
+      required: [device_code]
+      properties:
+        device_code:
+          type: string
+
+    AuthDevicePollResponse:
+      oneOf:
+        - $ref: "#/components/schemas/AuthDevicePollPending"
+        - $ref: "#/components/schemas/AuthDevicePollApproved"
+        - $ref: "#/components/schemas/AuthDevicePollDenied"
+        - $ref: "#/components/schemas/AuthDevicePollExpired"
+
+    AuthDevicePollPending:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [PENDING]
+        interval:
+          type: integer
+
+    AuthDevicePollApproved:
+      type: object
+      additionalProperties: false
+      required: [status, client_id, client_kind, secret_key]
+      properties:
+        status:
+          type: string
+          enum: [APPROVED]
+        client_id:
+          type: string
+        client_kind:
+          $ref: "#/components/schemas/NonUiClientKind"
+        secret_key:
+          type: string
+          description: One-shot credential shown only once after approval.
+
+    AuthDevicePollDenied:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [DENIED]
+
+    AuthDevicePollExpired:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [EXPIRED]
+
+    AuthDeviceCancelRequest:
+      type: object
+      additionalProperties: false
+      required: [device_code]
+      properties:
+        device_code:
+          type: string
+
+    AuthDeviceCancelResponse:
+      type: object
+      additionalProperties: false
+      required: [canceled]
+      properties:
+        canceled:
+          type: boolean
 
     ServerPolicy:
       type: object
@@ -1589,22 +2071,29 @@ components:
           type: string
           enum:
             - UNAUTHORIZED
+            - EMAIL_NOT_VERIFIED
             - FORBIDDEN_SCOPE
             - FORBIDDEN_ACTOR
-            - EMAIL_NOT_VERIFIED
+            - USER_NOT_FOUND
             - STATE_CONFLICT
             - IDEMPOTENCY_CONFLICT
-            - MISSING_IDEMPOTENCY_KEY
             - STALE_LOCK_TOKEN
             - NAME_COLLISION_EXHAUSTED
             - PURGED
-            - NOT_FOUND
-            - INVALID_TOKEN
-            - USER_NOT_FOUND
             - VALIDATION_FAILED
+            - INVALID_TOKEN
             - LOCK_REQUIRED
             - LOCK_INVALID
             - TOO_MANY_ATTEMPTS
+            - MFA_REQUIRED
+            - INVALID_2FA_CODE
+            - MFA_ALREADY_ENABLED
+            - MFA_NOT_ENABLED
+            - INVALID_DEVICE_CODE
+            - EXPIRED_DEVICE_CODE
+            - AUTHORIZATION_PENDING
+            - SLOW_DOWN
+            - ACCESS_DENIED
             - RATE_LIMITED
             - TEMPORARY_UNAVAILABLE
         message:

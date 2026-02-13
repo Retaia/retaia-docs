@@ -10,6 +10,120 @@ Tests obligatoires :
 * transitions interdites renvoient `409 STATE_CONFLICT`
 * `PURGED` est terminal
 
+## 1.1) Auth applicative
+
+Tests obligatoires :
+
+* `POST /auth/login`:
+  * succès `200` avec body valide (`email`, `password`) et émission d'un bearer token (`access_token`, `token_type=Bearer`)
+  * le token est lié à un `client_id` effectif; un nouveau login sur le même `client_id` invalide le token précédent
+  * credentials invalides => `401 UNAUTHORIZED`
+  * 2FA active sans `otp_code` => `401 MFA_REQUIRED`
+  * 2FA active avec `otp_code` invalide => `401 INVALID_2FA_CODE`
+  * 2FA active avec `otp_code` valide => `200`
+  * email non vérifié => `403 EMAIL_NOT_VERIFIED`
+  * body invalide => `422 VALIDATION_FAILED`
+  * dépassement tentative => `429 TOO_MANY_ATTEMPTS`
+* `POST /auth/2fa/setup`:
+  * bearer valide + 2FA inactive => `200` + `otpauth_uri` / `secret` pour app externe (Authy...)
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+  * 2FA déjà active => `409 MFA_ALREADY_ENABLED`
+* `POST /auth/2fa/enable`:
+  * bearer valide + `otp_code` valide => `200`
+  * `otp_code` invalide => `400 INVALID_2FA_CODE`
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+  * 2FA déjà active => `409 MFA_ALREADY_ENABLED`
+  * body invalide => `422 VALIDATION_FAILED`
+* `POST /auth/2fa/disable`:
+  * bearer valide + `otp_code` valide => `200`
+  * `otp_code` invalide => `400 INVALID_2FA_CODE`
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+  * 2FA non active => `409 MFA_NOT_ENABLED`
+  * body invalide => `422 VALIDATION_FAILED`
+* `POST /auth/logout`:
+  * bearer valide => `200`
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+* `GET /auth/me`:
+  * bearer valide => `200` + payload utilisateur courant
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+* `POST /auth/lost-password/request`:
+  * body valide (`email`) => `202`
+  * body invalide => `422 VALIDATION_FAILED`
+  * rate limit => `429 TOO_MANY_ATTEMPTS`
+* `POST /auth/lost-password/reset`:
+  * body valide (`token`, `new_password`) => `200`
+  * token invalide/expiré => `400 INVALID_TOKEN`
+  * body invalide => `422 VALIDATION_FAILED`
+* `POST /auth/verify-email/request`:
+  * body valide (`email`) => `202`
+  * body invalide => `422 VALIDATION_FAILED`
+  * rate limit => `429 TOO_MANY_ATTEMPTS`
+* `POST /auth/verify-email/confirm`:
+  * body valide (`token`) => `200`
+  * token invalide/expiré => `400 INVALID_TOKEN`
+  * body invalide => `422 VALIDATION_FAILED`
+* `POST /auth/verify-email/admin-confirm`:
+  * bearer admin valide + body valide (`email`) => `200`
+  * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
+  * utilisateur inexistant => `404 USER_NOT_FOUND`
+  * body invalide => `422 VALIDATION_FAILED`
+* `POST /auth/clients/{client_id}/revoke-token`:
+  * bearer admin valide + `client_id` valide => `200` et token(s) invalide(s)
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+  * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
+  * `client_id` invalide => `422 VALIDATION_FAILED`
+  * `client_id` de type `UI_RUST` protégé => `403` (non révocable via cet endpoint)
+* `POST /auth/clients/token`:
+  * `client_id + client_kind in {AGENT, MCP} + secret_key` valides => `200` + bearer token client
+  * credentials client invalides => `401 UNAUTHORIZED`
+  * body invalide => `422 VALIDATION_FAILED`
+  * rate limit => `429 TOO_MANY_ATTEMPTS`
+  * invariant: nouveau token minté pour un client révoque l’ancien token (1 token actif / client)
+  * `client_kind=UI_RUST` refusé (422/403 selon policy)
+* `POST /auth/clients/device/start`:
+  * `client_kind in {AGENT, MCP}` => `200` + `device_code`, `user_code`, `verification_uri`, `verification_uri_complete`
+  * body invalide => `422 VALIDATION_FAILED`
+  * rate limit => `429 TOO_MANY_ATTEMPTS`
+* `POST /auth/clients/device/poll`:
+  * avant validation UI => statut `PENDING`
+  * après approval UI => statut `APPROVED` + `secret_key` one-shot
+  * approval refusée par utilisateur => statut/code `DENIED`/`ACCESS_DENIED`
+  * code expiré => statut/code `EXPIRED`/`EXPIRED_DEVICE_CODE`
+  * polling trop fréquent => `429 SLOW_DOWN`/`TOO_MANY_ATTEMPTS`
+* `POST /auth/clients/device/cancel`:
+  * flow en cours => `200` canceled
+  * `device_code` invalide/expiré => `400 INVALID_DEVICE_CODE|EXPIRED_DEVICE_CODE`
+* `POST /auth/clients/{client_id}/rotate-secret`:
+  * bearer admin valide + `client_id` valide => `200` + nouvelle `secret_key` (retournée une fois)
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+  * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
+  * `client_id` invalide => `422 VALIDATION_FAILED`
+  * rotation invalide immédiatement les tokens actifs du client
+* toutes réponses d’erreur 4xx/5xx auth conformes au schéma `ErrorResponse`
+* endpoints humains mutateurs exigent un bearer token (`UserBearerAuth`) conforme à la spec
+* même flux login/token validé sur clients interactifs: `UI_RUST` et `AGENT`
+* compatibilité desktop validée: client `UI_RUST` (Rust/Tauri) utilise `POST /auth/login` + `Authorization: Bearer`
+* anti lock-out: l'UI n'expose jamais le token en clair et n'offre pas d'action d'auto-révocation du token UI actif
+* régression interdite: aucun endpoint runtime n'accepte encore `SessionCookieAuth` (Bearer-only)
+* 2FA optionnelle: compte sans 2FA active ne requiert pas OTP
+* création de secret `AGENT`/`MCP` via UI:
+  * sans 2FA active => approval UI sans OTP
+  * avec 2FA active => OTP obligatoire à l’étape d’approval
+  * sans validation UI => aucun `secret_key` ne peut être émise
+
+## 1.2) Agent runtime (CLI/GUI, cross-platform)
+
+Tests obligatoires :
+
+* `CLI` agent fonctionne en Linux headless (sans dépendance GUI)
+* `GUI` agent (quand présent) utilise le même moteur de processing que `CLI` (mêmes capabilities et mêmes résultats)
+* client `AGENT` validé dans les deux modes d’auth: interactif (`/auth/login`) et technique (`/auth/clients/token` ou OAuth2)
+* client `MCP` validé en mode technique (`/auth/clients/token` ou OAuth2), sans login interactif
+* mode service non-interactif redémarre sans login humain sur Linux/macOS/Windows
+* stockage secret conforme OS (Keychain macOS, Credential Manager/DPAPI Windows, secret store Linux)
+* rotation de secret client n’exige pas de réinstallation agent
+* cible Linux headless Raspberry Pi (Kodi/Plex) validée en non-régression
+
 ## 2) Jobs & leases
 
 Tests obligatoires :
@@ -80,6 +194,7 @@ Tests obligatoires :
 * payload erreur conforme à `api/ERROR-MODEL.md`
 * enum d’état `AssetState` strict sur les payloads d’assets
 * exigences de sécurité/scopes OpenAPI présentes sur chaque endpoint mutateur
+* schéma `SessionCookieAuth` absent de la spec OpenAPI
 
 ## 8.1) Authz matrix
 
@@ -104,6 +219,7 @@ Tests obligatoires :
 * toute nouvelle feature est introduite derrière un flag
 * toute feature `v1.1+` est désactivée par défaut
 * source de vérité des flags = payload runtime de Core (`server_policy.feature_flags`), jamais un hardcode client
+* canal runtime flags défini et testé pour `UI_RUST`, `AGENT`, `MCP` (pas seulement `POST /agents/register`)
 * flag absent dans le payload runtime => traité comme `false`
 * flags inconnus côté client => ignorés sans erreur
 * flag désactivé => la feature est refusée explicitement avec un code normatif
@@ -113,6 +229,7 @@ Tests obligatoires :
 * `job_type=suggest_tags` sur `/jobs/{job_id}/submit` exige `jobs:submit` + `suggestions:write`
 * client feature OFF => UI/action API de la feature interdite
 * client feature ON => disponibilité immédiate sans redéploiement
+* `UI_RUST`, `AGENT` et `MCP` appliquent tous les `feature_flags` runtime du Core
 
 Cas OFF/ON minimum :
 
@@ -122,6 +239,9 @@ Cas OFF/ON minimum :
 * `features.ai.suggested_tags_filters=ON` : filtres `suggested_tags*` utilisables
 * `features.decisions.bulk=OFF` : `/decisions/preview` et `/decisions/apply` non utilisables
 * `features.decisions.bulk=ON` : flux preview/apply utilisable
+* `UI_RUST` : OFF masque/neutralise la feature, ON l’active au prochain refresh flags
+* `AGENT` : OFF interdit job/patch liés à la feature, ON les autorise sans rebuild agent
+* `MCP` : OFF interdit les commandes/actions liées à la feature, ON les autorise sans redéploiement MCP
 
 ## 8.4) Transition runtime des flags
 
@@ -141,6 +261,20 @@ Tests obligatoires :
 * la commande dédiée de refresh met à jour explicitement `contracts/openapi-v1.sha256`
 * toute mise à jour de snapshot est visible dans la PR (pas de mutation implicite en post-merge)
 * non-régression v1 : un refresh de snapshot ne modifie pas la sémantique des comportements `v1` existants
+
+## 8.6) Security baseline (assume breach)
+
+Tests obligatoires :
+
+* aucun token (`access_token`, refresh token, token technique) n'apparaît en clair dans logs, traces, UI ou crash reports
+* aucune `secret_key` client (`AGENT`/`MCP`) n'est persistée en clair côté Core
+* `secret_key` n'est renvoyée qu'une fois lors de l'émission/rotation
+* rotation `secret_key` invalide immédiatement les tokens actifs du `client_id`
+* claims token minimales présentes (`sub`, `principal_type`, `client_id`, `client_kind`, `scope`, `jti`, `exp`) et absence de PII sensible
+* chiffrement au repos activé pour données sensibles et backups
+* flux auth sensibles soumis au rate-limit (login, lost-password, verify-email, token mint, device flow)
+* actions sécurité critiques auditées (login/logout, revoke-token, rotate-secret, 2FA enable/disable, device approval)
+* régression interdite: aucune réintroduction de `SessionCookieAuth`
 
 ## 9) Couverture minimale
 
@@ -166,6 +300,7 @@ Tests obligatoires :
 * [API-CONTRACTS.md](../api/API-CONTRACTS.md)
 * [ERROR-MODEL.md](../api/ERROR-MODEL.md)
 * [AUTHZ-MATRIX.md](../policies/AUTHZ-MATRIX.md)
+* [SECURITY-BASELINE.md](../policies/SECURITY-BASELINE.md)
 * [LOCK-LIFECYCLE.md](../policies/LOCK-LIFECYCLE.md)
 * [CODE-QUALITY.md](../change-management/CODE-QUALITY.md)
 * [I18N-LOCALIZATION.md](../policies/I18N-LOCALIZATION.md)
