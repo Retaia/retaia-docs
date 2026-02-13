@@ -37,7 +37,7 @@ Objectif : fournir une surface stable consommée par :
 * Toute nouvelle fonctionnalité DOIT être protégée par un feature flag serveur dès son introduction.
 * Les fonctionnalités `v1.1+` suivent la même règle et restent inactives tant que leur flag n'est pas activé.
 * Convention de nommage : `features.<domaine>.<fonction>` (ex: `features.ai.suggest_tags`).
-* Contrat de transport : l’état effectif des flags DOIT être transporté dans un payload standard `server_policy.feature_flags` pour tous les clients (`UI_RUST`, `AGENT`, `MCP`), avec endpoint d’accès runtime dédié ou payload équivalent.
+* Contrat de transport : l’état effectif des flags DOIT être transporté dans un payload standard `server_policy.feature_flags` pour tous les clients (`UI_RUST`, `AGENT`, `MCP`) via `GET /app/policy`.
 * Distinction normative (sans ambiguïté) :
   * `feature_flags` = activation runtime des fonctionnalités côté Core
   * `app_feature_enabled` = activation applicative effective (switches niveau application, gouvernés par admin)
@@ -293,6 +293,15 @@ Baseline sécurité/fuite (normatif) :
   * `401 UNAUTHORIZED`
   * `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
   * `422 VALIDATION_FAILED`
+
+`GET /app/policy`
+
+* security: `UserBearerAuth` ou `OAuth2ClientCredentials`
+* effet: retourne `server_policy` (incluant `feature_flags`) pour clients interactifs et techniques
+* règle: `UI_RUST`, `AGENT` et `MCP` DOIVENT consommer cet endpoint pour la disponibilité runtime des features
+* réponses:
+  * `200` succès
+  * `401 UNAUTHORIZED`
 
 `POST /auth/lost-password/request`
 
