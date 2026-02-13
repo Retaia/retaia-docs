@@ -297,6 +297,52 @@ Migration obligatoire (anti dette technique) :
   * `422 VALIDATION_FAILED`
   * `429 TOO_MANY_ATTEMPTS`
 
+`POST /auth/clients/device/start`
+
+* security: aucune (`security: []`)
+* body requis: `{ client_kind }` avec `client_kind in {AGENT, MCP}`
+* effet: démarre un flow d’autorisation device type GitHub
+* réponses:
+  * `200` (`device_code`, `user_code`, `verification_uri`, `verification_uri_complete`, `expires_in`, `interval`)
+  * `401 UNAUTHORIZED`
+  * `422 VALIDATION_FAILED`
+  * `429 TOO_MANY_ATTEMPTS`
+
+`POST /auth/clients/device/poll`
+
+* security: aucune (`security: []`)
+* body requis: `{ device_code }`
+* effet: récupère l’état du flow device
+* réponses:
+  * `200` avec `status in {PENDING, APPROVED, DENIED, EXPIRED}`
+  * `APPROVED` retourne `client_id`, `client_kind`, `secret_key` (one-shot)
+  * `400 INVALID_TOKEN` (`device_code` invalide/expiré)
+  * `429 TOO_MANY_ATTEMPTS` (poll trop fréquent)
+
+`POST /auth/clients/device/cancel`
+
+* security: aucune (`security: []`)
+* body requis: `{ device_code }`
+* effet: annule un flow device en cours
+* réponses:
+  * `200` canceled
+  * `400 INVALID_TOKEN`
+  * `422 VALIDATION_FAILED`
+
+Séquence normative bootstrap `AGENT/MCP` (obligatoire) :
+
+1. client technique lance `POST /auth/clients/device/start`
+2. client ouvre `verification_uri` (ou `verification_uri_complete`) dans le navigateur
+3. utilisateur se connecte via UI
+4. si 2FA est activée sur le compte, validation OTP obligatoire
+5. utilisateur approuve explicitement la création de credential technique
+6. client technique poll `POST /auth/clients/device/poll` jusqu’à `APPROVED`/`DENIED`/`EXPIRED`
+7. en cas `APPROVED`, `secret_key` est retournée une seule fois, puis utilisée sur `POST /auth/clients/token`
+
+Règle de sécurité :
+
+* création de `secret_key` `AGENT/MCP` sans validation UI utilisateur est interdite
+
 `POST /auth/clients/{client_id}/rotate-secret`
 
 * security: `UserBearerAuth`
