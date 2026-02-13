@@ -9,7 +9,7 @@ info:
     This API coordinates assets, processing jobs and agents.
     Agents are non-reliable by design.
     Jobs may remain pending indefinitely if no compatible agent is available.
-    AI-powered features are available in v1.1+ (except transcription, available in v1).
+    AI-powered features are planned for v1.1+ and are out of v1 conformance scope.
 
 servers:
   - url: /api/v1
@@ -242,7 +242,6 @@ paths:
       description: |
         Updates effective app switches (`app_feature_enabled`).
         Admin-only operation.
-        When AI app switches are disabled, Core MUST stop scheduling corresponding AI jobs for this app scope.
       security:
         - UserBearerAuth: []
       requestBody:
@@ -258,68 +257,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AppFeaturesResponse"
-        "401":
-          description: Unauthorized (`UNAUTHORIZED`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "403":
-          description: Forbidden actor or scope (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "422":
-          description: Validation failed (`VALIDATION_FAILED`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  /app/ai-defaults:
-    get:
-      tags: [Auth]
-      summary: Get global AI defaults and authorized models
-      description: |
-        Returns global AI defaults configured by admin and Core authorization policy.
-        Core does not discover or manage local model catalogs; the agent remains model/provider owner.
-      security:
-        - UserBearerAuth: []
-      responses:
-        "200":
-          description: Global AI defaults and authorization policy
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppAiDefaultsResponse"
-        "401":
-          description: Unauthorized (`UNAUTHORIZED`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-    patch:
-      tags: [Auth]
-      summary: Update global AI defaults and authorized models
-      description: |
-        Admin-only update of global AI defaults and authorized models.
-        Agent capabilities tied to unavailable or unauthorized provider/model combinations must be invalidated.
-      security:
-        - UserBearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AppAiDefaultsUpdateRequest"
-      responses:
-        "200":
-          description: Updated global AI defaults and authorization policy
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppAiDefaultsResponse"
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
           content:
@@ -766,13 +703,13 @@ paths:
           in: query
           schema:
             type: string
-          description: Suggested tags filter (AI-powered, available in v1.1+ when `features.ai.suggested_tags_filters=true`).
+          description: Suggested tags filter (AI-powered, planned v1.1+).
         - name: suggested_tags_mode
           in: query
           schema:
             type: string
             enum: [AND, OR]
-          description: Suggested tags matching mode (available in v1.1+ when `features.ai.suggested_tags_filters=true`).
+          description: Suggested tags matching mode (AI-powered, planned v1.1+).
         - name: q
           in: query
           schema:
@@ -1063,8 +1000,7 @@ paths:
       summary: Submit job result patch
       description: |
         Submits one job result patch.
-        For `job_type=suggest_tags` (v1.1+), server enforces both scopes `jobs:submit` and `suggestions:write`,
-        and requires feature flag `features.ai.suggest_tags` to be enabled.
+        For `job_type=suggest_tags` (planned v1.1+), server-side policy enforcement is defined in the v1.1 normative docs.
         If the flag is absent, it MUST be treated as `false`.
       security:
         - OAuth2ClientCredentials: ["jobs:submit"]
@@ -1440,7 +1376,6 @@ components:
             jobs:claim: Discover and claim jobs.
             jobs:heartbeat: Extend job leases.
             jobs:submit: Submit job completion/failure and derived uploads.
-            suggestions:write: Submit AI-powered suggestions (v1.1+).
             batches:execute: Preview and execute move batches.
             purge:execute: Preview and execute purge operations.
 
@@ -1789,21 +1724,6 @@ components:
       additionalProperties:
         type: boolean
       properties:
-        features.ai.suggest_tags:
-          type: boolean
-          default: false
-        features.ai.provider.ollama:
-          type: boolean
-          default: true
-        features.ai.provider.chatgpt:
-          type: boolean
-          default: false
-        features.ai.provider.claude:
-          type: boolean
-          default: false
-        features.ai.suggested_tags_filters:
-          type: boolean
-          default: false
         features.decisions.bulk:
           type: boolean
           default: false
@@ -1815,31 +1735,6 @@ components:
         Effective feature availability requires Core `FeatureFlags` AND `AppFeatureEnabled`.
       additionalProperties:
         type: boolean
-      properties:
-        app.features.ai.enabled:
-          type: boolean
-          default: true
-        app.features.ai.suggest_tags.enabled:
-          type: boolean
-          default: true
-        app.features.ai.provider.ollama.enabled:
-          type: boolean
-          default: true
-          description: |
-            App-level switch for provider `ollama`.
-            Effective only if Core flag `features.ai.provider.ollama=true`.
-        app.features.ai.provider.chatgpt.enabled:
-          type: boolean
-          default: true
-          description: |
-            App-level switch for provider `chatgpt`.
-            Effective only if Core flag `features.ai.provider.chatgpt=true`.
-        app.features.ai.provider.claude.enabled:
-          type: boolean
-          default: true
-          description: |
-            App-level switch for provider `claude`.
-            Effective only if Core flag `features.ai.provider.claude=true`.
 
     AppFeaturesResponse:
       type: object
@@ -1856,64 +1751,6 @@ components:
       properties:
         app_feature_enabled:
           $ref: "#/components/schemas/AppFeatureEnabled"
-
-    AppAiDefaults:
-      type: object
-      additionalProperties: false
-      required:
-        - default_llm_provider
-        - default_llm_model
-        - default_stt_provider
-        - default_stt_model
-      properties:
-        default_llm_provider:
-          type: string
-          enum: [ollama, chatgpt, claude]
-          default: ollama
-        default_llm_model:
-          type: string
-          default: mistral:latest
-        default_stt_provider:
-          type: string
-          enum: [whispercpp]
-          default: whispercpp
-        default_stt_model:
-          type: string
-          default: ggml-large-v3-turbo.bin
-        llm_quality_profile:
-          type: string
-          enum: [quality, balanced, speed]
-          default: quality
-        stt_quality_profile:
-          type: string
-          enum: [quality, balanced, speed]
-          default: quality
-        prioritize_quality_over_latency:
-          type: boolean
-          default: true
-        authorized_models:
-          type: object
-          description: Provider/model allowlist enforced by Core policy.
-          additionalProperties:
-            type: array
-            items:
-              type: string
-
-    AppAiDefaultsResponse:
-      type: object
-      additionalProperties: false
-      required: [app_ai_defaults]
-      properties:
-        app_ai_defaults:
-          $ref: "#/components/schemas/AppAiDefaults"
-
-    AppAiDefaultsUpdateRequest:
-      type: object
-      additionalProperties: false
-      required: [app_ai_defaults]
-      properties:
-        app_ai_defaults:
-          $ref: "#/components/schemas/AppAiDefaults"
 
     AgentModelInventoryEntry:
       type: object
@@ -2137,7 +1974,7 @@ components:
           type: string
         job_type:
           type: string
-          description: suggest_tags is available in v1.1+, transcribe_audio is available in v1.
+          description: suggest_tags and transcribe_audio are planned in v1.1+.
           enum:
             - extract_facts
             - generate_proxy
@@ -2249,7 +2086,7 @@ components:
 
     SubmitSuggest:
       type: object
-      description: AI-powered suggestions submission (available in v1.1+, requires jobs:submit and suggestions:write).
+      description: AI-powered suggestions submission (planned v1.1+).
       additionalProperties: false
       required: [lock_token, job_type, result]
       properties:

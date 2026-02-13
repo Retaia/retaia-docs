@@ -43,23 +43,11 @@ Acteurs normatifs :
 * scope: policy admin (sinon `403 FORBIDDEN_ACTOR` / `FORBIDDEN_SCOPE`)
 * portée: met à jour les switches applicatifs globaux
 
-`GET /app/ai-defaults`
-
-* acteur: `USER_INTERACTIVE`
-* scope: `UserBearerAuth`
-* portée: retourne les defaults globaux IA et modèles autorisés
-
 `GET /app/policy`
 
 * acteur: `USER_INTERACTIVE` ou `CLIENT_TECHNICAL`
 * scope: `UserBearerAuth` ou `OAuth2ClientCredentials`
 * portée: retourne la policy runtime (`server_policy.feature_flags`)
-
-`PATCH /app/ai-defaults`
-
-* acteur: `ADMIN_INTERACTIVE`
-* scope: policy admin (sinon `403 FORBIDDEN_ACTOR` / `FORBIDDEN_SCOPE`)
-* portée: met à jour provider/model globaux par défaut et modèles autorisés
 
 `POST /auth/verify-email/admin-confirm`
 

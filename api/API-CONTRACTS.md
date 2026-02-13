@@ -26,17 +26,16 @@ Objectif : fournir une surface stable consommée par :
 
 ### Versioning mineur (v1 / v1.1)
 
-* `v1` = socle stable (ingestion, processing review, transcription, décision humaine, moves, purge, recherche full-text `q`).
+* `v1` = socle stable (ingestion, processing review, décision humaine, moves, purge, recherche full-text `q`).
 * `v1.1` = extensions compatibles.
-* Toute fonctionnalité AI-powered (ex: `suggest_tags`, filtres `suggested_tags*`) est `v1.1+`.
-* Exception explicite : `transcribe_audio` est disponible dès `v1`.
+* Toute fonctionnalité AI-powered (ex: `transcribe_audio`, `suggest_tags`, filtres `suggested_tags*`) est hors périmètre de conformité v1 et planifiée en `v1.1+`.
 
 ### Feature flags (normatif)
 
 * Source de vérité : les flags sont pilotés par **Retaia Core** au runtime. Les clients (UI, agents, MCP) NE DOIVENT PAS hardcoder un état de flag.
 * Toute nouvelle fonctionnalité DOIT être protégée par un feature flag serveur dès son introduction.
 * Les fonctionnalités `v1.1+` suivent la même règle et restent inactives tant que leur flag n'est pas activé.
-* Convention de nommage : `features.<domaine>.<fonction>` (ex: `features.ai.suggest_tags`).
+* Convention de nommage : `features.<domaine>.<fonction>`.
 * Contrat de transport : l’état effectif des flags DOIT être transporté dans un payload standard `server_policy.feature_flags` pour tous les clients (`UI_RUST`, `AGENT`, `MCP`) via `GET /app/policy`.
 * Distinction normative (sans ambiguïté) :
   * `feature_flags` = activation runtime des fonctionnalités côté Core
@@ -45,7 +44,6 @@ Objectif : fournir une surface stable consommée par :
   * `contracts/` = snapshots versionnés pour détecter un drift du contrat OpenAPI
 * Règle de combinaison (obligatoire) :
   * exécution autorisée uniquement si `capability requise présente` **ET** `feature_flag(s) requis actif(s)`
-  * pour les features IA: disponibilité effective uniquement si `feature_flag(s) Core` **ET** `app_feature_enabled` sont actifs
   * capability présente + flag OFF => refus normatif (`403 FORBIDDEN_SCOPE`/équivalent policy)
   * flag ON + capability absente => non exécutable (`pending`, `403` ou `409` selon endpoint/policy)
 * Sémantique stricte :
@@ -57,38 +55,10 @@ Objectif : fournir une surface stable consommée par :
 
 Mapping normatif v1.1 (base actuelle, obligatoire pour tous les consommateurs) :
 
-* `features.ai.suggest_tags` :
-  * autorise `job_type=suggest_tags` sur `POST /jobs/{job_id}/submit`
-  * autorise `suggestions_patch`
-  * autorise le bloc `suggestions` dans `AssetDetail`
-  * client: OFF => ne pas afficher/exécuter les actions liées à la suggestion AI ; ON => disponible sans redéploiement
-* `features.ai.provider.ollama` :
-  * autorise le provider `ollama` pour `suggest_tags`
-  * rollout initial: ON
-* `features.ai.provider.chatgpt` :
-  * autorise le provider `chatgpt` pour `suggest_tags`
-  * rollout initial: OFF (activation progressive)
-* `features.ai.provider.claude` :
-  * autorise le provider `claude` pour `suggest_tags`
-  * rollout initial: OFF (activation progressive)
-* `app.features.ai.enabled` :
-  * switch applicatif global IA
-  * OFF => Core DOIT empêcher la planification des jobs IA pour le scope applicatif
-* `app.features.ai.suggest_tags.enabled` :
-  * switch applicatif dédié `suggest_tags`
-  * OFF => Core DOIT empêcher `job_type=suggest_tags` pour le scope applicatif
-* `app.features.ai.provider.ollama.enabled` :
-  * switch applicatif provider `ollama`
-* `app.features.ai.provider.chatgpt.enabled` :
-  * switch applicatif provider `chatgpt`
-* `app.features.ai.provider.claude.enabled` :
-  * switch applicatif provider `claude`
-* `features.ai.suggested_tags_filters` :
-  * autorise les query params `suggested_tags`, `suggested_tags_mode` sur `GET /assets`
-  * client: OFF => ne pas exposer ces filtres ni les envoyer ; ON => disponible sans redéploiement
 * `features.decisions.bulk` :
   * autorise `POST /decisions/preview` et `POST /decisions/apply`
   * client: OFF => interdire toute UI/action bulk decisions et tout appel API associé ; ON => disponible sans redéploiement
+* les capacités AI (`transcribe_audio`, `suggest_tags`, providers/modèles, filtres `suggested_tags*`) sont planifiées en v1.1+ et hors validation de conformité v1.
 
 Règles client (normatives, UI/agents/MCP) :
 
@@ -98,19 +68,12 @@ Règles client (normatives, UI/agents/MCP) :
 * aucun client ne DOIT hardcoder l’état d’un flag ni dépendre d’un flag local statique
 * toute décision de disponibilité fonctionnelle côté client DOIT être dérivée du dernier payload runtime reçu
 
-Précédence provider (obligatoire) :
-
-* provider autorisé uniquement si `features.ai.provider.<name>=true` **ET** `app.features.ai.provider.<name>.enabled=true`
-* `app.features.ai.enabled=false` => tous les providers IA sont effectifs OFF
-* `app.features.ai.suggest_tags.enabled=false` => aucun provider `suggest_tags` n'est effectif
-* un switch applicatif provider ne PEUT PAS outrepasser un `feature_flag` Core à `false`
-
 Gouvernance des `app_feature_enabled` (opposable) :
 
 * lecture (`GET /app/features`) : utilisateurs authentifiés (`UserBearerAuth`) ; retourne l’état effectif des switches applicatifs
 * modification (`PATCH /app/features`) : admin uniquement (`403 FORBIDDEN_ACTOR` / `FORBIDDEN_SCOPE` sinon)
 * portée : switches applicatifs globaux (pas des préférences locales client)
-* effet runtime obligatoire : quand IA est désactivée via `app_feature_enabled`, Core DOIT arrêter la planification des jobs IA concernés
+* effet runtime obligatoire : un switch applicatif désactivé DOIT empêcher l’exécution des fonctionnalités associées pour le scope applicatif
 
 ### Idempotence (règles strictes)
 
@@ -176,25 +139,10 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 * mode client applicatif non-interactif (`AGENT`, `MCP`) : `client_id + secret_key` pour obtenir un bearer token via `POST /auth/clients/token`
 * `MCP` PEUT piloter/orchestrer l'agent (configuration, déclenchement, supervision) mais NE DOIT JAMAIS exécuter de traitement média
 * `MCP` est interdit sur les endpoints de processing `/jobs/*` (`claim`, `heartbeat`, `submit`) avec refus `403 FORBIDDEN_ACTOR`
-* pour les workflows AI `suggest_tags` côté `AGENT`: `ollama` en phase 1; `chatgpt` et `claude` en phase 2 derrière feature flags
-* l’agent est propriétaire du provider/model runtime: découverte locale, disponibilité et installation
+* les capacités IA (providers, modèles, transcription, suggestions) sont planifiées en v1.1+
+* l’agent reste propriétaire du runtime provider/model (découverte locale, disponibilité, installation) dans le paquet normatif v1.1
 * Core NE DOIT PAS exposer de catalogue runtime global de modèles
 * `UI_RUST`, `AGENT` et `MCP` NE DOIVENT PAS hardcoder providers/modèles
-* le modèle LLM effectif DOIT être choisi explicitement par l'utilisateur (UI/CLI/config utilisateur), puis appliqué par le client
-* l’admin DOIT définir un provider/modèle global par défaut via `PATCH /app/ai-defaults`
-* valeurs par défaut normatives initiales:
-  * `default_llm_provider=ollama`
-  * `default_llm_model=mistral:latest`
-  * `default_stt_provider=whispercpp`
-  * `default_stt_model=ggml-large-v3-turbo.bin`
-  * `llm_quality_profile=quality`
-  * `stt_quality_profile=quality`
-  * `prioritize_quality_over_latency=true`
-* stratégie AI/transcription: local-first obligatoire pour `UI_RUST`, `AGENT`, `MCP`
-* transcription locale minimum actuelle: `Whisper.cpp`
-* backend distant autorisé uniquement en opt-in explicite utilisateur/policy (jamais par défaut implicite)
-* si un provider/modèle requis n’est pas disponible localement côté agent, les capabilities associées DOIVENT être invalidées
-* si un provider/modèle local est disponible mais non autorisé par Core, les capabilities associées DOIVENT être invalidées
 
 Règles 2FA par client (obligatoire) :
 
@@ -323,28 +271,7 @@ Normalisation HTTP (normatif) :
 * prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
 * body requis: `{ app_feature_enabled: { ... } }`
 * effet: met à jour les switches applicatifs globaux
-* règle: si IA est désactivée via `app_feature_enabled`, Core DOIT cesser la planification des jobs IA correspondants
-* réponses:
-  * `200` succès
-  * `401 UNAUTHORIZED`
-  * `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
-  * `422 VALIDATION_FAILED`
-
-`GET /app/ai-defaults`
-
-* security: `UserBearerAuth`
-* effet: retourne les defaults globaux IA (`provider/model`) et les modèles autorisés par Core
-* réponses:
-  * `200` succès
-  * `401 UNAUTHORIZED`
-
-`PATCH /app/ai-defaults`
-
-* security: `UserBearerAuth`
-* prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
-* body requis: `{ app_ai_defaults: { default_llm_provider, default_llm_model, default_stt_provider, default_stt_model, llm_quality_profile, stt_quality_profile, prioritize_quality_over_latency, authorized_models } }`
-* effet: met à jour les defaults globaux IA et la policy d’autorisation modèle
-* règle: un agent qui ne trouve pas le provider/modèle requis ou qui n’est pas autorisé DOIT invalider les capabilities liées
+* règle: un switch applicatif désactivé DOIT empêcher la planification/exécution des fonctionnalités associées
 * réponses:
   * `200` succès
   * `401 UNAUTHORIZED`
@@ -689,8 +616,8 @@ Effets :
 
 * `extract_facts | generate_proxy | generate_thumbnails | generate_audio_waveform` :
   mise à jour des domaines `facts/derived`, puis `PROCESSING_REVIEW → PROCESSED → DECISION_PENDING` quand le profil est complet
-* `transcribe_audio` (**v1**) : mise à jour du domaine `transcript`
-* `suggest_tags` (**v1.1+**) : mise à jour du domaine `suggestions`
+* `transcribe_audio` (**planned v1.1+**) : mise à jour du domaine `transcript`
+* `suggest_tags` (**planned v1.1+**) : mise à jour du domaine `suggestions`
 
 Note v1 (important) :
 
@@ -701,14 +628,12 @@ Note v1 (important) :
 * ownership de patch par `job_type` :
   * `extract_facts` -> `facts_patch`
   * `generate_proxy|generate_thumbnails|generate_audio_waveform` -> `derived_patch`
-  * `transcribe_audio` -> `transcript_patch`
-  * `suggest_tags` (**v1.1+**) -> `suggestions_patch`
+  * `transcribe_audio` (**planned v1.1+**) -> `transcript_patch`
+  * `suggest_tags` (**planned v1.1+**) -> `suggestions_patch`
 
 Règle authz complémentaire :
 
-* pour `job_type=suggest_tags`, l'acteur DOIT avoir `jobs:submit` **et** `suggestions:write`
-* pour `job_type=suggest_tags`, le flag `features.ai.suggest_tags` DOIT être actif
-* pour `job_type=suggest_tags`, le provider demandé DOIT être activé (`features.ai.provider.<provider>=true`)
+* pour `job_type=suggest_tags` (planned v1.1+), les règles de scopes/policy sont définies dans le paquet normatif v1.1.
 
 ### POST `/jobs/{job_id}/fail`
 
@@ -992,13 +917,12 @@ Le payload d’erreur normatif est défini dans [`ERROR-MODEL.md`](ERROR-MODEL.m
 * Scopes : agents strictement limités aux scopes jobs (jamais décisions/moves/purge)
 * Filtres `tags=` : tags humains uniquement
 * Recherche full-text `q=` disponible
-* Transcription (`transcribe_audio`) disponible
 * Changement de décision KEEP/REJECT autorisé de façon directe
 * Reprocess autorisé depuis `PROCESSED|ARCHIVED|REJECTED`
 
 ## 12) Décisions actées (v1.1)
 
-* Introduction des capacités AI-powered (`suggest_tags`, `suggestions_patch`, bloc `suggestions` dans `AssetDetail`)
+* Introduction des capacités AI-powered (`transcribe_audio`, `suggest_tags`, `suggestions_patch`, bloc `suggestions` dans `AssetDetail`)
 * Introduction de `suggested_tags=` et `suggested_tags_mode=`
 * Scope `suggestions:write` pour les flux AI dédiés
 * Bulk decisions via preview/apply (`/decisions/preview`, `/decisions/apply`)
