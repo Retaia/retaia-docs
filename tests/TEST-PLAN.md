@@ -288,6 +288,18 @@ Tests obligatoires :
 * exercice de notification fuite RGPD exécuté et tracé (SLA 72h vérifié en simulation)
 * rotation/rekey crypto n'introduit pas de perte d'accès légitime ni de régression authz
 
+## 8.8) Full-text + filtres localisation sur données chiffrées
+
+Tests obligatoires :
+
+* `q` fonctionne en v1 sans plaintext indexé pour la transcription
+* `location_country` fonctionne sur index dérivé
+* `location_city` fonctionne sur index dérivé
+* `geo_bbox` fonctionne sur index spatial dérivé
+* combinaison `q + filtres localisation + autres filtres` conserve la sémantique attendue
+* dump DB/backups de l'index de recherche ne révèle pas adresse, GPS, transcription en clair
+* reindex après rotation de clés conserve les résultats attendus sans fuite de plaintext
+
 ## 9) Couverture minimale
 
 Minimum :
@@ -314,6 +326,7 @@ Tests obligatoires :
 * [AUTHZ-MATRIX.md](../policies/AUTHZ-MATRIX.md)
 * [SECURITY-BASELINE.md](../policies/SECURITY-BASELINE.md)
 * [CRYPTO-SECURITY-MODEL.md](../policies/CRYPTO-SECURITY-MODEL.md)
+* [SEARCH-PRIVACY-INDEX.md](../policies/SEARCH-PRIVACY-INDEX.md)
 * [RGPD-DATA-PROTECTION.md](../policies/RGPD-DATA-PROTECTION.md)
 * [LOCK-LIFECYCLE.md](../policies/LOCK-LIFECYCLE.md)
 * [CODE-QUALITY.md](../change-management/CODE-QUALITY.md)

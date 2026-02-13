@@ -394,6 +394,9 @@ Query params (exemples) :
 * `suggested_tags=foo,bar` (**v1.1+**, suggestions uniquement)
 * `suggested_tags_mode=AND|OR` (**v1.1+**, défaut: AND)
 * `q=texte` (optionnel, **v1**, recherche full-text sur `filename`, `notes`, `transcript_text`)
+* `location_country=BE` (optionnel, filtre localisation)
+* `location_city=Brussels` (optionnel, filtre localisation)
+* `geo_bbox=min_lon,min_lat,max_lon,max_lat` (optionnel, filtre géospatial bbox)
 * `sort=-created_at`
 * `limit=50&cursor=...`
 
@@ -402,6 +405,8 @@ Règles `q=` :
 * matching case-insensitive
 * `q` ne modifie pas la sémantique des filtres (`state`, `media_type`, etc.)
 * tri par défaut conservé (`sort`) ; pas de score implicite exposé en v1
+* `q` DOIT utiliser un index de recherche dérivé compatible chiffrement (pas de plaintext de transcription en index)
+* filtres localisation DOIVENT reposer sur index spatial dérivé; les valeurs GPS source restent chiffrées
 
 Response :
 
@@ -933,6 +938,7 @@ Procédure de refresh contrôlé :
 * [AUTHZ-MATRIX.md](../policies/AUTHZ-MATRIX.md)
 * [SECURITY-BASELINE.md](../policies/SECURITY-BASELINE.md)
 * [CRYPTO-SECURITY-MODEL.md](../policies/CRYPTO-SECURITY-MODEL.md)
+* [SEARCH-PRIVACY-INDEX.md](../policies/SEARCH-PRIVACY-INDEX.md)
 * [RGPD-DATA-PROTECTION.md](../policies/RGPD-DATA-PROTECTION.md)
 * [HOOKS-CONTRACT.md](../policies/HOOKS-CONTRACT.md)
 * [ERROR-MODEL.md](ERROR-MODEL.md)

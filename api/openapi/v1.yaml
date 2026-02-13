@@ -641,6 +641,22 @@ paths:
           schema:
             type: string
           description: Full-text query over filename, notes and transcript_text (available in v1).
+        - name: location_country
+          in: query
+          schema:
+            type: string
+          description: Country-level location filter (uses secure derived search index).
+        - name: location_city
+          in: query
+          schema:
+            type: string
+          description: City-level location filter (uses secure derived search index).
+        - name: geo_bbox
+          in: query
+          schema:
+            type: string
+            example: "4.30,50.80,4.45,50.92"
+          description: Bounding box filter `min_lon,min_lat,max_lon,max_lat` (uses secure derived spatial index).
         - name: sort
           in: query
           schema:
