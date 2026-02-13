@@ -286,7 +286,7 @@ paths:
         Clients MUST NOT hardcode providers/models and MUST consume this catalog dynamically.
       security:
         - UserBearerAuth: []
-        - OAuth2ClientCredentials: []
+        - OAuth2ClientCredentials: ["models:read"]
       responses:
         "200":
           description: Runtime model catalog
@@ -296,6 +296,12 @@ paths:
                 $ref: "#/components/schemas/ModelCatalogResponse"
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden scope (`FORBIDDEN_SCOPE`)
           content:
             application/json:
               schema:
@@ -1387,6 +1393,7 @@ components:
             assets:read: Read assets and derived metadata.
             assets:write: Update human metadata and trigger reprocess.
             decisions:write: Apply human decisions.
+            models:read: Read runtime model catalog.
             jobs:claim: Discover and claim jobs.
             jobs:heartbeat: Extend job leases.
             jobs:submit: Submit job completion/failure and derived uploads.

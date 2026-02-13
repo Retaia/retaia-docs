@@ -203,6 +203,7 @@ Règle de cardinalité des tokens (obligatoire) :
 * `assets:read`
 * `assets:write` (**humain uniquement**) — tags/fields/notes humains
 * `decisions:write` (**humain uniquement**)
+* `models:read` (**clients techniques/UI via OAuth**) — lecture du catalogue runtime des modèles
 * `jobs:claim` (**agents uniquement**)
 * `jobs:heartbeat` (**agents uniquement**)
 * `jobs:submit` (**agents uniquement**)
@@ -319,12 +320,13 @@ Normalisation HTTP (normatif) :
 
 `GET /app/model-catalog`
 
-* security: `UserBearerAuth` ou `OAuth2ClientCredentials`
+* security: `UserBearerAuth` ou `OAuth2ClientCredentials(models:read)`
 * effet: retourne le catalogue runtime des providers/modèles LLM autorisés
 * règle: `UI_RUST`, `AGENT` et `MCP` DOIVENT consommer ce catalogue et NE DOIVENT PAS hardcoder la liste des modèles
 * réponses:
   * `200` succès
   * `401 UNAUTHORIZED`
+  * `403 FORBIDDEN_SCOPE`
 
 `GET /app/policy`
 
