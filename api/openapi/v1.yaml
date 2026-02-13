@@ -503,13 +503,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/AuthDevicePollResponse"
         "400":
-          description: Invalid or expired device code (`INVALID_TOKEN`)
+          description: Invalid or expired device code (`INVALID_DEVICE_CODE` or `EXPIRED_DEVICE_CODE`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authorization pending (`AUTHORIZATION_PENDING`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Access denied by user (`ACCESS_DENIED`)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "429":
-          description: Polling too fast (`TOO_MANY_ATTEMPTS`)
+          description: Polling too fast (`SLOW_DOWN` or `TOO_MANY_ATTEMPTS`)
           content:
             application/json:
               schema:
@@ -534,7 +546,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/AuthDeviceCancelResponse"
         "400":
-          description: Invalid device code (`INVALID_TOKEN`)
+          description: Invalid or expired device code (`INVALID_DEVICE_CODE` or `EXPIRED_DEVICE_CODE`)
           content:
             application/json:
               schema:
@@ -679,7 +691,6 @@ paths:
       summary: Update human metadata on one asset
       security:
         - UserBearerAuth: []
-        - OAuth2ClientCredentials: ["assets:write"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
       requestBody:
@@ -749,7 +760,6 @@ paths:
       summary: Trigger explicit reprocess
       security:
         - UserBearerAuth: []
-        - OAuth2ClientCredentials: ["assets:write"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -769,7 +779,6 @@ paths:
       summary: Set or update a human decision
       security:
         - UserBearerAuth: []
-        - OAuth2ClientCredentials: ["decisions:write"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -800,7 +809,6 @@ paths:
       summary: Reopen archived or rejected asset to decision pending
       security:
         - UserBearerAuth: []
-        - OAuth2ClientCredentials: ["decisions:write"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
       responses:
@@ -1089,7 +1097,6 @@ paths:
       summary: Preview move batch
       security:
         - UserBearerAuth: []
-        - OAuth2ClientCredentials: ["batches:execute"]
       requestBody:
         required: true
         content:
@@ -1113,7 +1120,6 @@ paths:
       summary: Execute or dry-run move batch
       security:
         - UserBearerAuth: []
-        - OAuth2ClientCredentials: ["batches:execute"]
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
@@ -1140,7 +1146,6 @@ paths:
       summary: Get move batch status and report
       security:
         - UserBearerAuth: []
-        - OAuth2ClientCredentials: ["batches:execute"]
       parameters:
         - name: batch_id
           in: path
@@ -1163,7 +1168,6 @@ paths:
       description: Available in v1.1+ when `features.decisions.bulk=true`.
       security:
         - UserBearerAuth: []
-        - OAuth2ClientCredentials: ["decisions:write"]
       requestBody:
         required: true
         content:
@@ -1191,7 +1195,6 @@ paths:
       description: Available in v1.1+ when `features.decisions.bulk=true`.
       security:
         - UserBearerAuth: []
-        - OAuth2ClientCredentials: ["decisions:write"]
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
@@ -1217,7 +1220,6 @@ paths:
       summary: Purge one rejected asset
       security:
         - UserBearerAuth: []
-        - OAuth2ClientCredentials: ["purge:execute"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -1248,7 +1250,6 @@ paths:
       summary: Preview purge impact for one asset
       security:
         - UserBearerAuth: []
-        - OAuth2ClientCredentials: ["purge:execute"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
       responses:
@@ -2088,6 +2089,11 @@ components:
             - INVALID_2FA_CODE
             - MFA_ALREADY_ENABLED
             - MFA_NOT_ENABLED
+            - INVALID_DEVICE_CODE
+            - EXPIRED_DEVICE_CODE
+            - AUTHORIZATION_PENDING
+            - SLOW_DOWN
+            - ACCESS_DENIED
             - RATE_LIMITED
             - TEMPORARY_UNAVAILABLE
         message:

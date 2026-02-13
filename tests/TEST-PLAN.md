@@ -219,6 +219,7 @@ Tests obligatoires :
 * toute nouvelle feature est introduite derrière un flag
 * toute feature `v1.1+` est désactivée par défaut
 * source de vérité des flags = payload runtime de Core (`server_policy.feature_flags`), jamais un hardcode client
+* canal runtime flags défini et testé pour `UI_RUST`, `AGENT`, `MCP` (pas seulement `POST /agents/register`)
 * flag absent dans le payload runtime => traité comme `false`
 * flags inconnus côté client => ignorés sans erreur
 * flag désactivé => la feature est refusée explicitement avec un code normatif

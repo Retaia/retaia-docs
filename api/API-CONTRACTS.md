@@ -37,7 +37,7 @@ Objectif : fournir une surface stable consommée par :
 * Toute nouvelle fonctionnalité DOIT être protégée par un feature flag serveur dès son introduction.
 * Les fonctionnalités `v1.1+` suivent la même règle et restent inactives tant que leur flag n'est pas activé.
 * Convention de nommage : `features.<domaine>.<fonction>` (ex: `features.ai.suggest_tags`).
-* Contrat de transport : l’état effectif des flags DOIT être transporté dans un payload standard `server_policy.feature_flags` (au minimum via `POST /agents/register`).
+* Contrat de transport : l’état effectif des flags DOIT être transporté dans un payload standard `server_policy.feature_flags` pour tous les clients (`UI_RUST`, `AGENT`, `MCP`), avec endpoint d’accès runtime dédié ou payload équivalent.
 * Distinction normative (sans ambiguïté) :
   * `feature_flags` = activation runtime des fonctionnalités côté Core
   * `capabilities` = aptitudes techniques déclarées par les agents pour exécuter des jobs
@@ -316,8 +316,10 @@ Migration obligatoire (anti dette technique) :
 * réponses:
   * `200` avec `status in {PENDING, APPROVED, DENIED, EXPIRED}`
   * `APPROVED` retourne `client_id`, `client_kind`, `secret_key` (one-shot)
-  * `400 INVALID_TOKEN` (`device_code` invalide/expiré)
-  * `429 TOO_MANY_ATTEMPTS` (poll trop fréquent)
+  * `400 INVALID_DEVICE_CODE` ou `EXPIRED_DEVICE_CODE`
+  * `401 AUTHORIZATION_PENDING`
+  * `403 ACCESS_DENIED`
+  * `429 SLOW_DOWN` ou `TOO_MANY_ATTEMPTS` (poll trop fréquent)
 
 `POST /auth/clients/device/cancel`
 
@@ -326,7 +328,7 @@ Migration obligatoire (anti dette technique) :
 * effet: annule un flow device en cours
 * réponses:
   * `200` canceled
-  * `400 INVALID_TOKEN`
+  * `400 INVALID_DEVICE_CODE` ou `EXPIRED_DEVICE_CODE`
   * `422 VALIDATION_FAILED`
 
 Séquence normative bootstrap `AGENT/MCP` (obligatoire) :
