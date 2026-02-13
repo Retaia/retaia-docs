@@ -157,6 +157,23 @@ Tests obligatoires :
 * backend distant de transcription refusé sans opt-in explicite utilisateur/policy
 * quand local compatible est disponible, aucun basculement implicite vers distant
 
+## 1.3) Gates de non-régression obligatoires (release blockers)
+
+Tests obligatoires :
+
+* Contrat OpenAPI:
+  * snapshot OpenAPI v1 à jour et validé en CI
+  * aucun drift `api/openapi/v1.yaml` vs `api/API-CONTRACTS.md`
+  * aucune réintroduction de codes HTTP legacy sur `POST /auth/clients/device/poll` (`401 AUTHORIZATION_PENDING`, `403 ACCESS_DENIED`)
+* Intégration auth/device:
+  * `POST /auth/clients/device/poll` piloté uniquement via `200` + `status`
+  * `POST /auth/clients/device/poll` -> `400 INVALID_DEVICE_CODE` pour code invalide
+  * `POST /auth/clients/token` -> `403 FORBIDDEN_ACTOR` pour `client_kind=UI_RUST`
+* Compat client UI/Agent/MCP:
+  * UI_RUST, AGENT, MCP compatibles avec le flux status-driven (`PENDING|APPROVED|DENIED|EXPIRED`)
+  * AGENT/MCP gèrent `429` (`SLOW_DOWN`/`TOO_MANY_ATTEMPTS`) avec retry/backoff déterministe
+  * aucun client ne dépend encore de `401/403` pour la machine d’état device flow
+
 ## 2) Jobs & leases
 
 Tests obligatoires :
