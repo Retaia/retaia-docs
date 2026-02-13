@@ -225,6 +225,16 @@ Baseline sécurité/fuite (normatif) :
 * toute implémentation Core/UI/Agent/MCP DOIT appliquer les exigences MUST de cette baseline
 * en cas de conflit d'interprétation, le modèle le plus restrictif s'applique
 
+Normalisation HTTP (normatif) :
+
+* `400` = requête sémantiquement invalide sur un identifiant/ticket déjà parsé (ex: `INVALID_TOKEN`, `INVALID_DEVICE_CODE`)
+* `401` = authentification absente/invalide (`UNAUTHORIZED`) uniquement
+* `403` = authentification valide mais action interdite (`FORBIDDEN_ACTOR`, `FORBIDDEN_SCOPE`)
+* `404` = ressource métier introuvable (`USER_NOT_FOUND`)
+* `409` = conflit d’état métier (`MFA_ALREADY_ENABLED`, `MFA_NOT_ENABLED`, `STATE_CONFLICT`)
+* `422` = validation de payload échouée (`VALIDATION_FAILED`)
+* `429` = anti-abus/rate-limit (`TOO_MANY_ATTEMPTS`, `SLOW_DOWN`)
+
 ### Endpoints auth applicatifs (normatif)
 
 `POST /auth/login`
@@ -405,7 +415,6 @@ Baseline sécurité/fuite (normatif) :
 * effet: démarre un flow d’autorisation device type GitHub
 * réponses:
   * `200` (`device_code`, `user_code`, `verification_uri`, `verification_uri_complete`, `expires_in`, `interval`)
-  * `401 UNAUTHORIZED`
   * `422 VALIDATION_FAILED`
   * `429 TOO_MANY_ATTEMPTS`
 
@@ -417,9 +426,7 @@ Baseline sécurité/fuite (normatif) :
 * réponses:
   * `200` avec `status in {PENDING, APPROVED, DENIED, EXPIRED}`
   * `APPROVED` retourne `client_id`, `client_kind`, `secret_key` (one-shot)
-  * `400 INVALID_DEVICE_CODE` ou `EXPIRED_DEVICE_CODE`
-  * `401 AUTHORIZATION_PENDING`
-  * `403 ACCESS_DENIED`
+  * `400 INVALID_DEVICE_CODE`
   * `429 SLOW_DOWN` ou `TOO_MANY_ATTEMPTS` (poll trop fréquent)
 
 `POST /auth/clients/device/cancel`

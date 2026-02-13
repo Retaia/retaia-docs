@@ -98,7 +98,7 @@ Tests obligatoires :
   * body invalide => `422 VALIDATION_FAILED`
   * rate limit => `429 TOO_MANY_ATTEMPTS`
   * invariant: nouveau token minté pour un client révoque l’ancien token (1 token actif / client)
-  * `client_kind=UI_RUST` refusé (422/403 selon policy)
+  * `client_kind=UI_RUST` refusé (`403 FORBIDDEN_ACTOR`)
 * `POST /auth/clients/device/start`:
   * `client_kind in {AGENT, MCP}` => `200` + `device_code`, `user_code`, `verification_uri`, `verification_uri_complete`
   * body invalide => `422 VALIDATION_FAILED`
@@ -106,8 +106,8 @@ Tests obligatoires :
 * `POST /auth/clients/device/poll`:
   * avant validation UI => statut `PENDING`
   * après approval UI => statut `APPROVED` + `secret_key` one-shot
-  * approval refusée par utilisateur => statut/code `DENIED`/`ACCESS_DENIED`
-  * code expiré => statut/code `EXPIRED`/`EXPIRED_DEVICE_CODE`
+  * approval refusée par utilisateur => statut `DENIED`
+  * code expiré => statut `EXPIRED`
   * polling trop fréquent => `429 SLOW_DOWN`/`TOO_MANY_ATTEMPTS`
 * `POST /auth/clients/device/cancel`:
   * flow en cours => `200` canceled

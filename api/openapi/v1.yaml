@@ -225,7 +225,7 @@ paths:
         - UserBearerAuth: []
       responses:
         "200":
-          description: Current user app feature switches
+          description: Effective app feature switches
           content:
             application/json:
               schema:
@@ -253,7 +253,7 @@ paths:
               $ref: "#/components/schemas/AppFeaturesUpdateRequest"
       responses:
         "200":
-          description: Updated user app feature switches
+          description: Updated effective app feature switches
           content:
             application/json:
               schema:
@@ -573,12 +573,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AuthDeviceStartResponse"
-        "401":
-          description: Unauthorized (`UNAUTHORIZED`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
         "422":
           description: Validation failed (`VALIDATION_FAILED`)
           content:
@@ -608,25 +602,13 @@ paths:
               $ref: "#/components/schemas/AuthDevicePollRequest"
       responses:
         "200":
-          description: Device authorization status
+          description: Device authorization status (`PENDING`, `APPROVED`, `DENIED`, `EXPIRED`)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/AuthDevicePollResponse"
         "400":
-          description: Invalid or expired device code (`INVALID_DEVICE_CODE` or `EXPIRED_DEVICE_CODE`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "401":
-          description: Authorization pending (`AUTHORIZATION_PENDING`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "403":
-          description: Access denied by user (`ACCESS_DENIED`)
+          description: Invalid device code (`INVALID_DEVICE_CODE`)
           content:
             application/json:
               schema:
@@ -2311,9 +2293,7 @@ components:
             - MFA_NOT_ENABLED
             - INVALID_DEVICE_CODE
             - EXPIRED_DEVICE_CODE
-            - AUTHORIZATION_PENDING
             - SLOW_DOWN
-            - ACCESS_DENIED
             - RATE_LIMITED
             - TEMPORARY_UNAVAILABLE
         message:
