@@ -42,6 +42,11 @@ Codes auth complémentaires (selon endpoint/policy) :
 * `EMAIL_NOT_VERIFIED`
 * `ACCESS_DENIED` (device flow refusé par utilisateur)
 
+Device flow (résumé normatif) :
+
+* poll en attente d’approbation utilisateur -> `401 AUTHORIZATION_PENDING`
+* poll refusé par utilisateur -> `403 ACCESS_DENIED`
+
 ## 4) Invariants
 
 * pas de payload d'erreur ad-hoc par endpoint
