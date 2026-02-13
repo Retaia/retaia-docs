@@ -174,6 +174,7 @@ Produire une transcription (et éventuellement des timecodes) à partir de l’a
 **Required capabilities**
 
 * `speech.transcription@1`
+* `speech.transcription.local.whispercpp@1` (minimum local-first)
 
 **Inputs**
 
@@ -181,6 +182,8 @@ Produire une transcription (et éventuellement des timecodes) à partir de l’a
 * source_path (read-only)
 * language (optionnel)
 * transcription_profile (optionnel)
+* transcription_engine (optionnel; ex: `whispercpp`)
+* remote_transcription_allowed (optionnel, défaut: `false`)
 
 **Expected outputs**
 
@@ -199,6 +202,7 @@ Produire une transcription (et éventuellement des timecodes) à partir de l’a
 * pas de piste audio → fatal
 * timeout / OOM → retryable (selon policy serveur)
 * moteur indisponible → retryable
+* backend distant demandé sans opt-in explicite → failed non bloquant (policy violation)
 
 
 ### 3.6 `suggest_tags`

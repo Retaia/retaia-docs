@@ -131,6 +131,10 @@ Tests obligatoires :
 * modèle LLM effectif choisi explicitement par l’utilisateur (UI/CLI/config utilisateur)
 * changement de modèle par l’utilisateur appliqué sans rebuild client
 * modèle hors catalogue runtime rejeté proprement (erreur explicite, sans crash)
+* stratégie local-first vérifiée sur `UI_RUST`, `AGENT`, `MCP` pour workloads AI/transcription
+* transcription locale via `Whisper.cpp` validée en non-régression
+* backend distant de transcription refusé sans opt-in explicite utilisateur/policy
+* quand local compatible est disponible, aucun basculement implicite vers distant
 
 ## 2) Jobs & leases
 
