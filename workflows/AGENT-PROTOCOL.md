@@ -14,6 +14,11 @@ Le protocole agent vise à :
 * rendre les retries sûrs et prévisibles
 * empêcher toute action destructive implicite
 
+Portée d'exécution :
+
+* seul un client `AGENT` exécute les jobs de processing
+* un client `MCP` peut piloter/orchestrer mais ne traite jamais les médias
+
 
 ## 2. Principes fondamentaux
 
@@ -218,6 +223,7 @@ Interdit :
 * retry infini côté agent
 * job complété sans outputs documentés
 * agent qui modifie des fichiers source
+* client `MCP` qui claim/heartbeat/submit un job de processing
 
 
 ## 11. Objectif

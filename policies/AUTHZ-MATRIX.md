@@ -97,6 +97,7 @@ Validation UI du device flow (`verification_uri*`)
 
 * scopes: `jobs:claim|jobs:heartbeat|jobs:submit`
 * acteur: `AGENT_TECHNICAL`
+* contrainte: `client_kind=MCP` interdit (`403 FORBIDDEN_ACTOR`)
 
 `POST /decisions/preview`, `POST /decisions/apply` (**v1.1+**)
 
