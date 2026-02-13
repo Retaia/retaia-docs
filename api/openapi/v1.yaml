@@ -283,9 +283,17 @@ paths:
       description: |
         Returns runtime `server_policy` including `feature_flags`.
         This endpoint is the canonical runtime policy transport for UI_RUST, AGENT, and MCP clients.
+        Clients may optionally send their supported feature-flags contract version for compatibility negotiation.
       security:
         - UserBearerAuth: []
         - OAuth2ClientCredentials: []
+      parameters:
+        - name: client_feature_flags_contract_version
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional client-advertised feature-flags contract version.
       responses:
         "200":
           description: Runtime app policy
@@ -818,6 +826,9 @@ paths:
                   type: array
                   items:
                     type: string
+                client_feature_flags_contract_version:
+                  type: string
+                  description: Optional client-advertised feature-flags contract version.
                 max_parallel_jobs:
                   type: integer
       responses:
@@ -1683,6 +1694,10 @@ components:
         `feature_flags` is the source of truth for client feature availability.
       required:
         - feature_flags
+        - feature_flags_contract_version
+        - effective_feature_flags_contract_version
+        - accepted_feature_flags_contract_versions
+        - feature_flags_compatibility_mode
       additionalProperties: true
       properties:
         min_poll_interval_seconds:
@@ -1698,6 +1713,23 @@ components:
           additionalProperties: true
         feature_flags:
           $ref: "#/components/schemas/FeatureFlags"
+        feature_flags_contract_version:
+          type: string
+          description: Latest feature-flags contract version served by Core.
+        accepted_feature_flags_contract_versions:
+          type: array
+          description: Feature-flags contract versions still accepted by Core for compatibility.
+          items:
+            type: string
+        effective_feature_flags_contract_version:
+          type: string
+          description: Feature-flags contract version effectively served to this client request.
+        feature_flags_compatibility_mode:
+          type: string
+          enum: [STRICT, COMPAT]
+          description: |
+            STRICT = latest contract served.
+            COMPAT = compatibility profile served (including retired-flag tombstones when required).
 
     FeatureFlags:
       type: object
