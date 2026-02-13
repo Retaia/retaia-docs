@@ -63,6 +63,7 @@ Objectif: en cas d'exfiltration partielle (DB, logs, token, backup), les donnée
 
 * minimisation: ne collecter et ne stocker que les données nécessaires au service
 * chiffrement au repos pour données sensibles et backups
+* chiffrement applicatif (field-level/envelope) obligatoire pour adresse, GPS et transcription
 * séparation logique des données opérationnelles et des secrets
 * exports/dumps de prod DOIVENT être chiffrés et tracés
 * données de debug en prod DOIVENT être minimisées et redigées
@@ -90,10 +91,13 @@ Une livraison est non conforme si au moins un point ci-dessous échoue:
 * `SessionCookieAuth` réintroduit
 * `secret_key` persistée en clair
 * rotation secret sans invalidation des tokens actifs
+* adresse/GPS/transcription lisible(s) en clair dans DB ou backup exfiltré
 
 ## Références associées
 
 * [API-CONTRACTS.md](../api/API-CONTRACTS.md)
 * [ERROR-MODEL.md](../api/ERROR-MODEL.md)
 * [AUTHZ-MATRIX.md](AUTHZ-MATRIX.md)
+* [CRYPTO-SECURITY-MODEL.md](CRYPTO-SECURITY-MODEL.md)
+* [RGPD-DATA-PROTECTION.md](RGPD-DATA-PROTECTION.md)
 * [TEST-PLAN.md](../tests/TEST-PLAN.md)

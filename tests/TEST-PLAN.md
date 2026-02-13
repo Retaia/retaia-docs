@@ -276,6 +276,18 @@ Tests obligatoires :
 * actions sécurité critiques auditées (login/logout, revoke-token, rotate-secret, 2FA enable/disable, device approval)
 * régression interdite: aucune réintroduction de `SessionCookieAuth`
 
+## 8.7) Crypto + RGPD (leak-resilience)
+
+Tests obligatoires :
+
+* adresses, coordonnées GPS et transcriptions non lisibles en clair dans dump DB
+* adresses, coordonnées GPS et transcriptions non lisibles en clair dans backups/extracts
+* logs/traces/crash reports ne contiennent jamais ces données en clair
+* export de données personnelles traçable et conforme au workflow RGPD
+* effacement RGPD (quand applicable) purge les données selon la policy de retention
+* exercice de notification fuite RGPD exécuté et tracé (SLA 72h vérifié en simulation)
+* rotation/rekey crypto n'introduit pas de perte d'accès légitime ni de régression authz
+
 ## 9) Couverture minimale
 
 Minimum :
@@ -301,6 +313,8 @@ Tests obligatoires :
 * [ERROR-MODEL.md](../api/ERROR-MODEL.md)
 * [AUTHZ-MATRIX.md](../policies/AUTHZ-MATRIX.md)
 * [SECURITY-BASELINE.md](../policies/SECURITY-BASELINE.md)
+* [CRYPTO-SECURITY-MODEL.md](../policies/CRYPTO-SECURITY-MODEL.md)
+* [RGPD-DATA-PROTECTION.md](../policies/RGPD-DATA-PROTECTION.md)
 * [LOCK-LIFECYCLE.md](../policies/LOCK-LIFECYCLE.md)
 * [CODE-QUALITY.md](../change-management/CODE-QUALITY.md)
 * [I18N-LOCALIZATION.md](../policies/I18N-LOCALIZATION.md)

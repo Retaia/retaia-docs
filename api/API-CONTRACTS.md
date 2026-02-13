@@ -96,6 +96,13 @@ Comportement :
 * URLs de dérivés **stables** (same-origin)
 * Accès contrôlé par bearer token (`Authorization: Bearer ...`) pour tous les clients
 
+### Confidentialité des données sensibles (normatif)
+
+* modèle "assume leak": DB/logs/backups peuvent être exfiltrés
+* les champs `adresse`, `gps` et `transcription` DOIVENT être protégés par chiffrement applicatif (envelope/field-level) en plus du chiffrement au repos
+* ces champs NE DOIVENT PAS être exposés en clair dans logs, traces, dumps et backups
+* toute implémentation Core/UI/Agent/MCP DOIT rester conforme aux policies crypto et RGPD associées
+
 ### États (doit matcher [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md))
 
 `DISCOVERED, READY, PROCESSING_REVIEW, PROCESSED, DECISION_PENDING, DECIDED_KEEP, DECIDED_REJECT, MOVE_QUEUED, ARCHIVED, REJECTED, PURGED`
@@ -925,6 +932,8 @@ Procédure de refresh contrôlé :
 * [NAMING-AND-NONCE.md](../policies/NAMING-AND-NONCE.md)
 * [AUTHZ-MATRIX.md](../policies/AUTHZ-MATRIX.md)
 * [SECURITY-BASELINE.md](../policies/SECURITY-BASELINE.md)
+* [CRYPTO-SECURITY-MODEL.md](../policies/CRYPTO-SECURITY-MODEL.md)
+* [RGPD-DATA-PROTECTION.md](../policies/RGPD-DATA-PROTECTION.md)
 * [HOOKS-CONTRACT.md](../policies/HOOKS-CONTRACT.md)
 * [ERROR-MODEL.md](ERROR-MODEL.md)
 * [CODE-QUALITY.md](../change-management/CODE-QUALITY.md)
