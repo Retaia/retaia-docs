@@ -117,6 +117,14 @@ Tests obligatoires :
   * bearer absent/invalide => `401 UNAUTHORIZED`
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
   * `client_id` invalide => `422 VALIDATION_FAILED`
+
+Matrice de migration v1 runtime (gelée) :
+
+* `POST /auth/clients/device/poll`:
+  * le pilotage client est fait uniquement via `200` + `status in {PENDING, APPROVED, DENIED, EXPIRED}`
+  * aucun pilotage via `401`/`403` n'est autorisé
+* `POST /auth/clients/token`:
+  * `client_kind=UI_RUST` doit être rejeté en `403 FORBIDDEN_ACTOR` uniquement
   * rotation invalide immédiatement les tokens actifs du client
 * toutes réponses d’erreur 4xx/5xx auth conformes au schéma `ErrorResponse`
 * endpoints humains mutateurs exigent un bearer token (`UserBearerAuth`) conforme à la spec

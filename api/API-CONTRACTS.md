@@ -449,6 +449,15 @@ Séquence normative bootstrap `AGENT/MCP` (obligatoire) :
 6. client technique poll `POST /auth/clients/device/poll` jusqu’à `APPROVED`/`DENIED`/`EXPIRED`
 7. en cas `APPROVED`, `secret_key` est retournée une seule fois, puis utilisée sur `POST /auth/clients/token`
 
+Matrice de migration v1 runtime (gelée) :
+
+* `POST /auth/clients/device/poll` :
+  * les clients DOIVENT lire l’état depuis le payload `200` (`status`)
+  * les clients NE DOIVENT PLUS interpréter `401`/`403` pour piloter le state machine device flow
+* `POST /auth/clients/token` :
+  * `client_kind=UI_RUST` DOIT retourner `403 FORBIDDEN_ACTOR`
+  * `422` n’est plus autorisé pour ce cas de refus
+
 Règle de sécurité :
 
 * création de `secret_key` `AGENT/MCP` sans validation UI utilisateur est interdite
