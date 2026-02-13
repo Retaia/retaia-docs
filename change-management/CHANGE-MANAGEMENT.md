@@ -124,6 +124,9 @@ Règles :
 
 L’UI web, Retaia Agent et les futurs clients (ex: MCP) consomment la même API.
 
+Pour la normalisation HTTP v1 runtime (device flow + client token), les tickets atomiques de mise en oeuvre sont définis dans :
+[`HTTP-STATUS-IMPLEMENTATION-TICKETS.md`](./HTTP-STATUS-IMPLEMENTATION-TICKETS.md).
+
 ## Adoption multilingue (priorités)
 
 Pour maximiser l'adoption produit, l'ordre d'implémentation i18n DOIT être :
