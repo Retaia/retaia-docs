@@ -328,6 +328,12 @@ Normalisation HTTP (normatif) :
 
 * security: `UserBearerAuth`
 * effet: retourne les switches applicatifs (`app_feature_enabled`) + métadonnées de gouvernance (`feature_governance`) + registre canonique `core_v1_global_features`
+* contrat payload stable obligatoire:
+  * `app_feature_enabled`
+  * `user_feature_enabled`
+  * `effective_feature_enabled`
+  * `feature_governance`
+  * `core_v1_global_features`
 * réponses:
   * `200` succès
   * `401 UNAUTHORIZED`
@@ -350,6 +356,11 @@ Normalisation HTTP (normatif) :
 * security: `UserBearerAuth`
 * effet: retourne les préférences feature de l’utilisateur (`user_feature_enabled`) et l’état effectif (`effective_feature_enabled`)
 * inclut `feature_governance` et `core_v1_global_features` pour appliquer localement dépendances, escalade et règles de protection
+* contrat payload stable obligatoire:
+  * `user_feature_enabled`
+  * `effective_feature_enabled`
+  * `feature_governance`
+  * `core_v1_global_features`
 * réponses:
   * `200` succès
   * `401 UNAUTHORIZED`
