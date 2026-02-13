@@ -6,52 +6,90 @@ Ce document définit la matrice d'autorisation normative par endpoint, scope et 
 
 * deny by default
 * aucune élévation implicite
-* vérification scope + état asset
+* vérification scope + acteur + état asset
+* séparation stricte acteurs interactifs vs techniques
+
+Acteurs normatifs :
+
+* `USER_INTERACTIVE` (client `UI_RUST` Rust/Tauri ou client `AGENT` opéré par un humain)
+* `AGENT_TECHNICAL` (daemon/service non-interactif)
+* `CLIENT_TECHNICAL` (client technique non-interactif, incluant MCP)
+* `ADMIN_INTERACTIVE` (sous-ensemble `USER_INTERACTIVE` avec droits admin)
+* `client_kind` interactif: `UI_RUST|AGENT`; `client_kind` technique: `AGENT|MCP`
 
 ## 2) Matrice v1 (résumé)
 
-`GET /assets`, `GET /assets/{uuid}`
+### Auth
+
+`POST /auth/login`
+
+* acteur: public (anonyme autorisé)
+* scope: aucun
+
+`POST /auth/2fa/setup|enable|disable`, `POST /auth/logout`, `GET /auth/me`
+
+* acteur: `USER_INTERACTIVE`
+* scope: session utilisateur valide (`UserBearerAuth`)
+
+`POST /auth/verify-email/admin-confirm`
+
+* acteur: `ADMIN_INTERACTIVE`
+* scope: policy admin (sinon `403 FORBIDDEN_ACTOR` / `FORBIDDEN_SCOPE`)
+
+`POST /auth/clients/{client_id}/revoke-token`, `POST /auth/clients/{client_id}/rotate-secret`
+
+* acteur: `ADMIN_INTERACTIVE`
+* scope: policy admin
+* contrainte: `client_kind=UI_RUST` => révocation refusée (`403`)
+
+`POST /auth/clients/token`
+
+* acteur: `CLIENT_TECHNICAL|AGENT_TECHNICAL`
+* scope: aucun (auth par `client_id + secret_key`)
+* contrainte: `client_kind in {AGENT, MCP}` uniquement
+
+### Assets / Derived
 
 * scopes: `assets:read`
-* acteurs: humain, agent, client intégré
+* acteurs: `USER_INTERACTIVE`, `AGENT_TECHNICAL`, `CLIENT_TECHNICAL`
 
 `PATCH /assets/{uuid}`
 
 * scope: `assets:write`
-* acteur: humain uniquement
+* acteur: `USER_INTERACTIVE`
 * deny si `state == PURGED`
 
 `POST /assets/{uuid}/decision`
 
 * scope: `decisions:write`
-* acteur: humain uniquement
+* acteur: `USER_INTERACTIVE`
 * états: `DECISION_PENDING|DECIDED_KEEP|DECIDED_REJECT`
 
 `POST /assets/{uuid}/reprocess`
 
 * scope: `assets:write`
-* acteur: humain uniquement
+* acteur: `USER_INTERACTIVE`
 * états: `PROCESSED|ARCHIVED|REJECTED`
 
 `POST /jobs/*`
 
 * scopes: `jobs:claim|jobs:heartbeat|jobs:submit`
-* acteur: agent uniquement
+* acteur: `AGENT_TECHNICAL`
 
 `POST /decisions/preview`, `POST /decisions/apply` (**v1.1+**)
 
 * scope: `decisions:write`
-* acteur: humain uniquement
+* acteur: `USER_INTERACTIVE`
 
 `POST /batches/moves`
 
 * scope: `batches:execute`
-* acteur: humain uniquement
+* acteur: `USER_INTERACTIVE`
 
 `POST /assets/{uuid}/purge`
 
 * scope: `purge:execute`
-* acteur: humain uniquement
+* acteur: `USER_INTERACTIVE`
 * état: `REJECTED`
 
 ## 3) Codes d'erreur authz
@@ -65,6 +103,7 @@ Ce document définit la matrice d'autorisation normative par endpoint, scope et 
 Pour chaque refus authz :
 
 * `actor_id`
+* `actor_type`
 * endpoint
 * scope manquant/interdit
 * état asset (si applicable)

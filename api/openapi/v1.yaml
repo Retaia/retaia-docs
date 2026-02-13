@@ -29,7 +29,7 @@ paths:
     post:
       tags: [Auth]
       summary: User login with email and password
-      description: Interactive login endpoint for UI web and user-facing clients (agent CLI/GUI, Electron, Tauri). Supports optional TOTP 2FA code when enabled.
+      description: Interactive login endpoint for supported human-operated clients (`UI_RUST` and `AGENT`). Supports optional TOTP 2FA code when enabled.
       security: []
       requestBody:
         required: true
@@ -360,10 +360,10 @@ paths:
   /auth/clients/{client_id}/revoke-token:
     post:
       tags: [Auth]
-      summary: Revoke one client token access
+      summary: Revoke one technical client token access
       description: |
         Admin-only endpoint for base UI operations.
-        Invalidates active bearer token(s) for the targeted client.
+        Invalidates active bearer token(s) for the targeted technical client.
       security:
         - UserBearerAuth: []
       parameters:
@@ -382,7 +382,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "403":
-          description: Forbidden actor or scope (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`). UI client token is protected and cannot be revoked here.
+          description: Forbidden actor or scope (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`). UI interactive client token is protected and cannot be revoked here.
           content:
             application/json:
               schema:
@@ -400,8 +400,8 @@ paths:
       summary: Mint client bearer token from secret key
       description: |
         Exchanges `(client_id, secret_key)` for a bearer token.
-        Normative rule: one active token per client; minting a new token revokes the previous one.
-        This endpoint is for non-UI clients only.
+        Normative rule: one active token per technical client_id; minting a new token revokes the previous one.
+        This endpoint is for technical non-interactive clients only.
       security: []
       requestBody:
         required: true
@@ -418,6 +418,12 @@ paths:
                 $ref: "#/components/schemas/AuthClientTokenSuccess"
         "401":
           description: Invalid client credentials (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden client kind for this flow (`FORBIDDEN_ACTOR`)
           content:
             application/json:
               schema:
@@ -1150,12 +1156,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: User bearer token used by interactive clients (UI web, agent CLI/GUI, Electron, Tauri).
-    SessionCookieAuth:
-      type: apiKey
-      in: cookie
-      name: retaia_session
-      description: Deprecated in favor of UserBearerAuth.
+      description: User bearer token used by human-operated interactive clients.
     OAuth2ClientCredentials:
       type: oauth2
       flows:
@@ -1358,11 +1359,13 @@ components:
 
     ClientKind:
       type: string
-      enum: [UI, AGENT_CLI, AGENT_GUI, ELECTRON, TAURI, MCP]
+      description: Form factor identifier for interactive login flows.
+      enum: [UI_RUST, AGENT]
 
     NonUiClientKind:
       type: string
-      enum: [AGENT_CLI, AGENT_GUI, ELECTRON, TAURI, MCP]
+      description: Allowed client kinds for technical secret-key token minting.
+      enum: [AGENT, MCP]
 
     AuthRotateClientSecretResponse:
       type: object

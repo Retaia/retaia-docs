@@ -9,9 +9,9 @@ Ce document doit rester strictement aligné avec `openapi/v1.yaml`.
 
 Objectif : fournir une surface stable consommée par :
 
-* UI web (same-origin, servie par Symfony)
-* Retaia Agent(s)
-* futurs clients (ex: client MCP)
+* client UI (`UI_RUST`, Rust/Tauri)
+* client Agent
+* client MCP
 
 
 ## 0) Conventions
@@ -67,6 +67,9 @@ Règles client (normatives, UI/agents/MCP) :
 
 * feature OFF => appel API de la feature interdit et UI correspondante masquée/désactivée
 * feature ON => feature disponible immédiatement, sans déploiement client supplémentaire
+* `UI_RUST`, `AGENT` et `MCP` DOIVENT tous consommer les `feature_flags` runtime pilotés par Core
+* aucun client ne DOIT hardcoder l’état d’un flag ni dépendre d’un flag local statique
+* toute décision de disponibilité fonctionnelle côté client DOIT être dérivée du dernier payload runtime reçu
 
 ### Idempotence (règles strictes)
 
@@ -102,11 +105,18 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 
 ## 1) Auth
 
+### Typologie des acteurs (normatif)
+
+* `USER_INTERACTIVE` : utilisateur humain connecté via client `UI_RUST` (Rust/Tauri) ou client `AGENT` en mode interactif
+* `CLIENT_TECHNICAL` : client non-humain authentifié par `client_id + secret_key`
+* `AGENT_TECHNICAL` : agent non-interactif (daemon/service) authentifié par `client_id + secret_key` ou client-credentials OAuth2
+* `client_kind` interactif est borné à `UI_RUST` ou `AGENT`; le mode technique autorise `AGENT` et `MCP`
+
 ### UI (humain)
 
 * Bearer token utilisateur obtenu via login (`POST /auth/login`)
 * l'interface de login est normative pour permettre l'obtention du token utilisateur
-* la même authentification DOIT rester valable si l’UI est empaquetée en app desktop (Electron ou Rust Tauri)
+* le `client_kind=UI_RUST` DOIT être implémenté en Rust/Tauri (Electron non supporté)
 * le token UI est non exportable dans l'interface (jamais affiché en clair)
 * un utilisateur ne peut pas invalider son token UI depuis l'UI (anti lock-out)
 * l'UI DOIT supporter l'enrôlement 2FA TOTP via app externe (Authy, Google Authenticator, etc.)
@@ -115,13 +125,13 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 
 * modes non interactifs : bearer technique (`OAuth2ClientCredentials`)
 * modes interactifs (agent CLI/GUI opéré par un humain) : bearer utilisateur via `POST /auth/login`
-* mode client applicatif : `client_id + secret_key` pour obtenir un bearer token via `POST /auth/clients/token`
+* mode client applicatif non-interactif (`AGENT`, `MCP`) : `client_id + secret_key` pour obtenir un bearer token via `POST /auth/clients/token`
 
 Règle de cardinalité des tokens (obligatoire) :
 
-* un même utilisateur PEUT avoir plusieurs tokens actifs simultanément sur des clients différents
-* contrainte stricte : **1 token actif par client** (clé logique : `(user_id, client_id)`)
-* émission d'un nouveau token pour le même `(user_id, client_id)` => révocation immédiate du token précédent
+* `USER_INTERACTIVE` : un même utilisateur PEUT avoir plusieurs tokens actifs simultanément sur des clients différents, avec contrainte stricte **1 token actif par `(user_id, client_id)`**
+* `CLIENT_TECHNICAL` / `AGENT_TECHNICAL` : contrainte stricte **1 token actif par `client_id`**
+* émission d'un nouveau token pour la même clé de cardinalité => révocation immédiate du token précédent
 
 #### Scopes (base)
 
@@ -138,15 +148,21 @@ Règle de cardinalité des tokens (obligatoire) :
 La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md).
 `openapi/v1.yaml` déclare explicitement les schémas de sécurité (`UserBearerAuth`, `OAuth2ClientCredentials`) et les scopes requis par endpoint.
 
+Migration obligatoire (anti dette technique) :
+
+* `SessionCookieAuth` est retiré du contrat et est interdit pour toute nouvelle implémentation.
+* Core DOIT supprimer le code runtime lié au cookie session auth (`SessionCookieAuth`).
+* UI, Agent et MCP DOIVENT migrer vers Bearer-only et supprimer toute dépendance cookie.
+
 ### Endpoints auth applicatifs (normatif)
 
 `POST /auth/login`
 
 * security: aucune (`security: []`)
 * body requis: `{ email, password }`
-* body optionnel: `otp_code` (obligatoire si 2FA active)
+* body optionnel: `client_id`, `client_kind`, `otp_code` (`otp_code` obligatoire si 2FA active)
 * réponses:
-  * `200` succès + bearer token (`access_token`, `token_type=Bearer`, `expires_in?`, `refresh_token?`)
+  * `200` succès + bearer token (`access_token`, `token_type=Bearer`, `expires_in?`, `refresh_token?`, `client_id`, `client_kind`)
   * `401 UNAUTHORIZED` (credentials invalides), `MFA_REQUIRED` (2FA active sans OTP), `INVALID_2FA_CODE` (OTP invalide)
   * `403 EMAIL_NOT_VERIFIED`
   * `422 VALIDATION_FAILED`
@@ -251,7 +267,7 @@ La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.m
 * security: `UserBearerAuth`
 * prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
 * effet: invalide les bearer tokens actifs du client ciblé (pas d'arrêt de process)
-* contrainte: un client `UI` est protégé et NE DOIT PAS être révocable via cet endpoint
+* contrainte: un `client_kind=UI_RUST` est protégé et NE DOIT PAS être révocable via cet endpoint
 * réponses:
   * `200` token(s) invalide(s)
   * `401 UNAUTHORIZED`
@@ -262,12 +278,13 @@ La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.m
 
 * security: aucune (`security: []`)
 * body requis: `{ client_id, client_kind, secret_key }`
-* `client_kind` autorisés: `AGENT_CLI | AGENT_GUI | ELECTRON | TAURI | MCP` (UI exclu)
+* `client_kind` autorisés: `AGENT | MCP` (`UI_RUST` exclu)
 * effet: émet un bearer token client
-* règle stricte: **1 token actif par client** (mint d’un nouveau token => révocation de l’ancien token pour ce client)
+* règle stricte: **1 token actif par client_id** (mint d’un nouveau token => révocation de l’ancien token pour ce client)
 * réponses:
   * `200` token client (`access_token`, `token_type=Bearer`, `expires_in?`, `client_id`, `client_kind`)
   * `401 UNAUTHORIZED` (credentials client invalides)
+  * `403 FORBIDDEN_ACTOR` (`client_kind` interactif refusé)
   * `422 VALIDATION_FAILED`
   * `429 TOO_MANY_ATTEMPTS`
 
@@ -288,7 +305,7 @@ Règle d'erreur (obligatoire) :
 
 Règle d’unification clients (obligatoire) :
 
-* le flux login utilisateur (`POST /auth/login`) et `UserBearerAuth` DOIVENT être communs pour UI web, agent CLI/GUI et futures apps desktop Electron/Tauri
+* le flux login utilisateur (`POST /auth/login`) et `UserBearerAuth` DOIVENT être communs pour les clients interactifs `UI_RUST` et `AGENT`
 
 
 ## 2) Assets
@@ -397,6 +414,14 @@ Response :
   * `allowed_job_types[]`
   * `feature_flags` (map runtime `flag_name -> boolean`, source de vérité Core)
   * (optionnel) `quiet_hours`
+
+Normes d’exécution agent (obligatoires) :
+
+* un agent DOIT fournir un binaire `CLI` (mode headless Linux obligatoire)
+* un agent PEUT fournir une `GUI` pour usage desktop
+* si une `GUI` existe, elle DOIT déléguer au même moteur que la `CLI` (mêmes capabilities, mêmes contraintes protocole)
+* l’auth non-interactive agent DOIT fonctionner sans login humain (service/daemon)
+* support plateforme cible : Linux headless (Raspberry Pi Kodi/Plex), macOS laptop, Windows desktop
 
 
 ## 5) Jobs
@@ -600,7 +625,7 @@ Retourne statut + rapport.
 
 ## 7.1) Bulk decisions (v1.1)
 
-Objectif : permettre à un client (ex: MCP) de **préparer** une action de décision en masse, sans laisser l’automatisation décider silencieusement.
+Objectif : permettre à un client d’automatisation de **préparer** une action de décision en masse, sans laisser l’automatisation décider silencieusement.
 
 Principe :
 
