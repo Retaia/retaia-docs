@@ -47,6 +47,11 @@ Tests obligatoires :
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
   * utilisateur inexistant => `404 USER_NOT_FOUND`
   * body invalide => `422 VALIDATION_FAILED`
+* `POST /auth/clients/{client_id}/revoke-token`:
+  * bearer admin valide + `client_id` valide => `200` et token(s) invalide(s)
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+  * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
+  * `client_id` invalide => `422 VALIDATION_FAILED`
 * toutes réponses d’erreur 4xx/5xx auth conformes au schéma `ErrorResponse`
 * endpoints humains mutateurs exigent un bearer token (`UserBearerAuth`) conforme à la spec
 * même flux login/token validé sur clients interactifs: UI web, agent CLI, agent GUI

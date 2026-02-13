@@ -202,6 +202,17 @@ La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.m
   * `404 USER_NOT_FOUND`
   * `422 VALIDATION_FAILED`
 
+`POST /auth/clients/{client_id}/revoke-token`
+
+* security: `UserBearerAuth`
+* prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
+* effet: invalide les bearer tokens actifs du client ciblé (pas d'arrêt de process)
+* réponses:
+  * `200` token(s) invalide(s)
+  * `401 UNAUTHORIZED`
+  * `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE` (selon matrice)
+  * `422 VALIDATION_FAILED`
+
 Règle d'erreur (obligatoire) :
 
 * toute réponse 4xx/5xx de ces endpoints DOIT retourner le schéma `ErrorResponse`
