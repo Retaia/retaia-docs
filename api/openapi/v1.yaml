@@ -1811,7 +1811,6 @@ components:
         app_feature_enabled:
           $ref: "#/components/schemas/AppFeatureEnabled"
 
-<<<<<<< HEAD
     ModelProviderCatalogEntry:
       type: object
       additionalProperties: false
