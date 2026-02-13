@@ -58,13 +58,13 @@ paths:
           in: query
           schema:
             type: string
-          description: Suggested tags filter (AI-powered, available in v1.1+).
+          description: Suggested tags filter (AI-powered, available in v1.1+ when `features.ai.suggested_tags_filters=true`).
         - name: suggested_tags_mode
           in: query
           schema:
             type: string
             enum: [AND, OR]
-          description: Suggested tags matching mode (available in v1.1+).
+          description: Suggested tags matching mode (available in v1.1+ when `features.ai.suggested_tags_filters=true`).
         - name: q
           in: query
           schema:
@@ -182,7 +182,7 @@ paths:
                   agent_id:
                     type: string
                   server_policy:
-                    type: object
+                    $ref: "#/components/schemas/ServerPolicy"
 
   /assets/{uuid}/reprocess:
     post:
@@ -333,6 +333,7 @@ paths:
         Submits one job result patch.
         For `job_type=suggest_tags` (v1.1+), server enforces both scopes `jobs:submit` and `suggestions:write`,
         and requires feature flag `features.ai.suggest_tags` to be enabled.
+        If the flag is absent, it MUST be treated as `false`.
       security:
         - OAuth2ClientCredentials: ["jobs:submit"]
       parameters:
@@ -600,7 +601,7 @@ paths:
     post:
       tags: [Decisions]
       summary: Preview bulk decisions
-      description: Available in v1.1+.
+      description: Available in v1.1+ when `features.decisions.bulk=true`.
       security:
         - SessionCookieAuth: []
         - OAuth2ClientCredentials: ["decisions:write"]
@@ -628,7 +629,7 @@ paths:
     post:
       tags: [Decisions]
       summary: Apply bulk decisions from preview token
-      description: Available in v1.1+.
+      description: Available in v1.1+ when `features.decisions.bulk=true`.
       security:
         - SessionCookieAuth: []
         - OAuth2ClientCredentials: ["decisions:write"]
@@ -732,6 +733,47 @@ components:
         type: string
 
   schemas:
+    ServerPolicy:
+      type: object
+      description: |
+        Runtime server policy returned by Core.
+        `feature_flags` is the source of truth for client feature availability.
+      required:
+        - feature_flags
+      additionalProperties: true
+      properties:
+        min_poll_interval_seconds:
+          type: integer
+        max_parallel_jobs_allowed:
+          type: integer
+        allowed_job_types:
+          type: array
+          items:
+            type: string
+        quiet_hours:
+          type: object
+          additionalProperties: true
+        feature_flags:
+          $ref: "#/components/schemas/FeatureFlags"
+
+    FeatureFlags:
+      type: object
+      description: |
+        Runtime flags controlled by Core.
+        Client semantics: missing flag = false, unknown flags are ignored, safe-by-default.
+      additionalProperties:
+        type: boolean
+      properties:
+        features.ai.suggest_tags:
+          type: boolean
+          default: false
+        features.ai.suggested_tags_filters:
+          type: boolean
+          default: false
+        features.decisions.bulk:
+          type: boolean
+          default: false
+
     AssetState:
       type: string
       enum:

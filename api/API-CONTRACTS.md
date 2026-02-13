@@ -33,19 +33,40 @@ Objectif : fournir une surface stable consommée par :
 
 ### Feature flags (normatif)
 
+* Source de vérité : les flags sont pilotés par **Retaia Core** au runtime. Les clients (UI, agents, MCP) NE DOIVENT PAS hardcoder un état de flag.
 * Toute nouvelle fonctionnalité DOIT être protégée par un feature flag serveur dès son introduction.
 * Les fonctionnalités `v1.1+` suivent la même règle et restent inactives tant que leur flag n'est pas activé.
 * Convention de nommage : `features.<domaine>.<fonction>` (ex: `features.ai.suggest_tags`).
-* Valeur par défaut : `false` tant que la feature n’est pas explicitement activée.
+* Contrat de transport : l’état effectif des flags DOIT être transporté dans un payload standard `server_policy.feature_flags` (au minimum via `POST /agents/register`).
+* Distinction normative (sans ambiguïté) :
+  * `feature_flags` = activation runtime des fonctionnalités côté Core
+  * `capabilities` = aptitudes techniques déclarées par les agents pour exécuter des jobs
+  * `contracts/` = snapshots versionnés pour détecter un drift du contrat OpenAPI
+* Sémantique stricte :
+  * flag absent = `false`
+  * flag inconnu côté client = ignoré
+  * comportement safe-by-default : sans signal explicite `true` renvoyé par Core, la feature reste indisponible
 * Quand un flag est `false`, l’endpoint reste stable et la feature est refusée de façon explicite (`403 FORBIDDEN_SCOPE` ou `409 STATE_CONFLICT` selon le cas).
 * L’activation d’un flag ne DOIT pas modifier le comportement des fonctionnalités `v1`.
-* Le statut effectif des flags applicables DOIT être exposé dans `server_policy` retourné à l’enregistrement agent.
 
-Mapping normatif v1.1 (base actuelle) :
+Mapping normatif v1.1 (base actuelle, obligatoire pour tous les consommateurs) :
 
-* `features.ai.suggest_tags` -> `job_type=suggest_tags`, `suggestions_patch`, bloc `suggestions` dans `AssetDetail`
-* `features.ai.suggested_tags_filters` -> query params `suggested_tags`, `suggested_tags_mode`
-* `features.decisions.bulk` -> endpoints `/decisions/preview`, `/decisions/apply`
+* `features.ai.suggest_tags` :
+  * autorise `job_type=suggest_tags` sur `POST /jobs/{job_id}/submit`
+  * autorise `suggestions_patch`
+  * autorise le bloc `suggestions` dans `AssetDetail`
+  * client: OFF => ne pas afficher/exécuter les actions liées à la suggestion AI ; ON => disponible sans redéploiement
+* `features.ai.suggested_tags_filters` :
+  * autorise les query params `suggested_tags`, `suggested_tags_mode` sur `GET /assets`
+  * client: OFF => ne pas exposer ces filtres ni les envoyer ; ON => disponible sans redéploiement
+* `features.decisions.bulk` :
+  * autorise `POST /decisions/preview` et `POST /decisions/apply`
+  * client: OFF => interdire toute UI/action bulk decisions et tout appel API associé ; ON => disponible sans redéploiement
+
+Règles client (normatives, UI/agents/MCP) :
+
+* feature OFF => appel API de la feature interdit et UI correspondante masquée/désactivée
+* feature ON => feature disponible immédiatement, sans déploiement client supplémentaire
 
 ### Idempotence (règles strictes)
 
@@ -210,6 +231,7 @@ Response :
   * `min_poll_interval_seconds`
   * `max_parallel_jobs_allowed`
   * `allowed_job_types[]`
+  * `feature_flags` (map runtime `flag_name -> boolean`, source de vérité Core)
   * (optionnel) `quiet_hours`
 
 
