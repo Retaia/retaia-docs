@@ -284,6 +284,7 @@ paths:
       description: |
         Returns runtime `server_policy` including `feature_flags`.
         This endpoint is the canonical runtime policy transport for UI_RUST, AGENT, and MCP clients.
+
       security:
         - UserBearerAuth: []
         - OAuth2ClientCredentials: []
@@ -294,6 +295,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AppPolicyResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /app/model-catalog:
+    get:
+      tags: [Auth]
+      summary: Get runtime model catalog
+      description: |
+        Returns the runtime model catalog used by clients to let users choose an LLM model.
+        Clients MUST NOT hardcode providers/models and MUST consume this catalog dynamically.
+      security:
+        - UserBearerAuth: []
+        - OAuth2ClientCredentials: []
+      responses:
+        "200":
+          description: Runtime model catalog
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModelCatalogResponse"
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
           content:
@@ -1785,6 +1810,34 @@ components:
       properties:
         app_feature_enabled:
           $ref: "#/components/schemas/AppFeatureEnabled"
+
+<<<<<<< HEAD
+    ModelProviderCatalogEntry:
+      type: object
+      additionalProperties: false
+      required: [provider, models]
+      properties:
+        provider:
+          type: string
+          enum: [ollama, chatgpt, claude]
+        models:
+          type: array
+          items:
+            type: string
+        default_model:
+          type: string
+
+    ModelCatalogResponse:
+      type: object
+      additionalProperties: false
+      required: [catalog_version, providers]
+      properties:
+        catalog_version:
+          type: string
+        providers:
+          type: array
+          items:
+            $ref: "#/components/schemas/ModelProviderCatalogEntry"
 
     AppPolicyResponse:
       type: object

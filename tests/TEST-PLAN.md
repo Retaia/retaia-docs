@@ -60,6 +60,12 @@ Tests obligatoires :
   * bearer client technique valide (`OAuth2ClientCredentials`) => `200`
   * bearer absent/invalide => `401 UNAUTHORIZED`
   * endpoint runtime canonique pour `UI_RUST`, `AGENT`, `MCP`
+
+* `GET /app/model-catalog`:
+  * bearer utilisateur valide => `200` + providers/modèles runtime
+  * bearer client technique valide (`OAuth2ClientCredentials`) => `200`
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+  * la liste providers/modèles n'est jamais hardcodée côté client (source runtime opposable)
 * `POST /auth/lost-password/request`:
   * body valide (`email`) => `202`
   * body invalide => `422 VALIDATION_FAILED`
