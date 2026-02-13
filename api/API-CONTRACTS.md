@@ -136,6 +136,9 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 * pour les workflows AI `suggest_tags` côté `AGENT`, les clients LLM minimum obligatoires sont `ollama`, `chatgpt`, `anthropic`
 * pour `UI_RUST`, `AGENT` et `MCP`, la liste des modèles LLM DOIT être lue dynamiquement (runtime policy/catalog) et ne DOIT PAS être hardcodée
 * le modèle LLM effectif DOIT être choisi explicitement par l'utilisateur (UI/CLI/config utilisateur), puis appliqué par le client
+* stratégie AI/transcription: local-first obligatoire pour `UI_RUST`, `AGENT`, `MCP`
+* transcription locale minimum actuelle: `Whisper.cpp`
+* backend distant autorisé uniquement en opt-in explicite utilisateur/policy (jamais par défaut implicite)
 
 Règles 2FA par client (obligatoire) :
 

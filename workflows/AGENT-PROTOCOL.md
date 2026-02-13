@@ -89,6 +89,15 @@ Règles :
 * modèle effectif DOIT provenir d'un choix utilisateur explicite (CLI/GUI/config utilisateur)
 * en mode non-interactif, le modèle choisi par l'utilisateur DOIT rester traçable et réutilisable jusqu'à changement explicite
 
+### 3.5 Local-first AI/transcription (normatif)
+
+Pour `UI_RUST`, `AGENT` et `MCP` :
+
+* exécution local-first obligatoire pour les workloads AI/transcription quand un modèle local compatible est disponible
+* transcription locale minimum supportée: `Whisper.cpp`
+* usage d'un backend distant autorisé uniquement en opt-in explicite utilisateur/policy
+* le mode distant ne DOIT pas devenir le défaut implicite
+
 
 ## 4. Cycle de vie d’un job
 

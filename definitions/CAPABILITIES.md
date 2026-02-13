@@ -39,6 +39,7 @@ Exemples valides :
 * `media.thumbnails@1`
 * `audio.waveform@1`
 * `speech.transcription@1`
+* `speech.transcription.local.whispercpp@1`
 * `meta.tags.suggestions@1` (**v1.1+**, AI-powered)
 * `llm.client.ollama@1` (**v1.1+**, AI-powered)
 * `llm.client.chatgpt@1` (**v1.1+**, AI-powered)
@@ -124,6 +125,14 @@ Pour tout agent qui déclare `meta.tags.suggestions@1` :
 * le support des clients `llm.client.ollama@1`, `llm.client.chatgpt@1` et `llm.client.anthropic@1` est obligatoire
 * la sélection du client LLM DOIT rester explicite (configuration/feature flag/runtime policy)
 * un client LLM indisponible ne DOIT PAS casser le runtime agent global (fallback ou retry policy)
+
+## 10. Transcription local-first (normatif)
+
+Pour tout agent qui déclare `speech.transcription@1` :
+
+* le mode local-first est obligatoire
+* le support `speech.transcription.local.whispercpp@1` est obligatoire (minimum actuel)
+* un backend distant de transcription PEUT exister, mais uniquement en opt-in explicite utilisateur/policy
 
 ## Références associées
 
