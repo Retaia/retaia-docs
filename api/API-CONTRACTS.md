@@ -102,6 +102,7 @@ Gouvernance des `app_feature_enabled` (opposable) :
 * modification (`PATCH /app/features`) : admin uniquement (`403 FORBIDDEN_ACTOR` / `FORBIDDEN_SCOPE` sinon)
 * portée : switches applicatifs globaux (pas des préférences locales client)
 * effet runtime obligatoire : un switch applicatif désactivé DOIT empêcher l’exécution des fonctionnalités associées pour le scope applicatif
+* règle MCP obligatoire : `app_feature_enabled.features.ai=false` DOIT désactiver le client `MCP` (bootstrap, token mint et appels authentifiés MCP refusés)
 
 ### Idempotence (règles strictes)
 
@@ -385,10 +386,11 @@ Normalisation HTTP (normatif) :
 * `client_kind` autorisés: `AGENT | MCP` (`UI_RUST` exclu)
 * effet: émet un bearer token client
 * règle stricte: **1 token actif par client_id** (mint d’un nouveau token => révocation de l’ancien token pour ce client)
+* gate applicatif: si `app_feature_enabled.features.ai=false`, un `client_kind=MCP` DOIT être refusé (`403 FORBIDDEN_SCOPE`)
 * réponses:
   * `200` token client (`access_token`, `token_type=Bearer`, `expires_in?`, `client_id`, `client_kind`)
   * `401 UNAUTHORIZED` (credentials client invalides)
-  * `403 FORBIDDEN_ACTOR` (`client_kind` interactif refusé)
+  * `403 FORBIDDEN_ACTOR` (`client_kind` interactif refusé) ou `FORBIDDEN_SCOPE` (`MCP` désactivé par switch applicatif)
   * `422 VALIDATION_FAILED`
   * `429 TOO_MANY_ATTEMPTS`
 
@@ -397,8 +399,10 @@ Normalisation HTTP (normatif) :
 * security: aucune (`security: []`)
 * body requis: `{ client_kind }` avec `client_kind in {AGENT, MCP}`
 * effet: démarre un flow d’autorisation device type GitHub
+* gate applicatif: si `app_feature_enabled.features.ai=false`, `client_kind=MCP` DOIT être refusé (`403 FORBIDDEN_SCOPE`)
 * réponses:
   * `200` (`device_code`, `user_code`, `verification_uri`, `verification_uri_complete`, `expires_in`, `interval`)
+  * `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
   * `422 VALIDATION_FAILED`
   * `429 TOO_MANY_ATTEMPTS`
 

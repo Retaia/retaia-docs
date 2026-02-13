@@ -19,6 +19,7 @@ Portée d'exécution :
 * seul un client `AGENT` exécute les jobs de processing
 * un client `MCP` peut piloter/orchestrer mais ne traite jamais les médias
 * rollout projet global: le client applicatif `MCP_CLIENT` (mappé `client_kind=MCP`) est intégré à partir de la v1.1 globale
+* gate applicatif: `app_feature_enabled.features.ai=false` désactive le client `MCP` (bootstrap/token/runtime refusés)
 
 
 ## 2. Principes fondamentaux

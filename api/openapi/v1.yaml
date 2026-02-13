@@ -221,6 +221,7 @@ paths:
       description: |
         Returns effective app switches (`app_feature_enabled`).
         Effective feature availability requires Core `feature_flags` AND `app_feature_enabled`.
+        Normative gate: when `app_feature_enabled.features.ai=false`, `client_kind=MCP` is disabled at runtime.
       security:
         - UserBearerAuth: []
       responses:
@@ -504,6 +505,7 @@ paths:
         Exchanges `(client_id, secret_key)` for a bearer token.
         Normative rule: one active token per technical client_id; minting a new token revokes the previous one.
         This endpoint is for technical non-interactive clients only.
+        Runtime gate: when `app_feature_enabled.features.ai=false`, `client_kind=MCP` MUST be rejected.
       security: []
       requestBody:
         required: true
@@ -525,7 +527,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "403":
-          description: Forbidden client kind for this flow (`FORBIDDEN_ACTOR`)
+          description: Forbidden client kind or disabled app switch for this flow (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`)
           content:
             application/json:
               schema:
@@ -550,6 +552,7 @@ paths:
       description: |
         Starts a browser-assisted authorization flow (GitHub-style) for `AGENT`/`MCP`.
         User validation (and optional 2FA) happens via `verification_uri`.
+        Runtime gate: when `app_feature_enabled.features.ai=false`, `client_kind=MCP` MUST be rejected.
       security: []
       requestBody:
         required: true
@@ -564,6 +567,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AuthDeviceStartResponse"
+        "403":
+          description: Forbidden actor or disabled app switch (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "422":
           description: Validation failed (`VALIDATION_FAILED`)
           content:
@@ -1766,6 +1775,7 @@ components:
       description: |
         Application-level feature switches.
         Effective feature availability requires Core `FeatureFlags` AND `AppFeatureEnabled`.
+        `features.ai` controls MCP global availability (false => MCP disabled).
       additionalProperties:
         type: boolean
 
