@@ -40,10 +40,12 @@ Objectif : fournir une surface stable consommée par :
 * Contrat de transport : l’état effectif des flags DOIT être transporté dans un payload standard `server_policy.feature_flags` pour tous les clients (`UI_RUST`, `AGENT`, `MCP`), avec endpoint d’accès runtime dédié ou payload équivalent.
 * Distinction normative (sans ambiguïté) :
   * `feature_flags` = activation runtime des fonctionnalités côté Core
+  * `app_feature_enabled` = activation applicative effective (switches niveau application, gouvernés par admin)
   * `capabilities` = aptitudes techniques déclarées par les agents pour exécuter des jobs
   * `contracts/` = snapshots versionnés pour détecter un drift du contrat OpenAPI
 * Règle de combinaison (obligatoire) :
   * exécution autorisée uniquement si `capability requise présente` **ET** `feature_flag(s) requis actif(s)`
+  * pour les features IA: disponibilité effective uniquement si `feature_flag(s) Core` **ET** `app_feature_enabled` sont actifs
   * capability présente + flag OFF => refus normatif (`403 FORBIDDEN_SCOPE`/équivalent policy)
   * flag ON + capability absente => non exécutable (`pending`, `403` ou `409` selon endpoint/policy)
 * Sémantique stricte :
@@ -69,6 +71,12 @@ Mapping normatif v1.1 (base actuelle, obligatoire pour tous les consommateurs) :
 * `features.ai.provider.claude` :
   * autorise le provider `claude` pour `suggest_tags`
   * rollout initial: OFF (activation progressive)
+* `app.features.ai.enabled` :
+  * switch applicatif global IA
+  * OFF => Core DOIT empêcher la planification des jobs IA pour le scope applicatif
+* `app.features.ai.suggest_tags.enabled` :
+  * switch applicatif dédié `suggest_tags`
+  * OFF => Core DOIT empêcher `job_type=suggest_tags` pour le scope applicatif
 * `features.ai.suggested_tags_filters` :
   * autorise les query params `suggested_tags`, `suggested_tags_mode` sur `GET /assets`
   * client: OFF => ne pas exposer ces filtres ni les envoyer ; ON => disponible sans redéploiement
@@ -83,6 +91,13 @@ Règles client (normatives, UI/agents/MCP) :
 * `UI_RUST`, `AGENT` et `MCP` DOIVENT tous consommer les `feature_flags` runtime pilotés par Core
 * aucun client ne DOIT hardcoder l’état d’un flag ni dépendre d’un flag local statique
 * toute décision de disponibilité fonctionnelle côté client DOIT être dérivée du dernier payload runtime reçu
+
+Gouvernance des `app_feature_enabled` (opposable) :
+
+* lecture (`GET /app/features`) : utilisateurs authentifiés (`UserBearerAuth`) ; retourne l’état effectif des switches applicatifs
+* modification (`PATCH /app/features`) : admin uniquement (`403 FORBIDDEN_ACTOR` / `FORBIDDEN_SCOPE` sinon)
+* portée : switches applicatifs globaux (pas des préférences locales client)
+* effet runtime obligatoire : quand IA est désactivée via `app_feature_enabled`, Core DOIT arrêter la planification des jobs IA concernés
 
 ### Idempotence (règles strictes)
 
@@ -257,6 +272,27 @@ Baseline sécurité/fuite (normatif) :
 * réponses:
   * `200` utilisateur courant
   * `401 UNAUTHORIZED`
+
+`GET /app/features`
+
+* security: `UserBearerAuth`
+* effet: retourne les switches applicatifs effectifs (`app_feature_enabled`)
+* réponses:
+  * `200` succès
+  * `401 UNAUTHORIZED`
+
+`PATCH /app/features`
+
+* security: `UserBearerAuth`
+* prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
+* body requis: `{ app_feature_enabled: { ... } }`
+* effet: met à jour les switches applicatifs globaux
+* règle: si IA est désactivée via `app_feature_enabled`, Core DOIT cesser la planification des jobs IA correspondants
+* réponses:
+  * `200` succès
+  * `401 UNAUTHORIZED`
+  * `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
+  * `422 VALIDATION_FAILED`
 
 `POST /auth/lost-password/request`
 
