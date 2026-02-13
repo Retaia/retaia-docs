@@ -360,6 +360,7 @@ Tests obligatoires :
 
 * la PR est rebased sur `master` (pas de merge de synchronisation)
 * aucun commit de type `Merge branch 'master' into ...` dans l'historique PR
+* le check CI `branch-up-to-date` est vert avant merge
 * gate CI bloquant si un commit de merge de synchronisation est détecté
 * résolution de conflits validée dans le rebase (pas de merge commit dédié)
 
