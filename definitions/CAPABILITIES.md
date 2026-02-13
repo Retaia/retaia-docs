@@ -46,12 +46,12 @@ Exemples valides :
 * `media.proxies.photo@1`
 * `media.thumbnails@1`
 * `audio.waveform@1`
-* `speech.transcription@1`
-* `speech.transcription.local.whispercpp@1`
-* `meta.tags.suggestions@1` (**v1.1+**, AI-powered)
-* `llm.client.ollama@1` (**v1.1+**, AI-powered)
-* `llm.client.chatgpt@1` (**v1.1+**, AI-powered)
-* `llm.client.claude@1` (**v1.1+**, AI-powered)
+* `speech.transcription@1` (**planned v1.1+**, AI-powered)
+* `speech.transcription.local.whispercpp@1` (**planned v1.1+**, AI-powered)
+* `meta.tags.suggestions@1` (**planned v1.1+**, AI-powered)
+* `llm.client.ollama@1` (**planned v1.1+**, AI-powered)
+* `llm.client.chatgpt@1` (**planned v1.1+**, AI-powered)
+* `llm.client.claude@1` (**planned v1.1+**, AI-powered)
 
 La version suit une logique **major only** :
 
@@ -126,7 +126,7 @@ Le système de capabilities vise à :
 
 Toute implémentation qui court‑circuite ces objectifs est invalide.
 
-## 9. Capabilities LLM minimales (normatif)
+## 9. Capabilities LLM minimales (planned v1.1+)
 
 Pour tout agent qui déclare `meta.tags.suggestions@1` :
 
@@ -135,7 +135,7 @@ Pour tout agent qui déclare `meta.tags.suggestions@1` :
 * la sélection du client LLM DOIT rester explicite (configuration/feature flag/runtime policy)
 * un client LLM indisponible ne DOIT PAS casser le runtime agent global (fallback ou retry policy)
 
-## 10. Transcription local-first (normatif)
+## 10. Transcription local-first (planned v1.1+)
 
 Pour tout agent qui déclare `speech.transcription@1` :
 
@@ -143,7 +143,7 @@ Pour tout agent qui déclare `speech.transcription@1` :
 * le support `speech.transcription.local.whispercpp@1` est obligatoire (minimum actuel)
 * un backend distant de transcription PEUT exister, mais uniquement en opt-in explicite utilisateur/policy
 
-## 11. Invalidation capability par inventaire modèle (normatif)
+## 11. Invalidation capability par inventaire modèle (planned v1.1+)
 
 Pour les capabilities dépendantes d'un provider/modèle (`llm.*`, `speech.transcription.*`) :
 

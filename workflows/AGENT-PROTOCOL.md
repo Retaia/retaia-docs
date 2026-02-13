@@ -79,9 +79,9 @@ Secrets :
 * stockage secret DOIT utiliser le magasin sécurisé OS (Linux Secret Service/file perms stricts, macOS Keychain, Windows Credential Manager/DPAPI)
 * rotation `POST /auth/clients/{client_id}/rotate-secret` DOIT être supportée sans réinstallation complète
 
-### 3.4 Clients LLM minimum (normatif)
+### 3.4 Clients LLM minimum (planned v1.1+)
 
-Pour les workloads AI `suggest_tags` (`meta.tags.suggestions@1`), l'agent DOIT supporter au minimum :
+Pour les workloads AI `suggest_tags` (`meta.tags.suggestions@1`), planifiés en v1.1+, l'agent DOIT supporter au minimum :
 
 * `ollama`
 * `chatgpt` (phase 2, sous flag)
@@ -100,7 +100,7 @@ Règles :
 * si le provider/modèle local est hors policy Core, l'agent DOIT invalider les capabilities associées
 * si le provider est géré localement, l'agent PEUT supporter l'installation de modèle
 
-### 3.5 Local-first AI/transcription (normatif)
+### 3.5 Local-first AI/transcription (planned v1.1+)
 
 Pour `UI_RUST`, `AGENT` et `MCP` :
 
