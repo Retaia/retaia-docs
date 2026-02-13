@@ -330,6 +330,8 @@ Cas OFF/ON minimum :
 * `UI_RUST` : OFF masque/neutralise la feature, ON l’active au prochain refresh flags
 * `AGENT` : OFF interdit job/patch liés à la feature, ON les autorise sans rebuild agent
 * `MCP` : OFF interdit les commandes/actions liées à la feature, ON les autorise sans redéploiement MCP
+* assimilation flag->mainline validée: après stabilisation, le flag disparaît de `server_policy.feature_flags` et le comportement final reste couvert par des tests non conditionnels
+* aucun code/test/doc OFF/ON obsolète persistant après retrait du flag (hors kill-switchs explicitement documentés)
 
 ## 8.4) Transition runtime des flags
 
