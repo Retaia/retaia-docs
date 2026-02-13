@@ -343,6 +343,20 @@ Tests obligatoires :
 * continuous deployment validé: une release Core avec retrait de flag passe les gates CD sans exiger upgrade client synchronisée
 * chaque kill-switch permanent a une entrée dans `change-management/FEATURE-FLAG-KILLSWITCH-REGISTRY.md`
 
+## 8.4.b) Matrice de vérité feature governance
+
+Tests obligatoires :
+
+* `feature_flags=OFF`, `app=ON`, `user=ON` => `effective=OFF`
+* `feature_flags=ON`, `app=OFF`, `user=ON` => `effective=OFF`
+* `feature_flags=ON`, `app=ON`, `user=OFF` => `effective=OFF`
+* `feature_flags=ON`, `app=ON`, `user=ON`, dépendance OFF => `effective=OFF`
+* `feature_flags=ON`, `app=ON`, `user=ON`, dépendances ON => `effective=ON`
+* admin OFF puis user ON => `effective=OFF` (l’utilisateur ne peut pas réactiver)
+* admin ON après un user OFF persistant => `effective=OFF` pour cet utilisateur
+* tentative user OFF sur `CORE_V1_GLOBAL` => `403 FORBIDDEN_SCOPE`
+* clé `user_feature_enabled` absente => évaluée `true`
+
 ## 8.5) Contract drift (`contracts/`)
 
 Tests obligatoires :
