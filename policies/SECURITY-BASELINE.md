@@ -19,7 +19,7 @@ Objectif: en cas d'exfiltration partielle (DB, logs, token, backup), les donnée
 * toutes les erreurs 4xx/5xx exposées aux clients DOIVENT rester compatibles `ErrorResponse` (pas de stacktrace, pas de secret)
 * tous les tokens DOIVENT avoir `exp` borné et `jti` unique
 * tout endpoint mutateur DOIT appliquer authn + authz explicite (acteur + scope + contrainte d'état)
-* toute action de sécurité (login, logout, rotate-secret, revoke-token, 2FA enable/disable, approval device flow) DOIT être auditée
+* toute action de sécurité (login, logout, rotate-secret, revoke-token, 2FA enable/disable, approval device flow, `PATCH /app/features`) DOIT être auditée
 
 ## 3) Gestion des secrets et credentials (MUST)
 
