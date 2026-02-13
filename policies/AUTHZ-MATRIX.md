@@ -46,7 +46,7 @@ Acteurs normatifs :
 `GET /app/model-catalog`
 
 * acteur: `USER_INTERACTIVE` ou `CLIENT_TECHNICAL`
-* scope: `UserBearerAuth` ou `OAuth2ClientCredentials`
+* scope: `UserBearerAuth` ou `OAuth2ClientCredentials(models:read)`
 * portée: retourne le catalogue runtime providers/modèles LLM
 
 `GET /app/policy`

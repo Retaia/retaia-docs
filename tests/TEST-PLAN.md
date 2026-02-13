@@ -57,7 +57,8 @@ Tests obligatoires :
   * `app.features.ai.enabled=OFF` ou `app.features.ai.suggest_tags.enabled=OFF` => arrêt planification jobs IA correspondants côté Core
 * `GET /app/model-catalog`:
   * bearer utilisateur valide => `200` + providers/modèles runtime
-  * bearer client technique valide (`OAuth2ClientCredentials`) => `200`
+  * bearer client technique valide (`OAuth2ClientCredentials` + scope `models:read`) => `200`
+  * bearer technique sans scope `models:read` => `403 FORBIDDEN_SCOPE`
   * bearer absent/invalide => `401 UNAUTHORIZED`
   * la liste providers/modèles n'est jamais hardcodée côté client (source runtime opposable)
 * `GET /app/policy`:
