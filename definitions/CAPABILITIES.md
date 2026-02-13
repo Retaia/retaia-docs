@@ -40,6 +40,9 @@ Exemples valides :
 * `audio.waveform@1`
 * `speech.transcription@1`
 * `meta.tags.suggestions@1` (**v1.1+**, AI-powered)
+* `llm.client.ollama@1` (**v1.1+**, AI-powered)
+* `llm.client.chatgpt@1` (**v1.1+**, AI-powered)
+* `llm.client.anthropic@1` (**v1.1+**, AI-powered)
 
 La version suit une logique **major only** :
 
@@ -113,6 +116,14 @@ Le système de capabilities vise à :
 * rendre le système extensible sans couplage fort
 
 Toute implémentation qui court‑circuite ces objectifs est invalide.
+
+## 9. Capabilities LLM minimales (normatif)
+
+Pour tout agent qui déclare `meta.tags.suggestions@1` :
+
+* le support des clients `llm.client.ollama@1`, `llm.client.chatgpt@1` et `llm.client.anthropic@1` est obligatoire
+* la sélection du client LLM DOIT rester explicite (configuration/feature flag/runtime policy)
+* un client LLM indisponible ne DOIT PAS casser le runtime agent global (fallback ou retry policy)
 
 ## Références associées
 

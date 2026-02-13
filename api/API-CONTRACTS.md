@@ -133,6 +133,7 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 * modes non interactifs : bearer technique (`OAuth2ClientCredentials`)
 * modes interactifs (agent CLI/GUI opéré par un humain) : bearer utilisateur via `POST /auth/login`
 * mode client applicatif non-interactif (`AGENT`, `MCP`) : `client_id + secret_key` pour obtenir un bearer token via `POST /auth/clients/token`
+* pour les workflows AI `suggest_tags` côté `AGENT`, les clients LLM minimum obligatoires sont `ollama`, `chatgpt`, `anthropic`
 
 Règles 2FA par client (obligatoire) :
 

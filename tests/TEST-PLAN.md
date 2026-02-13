@@ -123,6 +123,10 @@ Tests obligatoires :
 * stockage secret conforme OS (Keychain macOS, Credential Manager/DPAPI Windows, secret store Linux)
 * rotation de secret client n’exige pas de réinstallation agent
 * cible Linux headless Raspberry Pi (Kodi/Plex) validée en non-régression
+* agent AI `suggest_tags` supporte au minimum les clients LLM `ollama`, `chatgpt`, `anthropic`
+* sélection provider LLM pilotée par config/runtime policy (pas de hardcode implicite)
+* indisponibilité d’un provider LLM n’arrête pas l’agent: fallback provider ou retryable contrôlé
+* pour une policy identique, le routing provider reste déterministe (non flaky)
 
 ## 2) Jobs & leases
 
