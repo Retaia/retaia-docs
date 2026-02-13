@@ -41,8 +41,13 @@ Objectif : fournir une surface stable consommée par :
 * Versionnement/acceptance obligatoire des flags :
   * client -> Core : `client_feature_flags_contract_version` (query `GET /app/policy` ou body `POST /agents/register`)
   * Core -> client : `feature_flags_contract_version`, `accepted_feature_flags_contract_versions`, `effective_feature_flags_contract_version`, `feature_flags_compatibility_mode`
+  * format de version: SemVer (`MAJOR.MINOR.PATCH`)
   * si la version client est acceptée mais non-latest, Core DOIT servir un profil compatible (`feature_flags_compatibility_mode=COMPAT`)
   * Core DOIT éviter toute casse UI/Agent lors du retrait d’un flag (profil compat + tombstones `false` pour flags retirés, tant qu’une version acceptée les attend)
+  * si la version client n'est pas supportée: `426` + `ErrorResponse.code=UNSUPPORTED_FEATURE_FLAGS_CONTRACT_VERSION`
+* Fenêtre d'acceptance minimale:
+  * au moins **2 versions client stables** (UI/Agent/MCP) ou **90 jours** après introduction de la version de contrat (le plus long des deux)
+  * tombstones `false` conservés au moins **30 jours** après fermeture de la fenêtre d'acceptance
 * Distinction normative (sans ambiguïté) :
   * `feature_flags` = activation runtime des fonctionnalités côté Core
   * `app_feature_enabled` = activation applicative effective (switches niveau application, gouvernés par admin)
@@ -60,6 +65,8 @@ Objectif : fournir une surface stable consommée par :
 * L’activation d’un flag ne DOIT pas modifier le comportement des fonctionnalités `v1`.
 * Le cycle de vie complet (introduction -> rollout -> assimilation -> retrait) est défini dans [`FEATURE-FLAG-LIFECYCLE.md`](../change-management/FEATURE-FLAG-LIFECYCLE.md).
 * Ce cycle DOIT permettre le continuous development sans casse des clients encore dans la fenêtre d'acceptance.
+* Ownership runtime: `accepted_feature_flags_contract_versions` est piloté par release/config Core (pas modifiable via endpoint admin runtime).
+* Les kill-switches permanents autorisés DOIVENT être listés dans [`FEATURE-FLAG-KILLSWITCH-REGISTRY.md`](../change-management/FEATURE-FLAG-KILLSWITCH-REGISTRY.md).
 
 Mapping normatif v1.1 (base actuelle, obligatoire pour tous les consommateurs) :
 
@@ -297,6 +304,7 @@ Normalisation HTTP (normatif) :
 * réponses:
   * `200` succès
   * `401 UNAUTHORIZED`
+  * `426 UNSUPPORTED_FEATURE_FLAGS_CONTRACT_VERSION`
 
 `POST /auth/lost-password/request`
 
@@ -545,7 +553,6 @@ Body :
 * `agent_version`
 * `platform`
 * `capabilities: string[]` (voir [`CAPABILITIES.md`](../definitions/CAPABILITIES.md))
-* `model_inventory[]` (optionnel, inventaire provider/modèle local publié par l’agent)
 * `client_feature_flags_contract_version` (optionnel)
 * `max_parallel_jobs` (suggestion)
 
@@ -632,8 +639,6 @@ Effets :
 
 * `extract_facts | generate_proxy | generate_thumbnails | generate_audio_waveform` :
   mise à jour des domaines `facts/derived`, puis `PROCESSING_REVIEW → PROCESSED → DECISION_PENDING` quand le profil est complet
-* `transcribe_audio` (**planned v1.1+**) : mise à jour du domaine `transcript`
-* `suggest_tags` (**planned v1.1+**) : mise à jour du domaine `suggestions`
 
 Note v1 (important) :
 
@@ -644,12 +649,10 @@ Note v1 (important) :
 * ownership de patch par `job_type` :
   * `extract_facts` -> `facts_patch`
   * `generate_proxy|generate_thumbnails|generate_audio_waveform` -> `derived_patch`
-  * `transcribe_audio` (**planned v1.1+**) -> `transcript_patch`
-  * `suggest_tags` (**planned v1.1+**) -> `suggestions_patch`
 
-Règle authz complémentaire :
+Règle d'extension:
 
-* pour `job_type=suggest_tags` (planned v1.1+), les règles de scopes/policy sont définies dans le paquet normatif v1.1.
+* les `job_type` IA (`transcribe_audio`, `suggest_tags`) et leurs patch domains sont hors périmètre v1 et documentés dans le paquet normatif v1.1.
 
 ### POST `/jobs/{job_id}/fail`
 
@@ -870,15 +873,13 @@ Effet :
 * `processing: { facts_done, thumbs_done, proxy_done, waveform_done, review_processing_version }`
 * `derived: { proxy_video_url?, proxy_audio_url?, waveform_url?, thumbs[] }`
 * `transcript: { status, text_preview?, updated_at? }`
-* `suggestions: { status, tags_suggested[], source? }` (**v1.1+**)
 * `decisions: { current?, history[] }`
 * `audit: { path_history[] }`
 
 ### Job
 
 * `job_id`
-* `job_type` (`extract_facts | generate_proxy | generate_thumbnails | generate_audio_waveform | transcribe_audio`)
-* `job_type` (`suggest_tags`) (**v1.1+**)
+* `job_type` (`extract_facts | generate_proxy | generate_thumbnails | generate_audio_waveform`)
 * `asset_uuid`
 * `lock_token`
 * `locked_until`
@@ -889,8 +890,6 @@ Effet :
 
 * `facts_patch?` (JSON partiel)
 * `derived_patch?` (`derived_manifest` partiel)
-* `transcript_patch?`
-* `suggestions_patch?` (**v1.1+**)
 * `warnings[]`
 * `metrics`
 
@@ -914,6 +913,7 @@ Règles :
 * `409 IDEMPOTENCY_CONFLICT`
 * `409 MFA_ALREADY_ENABLED` / `MFA_NOT_ENABLED`
 * `423 LOCK_REQUIRED` / `LOCK_INVALID`
+* `426 UNSUPPORTED_FEATURE_FLAGS_CONTRACT_VERSION`
 * `410 PURGED`
 * `422 VALIDATION_FAILED`
 * `429 TOO_MANY_ATTEMPTS`
@@ -938,7 +938,7 @@ Le payload d’erreur normatif est défini dans [`ERROR-MODEL.md`](ERROR-MODEL.m
 
 ## 12) Décisions actées (v1.1)
 
-* Introduction des capacités AI-powered (`transcribe_audio`, `suggest_tags`, `suggestions_patch`, bloc `suggestions` dans `AssetDetail`)
+* Introduction des capacités AI-powered (`transcribe_audio`, `suggest_tags`, patch domains IA, enrichissements `AssetDetail`)
 * Introduction de `suggested_tags=` et `suggested_tags_mode=`
 * Scope `suggestions:write` pour les flux AI dédiés
 * Bulk decisions via preview/apply (`/decisions/preview`, `/decisions/apply`)
@@ -960,6 +960,7 @@ Règles normatives (tous les repos consommateurs : UI, core, agents, MCP, toolin
 * la valeur DOIT être le hash SHA-256 calculé depuis `api/openapi/v1.yaml` de `retaia-docs`
 * la CI DOIT échouer si le hash versionné localement ne correspond plus au hash de la spec courante (drift détecté)
 * la mise à jour du hash DOIT être explicite dans une PR, via une commande dédiée (pas d’update implicite en pipeline)
+* la CI DOIT aussi échouer si un endpoint/champ documenté dans `API-CONTRACTS.md` n'existe plus dans `openapi/v1.yaml` (gate de cohérence contrat/docs)
 
 Notes d'interprétation :
 

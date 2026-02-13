@@ -295,10 +295,16 @@ Tests obligatoires :
 * aucune transition runtime de flag ne modifie les comportements historiques `v1` non flaggés
 * négociation version flags via `client_feature_flags_contract_version` sur `GET /app/policy` et `POST /agents/register`
 * Core renvoie `feature_flags_contract_version`, `accepted_feature_flags_contract_versions[]`, `effective_feature_flags_contract_version`, `feature_flags_compatibility_mode`
+* format des versions flags validé en SemVer (`MAJOR.MINOR.PATCH`)
 * client version acceptée mais non-latest => réponse `COMPAT` non cassante
+* client version non supportée => `426 UNSUPPORTED_FEATURE_FLAGS_CONTRACT_VERSION`
 * retrait d’un flag latest conserve un tombstone `false` pour profils `COMPAT` encore acceptés
+* fenêtre d’acceptance respectée: `max(2 versions stables, 90 jours)`
+* tombstones retirés uniquement après `>=30 jours` post-acceptance
+* `accepted_feature_flags_contract_versions[]` non modifiable via endpoint admin runtime
 * continuous development validé: suppression d’un flag n’interrompt pas UI/Agent/MCP déjà déployés dans la fenêtre d’acceptance
 * continuous deployment validé: une release Core avec retrait de flag passe les gates CD sans exiger upgrade client synchronisée
+* chaque kill-switch permanent a une entrée dans `change-management/FEATURE-FLAG-KILLSWITCH-REGISTRY.md`
 
 ## 8.5) Contract drift (`contracts/`)
 
@@ -309,6 +315,7 @@ Tests obligatoires :
 * la commande dédiée de refresh met à jour explicitement `contracts/openapi-v1.sha256`
 * toute mise à jour de snapshot est visible dans la PR (pas de mutation implicite en post-merge)
 * non-régression v1 : un refresh de snapshot ne modifie pas la sémantique des comportements `v1` existants
+* gate de cohérence contrat/docs : CI échoue si un endpoint/champ mentionné dans `api/API-CONTRACTS.md` n'existe pas dans `api/openapi/v1.yaml`
 
 ## 8.6) Workflow Git (historique linéaire)
 

@@ -21,6 +21,7 @@ Le Core DOIT implémenter un contrat de compatibilité de flags:
   * `accepted_feature_flags_contract_versions[]`
   * `effective_feature_flags_contract_version`
   * `feature_flags_compatibility_mode` (`STRICT|COMPAT`)
+* format obligatoire: SemVer (`MAJOR.MINOR.PATCH`)
 
 Règles:
 
@@ -28,6 +29,10 @@ Règles:
 * mode `COMPAT` NE DOIT PAS casser les clients existants
 * un flag retiré du mainline DOIT rester servi en tombstone `false` tant qu'une version acceptée peut encore le lire
 * un client qui ne transmet pas de version DOIT recevoir un profil non cassant
+* si la version client est non supportée, Core DOIT répondre `426` avec `UNSUPPORTED_FEATURE_FLAGS_CONTRACT_VERSION`
+* ownership: la liste `accepted_feature_flags_contract_versions[]` est pilotée par release/config Core, pas par endpoint admin runtime
+* fenêtre d'acceptance minimale: `max(2 versions client stables, 90 jours)`
+* rétention tombstones après fermeture acceptance: minimum 30 jours
 
 ## 3) Assimilation au mainline
 
@@ -72,3 +77,9 @@ Une PR qui retire un flag DOIT inclure:
 * empiler plusieurs flags pour une même feature stabilisée
 * garder des chemins OFF/ON non testés en CI
 * utiliser un flag temporaire comme permission permanente
+* permettre la modification runtime admin de `accepted_feature_flags_contract_versions[]`
+
+## 8) Kill-switch registry (obligatoire)
+
+* chaque kill-switch permanent DOIT être déclaré dans [`FEATURE-FLAG-KILLSWITCH-REGISTRY.md`](./FEATURE-FLAG-KILLSWITCH-REGISTRY.md)
+* sans entrée explicite dans ce registre, un flag n'est pas autorisé à rester permanent
