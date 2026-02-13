@@ -220,7 +220,7 @@ paths:
       summary: Get effective app feature switches
       description: |
         Returns effective app switches (`app_feature_enabled`).
-        Effective AI availability requires Core `feature_flags` AND `app_feature_enabled`.
+        Effective feature availability requires Core `feature_flags` AND `app_feature_enabled`.
       security:
         - UserBearerAuth: []
       responses:
@@ -293,7 +293,9 @@ paths:
           required: false
           schema:
             type: string
-          description: Optional client-advertised feature-flags contract version.
+            pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+            examples: ["1.2.0"]
+          description: Optional client-advertised feature-flags contract version (SemVer).
       responses:
         "200":
           description: Runtime app policy
@@ -303,6 +305,12 @@ paths:
                 $ref: "#/components/schemas/AppPolicyResponse"
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "426":
+          description: Unsupported feature-flags contract version (`UNSUPPORTED_FEATURE_FLAGS_CONTRACT_VERSION`)
           content:
             application/json:
               schema:
@@ -828,7 +836,8 @@ paths:
                     type: string
                 client_feature_flags_contract_version:
                   type: string
-                  description: Optional client-advertised feature-flags contract version.
+                  pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+                  description: Optional client-advertised feature-flags contract version (SemVer).
                 max_parallel_jobs:
                   type: integer
       responses:
@@ -851,6 +860,12 @@ paths:
                       type: string
                   server_policy:
                     $ref: "#/components/schemas/ServerPolicy"
+        "426":
+          description: Unsupported feature-flags contract version (`UNSUPPORTED_FEATURE_FLAGS_CONTRACT_VERSION`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /assets/{uuid}/reprocess:
     post:
@@ -1715,15 +1730,18 @@ components:
           $ref: "#/components/schemas/FeatureFlags"
         feature_flags_contract_version:
           type: string
-          description: Latest feature-flags contract version served by Core.
+          pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+          description: Latest feature-flags contract version served by Core (SemVer).
         accepted_feature_flags_contract_versions:
           type: array
           description: Feature-flags contract versions still accepted by Core for compatibility.
           items:
             type: string
+            pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$"
         effective_feature_flags_contract_version:
           type: string
-          description: Feature-flags contract version effectively served to this client request.
+          pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+          description: Feature-flags contract version effectively served to this client request (SemVer).
         feature_flags_compatibility_mode:
           type: string
           enum: [STRICT, COMPAT]
@@ -2118,6 +2136,7 @@ components:
             - MFA_NOT_ENABLED
             - INVALID_DEVICE_CODE
             - EXPIRED_DEVICE_CODE
+            - UNSUPPORTED_FEATURE_FLAGS_CONTRACT_VERSION
             - SLOW_DOWN
             - RATE_LIMITED
             - TEMPORARY_UNAVAILABLE

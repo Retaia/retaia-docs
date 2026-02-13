@@ -198,6 +198,8 @@ Chaque merge sur `master` rend le déploiement possible immédiatement.
 
 Politique détaillée:
 [`FEATURE-FLAG-LIFECYCLE.md`](./FEATURE-FLAG-LIFECYCLE.md)
+Registre kill-switch:
+[`FEATURE-FLAG-KILLSWITCH-REGISTRY.md`](./FEATURE-FLAG-KILLSWITCH-REGISTRY.md)
 
 Les déploiements sont identifiés par :
 

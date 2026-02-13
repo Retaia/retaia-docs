@@ -27,25 +27,20 @@ Toutes les erreurs JSON DOIVENT suivre :
 ## 3) Mapping recommandé
 
 * `400` -> `INVALID_TOKEN`, `INVALID_2FA_CODE`, `INVALID_DEVICE_CODE`, `EXPIRED_DEVICE_CODE`
-* `401` -> `UNAUTHORIZED`, `MFA_REQUIRED`, `AUTHORIZATION_PENDING`
+* `401` -> `UNAUTHORIZED`, `MFA_REQUIRED`
 * `403` -> `FORBIDDEN_SCOPE`, `FORBIDDEN_ACTOR`
 * `409` -> `STATE_CONFLICT`, `IDEMPOTENCY_CONFLICT`, `STALE_LOCK_TOKEN`, `NAME_COLLISION_EXHAUSTED`, `MFA_ALREADY_ENABLED`, `MFA_NOT_ENABLED`
 * `410` -> `PURGED`
 * `404` -> `USER_NOT_FOUND`
 * `422` -> `VALIDATION_FAILED`
 * `423` -> `LOCK_REQUIRED`, `LOCK_INVALID`
+* `426` -> `UNSUPPORTED_FEATURE_FLAGS_CONTRACT_VERSION`
 * `429` -> `RATE_LIMITED`, `TOO_MANY_ATTEMPTS`, `SLOW_DOWN`
 * `503` -> `TEMPORARY_UNAVAILABLE`
 
 Codes auth complémentaires (selon endpoint/policy) :
 
 * `EMAIL_NOT_VERIFIED`
-* `ACCESS_DENIED` (device flow refusé par utilisateur)
-
-Device flow (résumé normatif) :
-
-* poll en attente d’approbation utilisateur -> `401 AUTHORIZATION_PENDING`
-* poll refusé par utilisateur -> `403 ACCESS_DENIED`
 
 ## 4) Invariants
 
