@@ -128,6 +128,7 @@ Arbitrage admin/user (opposable) :
 * `app_feature_enabled=false` domine toujours (feature OFF pour tous les utilisateurs)
 * `app_feature_enabled=true` n’annule pas un opt-out utilisateur (`user_feature_enabled=false`)
 * `CORE_V1_GLOBAL` : toujours ON dans `effective_feature_enabled` (hors indisponibilité technique majeure hors scope flags/user)
+* l’algorithme opposable complet est défini dans [`FEATURE-RESOLUTION-ENGINE.md`](../policies/FEATURE-RESOLUTION-ENGINE.md)
 
 ### Idempotence (règles strictes)
 
