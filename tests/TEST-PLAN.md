@@ -309,9 +309,11 @@ Cas OFF/ON minimum :
 * `UI_RUST` : OFF masque/neutralise la feature, ON l’active au prochain refresh flags
 * `AGENT` : OFF interdit job/patch liés à la feature, ON les autorise sans rebuild agent
 * `MCP` : OFF interdit les commandes/actions liées à la feature, ON les autorise sans redéploiement MCP
+* `UI_RUST` se base uniquement sur `effective_feature_enabled` (pas de décision locale sur flags bruts)
 * `app_feature_enabled.features.ai=OFF` : client `MCP` entièrement désactivé (bootstrap/token/appels runtime refusés)
 * `app_feature_enabled.features.ai=ON` : client `MCP` autorisé selon matrice authz et capabilities
 * `user_feature_enabled.features.ai=OFF` : fonctionnalités AI désactivées pour l’utilisateur courant sans impact global
+* admin remet ON une feature globalement après opt-out user => l’utilisateur concerné reste OFF
 * tentative d’opt-out utilisateur sur une feature `CORE_V1_GLOBAL` => refus `403 FORBIDDEN_SCOPE`
 * pour chaque clé de `core_v1_global_features[]`, la ligne `feature_governance.key` correspondante expose `tier=CORE_V1_GLOBAL` et `user_can_disable=false`
 * assimilation flag->mainline validée: après stabilisation, le flag disparaît de `server_policy.feature_flags` et le comportement final reste couvert par des tests non conditionnels
