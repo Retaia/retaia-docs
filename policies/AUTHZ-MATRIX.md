@@ -16,6 +16,7 @@ Acteurs normatifs :
 * `CLIENT_TECHNICAL` (client technique non-interactif, incluant MCP)
 * `ADMIN_INTERACTIVE` (sous-ensemble `USER_INTERACTIVE` avec droits admin)
 * `client_kind` interactif: `UI_RUST|AGENT`; `client_kind` technique: `AGENT|MCP`
+* rollout projet global: `UI_RUST` (client `RUST_UI`) et `MCP` (client `MCP_CLIENT`) sont livrés côté clients applicatifs à partir de la v1.1 globale
 
 ## 2) Matrice v1 (résumé)
 

@@ -9,9 +9,9 @@ Ce document doit rester strictement aligné avec `openapi/v1.yaml`.
 
 Objectif : fournir une surface stable consommée par :
 
-* client UI (`UI_RUST`, Rust/Tauri)
-* client Agent
-* client MCP
+* client Agent (`AGENT`) — livré en v1 projet global
+* client UI Rust/Tauri (`RUST_UI`, `client_kind=UI_RUST`) — livré en v1.1 projet global
+* client MCP (`MCP_CLIENT`, `client_kind=MCP`) — livré en v1.1 projet global
 
 
 ## 0) Conventions
@@ -29,6 +29,17 @@ Objectif : fournir une surface stable consommée par :
 * `v1` = socle stable (ingestion, processing review, décision humaine, moves, purge, recherche full-text `q`).
 * `v1.1` = extensions compatibles.
 * Toute fonctionnalité AI-powered (ex: `transcribe_audio`, `suggest_tags`, filtres `suggested_tags*`) est hors périmètre de conformité v1 et planifiée en `v1.1+`.
+
+### Versioning projet global (rollout)
+
+* `v1` (projet global) :
+  * Core v1
+  * Agent v1
+  * système `capabilities` v1
+  * système `feature_flags` v1
+* `v1.1` (projet global) :
+  * client `RUST_UI` (mappé sur `client_kind=UI_RUST`)
+  * client `MCP_CLIENT` (mappé sur `client_kind=MCP`)
 
 ### Feature flags (normatif)
 
@@ -139,6 +150,7 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 * `CLIENT_TECHNICAL` : client non-humain authentifié par `client_id + secret_key`
 * `AGENT_TECHNICAL` : agent non-interactif (daemon/service) authentifié par `client_id + secret_key` ou client-credentials OAuth2
 * `client_kind` interactif est borné à `UI_RUST` ou `AGENT`; le mode technique autorise `AGENT` et `MCP`
+* rollout projet global : `UI_RUST` et `MCP` sont intégrés côté clients applicatifs à partir de la v1.1 globale
 
 ### UI (humain)
 

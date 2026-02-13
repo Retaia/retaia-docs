@@ -2,6 +2,14 @@
 
 Ce document définit le minimum de tests opposables pour valider une implémentation Retaia.
 
+## 0) Versioning projet global
+
+Tests obligatoires :
+
+* `v1` projet global : Core + Agent + `capabilities` + `feature_flags`
+* `v1.1` projet global : client `RUST_UI` (`client_kind=UI_RUST`) + client `MCP_CLIENT` (`client_kind=MCP`)
+* les suites UI/MCP sont classées en gates `v1.1` global même si l'API v1 les supporte contractuellement
+
 ## 1) State machine
 
 Tests obligatoires :
@@ -123,12 +131,12 @@ Matrice de migration v1 runtime (gelée) :
   * rotation invalide immédiatement les tokens actifs du client
 * toutes réponses d’erreur 4xx/5xx auth conformes au schéma `ErrorResponse`
 * endpoints humains mutateurs exigent un bearer token (`UserBearerAuth`) conforme à la spec
-* même flux login/token validé sur clients interactifs: `UI_RUST` et `AGENT`
-* compatibilité desktop validée: client `UI_RUST` (Rust/Tauri) utilise `POST /auth/login` + `Authorization: Bearer`
-* anti lock-out: l'UI n'expose jamais le token en clair et n'offre pas d'action d'auto-révocation du token UI actif
+* même flux login/token validé sur clients interactifs: `UI_RUST` et `AGENT` (gate `v1.1` global pour `UI_RUST`)
+* compatibilité desktop validée: client `UI_RUST` (Rust/Tauri) utilise `POST /auth/login` + `Authorization: Bearer` (gate `v1.1` global)
+* anti lock-out: l'UI n'expose jamais le token en clair et n'offre pas d'action d'auto-révocation du token UI actif (gate `v1.1` global)
 * régression interdite: aucun endpoint runtime n'accepte encore `SessionCookieAuth` (Bearer-only)
 * 2FA optionnelle: compte sans 2FA active ne requiert pas OTP
-* création de secret `AGENT`/`MCP` via UI:
+* création de secret `AGENT`/`MCP` via UI (gate `v1.1` global):
   * sans 2FA active => approval UI sans OTP
   * avec 2FA active => OTP obligatoire à l’étape d’approval
   * sans validation UI => aucun `secret_key` ne peut être émise
@@ -140,9 +148,9 @@ Tests obligatoires :
 * `CLI` agent fonctionne en Linux headless (sans dépendance GUI)
 * `GUI` agent (quand présent) utilise le même moteur de processing que `CLI` (mêmes capabilities et mêmes résultats)
 * client `AGENT` validé dans les deux modes d’auth: interactif (`/auth/login`) et technique (`/auth/clients/token` ou OAuth2)
-* client `MCP` validé en mode technique (`/auth/clients/token` ou OAuth2), sans login interactif
-* client `MCP` peut piloter/orchestrer l'agent sans exécuter de processing
-* client `MCP` ne peut pas `claim/heartbeat/submit` de job (`/jobs/*` => `403 FORBIDDEN_ACTOR`)
+* client `MCP` validé en mode technique (`/auth/clients/token` ou OAuth2), sans login interactif (gate `v1.1` global)
+* client `MCP` peut piloter/orchestrer l'agent sans exécuter de processing (gate `v1.1` global)
+* client `MCP` ne peut pas `claim/heartbeat/submit` de job (`/jobs/*` => `403 FORBIDDEN_ACTOR`) (gate `v1.1` global)
 * mode service non-interactif redémarre sans login humain sur Linux/macOS/Windows
 * stockage secret conforme OS (Keychain macOS, Credential Manager/DPAPI Windows, secret store Linux)
 * rotation de secret client n’exige pas de réinstallation agent
@@ -162,7 +170,7 @@ Tests obligatoires :
   * `POST /auth/clients/device/poll` -> `400 INVALID_DEVICE_CODE` pour code invalide
   * `POST /auth/clients/token` -> `403 FORBIDDEN_ACTOR` pour `client_kind=UI_RUST`
 * Compat client UI/Agent/MCP:
-  * UI_RUST, AGENT, MCP compatibles avec le flux status-driven (`PENDING|APPROVED|DENIED|EXPIRED`)
+  * UI_RUST, AGENT, MCP compatibles avec le flux status-driven (`PENDING|APPROVED|DENIED|EXPIRED`) (gate `v1.1` global pour UI_RUST/MCP)
   * AGENT/MCP gèrent `429` (`SLOW_DOWN`/`TOO_MANY_ATTEMPTS`) avec retry/backoff déterministe
   * aucun client ne dépend encore de `401/403` pour la machine d’état device flow
 
@@ -260,7 +268,7 @@ Tests obligatoires :
 * toute nouvelle feature est introduite derrière un flag
 * toute feature `v1.1+` est désactivée par défaut
 * source de vérité des flags = payload runtime de Core (`server_policy.feature_flags`), jamais un hardcode client
-* canal runtime flags défini et testé pour `UI_RUST`, `AGENT`, `MCP` via `GET /app/policy` (pas seulement `POST /agents/register`)
+* canal runtime flags défini et testé pour `AGENT` en v1, puis `UI_RUST` et `MCP` en v1.1 global via `GET /app/policy` (pas seulement `POST /agents/register`)
 * distinction opposable: `capabilities` (agent/client), `feature_flags` (Core) et `app_feature_enabled` (application) sont testées séparément
 * règle AND validée: capability + flag requis pour exécuter une action feature
 * flag absent dans le payload runtime => traité comme `false`
@@ -271,7 +279,7 @@ Tests obligatoires :
 * mapping des flags v1.1 conforme : `features.decisions.bulk` (+ flags IA dans le paquet normatif v1.1)
 * client feature OFF => UI/action API de la feature interdite
 * client feature ON => disponibilité immédiate sans redéploiement
-* `UI_RUST`, `AGENT` et `MCP` appliquent tous les `feature_flags` runtime du Core
+* `AGENT` applique les `feature_flags` runtime du Core en v1 ; `UI_RUST` et `MCP` les appliquent en v1.1 global
 
 Cas OFF/ON minimum :
 
