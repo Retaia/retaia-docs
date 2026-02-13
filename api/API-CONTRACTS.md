@@ -427,6 +427,7 @@ Normalisation HTTP (normatif) :
   * `200` avec `status in {PENDING, APPROVED, DENIED, EXPIRED}`
   * `APPROVED` retourne `client_id`, `client_kind`, `secret_key` (one-shot)
   * `400 INVALID_DEVICE_CODE`
+  * `422 VALIDATION_FAILED`
   * `429 SLOW_DOWN` ou `TOO_MANY_ATTEMPTS` (poll trop fréquent)
 
 `POST /auth/clients/device/cancel`

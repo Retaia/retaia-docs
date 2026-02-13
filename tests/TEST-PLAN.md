@@ -108,6 +108,7 @@ Tests obligatoires :
   * après approval UI => statut `APPROVED` + `secret_key` one-shot
   * approval refusée par utilisateur => statut `DENIED`
   * code expiré => statut `EXPIRED`
+  * body invalide => `422 VALIDATION_FAILED`
   * polling trop fréquent => `429 SLOW_DOWN`/`TOO_MANY_ATTEMPTS`
 * `POST /auth/clients/device/cancel`:
   * flow en cours => `200` canceled
