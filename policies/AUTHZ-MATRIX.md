@@ -31,6 +31,16 @@ Acteurs normatifs :
 * acteur: `USER_INTERACTIVE`
 * scope: session utilisateur valide (`UserBearerAuth`)
 
+`GET /app/features`
+
+* acteur: `USER_INTERACTIVE`
+* scope: session utilisateur valide (`UserBearerAuth`)
+
+`PATCH /app/features`
+
+* acteur: `ADMIN_INTERACTIVE`
+* scope: policy admin (sinon `403 FORBIDDEN_ACTOR` / `FORBIDDEN_SCOPE`)
+
 `POST /auth/verify-email/admin-confirm`
 
 * acteur: `ADMIN_INTERACTIVE`
