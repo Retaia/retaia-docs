@@ -121,6 +121,18 @@ Catalogue de dépendances et escalade (opposable) :
 * règle de dépendance : si une dépendance est OFF, la feature dépendante devient OFF dans `effective_feature_enabled`
 * règle d’escalade : désactiver une feature parent DOIT désactiver toutes les features listées dans `disable_escalation[]`
 * règle de sûreté v1 globale : les features socle v1 (`CORE_V1_GLOBAL`) restent disponibles et ne sont pas impactées par des opt-out utilisateur
+* registre explicite obligatoire : Core DOIT exposer `core_v1_global_features[]` (liste canonique des clés non désactivables)
+* toute entrée `feature_governance` dont `key` appartient à `core_v1_global_features[]` DOIT avoir `tier=CORE_V1_GLOBAL` et `user_can_disable=false`
+
+Registre canonique `CORE_V1_GLOBAL` (v1) :
+
+* `features.core.auth`
+* `features.core.assets.lifecycle`
+* `features.core.jobs.runtime`
+* `features.core.search.query`
+* `features.core.policy.runtime`
+* `features.core.derived.access`
+* `features.core.clients.bootstrap`
 
 Arbitrage admin/user (opposable) :
 
@@ -315,7 +327,7 @@ Normalisation HTTP (normatif) :
 `GET /app/features`
 
 * security: `UserBearerAuth`
-* effet: retourne les switches applicatifs (`app_feature_enabled`) + métadonnées de gouvernance (`feature_governance`)
+* effet: retourne les switches applicatifs (`app_feature_enabled`) + métadonnées de gouvernance (`feature_governance`) + registre canonique `core_v1_global_features`
 * réponses:
   * `200` succès
   * `401 UNAUTHORIZED`
@@ -337,7 +349,7 @@ Normalisation HTTP (normatif) :
 
 * security: `UserBearerAuth`
 * effet: retourne les préférences feature de l’utilisateur (`user_feature_enabled`) et l’état effectif (`effective_feature_enabled`)
-* inclut `feature_governance` pour appliquer localement dépendances et escalade
+* inclut `feature_governance` et `core_v1_global_features` pour appliquer localement dépendances, escalade et règles de protection
 * réponses:
   * `200` succès
   * `401 UNAUTHORIZED`

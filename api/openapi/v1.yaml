@@ -1867,6 +1867,7 @@ components:
       properties:
         key:
           type: string
+          description: Feature key. Keys listed in `core_v1_global_features` are protected.
         tier:
           type: string
           enum: [CORE_V1_GLOBAL, OPTIONAL]
@@ -1886,10 +1887,12 @@ components:
     AppFeaturesResponse:
       type: object
       additionalProperties: false
-      required: [app_feature_enabled]
+      required: [app_feature_enabled, core_v1_global_features]
       properties:
         app_feature_enabled:
           $ref: "#/components/schemas/AppFeatureEnabled"
+        core_v1_global_features:
+          $ref: "#/components/schemas/CoreV1GlobalFeatures"
         user_feature_enabled:
           $ref: "#/components/schemas/UserFeatureEnabled"
         effective_feature_enabled:
@@ -1910,7 +1913,7 @@ components:
     UserFeaturesResponse:
       type: object
       additionalProperties: false
-      required: [user_feature_enabled, effective_feature_enabled, feature_governance]
+      required: [user_feature_enabled, effective_feature_enabled, feature_governance, core_v1_global_features]
       properties:
         user_feature_enabled:
           $ref: "#/components/schemas/UserFeatureEnabled"
@@ -1920,6 +1923,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/FeatureGovernanceRule"
+        core_v1_global_features:
+          $ref: "#/components/schemas/CoreV1GlobalFeatures"
 
     UserFeaturesUpdateRequest:
       type: object
@@ -1928,6 +1933,25 @@ components:
       properties:
         user_feature_enabled:
           $ref: "#/components/schemas/UserFeatureEnabled"
+
+    CoreV1GlobalFeatureKey:
+      type: string
+      enum:
+        - features.core.auth
+        - features.core.assets.lifecycle
+        - features.core.jobs.runtime
+        - features.core.search.query
+        - features.core.policy.runtime
+        - features.core.derived.access
+        - features.core.clients.bootstrap
+
+    CoreV1GlobalFeatures:
+      type: array
+      uniqueItems: true
+      minItems: 1
+      description: Canonical list of non-disableable v1 global core feature keys.
+      items:
+        $ref: "#/components/schemas/CoreV1GlobalFeatureKey"
 
     AppPolicyResponse:
       type: object
