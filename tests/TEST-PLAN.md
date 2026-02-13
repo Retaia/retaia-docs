@@ -55,12 +55,19 @@ Tests obligatoires :
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
   * body invalide => `422 VALIDATION_FAILED`
   * `app.features.ai.enabled=OFF` ou `app.features.ai.suggest_tags.enabled=OFF` => arrêt planification jobs IA correspondants côté Core
-* `GET /app/model-catalog`:
-  * bearer utilisateur valide => `200` + providers/modèles runtime
-  * bearer client technique valide (`OAuth2ClientCredentials` + scope `models:read`) => `200`
-  * bearer technique sans scope `models:read` => `403 FORBIDDEN_SCOPE`
+* `GET /app/ai-defaults`:
+  * bearer utilisateur valide => `200` + provider/model globaux par défaut + modèles autorisés
+  * defaults initiaux attendus:
+    * `default_llm_provider=ollama`
+    * `default_llm_model=mistral:latest`
+    * `default_stt_provider=whispercpp`
+    * `default_stt_model=ggml-large-v3-turbo.bin`
   * bearer absent/invalide => `401 UNAUTHORIZED`
-  * la liste providers/modèles n'est jamais hardcodée côté client (source runtime opposable)
+* `PATCH /app/ai-defaults`:
+  * bearer admin valide + body valide => `200`
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+  * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
+  * body invalide => `422 VALIDATION_FAILED`
 * `GET /app/policy`:
   * bearer utilisateur valide => `200` + `server_policy.feature_flags`
   * bearer client technique valide (`OAuth2ClientCredentials`) => `200`
@@ -158,10 +165,12 @@ Tests obligatoires :
 * sélection provider LLM pilotée par config/runtime policy (pas de hardcode implicite)
 * indisponibilité d’un provider LLM n’arrête pas l’agent: fallback provider ou retryable contrôlé
 * pour une policy identique, le routing provider reste déterministe (non flaky)
-* liste des modèles LLM lue dynamiquement depuis runtime policy/catalog (pas de hardcode client)
+* inventaire provider/modèle publié par l’agent (pas de catalogue modèle global Core)
 * modèle LLM effectif choisi explicitement par l’utilisateur (UI/CLI/config utilisateur)
 * changement de modèle par l’utilisateur appliqué sans rebuild client
-* modèle hors catalogue runtime rejeté proprement (erreur explicite, sans crash)
+* provider/modèle introuvable localement invalide les capabilities associées
+* provider/modèle non autorisé par Core invalide les capabilities associées
+* si le provider local supporte l'installation, l'agent peut installer le modèle requis puis republier capabilities/inventaire
 * stratégie local-first vérifiée sur `UI_RUST`, `AGENT`, `MCP` pour workloads AI/transcription
 * transcription locale via `Whisper.cpp` validée en non-régression
 * backend distant de transcription refusé sans opt-in explicite utilisateur/policy

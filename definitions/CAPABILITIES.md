@@ -143,6 +143,16 @@ Pour tout agent qui déclare `speech.transcription@1` :
 * le support `speech.transcription.local.whispercpp@1` est obligatoire (minimum actuel)
 * un backend distant de transcription PEUT exister, mais uniquement en opt-in explicite utilisateur/policy
 
+## 11. Invalidation capability par inventaire modèle (normatif)
+
+Pour les capabilities dépendantes d'un provider/modèle (`llm.*`, `speech.transcription.*`) :
+
+* l'agent DOIT publier son inventaire provider/modèle disponible au runtime
+* si le provider/modèle requis n'est pas disponible localement, la capability DOIT être invalidée
+* si le provider/modèle est disponible localement mais non autorisé par Core policy, la capability DOIT être invalidée
+* Core ne maintient pas de catalogue runtime de modèles; seul l'agent est source de vérité d'inventaire local
+* l'agent PEUT supporter l'installation de modèle quand le provider local le permet
+
 ## Références associées
 
 * [JOB-TYPES.md](JOB-TYPES.md)

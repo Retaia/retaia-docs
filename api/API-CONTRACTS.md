@@ -177,11 +177,21 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 * `MCP` PEUT piloter/orchestrer l'agent (configuration, déclenchement, supervision) mais NE DOIT JAMAIS exécuter de traitement média
 * `MCP` est interdit sur les endpoints de processing `/jobs/*` (`claim`, `heartbeat`, `submit`) avec refus `403 FORBIDDEN_ACTOR`
 * pour les workflows AI `suggest_tags` côté `AGENT`: `ollama` en phase 1; `chatgpt` et `claude` en phase 2 derrière feature flags
-* pour `UI_RUST`, `AGENT` et `MCP`, la liste des modèles LLM DOIT être lue dynamiquement (runtime policy/catalog via `GET /app/model-catalog`) et ne DOIT PAS être hardcodée
+* l’agent est propriétaire du provider/model runtime: découverte locale, disponibilité et installation
+* Core NE DOIT PAS exposer de catalogue runtime global de modèles
+* `UI_RUST`, `AGENT` et `MCP` NE DOIVENT PAS hardcoder providers/modèles
 * le modèle LLM effectif DOIT être choisi explicitement par l'utilisateur (UI/CLI/config utilisateur), puis appliqué par le client
+* l’admin DOIT définir un provider/modèle global par défaut via `PATCH /app/ai-defaults`
+* valeurs par défaut normatives initiales:
+  * `default_llm_provider=ollama`
+  * `default_llm_model=mistral:latest`
+  * `default_stt_provider=whispercpp`
+  * `default_stt_model=ggml-large-v3-turbo.bin`
 * stratégie AI/transcription: local-first obligatoire pour `UI_RUST`, `AGENT`, `MCP`
 * transcription locale minimum actuelle: `Whisper.cpp`
 * backend distant autorisé uniquement en opt-in explicite utilisateur/policy (jamais par défaut implicite)
+* si un provider/modèle requis n’est pas disponible localement côté agent, les capabilities associées DOIVENT être invalidées
+* si un provider/modèle local est disponible mais non autorisé par Core, les capabilities associées DOIVENT être invalidées
 
 Règles 2FA par client (obligatoire) :
 
@@ -203,7 +213,6 @@ Règle de cardinalité des tokens (obligatoire) :
 * `assets:read`
 * `assets:write` (**humain uniquement**) — tags/fields/notes humains
 * `decisions:write` (**humain uniquement**)
-* `models:read` (**clients techniques/UI via OAuth**) — lecture du catalogue runtime des modèles
 * `jobs:claim` (**agents uniquement**)
 * `jobs:heartbeat` (**agents uniquement**)
 * `jobs:submit` (**agents uniquement**)
@@ -318,15 +327,26 @@ Normalisation HTTP (normatif) :
   * `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
   * `422 VALIDATION_FAILED`
 
-`GET /app/model-catalog`
+`GET /app/ai-defaults`
 
-* security: `UserBearerAuth` ou `OAuth2ClientCredentials(models:read)`
-* effet: retourne le catalogue runtime des providers/modèles LLM autorisés
-* règle: `UI_RUST`, `AGENT` et `MCP` DOIVENT consommer ce catalogue et NE DOIVENT PAS hardcoder la liste des modèles
+* security: `UserBearerAuth`
+* effet: retourne les defaults globaux IA (`provider/model`) et les modèles autorisés par Core
 * réponses:
   * `200` succès
   * `401 UNAUTHORIZED`
-  * `403 FORBIDDEN_SCOPE`
+
+`PATCH /app/ai-defaults`
+
+* security: `UserBearerAuth`
+* prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
+* body requis: `{ app_ai_defaults: { default_llm_provider, default_llm_model, default_stt_provider, default_stt_model, authorized_models } }`
+* effet: met à jour les defaults globaux IA et la policy d’autorisation modèle
+* règle: un agent qui ne trouve pas le provider/modèle requis ou qui n’est pas autorisé DOIT invalider les capabilities liées
+* réponses:
+  * `200` succès
+  * `401 UNAUTHORIZED`
+  * `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
+  * `422 VALIDATION_FAILED`
 
 `GET /app/policy`
 
@@ -584,11 +604,14 @@ Body :
 * `agent_version`
 * `platform`
 * `capabilities: string[]` (voir [`CAPABILITIES.md`](../definitions/CAPABILITIES.md))
+* `model_inventory[]` (optionnel, inventaire provider/modèle local publié par l’agent)
 * `max_parallel_jobs` (suggestion)
 
 Response :
 
 * `agent_id`
+* `effective_capabilities: string[]` (capabilities retenues après policy Core)
+* `capability_warnings[]` (raisons d’invalidation capability, ex: provider/modèle indisponible ou non autorisé)
 * `server_policy` (quotas et règles serveur), incluant au minimum :
 
   * `min_poll_interval_seconds`
