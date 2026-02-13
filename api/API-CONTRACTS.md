@@ -908,6 +908,16 @@ Checklist minimale d’implémentation :
   * échoue (exit code non nul) en cas de mismatch
 * exiger dans la PR la trace explicite du refresh (`contracts/openapi-v1.sha256` modifié + justification migration)
 
+## 16) Workflow Git normatif (repos consommateurs)
+
+Règles opposables (UI, core, agents, MCP, tooling) :
+
+* toute branche de travail DOIT être synchronisée via `rebase` sur `master`
+* les merge commits de synchronisation (`Merge branch 'master' into ...`) sont interdits
+* l'historique PR DOIT rester linéaire avant merge
+* en cas de conflit, la résolution DOIT être faite pendant le rebase
+* la CI DOIT pouvoir bloquer une PR contenant un commit de merge de synchronisation
+
 Exemple de scripts (POSIX) :
 
 ```bash

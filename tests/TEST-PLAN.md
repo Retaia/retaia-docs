@@ -266,7 +266,16 @@ Tests obligatoires :
 * toute mise à jour de snapshot est visible dans la PR (pas de mutation implicite en post-merge)
 * non-régression v1 : un refresh de snapshot ne modifie pas la sémantique des comportements `v1` existants
 
-## 8.6) Security baseline (assume breach)
+## 8.6) Workflow Git (historique linéaire)
+
+Tests obligatoires :
+
+* la PR est rebased sur `master` (pas de merge de synchronisation)
+* aucun commit de type `Merge branch 'master' into ...` dans l'historique PR
+* gate CI bloquant si un commit de merge de synchronisation est détecté
+* résolution de conflits validée dans le rebase (pas de merge commit dédié)
+
+## 8.7) Security baseline (assume breach)
 
 Tests obligatoires :
 
@@ -280,7 +289,7 @@ Tests obligatoires :
 * actions sécurité critiques auditées (login/logout, revoke-token, rotate-secret, 2FA enable/disable, device approval)
 * régression interdite: aucune réintroduction de `SessionCookieAuth`
 
-## 8.7) GPG/OpenPGP standardisation
+## 8.8) GPG/OpenPGP standardisation
 
 Tests obligatoires :
 
@@ -294,7 +303,7 @@ Tests obligatoires :
 * mode avancé: intégration `gpg-agent`/clés existantes fonctionne quand activée
 * fallback sûr: indisponibilité du mode avancé ne bloque pas l'usage standard
 
-## 8.8) Crypto + RGPD (leak-resilience)
+## 8.9) Crypto + RGPD (leak-resilience)
 
 Tests obligatoires :
 
@@ -306,7 +315,7 @@ Tests obligatoires :
 * exercice de notification fuite RGPD exécuté et tracé (SLA 72h vérifié en simulation)
 * rotation/rekey crypto n'introduit pas de perte d'accès légitime ni de régression authz
 
-## 8.9) Full-text + filtres localisation sur données chiffrées
+## 8.10) Full-text + filtres localisation sur données chiffrées
 
 Tests obligatoires :
 
