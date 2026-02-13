@@ -10,6 +10,45 @@ Tests obligatoires :
 * transitions interdites renvoient `409 STATE_CONFLICT`
 * `PURGED` est terminal
 
+## 1.1) Auth applicative
+
+Tests obligatoires :
+
+* `POST /auth/login`:
+  * succès `200` avec body valide (`email`, `password`)
+  * credentials invalides => `401 UNAUTHORIZED`
+  * email non vérifié => `403 EMAIL_NOT_VERIFIED`
+  * body invalide => `422 VALIDATION_FAILED`
+  * dépassement tentative => `429 TOO_MANY_ATTEMPTS`
+* `POST /auth/logout`:
+  * session valide => `200`
+  * session absente/invalide => `401 UNAUTHORIZED`
+* `GET /auth/me`:
+  * session valide => `200` + payload utilisateur courant
+  * session absente/invalide => `401 UNAUTHORIZED`
+* `POST /auth/lost-password/request`:
+  * body valide (`email`) => `202`
+  * body invalide => `422 VALIDATION_FAILED`
+  * rate limit => `429 TOO_MANY_ATTEMPTS`
+* `POST /auth/lost-password/reset`:
+  * body valide (`token`, `new_password`) => `200`
+  * token invalide/expiré => `400 INVALID_TOKEN`
+  * body invalide => `422 VALIDATION_FAILED`
+* `POST /auth/verify-email/request`:
+  * body valide (`email`) => `202`
+  * body invalide => `422 VALIDATION_FAILED`
+  * rate limit => `429 TOO_MANY_ATTEMPTS`
+* `POST /auth/verify-email/confirm`:
+  * body valide (`token`) => `200`
+  * token invalide/expiré => `400 INVALID_TOKEN`
+  * body invalide => `422 VALIDATION_FAILED`
+* `POST /auth/verify-email/admin-confirm`:
+  * session admin valide + body valide (`email`) => `200`
+  * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
+  * utilisateur inexistant => `404 USER_NOT_FOUND`
+  * body invalide => `422 VALIDATION_FAILED`
+* toutes réponses d’erreur 4xx/5xx auth conformes au schéma `ErrorResponse`
+
 ## 2) Jobs & leases
 
 Tests obligatoires :

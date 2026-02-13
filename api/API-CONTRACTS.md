@@ -126,6 +126,84 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md).
 `openapi/v1.yaml` déclare explicitement les schémas de sécurité (`SessionCookieAuth`, `OAuth2ClientCredentials`) et les scopes requis par endpoint.
 
+### Endpoints auth applicatifs (normatif)
+
+`POST /auth/login`
+
+* security: aucune (`security: []`)
+* body requis: `{ email, password }`
+* réponses:
+  * `200` succès
+  * `401 UNAUTHORIZED` (credentials invalides)
+  * `403 EMAIL_NOT_VERIFIED`
+  * `422 VALIDATION_FAILED`
+  * `429 TOO_MANY_ATTEMPTS`
+
+`POST /auth/logout`
+
+* security: `SessionCookieAuth`
+* réponses:
+  * `200` succès
+  * `401 UNAUTHORIZED`
+
+`GET /auth/me`
+
+* security: `SessionCookieAuth`
+* réponses:
+  * `200` utilisateur courant
+  * `401 UNAUTHORIZED`
+
+`POST /auth/lost-password/request`
+
+* security: aucune (`security: []`)
+* body requis: `{ email }`
+* réponses:
+  * `202` accepté
+  * `422 VALIDATION_FAILED`
+  * `429 TOO_MANY_ATTEMPTS`
+
+`POST /auth/lost-password/reset`
+
+* security: aucune (`security: []`)
+* body requis: `{ token, new_password }`
+* réponses:
+  * `200` succès
+  * `400 INVALID_TOKEN`
+  * `422 VALIDATION_FAILED`
+
+`POST /auth/verify-email/request`
+
+* security: aucune (`security: []`)
+* body requis: `{ email }`
+* réponses:
+  * `202` accepté
+  * `422 VALIDATION_FAILED`
+  * `429 TOO_MANY_ATTEMPTS`
+
+`POST /auth/verify-email/confirm`
+
+* security: aucune (`security: []`)
+* body requis: `{ token }`
+* réponses:
+  * `200` succès
+  * `400 INVALID_TOKEN`
+  * `422 VALIDATION_FAILED`
+
+`POST /auth/verify-email/admin-confirm`
+
+* security: `SessionCookieAuth`
+* prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
+* body requis: `{ email }`
+* réponses:
+  * `200` succès
+  * `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE` (selon matrice)
+  * `404 USER_NOT_FOUND`
+  * `422 VALIDATION_FAILED`
+
+Règle d'erreur (obligatoire) :
+
+* toute réponse 4xx/5xx de ces endpoints DOIT retourner le schéma `ErrorResponse`
+
 
 ## 2) Assets
 
@@ -564,11 +642,17 @@ Règles :
 
 ## 10) Codes d’erreur (normatifs)
 
+* `400 INVALID_TOKEN`
+* `401 UNAUTHORIZED`
+* `403 FORBIDDEN_SCOPE` / `FORBIDDEN_ACTOR`
+* `403 EMAIL_NOT_VERIFIED`
+* `404 USER_NOT_FOUND`
 * `409 STATE_CONFLICT`
 * `409 IDEMPOTENCY_CONFLICT`
 * `423 LOCK_REQUIRED` / `LOCK_INVALID`
 * `410 PURGED`
 * `422 VALIDATION_FAILED`
+* `429 TOO_MANY_ATTEMPTS`
 * `429 RATE_LIMITED`
 * `503 TEMPORARY_UNAVAILABLE`
 

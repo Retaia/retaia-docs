@@ -15,6 +15,7 @@ servers:
   - url: /api/v1
 
 tags:
+  - name: Auth
   - name: Assets
   - name: Agents
   - name: Jobs
@@ -24,6 +25,224 @@ tags:
   - name: Purge
 
 paths:
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with email and password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthLoginRequest"
+      responses:
+        "200":
+          description: Login success
+        "401":
+          description: Invalid credentials (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Email not verified (`EMAIL_NOT_VERIFIED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many attempts (`TOO_MANY_ATTEMPTS`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout current user session
+      security:
+        - SessionCookieAuth: []
+      responses:
+        "200":
+          description: Logout success
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current authenticated user
+      security:
+        - SessionCookieAuth: []
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthCurrentUser"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/lost-password/request:
+    post:
+      tags: [Auth]
+      summary: Request lost password reset email
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthEmailRequest"
+      responses:
+        "202":
+          description: Request accepted
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many attempts (`TOO_MANY_ATTEMPTS`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/lost-password/reset:
+    post:
+      tags: [Auth]
+      summary: Reset password with token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthLostPasswordResetRequest"
+      responses:
+        "200":
+          description: Password reset success
+        "400":
+          description: Invalid token (`INVALID_TOKEN`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/verify-email/request:
+    post:
+      tags: [Auth]
+      summary: Request verification email
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthEmailRequest"
+      responses:
+        "202":
+          description: Request accepted
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many attempts (`TOO_MANY_ATTEMPTS`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/verify-email/confirm:
+    post:
+      tags: [Auth]
+      summary: Confirm email verification token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthTokenRequest"
+      responses:
+        "200":
+          description: Email verified
+        "400":
+          description: Invalid token (`INVALID_TOKEN`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/verify-email/admin-confirm:
+    post:
+      tags: [Auth]
+      summary: Admin confirms user email verification
+      description: Requires an authenticated admin actor, per AUTHZ matrix (FORBIDDEN_ACTOR or FORBIDDEN_SCOPE on authz failure).
+      security:
+        - SessionCookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthEmailRequest"
+      responses:
+        "200":
+          description: Email verified by admin
+        "403":
+          description: Forbidden actor or scope (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: User not found (`USER_NOT_FOUND`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /assets:
     get:
       tags: [Assets]
@@ -733,6 +952,63 @@ components:
         type: string
 
   schemas:
+    AuthLoginRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    AuthEmailRequest:
+      type: object
+      additionalProperties: false
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+
+    AuthTokenRequest:
+      type: object
+      additionalProperties: false
+      required: [token]
+      properties:
+        token:
+          type: string
+
+    AuthLostPasswordResetRequest:
+      type: object
+      additionalProperties: false
+      required: [token, new_password]
+      properties:
+        token:
+          type: string
+        new_password:
+          type: string
+
+    AuthCurrentUser:
+      type: object
+      additionalProperties: true
+      required: [email]
+      properties:
+        uuid:
+          type: string
+        email:
+          type: string
+          format: email
+        display_name:
+          type: string
+        email_verified:
+          type: boolean
+        roles:
+          type: array
+          items:
+            type: string
+
     ServerPolicy:
       type: object
       description: |
@@ -1210,16 +1486,21 @@ components:
         code:
           type: string
           enum:
+            - UNAUTHORIZED
+            - EMAIL_NOT_VERIFIED
             - FORBIDDEN_SCOPE
             - FORBIDDEN_ACTOR
+            - USER_NOT_FOUND
             - STATE_CONFLICT
             - IDEMPOTENCY_CONFLICT
             - STALE_LOCK_TOKEN
             - NAME_COLLISION_EXHAUSTED
             - PURGED
             - VALIDATION_FAILED
+            - INVALID_TOKEN
             - LOCK_REQUIRED
             - LOCK_INVALID
+            - TOO_MANY_ATTEMPTS
             - RATE_LIMITED
             - TEMPORARY_UNAVAILABLE
         message:
