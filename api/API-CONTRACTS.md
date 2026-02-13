@@ -40,12 +40,12 @@ Objectif : fournir une surface stable consommée par :
 * Contrat de transport : l’état effectif des flags DOIT être transporté dans un payload standard `server_policy.feature_flags` pour tous les clients (`UI_RUST`, `AGENT`, `MCP`), avec endpoint d’accès runtime dédié ou payload équivalent.
 * Distinction normative (sans ambiguïté) :
   * `feature_flags` = activation runtime globale des fonctionnalités côté Core
-  * `ui_feature_flags` = préférences utilisateur/UI (publices côté UI), pilotées par l'utilisateur
+  * `app_feature_enabled` = préférences utilisateur d’activation applicative, pilotées depuis l'UI
   * `capabilities` = aptitudes techniques déclarées par les agents pour exécuter des jobs
   * `contracts/` = snapshots versionnés pour détecter un drift du contrat OpenAPI
 * Règle de combinaison (obligatoire) :
   * exécution autorisée uniquement si `capability requise présente` **ET** `feature_flag(s) requis actif(s)`
-  * pour les features IA interactives: disponibilité effective = `feature_flag Core` **ET** `ui_feature_flag utilisateur`
+  * pour les features IA interactives: disponibilité effective = `feature_flag Core` **ET** `app_feature_enabled utilisateur`
   * capability présente + flag OFF => refus normatif (`403 FORBIDDEN_SCOPE`/équivalent policy)
   * flag ON + capability absente => non exécutable (`pending`, `403` ou `409` selon endpoint/policy)
 * Sémantique stricte :
@@ -71,10 +71,10 @@ Mapping normatif v1.1 (base actuelle, obligatoire pour tous les consommateurs) :
 * `features.ai.provider.claude` :
   * autorise le provider `claude` pour `suggest_tags`
   * rollout initial: OFF (activation progressive)
-* `ui.features.ai.enabled` :
-  * toggle utilisateur/UI global pour activer/désactiver les features IA côté UI
-* `ui.features.ai.suggest_tags.enabled` :
-  * toggle utilisateur/UI dédié à la suggestion de tags
+* `app.features.ai.enabled` :
+  * switch utilisateur global pour activer/désactiver les features IA côté application
+* `app.features.ai.suggest_tags.enabled` :
+  * switch utilisateur dédié à la suggestion de tags
   * OFF => Core NE DOIT PAS planifier de jobs `suggest_tags` pour ce scope utilisateur
 * `features.ai.suggested_tags_filters` :
   * autorise les query params `suggested_tags`, `suggested_tags_mode` sur `GET /assets`
@@ -265,22 +265,22 @@ Baseline sécurité/fuite (normatif) :
   * `200` utilisateur courant
   * `401 UNAUTHORIZED`
 
-`GET /auth/me/ui-feature-flags`
+`GET /app/features`
 
 * security: `UserBearerAuth`
-* effet: retourne les flags UI pilotés par l'utilisateur courant (`ui_feature_flags`)
+* effet: retourne les switches applicatifs pilotés par l'utilisateur courant (`app_feature_enabled`)
 * réponses:
-  * `200` flags UI utilisateur
+  * `200` switches applicatifs utilisateur
   * `401 UNAUTHORIZED`
 
-`PATCH /auth/me/ui-feature-flags`
+`PATCH /app/features`
 
 * security: `UserBearerAuth`
-* body requis: `{ ui_feature_flags: { ... } }`
-* effet: met à jour les flags UI utilisateur
-* règle: si IA désactivée via UI flag, Core DOIT arrêter la planification des jobs IA correspondants (ex: `suggest_tags`) pour ce scope
+* body requis: `{ app_feature_enabled: { ... } }`
+* effet: met à jour les switches applicatifs utilisateur
+* règle: si IA désactivée via `app_feature_enabled`, Core DOIT arrêter la planification des jobs IA correspondants (ex: `suggest_tags`) pour ce scope
 * réponses:
-  * `200` flags UI mis à jour
+  * `200` switches applicatifs mis à jour
   * `401 UNAUTHORIZED`
   * `422 VALIDATION_FAILED`
 

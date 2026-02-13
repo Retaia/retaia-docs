@@ -214,22 +214,22 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /auth/me/ui-feature-flags:
+  /app/features:
     get:
       tags: [Auth]
-      summary: Get current user UI feature flags
+      summary: Get current user app feature switches
       description: |
-        Returns user-controlled UI flags.
-        Effective AI availability requires Core `feature_flags` AND user `ui_feature_flags`.
+        Returns user-controlled app switches (`app_feature_enabled`).
+        Effective AI availability requires Core `feature_flags` AND user `app_feature_enabled`.
       security:
         - UserBearerAuth: []
       responses:
         "200":
-          description: Current user UI feature flags
+          description: Current user app feature switches
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthUiFeatureFlagsResponse"
+                $ref: "#/components/schemas/AppFeaturesResponse"
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
           content:
@@ -238,10 +238,10 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
     patch:
       tags: [Auth]
-      summary: Update current user UI feature flags
+      summary: Update current user app feature switches
       description: |
-        Updates user-controlled UI flags.
-        When AI UI flags are disabled, Core MUST stop scheduling corresponding AI jobs for this user scope.
+        Updates user-controlled app switches (`app_feature_enabled`).
+        When AI app switches are disabled, Core MUST stop scheduling corresponding AI jobs for this user scope.
       security:
         - UserBearerAuth: []
       requestBody:
@@ -249,14 +249,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AuthUiFeatureFlagsUpdateRequest"
+              $ref: "#/components/schemas/AppFeaturesUpdateRequest"
       responses:
         "200":
-          description: Updated user UI feature flags
+          description: Updated user app feature switches
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthUiFeatureFlagsResponse"
+                $ref: "#/components/schemas/AppFeaturesResponse"
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
           content:
@@ -1706,45 +1706,45 @@ components:
           type: boolean
           default: false
 
-    UiFeatureFlags:
+    AppFeatureEnabled:
       type: object
       description: |
-        User-controlled UI flags.
-        Effective feature availability requires Core `FeatureFlags` AND user `UiFeatureFlags`.
+        User-controlled app feature switches.
+        Effective feature availability requires Core `FeatureFlags` AND user `AppFeatureEnabled`.
       additionalProperties:
         type: boolean
       properties:
-        ui.features.ai.enabled:
+        app.features.ai.enabled:
           type: boolean
           default: true
-        ui.features.ai.suggest_tags.enabled:
+        app.features.ai.suggest_tags.enabled:
           type: boolean
           default: true
-        ui.features.ai.provider.ollama.enabled:
+        app.features.ai.provider.ollama.enabled:
           type: boolean
           default: true
-        ui.features.ai.provider.chatgpt.enabled:
+        app.features.ai.provider.chatgpt.enabled:
           type: boolean
           default: true
-        ui.features.ai.provider.claude.enabled:
+        app.features.ai.provider.claude.enabled:
           type: boolean
           default: true
 
-    AuthUiFeatureFlagsResponse:
+    AppFeaturesResponse:
       type: object
       additionalProperties: false
-      required: [ui_feature_flags]
+      required: [app_feature_enabled]
       properties:
-        ui_feature_flags:
-          $ref: "#/components/schemas/UiFeatureFlags"
+        app_feature_enabled:
+          $ref: "#/components/schemas/AppFeatureEnabled"
 
-    AuthUiFeatureFlagsUpdateRequest:
+    AppFeaturesUpdateRequest:
       type: object
       additionalProperties: false
-      required: [ui_feature_flags]
+      required: [app_feature_enabled]
       properties:
-        ui_feature_flags:
-          $ref: "#/components/schemas/UiFeatureFlags"
+        app_feature_enabled:
+          $ref: "#/components/schemas/AppFeatureEnabled"
 
     AssetState:
       type: string

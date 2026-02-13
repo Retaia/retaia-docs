@@ -31,7 +31,7 @@ Acteurs normatifs :
 * acteur: `USER_INTERACTIVE`
 * scope: session utilisateur valide (`UserBearerAuth`)
 
-`GET|PATCH /auth/me/ui-feature-flags`
+`GET|PATCH /app/features`
 
 * acteur: `USER_INTERACTIVE`
 * scope: session utilisateur valide (`UserBearerAuth`)
