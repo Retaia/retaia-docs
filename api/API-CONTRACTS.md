@@ -91,7 +91,7 @@ Comportement :
 ### Derived URLs
 
 * URLs de dérivés **stables** (same-origin)
-* Accès contrôlé par session cookie (UI) ou bearer token (clients autorisés)
+* Accès contrôlé par bearer token (`Authorization: Bearer ...`) pour tous les clients
 
 ### États (doit matcher [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md))
 
@@ -104,8 +104,8 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 
 ### UI (humain)
 
-* Session cookie HttpOnly (same-origin)
-* CSRF sur méthodes mutantes
+* Bearer token utilisateur obtenu via login (`POST /auth/login`)
+* l'interface de login est normative pour permettre l'obtention du token utilisateur
 
 ### Agents / MCP
 
@@ -124,7 +124,7 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 * `purge:execute` (**humain uniquement**)
 
 La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md).
-`openapi/v1.yaml` déclare explicitement les schémas de sécurité (`SessionCookieAuth`, `OAuth2ClientCredentials`) et les scopes requis par endpoint.
+`openapi/v1.yaml` déclare explicitement les schémas de sécurité (`UserBearerAuth`, `OAuth2ClientCredentials`) et les scopes requis par endpoint.
 
 ### Endpoints auth applicatifs (normatif)
 
@@ -133,7 +133,7 @@ La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.m
 * security: aucune (`security: []`)
 * body requis: `{ email, password }`
 * réponses:
-  * `200` succès
+  * `200` succès + bearer token (`access_token`, `token_type=Bearer`, `expires_in?`, `refresh_token?`)
   * `401 UNAUTHORIZED` (credentials invalides)
   * `403 EMAIL_NOT_VERIFIED`
   * `422 VALIDATION_FAILED`
@@ -141,14 +141,14 @@ La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.m
 
 `POST /auth/logout`
 
-* security: `SessionCookieAuth`
+* security: `UserBearerAuth`
 * réponses:
   * `200` succès
   * `401 UNAUTHORIZED`
 
 `GET /auth/me`
 
-* security: `SessionCookieAuth`
+* security: `UserBearerAuth`
 * réponses:
   * `200` utilisateur courant
   * `401 UNAUTHORIZED`
@@ -191,7 +191,7 @@ La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.m
 
 `POST /auth/verify-email/admin-confirm`
 
-* security: `SessionCookieAuth`
+* security: `UserBearerAuth`
 * prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
 * body requis: `{ email }`
 * réponses:

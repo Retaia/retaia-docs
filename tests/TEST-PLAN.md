@@ -15,17 +15,17 @@ Tests obligatoires :
 Tests obligatoires :
 
 * `POST /auth/login`:
-  * succès `200` avec body valide (`email`, `password`)
+  * succès `200` avec body valide (`email`, `password`) et émission d'un bearer token (`access_token`, `token_type=Bearer`)
   * credentials invalides => `401 UNAUTHORIZED`
   * email non vérifié => `403 EMAIL_NOT_VERIFIED`
   * body invalide => `422 VALIDATION_FAILED`
   * dépassement tentative => `429 TOO_MANY_ATTEMPTS`
 * `POST /auth/logout`:
-  * session valide => `200`
-  * session absente/invalide => `401 UNAUTHORIZED`
+  * bearer valide => `200`
+  * bearer absent/invalide => `401 UNAUTHORIZED`
 * `GET /auth/me`:
-  * session valide => `200` + payload utilisateur courant
-  * session absente/invalide => `401 UNAUTHORIZED`
+  * bearer valide => `200` + payload utilisateur courant
+  * bearer absent/invalide => `401 UNAUTHORIZED`
 * `POST /auth/lost-password/request`:
   * body valide (`email`) => `202`
   * body invalide => `422 VALIDATION_FAILED`
@@ -43,11 +43,12 @@ Tests obligatoires :
   * token invalide/expiré => `400 INVALID_TOKEN`
   * body invalide => `422 VALIDATION_FAILED`
 * `POST /auth/verify-email/admin-confirm`:
-  * session admin valide + body valide (`email`) => `200`
+  * bearer admin valide + body valide (`email`) => `200`
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
   * utilisateur inexistant => `404 USER_NOT_FOUND`
   * body invalide => `422 VALIDATION_FAILED`
 * toutes réponses d’erreur 4xx/5xx auth conformes au schéma `ErrorResponse`
+* endpoints humains mutateurs exigent un bearer token (`UserBearerAuth`) conforme à la spec
 
 ## 2) Jobs & leases
 

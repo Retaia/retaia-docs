@@ -39,6 +39,10 @@ paths:
       responses:
         "200":
           description: Login success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthLoginSuccess"
         "401":
           description: Invalid credentials (`UNAUTHORIZED`)
           content:
@@ -67,9 +71,9 @@ paths:
   /auth/logout:
     post:
       tags: [Auth]
-      summary: Logout current user session
+      summary: Logout current user token session
       security:
-        - SessionCookieAuth: []
+        - UserBearerAuth: []
       responses:
         "200":
           description: Logout success
@@ -85,7 +89,7 @@ paths:
       tags: [Auth]
       summary: Get current authenticated user
       security:
-        - SessionCookieAuth: []
+        - UserBearerAuth: []
       responses:
         "200":
           description: Current user
@@ -214,7 +218,7 @@ paths:
       summary: Admin confirms user email verification
       description: Requires an authenticated admin actor, per AUTHZ matrix (FORBIDDEN_ACTOR or FORBIDDEN_SCOPE on authz failure).
       security:
-        - SessionCookieAuth: []
+        - UserBearerAuth: []
       requestBody:
         required: true
         content:
@@ -248,7 +252,7 @@ paths:
       tags: [Assets]
       summary: List assets
       security:
-        - SessionCookieAuth: []
+        - UserBearerAuth: []
         - OAuth2ClientCredentials: ["assets:read"]
       parameters:
         - name: state
@@ -323,7 +327,7 @@ paths:
       tags: [Assets]
       summary: Get one asset detail
       security:
-        - SessionCookieAuth: []
+        - UserBearerAuth: []
         - OAuth2ClientCredentials: ["assets:read"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
@@ -338,7 +342,7 @@ paths:
       tags: [Assets]
       summary: Update human metadata on one asset
       security:
-        - SessionCookieAuth: []
+        - UserBearerAuth: []
         - OAuth2ClientCredentials: ["assets:write"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
@@ -408,7 +412,7 @@ paths:
       tags: [Assets]
       summary: Trigger explicit reprocess
       security:
-        - SessionCookieAuth: []
+        - UserBearerAuth: []
         - OAuth2ClientCredentials: ["assets:write"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
@@ -428,7 +432,7 @@ paths:
       tags: [Decisions]
       summary: Set or update a human decision
       security:
-        - SessionCookieAuth: []
+        - UserBearerAuth: []
         - OAuth2ClientCredentials: ["decisions:write"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
@@ -459,7 +463,7 @@ paths:
       tags: [Decisions]
       summary: Reopen archived or rejected asset to decision pending
       security:
-        - SessionCookieAuth: []
+        - UserBearerAuth: []
         - OAuth2ClientCredentials: ["decisions:write"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
@@ -709,7 +713,7 @@ paths:
       tags: [Derived]
       summary: List available derived files for one asset
       security:
-        - SessionCookieAuth: []
+        - UserBearerAuth: []
         - OAuth2ClientCredentials: ["assets:read"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
@@ -727,7 +731,7 @@ paths:
       tags: [Derived]
       summary: Fetch one derived file by kind
       security:
-        - SessionCookieAuth: []
+        - UserBearerAuth: []
         - OAuth2ClientCredentials: ["assets:read"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
@@ -748,7 +752,7 @@ paths:
       tags: [Batches]
       summary: Preview move batch
       security:
-        - SessionCookieAuth: []
+        - UserBearerAuth: []
         - OAuth2ClientCredentials: ["batches:execute"]
       requestBody:
         required: true
@@ -772,7 +776,7 @@ paths:
       tags: [Batches]
       summary: Execute or dry-run move batch
       security:
-        - SessionCookieAuth: []
+        - UserBearerAuth: []
         - OAuth2ClientCredentials: ["batches:execute"]
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -799,7 +803,7 @@ paths:
       tags: [Batches]
       summary: Get move batch status and report
       security:
-        - SessionCookieAuth: []
+        - UserBearerAuth: []
         - OAuth2ClientCredentials: ["batches:execute"]
       parameters:
         - name: batch_id
@@ -822,7 +826,7 @@ paths:
       summary: Preview bulk decisions
       description: Available in v1.1+ when `features.decisions.bulk=true`.
       security:
-        - SessionCookieAuth: []
+        - UserBearerAuth: []
         - OAuth2ClientCredentials: ["decisions:write"]
       requestBody:
         required: true
@@ -850,7 +854,7 @@ paths:
       summary: Apply bulk decisions from preview token
       description: Available in v1.1+ when `features.decisions.bulk=true`.
       security:
-        - SessionCookieAuth: []
+        - UserBearerAuth: []
         - OAuth2ClientCredentials: ["decisions:write"]
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -876,7 +880,7 @@ paths:
       tags: [Purge]
       summary: Purge one rejected asset
       security:
-        - SessionCookieAuth: []
+        - UserBearerAuth: []
         - OAuth2ClientCredentials: ["purge:execute"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
@@ -907,7 +911,7 @@ paths:
       tags: [Purge]
       summary: Preview purge impact for one asset
       security:
-        - SessionCookieAuth: []
+        - UserBearerAuth: []
         - OAuth2ClientCredentials: ["purge:execute"]
       parameters:
         - $ref: "#/components/parameters/UuidPath"
@@ -917,10 +921,15 @@ paths:
 
 components:
   securitySchemes:
+    UserBearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
     SessionCookieAuth:
       type: apiKey
       in: cookie
       name: retaia_session
+      description: Deprecated in favor of UserBearerAuth.
     OAuth2ClientCredentials:
       type: oauth2
       flows:
@@ -961,6 +970,22 @@ components:
           type: string
           format: email
         password:
+          type: string
+
+    AuthLoginSuccess:
+      type: object
+      additionalProperties: false
+      required: [access_token, token_type]
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          enum: [Bearer]
+        expires_in:
+          type: integer
+          description: Access token lifetime in seconds.
+        refresh_token:
           type: string
 
     AuthEmailRequest:
