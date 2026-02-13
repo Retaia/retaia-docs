@@ -11,11 +11,11 @@ Ce document définit la matrice d'autorisation normative par endpoint, scope et 
 
 Acteurs normatifs :
 
-* `USER_INTERACTIVE` (UI web/desktop, agent CLI/GUI opéré par un humain)
+* `USER_INTERACTIVE` (client `UI` Rust/Tauri ou client `AGENT` opéré par un humain)
 * `AGENT_TECHNICAL` (daemon/service non-interactif)
-* `CLIENT_TECHNICAL` (intégration non-interactive)
+* `CLIENT_TECHNICAL` (client technique non-interactif)
 * `ADMIN_INTERACTIVE` (sous-ensemble `USER_INTERACTIVE` avec droits admin)
-* `AGENT_CLI`/`AGENT_GUI` peuvent exister dans les deux modes selon le flux d’auth (login utilisateur vs secret-key/OAuth2)
+* `client_kind` autorisés: `UI` ou `AGENT` uniquement
 
 ## 2) Matrice v1 (résumé)
 
@@ -40,13 +40,13 @@ Acteurs normatifs :
 
 * acteur: `ADMIN_INTERACTIVE`
 * scope: policy admin
-* contrainte: `client_kind in {UI_WEB, UI_ELECTRON, UI_TAURI}` => révocation refusée (`403`)
+* contrainte: `client_kind=UI` => révocation refusée (`403`)
 
 `POST /auth/clients/token`
 
 * acteur: `CLIENT_TECHNICAL|AGENT_TECHNICAL`
 * scope: aucun (auth par `client_id + secret_key`)
-* contrainte: `client_kind in {AGENT_CLI, AGENT_GUI, MCP}` uniquement
+* contrainte: `client_kind=AGENT` uniquement
 
 ### Assets / Derived
 

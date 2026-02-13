@@ -9,9 +9,8 @@ Ce document doit rester strictement aligné avec `openapi/v1.yaml`.
 
 Objectif : fournir une surface stable consommée par :
 
-* UI web (same-origin, servie par Symfony)
-* Retaia Agent(s)
-* futurs clients (ex: client MCP)
+* client UI (Rust/Tauri)
+* client Agent
 
 
 ## 0) Conventions
@@ -33,7 +32,7 @@ Objectif : fournir une surface stable consommée par :
 
 ### Feature flags (normatif)
 
-* Source de vérité : les flags sont pilotés par **Retaia Core** au runtime. Les clients (UI, agents, MCP) NE DOIVENT PAS hardcoder un état de flag.
+* Source de vérité : les flags sont pilotés par **Retaia Core** au runtime. Les clients (UI, agents) NE DOIVENT PAS hardcoder un état de flag.
 * Toute nouvelle fonctionnalité DOIT être protégée par un feature flag serveur dès son introduction.
 * Les fonctionnalités `v1.1+` suivent la même règle et restent inactives tant que leur flag n'est pas activé.
 * Convention de nommage : `features.<domaine>.<fonction>` (ex: `features.ai.suggest_tags`).
@@ -63,7 +62,7 @@ Mapping normatif v1.1 (base actuelle, obligatoire pour tous les consommateurs) :
   * autorise `POST /decisions/preview` et `POST /decisions/apply`
   * client: OFF => interdire toute UI/action bulk decisions et tout appel API associé ; ON => disponible sans redéploiement
 
-Règles client (normatives, UI/agents/MCP) :
+Règles client (normatives, UI/agents) :
 
 * feature OFF => appel API de la feature interdit et UI correspondante masquée/désactivée
 * feature ON => feature disponible immédiatement, sans déploiement client supplémentaire
@@ -104,21 +103,21 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 
 ### Typologie des acteurs (normatif)
 
-* `USER_INTERACTIVE` : utilisateur humain connecté via UI (`UI_WEB`, `UI_ELECTRON`, `UI_TAURI`) ou agent en mode interactif (`AGENT_CLI`, `AGENT_GUI`)
+* `USER_INTERACTIVE` : utilisateur humain connecté via client `UI` (Rust/Tauri) ou client `AGENT` en mode interactif
 * `CLIENT_TECHNICAL` : client non-humain authentifié par `client_id + secret_key`
 * `AGENT_TECHNICAL` : agent non-interactif (daemon/service) authentifié par `client_id + secret_key` ou client-credentials OAuth2
-* `AGENT_CLI` / `AGENT_GUI` décrivent un form factor; le mode (`USER_INTERACTIVE` vs `AGENT_TECHNICAL`) est déterminé par le flux d’auth utilisé.
+* `client_kind` est strictement borné à `UI` ou `AGENT`
 
 ### UI (humain)
 
 * Bearer token utilisateur obtenu via login (`POST /auth/login`)
 * l'interface de login est normative pour permettre l'obtention du token utilisateur
-* la même authentification DOIT rester valable si l’UI est empaquetée en app desktop (Electron ou Rust Tauri)
+* l’UI DOIT être implémentée en Rust/Tauri (Electron non supporté)
 * le token UI est non exportable dans l'interface (jamais affiché en clair)
 * un utilisateur ne peut pas invalider son token UI depuis l'UI (anti lock-out)
 * l'UI DOIT supporter l'enrôlement 2FA TOTP via app externe (Authy, Google Authenticator, etc.)
 
-### Agents / MCP
+### Agents
 
 * modes non interactifs : bearer technique (`OAuth2ClientCredentials`)
 * modes interactifs (agent CLI/GUI opéré par un humain) : bearer utilisateur via `POST /auth/login`
@@ -138,12 +137,18 @@ Règle de cardinalité des tokens (obligatoire) :
 * `jobs:claim` (**agents uniquement**)
 * `jobs:heartbeat` (**agents uniquement**)
 * `jobs:submit` (**agents uniquement**)
-* `suggestions:write` (**v1.1+**, agents/MCP)
+* `suggestions:write` (**v1.1+**, agents)
 * `batches:execute` (**humain uniquement**)
 * `purge:execute` (**humain uniquement**)
 
 La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md).
 `openapi/v1.yaml` déclare explicitement les schémas de sécurité (`UserBearerAuth`, `OAuth2ClientCredentials`) et les scopes requis par endpoint.
+
+Migration obligatoire (anti dette technique) :
+
+* `SessionCookieAuth` est retiré du contrat et est interdit pour toute nouvelle implémentation.
+* Core DOIT supprimer le code runtime lié au cookie session auth (`SessionCookieAuth`).
+* UI et Agent DOIVENT migrer vers Bearer-only et supprimer toute dépendance cookie.
 
 ### Endpoints auth applicatifs (normatif)
 
@@ -258,7 +263,7 @@ La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.m
 * security: `UserBearerAuth`
 * prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
 * effet: invalide les bearer tokens actifs du client ciblé (pas d'arrêt de process)
-* contrainte: un `client_kind` UI (`UI_WEB`, `UI_ELECTRON`, `UI_TAURI`) est protégé et NE DOIT PAS être révocable via cet endpoint
+* contrainte: un `client_kind=UI` est protégé et NE DOIT PAS être révocable via cet endpoint
 * réponses:
   * `200` token(s) invalide(s)
   * `401 UNAUTHORIZED`
@@ -269,7 +274,7 @@ La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.m
 
 * security: aucune (`security: []`)
 * body requis: `{ client_id, client_kind, secret_key }`
-* `client_kind` autorisés: `AGENT_CLI | AGENT_GUI | MCP` (UI exclu)
+* `client_kind` autorisé: `AGENT` (UI exclu)
 * effet: émet un bearer token client
 * règle stricte: **1 token actif par client_id** (mint d’un nouveau token => révocation de l’ancien token pour ce client)
 * réponses:
@@ -296,7 +301,7 @@ Règle d'erreur (obligatoire) :
 
 Règle d’unification clients (obligatoire) :
 
-* le flux login utilisateur (`POST /auth/login`) et `UserBearerAuth` DOIVENT être communs pour `UI_WEB`, `UI_ELECTRON`, `UI_TAURI`, `AGENT_CLI` et `AGENT_GUI` en mode interactif
+* le flux login utilisateur (`POST /auth/login`) et `UserBearerAuth` DOIVENT être communs pour les clients `UI` et `AGENT` en mode interactif
 
 
 ## 2) Assets
@@ -412,7 +417,7 @@ Normes d’exécution agent (obligatoires) :
 * un agent PEUT fournir une `GUI` pour usage desktop
 * si une `GUI` existe, elle DOIT déléguer au même moteur que la `CLI` (mêmes capabilities, mêmes contraintes protocole)
 * l’auth non-interactive agent DOIT fonctionner sans login humain (service/daemon)
-* support plateforme cible : Linux (headless Kodi/Plex), macOS laptop, Windows desktop
+* support plateforme cible : Linux headless (Raspberry Pi Kodi/Plex), macOS laptop, Windows desktop
 
 
 ## 5) Jobs
@@ -616,7 +621,7 @@ Retourne statut + rapport.
 
 ## 7.1) Bulk decisions (v1.1)
 
-Objectif : permettre à un client (ex: MCP) de **préparer** une action de décision en masse, sans laisser l’automatisation décider silencieusement.
+Objectif : permettre à un client d’automatisation de **préparer** une action de décision en masse, sans laisser l’automatisation décider silencieusement.
 
 Principe :
 
@@ -795,7 +800,7 @@ Objectif :
 
 * détecter tout changement de `api/openapi/v1.yaml` même sans version bump (`info.version` inchangé)
 
-Règles normatives (tous les repos consommateurs : UI, core, agents, MCP, tooling CI) :
+Règles normatives (tous les repos consommateurs : UI, core, agents, tooling CI) :
 
 * chaque repo consommateur DOIT versionner un snapshot de contrat dans `contracts/`
 * fichier minimum requis : `contracts/openapi-v1.sha256`

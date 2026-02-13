@@ -46,13 +46,13 @@ Le serveur peut refuser l’enregistrement si la déclaration est invalide.
 
 Support plateforme minimal attendu :
 
-* Linux headless (cible NAS/médiaserveur type Kodi/Plex) via `CLI` uniquement
+* Linux headless (Raspberry Pi cible Kodi/Plex) via `CLI` uniquement
 * macOS (laptop) via `CLI` et/ou `GUI`
 * Windows (desktop) via `CLI` et/ou `GUI`
 
 Contrainte d’implémentation :
 
-* la stack agent DOIT rester cross-platform; Rust est la baseline recommandée pour la portabilité binaire et service mode.
+* la stack agent DOIT être implémentée en Rust pour la portabilité binaire cross-platform et le service mode.
 
 ### 3.3 Modes d’auth agent (normatif)
 
