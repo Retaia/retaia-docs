@@ -112,6 +112,7 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 
 * modes non interactifs : bearer technique (`OAuth2ClientCredentials`)
 * modes interactifs (agent CLI/GUI opéré par un humain) : bearer utilisateur via `POST /auth/login`
+* mode client applicatif : `client_id + secret_key` pour obtenir un bearer token via `POST /auth/clients/token`
 
 #### Scopes (base)
 
@@ -209,6 +210,29 @@ La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.m
 * effet: invalide les bearer tokens actifs du client ciblé (pas d'arrêt de process)
 * réponses:
   * `200` token(s) invalide(s)
+  * `401 UNAUTHORIZED`
+  * `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE` (selon matrice)
+  * `422 VALIDATION_FAILED`
+
+`POST /auth/clients/token`
+
+* security: aucune (`security: []`)
+* body requis: `{ client_id, secret_key }`
+* effet: émet un bearer token client
+* règle stricte: **1 token actif par client** (mint d’un nouveau token => révocation de l’ancien token)
+* réponses:
+  * `200` token client (`access_token`, `token_type=Bearer`, `expires_in?`)
+  * `401 UNAUTHORIZED` (credentials client invalides)
+  * `422 VALIDATION_FAILED`
+  * `429 TOO_MANY_ATTEMPTS`
+
+`POST /auth/clients/{client_id}/rotate-secret`
+
+* security: `UserBearerAuth`
+* prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
+* effet: régénère la `secret_key` et invalide les tokens actifs du client ciblé
+* réponses:
+  * `200` nouvelle `secret_key` (retournée une seule fois à la rotation)
   * `401 UNAUTHORIZED`
   * `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE` (selon matrice)
   * `422 VALIDATION_FAILED`

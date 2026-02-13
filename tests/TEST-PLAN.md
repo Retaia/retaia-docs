@@ -52,6 +52,18 @@ Tests obligatoires :
   * bearer absent/invalide => `401 UNAUTHORIZED`
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
   * `client_id` invalide => `422 VALIDATION_FAILED`
+* `POST /auth/clients/token`:
+  * `client_id + secret_key` valides => `200` + bearer token client
+  * credentials client invalides => `401 UNAUTHORIZED`
+  * body invalide => `422 VALIDATION_FAILED`
+  * rate limit => `429 TOO_MANY_ATTEMPTS`
+  * invariant: nouveau token minté pour un client révoque l’ancien token (1 token actif / client)
+* `POST /auth/clients/{client_id}/rotate-secret`:
+  * bearer admin valide + `client_id` valide => `200` + nouvelle `secret_key` (retournée une fois)
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+  * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
+  * `client_id` invalide => `422 VALIDATION_FAILED`
+  * rotation invalide immédiatement les tokens actifs du client
 * toutes réponses d’erreur 4xx/5xx auth conformes au schéma `ErrorResponse`
 * endpoints humains mutateurs exigent un bearer token (`UserBearerAuth`) conforme à la spec
 * même flux login/token validé sur clients interactifs: UI web, agent CLI, agent GUI

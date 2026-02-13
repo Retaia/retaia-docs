@@ -285,6 +285,83 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /auth/clients/token:
+    post:
+      tags: [Auth]
+      summary: Mint client bearer token from secret key
+      description: |
+        Exchanges `(client_id, secret_key)` for a bearer token.
+        Normative rule: one active token per client; minting a new token revokes the previous one.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthClientTokenRequest"
+      responses:
+        "200":
+          description: Client token minted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthClientTokenSuccess"
+        "401":
+          description: Invalid client credentials (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many attempts (`TOO_MANY_ATTEMPTS`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/clients/{client_id}/rotate-secret:
+    post:
+      tags: [Auth]
+      summary: Rotate client secret key
+      description: |
+        Admin-only operation.
+        Rotates secret key for one client and invalidates active bearer token(s).
+      security:
+        - UserBearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ClientIdPath"
+      responses:
+        "200":
+          description: Client secret rotated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthRotateClientSecretResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden actor or scope (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /assets:
     get:
       tags: [Assets]
@@ -1089,6 +1166,46 @@ components:
         revoked:
           type: boolean
         revoked_at:
+          type: string
+          format: date-time
+
+    AuthClientTokenRequest:
+      type: object
+      additionalProperties: false
+      required: [client_id, secret_key]
+      properties:
+        client_id:
+          type: string
+        secret_key:
+          type: string
+
+    AuthClientTokenSuccess:
+      type: object
+      additionalProperties: false
+      required: [client_id, access_token, token_type]
+      properties:
+        client_id:
+          type: string
+        access_token:
+          type: string
+        token_type:
+          type: string
+          enum: [Bearer]
+        expires_in:
+          type: integer
+          description: Access token lifetime in seconds.
+
+    AuthRotateClientSecretResponse:
+      type: object
+      additionalProperties: false
+      required: [client_id, secret_key]
+      properties:
+        client_id:
+          type: string
+        secret_key:
+          type: string
+          description: Returned once at rotation time.
+        rotated_at:
           type: string
           format: date-time
 
