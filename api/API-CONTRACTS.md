@@ -164,7 +164,7 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 * `MCP` PEUT piloter/orchestrer l'agent (configuration, déclenchement, supervision) mais NE DOIT JAMAIS exécuter de traitement média
 * `MCP` est interdit sur les endpoints de processing `/jobs/*` (`claim`, `heartbeat`, `submit`) avec refus `403 FORBIDDEN_ACTOR`
 * pour les workflows AI `suggest_tags` côté `AGENT`: `ollama` en phase 1; `chatgpt` et `claude` en phase 2 derrière feature flags
-* pour `UI_RUST`, `AGENT` et `MCP`, la liste des modèles LLM DOIT être lue dynamiquement (runtime policy/catalog) et ne DOIT PAS être hardcodée
+* pour `UI_RUST`, `AGENT` et `MCP`, la liste des modèles LLM DOIT être lue dynamiquement (runtime policy/catalog via `GET /app/model-catalog`) et ne DOIT PAS être hardcodée
 * le modèle LLM effectif DOIT être choisi explicitement par l'utilisateur (UI/CLI/config utilisateur), puis appliqué par le client
 * stratégie AI/transcription: local-first obligatoire pour `UI_RUST`, `AGENT`, `MCP`
 * transcription locale minimum actuelle: `Whisper.cpp`
@@ -293,6 +293,15 @@ Baseline sécurité/fuite (normatif) :
   * `401 UNAUTHORIZED`
   * `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
   * `422 VALIDATION_FAILED`
+
+`GET /app/model-catalog`
+
+* security: `UserBearerAuth` ou `OAuth2ClientCredentials`
+* effet: retourne le catalogue runtime des providers/modèles LLM autorisés
+* règle: `UI_RUST`, `AGENT` et `MCP` DOIVENT consommer ce catalogue et NE DOIVENT PAS hardcoder la liste des modèles
+* réponses:
+  * `200` succès
+  * `401 UNAUTHORIZED`
 
 `POST /auth/lost-password/request`
 
