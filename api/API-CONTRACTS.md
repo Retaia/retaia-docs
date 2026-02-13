@@ -37,6 +37,11 @@ Objectif : fournir une surface stable consommée par :
 * Les fonctionnalités `v1.1+` suivent la même règle et restent inactives tant que leur flag n'est pas activé.
 * Convention de nommage : `features.<domaine>.<fonction>`.
 * Contrat de transport : l’état effectif des flags DOIT être transporté dans un payload standard `server_policy.feature_flags` pour tous les clients (`UI_RUST`, `AGENT`, `MCP`) via `GET /app/policy`.
+* Versionnement/acceptance obligatoire des flags :
+  * client -> Core : `client_feature_flags_contract_version` (query `GET /app/policy` ou body `POST /agents/register`)
+  * Core -> client : `feature_flags_contract_version`, `accepted_feature_flags_contract_versions`, `effective_feature_flags_contract_version`, `feature_flags_compatibility_mode`
+  * si la version client est acceptée mais non-latest, Core DOIT servir un profil compatible (`feature_flags_compatibility_mode=COMPAT`)
+  * Core DOIT éviter toute casse UI/Agent lors du retrait d’un flag (profil compat + tombstones `false` pour flags retirés, tant qu’une version acceptée les attend)
 * Distinction normative (sans ambiguïté) :
   * `feature_flags` = activation runtime des fonctionnalités côté Core
   * `app_feature_enabled` = activation applicative effective (switches niveau application, gouvernés par admin)
@@ -52,6 +57,8 @@ Objectif : fournir une surface stable consommée par :
   * comportement safe-by-default : sans signal explicite `true` renvoyé par Core, la feature reste indisponible
 * Quand un flag est `false`, l’endpoint reste stable et la feature est refusée de façon explicite (`403 FORBIDDEN_SCOPE` ou `409 STATE_CONFLICT` selon le cas).
 * L’activation d’un flag ne DOIT pas modifier le comportement des fonctionnalités `v1`.
+* Le cycle de vie complet (introduction -> rollout -> assimilation -> retrait) est défini dans [`FEATURE-FLAG-LIFECYCLE.md`](../change-management/FEATURE-FLAG-LIFECYCLE.md).
+* Ce cycle DOIT permettre le continuous development sans casse des clients encore dans la fenêtre d'acceptance.
 
 Mapping normatif v1.1 (base actuelle, obligatoire pour tous les consommateurs) :
 
@@ -67,6 +74,7 @@ Règles client (normatives, UI/agents/MCP) :
 * `UI_RUST`, `AGENT` et `MCP` DOIVENT tous consommer les `feature_flags` runtime pilotés par Core
 * aucun client ne DOIT hardcoder l’état d’un flag ni dépendre d’un flag local statique
 * toute décision de disponibilité fonctionnelle côté client DOIT être dérivée du dernier payload runtime reçu
+* un client DOIT accepter `feature_flags_compatibility_mode=COMPAT` sans échec fonctionnel
 
 Gouvernance des `app_feature_enabled` (opposable) :
 
@@ -281,8 +289,10 @@ Normalisation HTTP (normatif) :
 `GET /app/policy`
 
 * security: `UserBearerAuth` ou `OAuth2ClientCredentials`
+* paramètre optionnel: `client_feature_flags_contract_version`
 * effet: retourne `server_policy` (incluant `feature_flags`) pour clients interactifs et techniques
 * règle: `UI_RUST`, `AGENT` et `MCP` DOIVENT consommer cet endpoint pour la disponibilité runtime des features
+* versionnement: Core retourne la version effective servie et le mode `STRICT|COMPAT`
 * réponses:
   * `200` succès
   * `401 UNAUTHORIZED`
@@ -535,6 +545,7 @@ Body :
 * `platform`
 * `capabilities: string[]` (voir [`CAPABILITIES.md`](../definitions/CAPABILITIES.md))
 * `model_inventory[]` (optionnel, inventaire provider/modèle local publié par l’agent)
+* `client_feature_flags_contract_version` (optionnel)
 * `max_parallel_jobs` (suggestion)
 
 Response :
@@ -548,6 +559,10 @@ Response :
   * `max_parallel_jobs_allowed`
   * `allowed_job_types[]`
   * `feature_flags` (map runtime `flag_name -> boolean`, source de vérité Core)
+  * `feature_flags_contract_version`
+  * `accepted_feature_flags_contract_versions[]`
+  * `effective_feature_flags_contract_version`
+  * `feature_flags_compatibility_mode` (`STRICT|COMPAT`)
   * (optionnel) `quiet_hours`
 
 Normes d’exécution agent (obligatoires) :

@@ -291,6 +291,12 @@ Tests obligatoires :
 * transition `ON -> OFF` sans redéploiement client : la feature est immédiatement retirée/neutralisée côté client
 * un client démarré avant la transition n’utilise pas de cache de flags non borné dans le temps
 * aucune transition runtime de flag ne modifie les comportements historiques `v1` non flaggés
+* négociation version flags via `client_feature_flags_contract_version` sur `GET /app/policy` et `POST /agents/register`
+* Core renvoie `feature_flags_contract_version`, `accepted_feature_flags_contract_versions[]`, `effective_feature_flags_contract_version`, `feature_flags_compatibility_mode`
+* client version acceptée mais non-latest => réponse `COMPAT` non cassante
+* retrait d’un flag latest conserve un tombstone `false` pour profils `COMPAT` encore acceptés
+* continuous development validé: suppression d’un flag n’interrompt pas UI/Agent/MCP déjà déployés dans la fenêtre d’acceptance
+* continuous deployment validé: une release Core avec retrait de flag passe les gates CD sans exiger upgrade client synchronisée
 
 ## 8.5) Contract drift (`contracts/`)
 

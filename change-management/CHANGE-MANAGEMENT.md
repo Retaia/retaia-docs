@@ -188,10 +188,16 @@ Le projet adopte une stratégie **trunk-based** :
 
 - Les fonctionnalités stables sont mergées dès qu’elles sont prêtes.
 - Le système peut être déployé plusieurs fois par jour.
+- Le continuous development est obligatoire: évolution continue sans casser les clients déjà déployés.
+- Le continuous deployment est obligatoire: chaque release doit rester déployable sans forcer une migration client immédiate.
 - Toute nouvelle feature doit être protégée par feature flag dès son introduction, pour permettre un merge rapide sur `master` sans dérive de branche.
 - Les fonctionnalités incomplètes ne doivent jamais casser `master` et restent isolées derrière leurs feature flags (ou endpoints non exposés si nécessaire).
+- Une feature flag de rollout DOIT être assimilée puis retirée selon le cycle normatif.
 
 Chaque merge sur `master` rend le déploiement possible immédiatement.
+
+Politique détaillée:
+[`FEATURE-FLAG-LIFECYCLE.md`](./FEATURE-FLAG-LIFECYCLE.md)
 
 Les déploiements sont identifiés par :
 
