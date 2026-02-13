@@ -108,6 +108,7 @@ Pour `UI_RUST`, `AGENT` et `MCP` :
 * transcription locale minimum supportée: `Whisper.cpp`
 * usage d'un backend distant autorisé uniquement en opt-in explicite utilisateur/policy
 * le mode distant ne DOIT pas devenir le défaut implicite
+* la qualité de résultat prime sur la performance par défaut (latence/coût secondaires)
 
 
 ## 4. Cycle de vie d’un job
