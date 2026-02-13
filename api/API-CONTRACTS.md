@@ -102,6 +102,13 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 
 ## 1) Auth
 
+### Typologie des acteurs (normatif)
+
+* `USER_INTERACTIVE` : utilisateur humain connecté via UI (`UI_WEB`, `UI_ELECTRON`, `UI_TAURI`) ou agent en mode interactif (`AGENT_CLI`, `AGENT_GUI`)
+* `CLIENT_TECHNICAL` : client non-humain authentifié par `client_id + secret_key`
+* `AGENT_TECHNICAL` : agent non-interactif (daemon/service) authentifié par `client_id + secret_key` ou client-credentials OAuth2
+* `AGENT_CLI` / `AGENT_GUI` décrivent un form factor; le mode (`USER_INTERACTIVE` vs `AGENT_TECHNICAL`) est déterminé par le flux d’auth utilisé.
+
 ### UI (humain)
 
 * Bearer token utilisateur obtenu via login (`POST /auth/login`)
@@ -115,13 +122,13 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 
 * modes non interactifs : bearer technique (`OAuth2ClientCredentials`)
 * modes interactifs (agent CLI/GUI opéré par un humain) : bearer utilisateur via `POST /auth/login`
-* mode client applicatif : `client_id + secret_key` pour obtenir un bearer token via `POST /auth/clients/token`
+* mode client applicatif non-interactif : `client_id + secret_key` pour obtenir un bearer token via `POST /auth/clients/token`
 
 Règle de cardinalité des tokens (obligatoire) :
 
-* un même utilisateur PEUT avoir plusieurs tokens actifs simultanément sur des clients différents
-* contrainte stricte : **1 token actif par client** (clé logique : `(user_id, client_id)`)
-* émission d'un nouveau token pour le même `(user_id, client_id)` => révocation immédiate du token précédent
+* `USER_INTERACTIVE` : un même utilisateur PEUT avoir plusieurs tokens actifs simultanément sur des clients différents, avec contrainte stricte **1 token actif par `(user_id, client_id)`**
+* `CLIENT_TECHNICAL` / `AGENT_TECHNICAL` : contrainte stricte **1 token actif par `client_id`**
+* émission d'un nouveau token pour la même clé de cardinalité => révocation immédiate du token précédent
 
 #### Scopes (base)
 
@@ -144,9 +151,9 @@ La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.m
 
 * security: aucune (`security: []`)
 * body requis: `{ email, password }`
-* body optionnel: `otp_code` (obligatoire si 2FA active)
+* body optionnel: `client_id`, `client_kind`, `otp_code` (`otp_code` obligatoire si 2FA active)
 * réponses:
-  * `200` succès + bearer token (`access_token`, `token_type=Bearer`, `expires_in?`, `refresh_token?`)
+  * `200` succès + bearer token (`access_token`, `token_type=Bearer`, `expires_in?`, `refresh_token?`, `client_id`, `client_kind`)
   * `401 UNAUTHORIZED` (credentials invalides), `MFA_REQUIRED` (2FA active sans OTP), `INVALID_2FA_CODE` (OTP invalide)
   * `403 EMAIL_NOT_VERIFIED`
   * `422 VALIDATION_FAILED`
@@ -251,7 +258,7 @@ La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.m
 * security: `UserBearerAuth`
 * prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
 * effet: invalide les bearer tokens actifs du client ciblé (pas d'arrêt de process)
-* contrainte: un client `UI` est protégé et NE DOIT PAS être révocable via cet endpoint
+* contrainte: un `client_kind` UI (`UI_WEB`, `UI_ELECTRON`, `UI_TAURI`, alias legacy `UI|ELECTRON|TAURI`) est protégé et NE DOIT PAS être révocable via cet endpoint
 * réponses:
   * `200` token(s) invalide(s)
   * `401 UNAUTHORIZED`
@@ -262,12 +269,13 @@ La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.m
 
 * security: aucune (`security: []`)
 * body requis: `{ client_id, client_kind, secret_key }`
-* `client_kind` autorisés: `AGENT_CLI | AGENT_GUI | ELECTRON | TAURI | MCP` (UI exclu)
+* `client_kind` autorisés: `AGENT_CLI | AGENT_GUI | MCP` (UI exclu, alias legacy `ELECTRON|TAURI` tolérés pour compatibilité)
 * effet: émet un bearer token client
-* règle stricte: **1 token actif par client** (mint d’un nouveau token => révocation de l’ancien token pour ce client)
+* règle stricte: **1 token actif par client_id** (mint d’un nouveau token => révocation de l’ancien token pour ce client)
 * réponses:
   * `200` token client (`access_token`, `token_type=Bearer`, `expires_in?`, `client_id`, `client_kind`)
   * `401 UNAUTHORIZED` (credentials client invalides)
+  * `403 FORBIDDEN_ACTOR` (`client_kind` interactif refusé)
   * `422 VALIDATION_FAILED`
   * `429 TOO_MANY_ATTEMPTS`
 
@@ -288,7 +296,7 @@ Règle d'erreur (obligatoire) :
 
 Règle d’unification clients (obligatoire) :
 
-* le flux login utilisateur (`POST /auth/login`) et `UserBearerAuth` DOIVENT être communs pour UI web, agent CLI/GUI et futures apps desktop Electron/Tauri
+* le flux login utilisateur (`POST /auth/login`) et `UserBearerAuth` DOIVENT être communs pour `UI_WEB`, `UI_ELECTRON`, `UI_TAURI`, `AGENT_CLI` et `AGENT_GUI` en mode interactif
 
 
 ## 2) Assets
@@ -397,6 +405,14 @@ Response :
   * `allowed_job_types[]`
   * `feature_flags` (map runtime `flag_name -> boolean`, source de vérité Core)
   * (optionnel) `quiet_hours`
+
+Normes d’exécution agent (obligatoires) :
+
+* un agent DOIT fournir un binaire `CLI` (mode headless Linux obligatoire)
+* un agent PEUT fournir une `GUI` pour usage desktop
+* si une `GUI` existe, elle DOIT déléguer au même moteur que la `CLI` (mêmes capabilities, mêmes contraintes protocole)
+* l’auth non-interactive agent DOIT fonctionner sans login humain (service/daemon)
+* support plateforme cible : Linux (headless Kodi/Plex), macOS laptop, Windows desktop
 
 
 ## 5) Jobs

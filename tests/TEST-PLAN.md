@@ -72,14 +72,14 @@ Tests obligatoires :
   * bearer absent/invalide => `401 UNAUTHORIZED`
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
   * `client_id` invalide => `422 VALIDATION_FAILED`
-  * `client_id` de type `UI` protégé => `403` (non révocable via cet endpoint)
+  * `client_id` de type `UI_WEB|UI_ELECTRON|UI_TAURI` (et alias legacy `UI|ELECTRON|TAURI`) protégé => `403` (non révocable via cet endpoint)
 * `POST /auth/clients/token`:
-  * `client_id + client_kind(non-UI) + secret_key` valides => `200` + bearer token client
+  * `client_id + client_kind(non-UI: AGENT_CLI|AGENT_GUI|MCP) + secret_key` valides => `200` + bearer token client
   * credentials client invalides => `401 UNAUTHORIZED`
   * body invalide => `422 VALIDATION_FAILED`
   * rate limit => `429 TOO_MANY_ATTEMPTS`
   * invariant: nouveau token minté pour un client révoque l’ancien token (1 token actif / client)
-  * `client_kind=UI` refusé (422/403 selon policy)
+  * `client_kind=UI_WEB|UI_ELECTRON|UI_TAURI` (et alias legacy `UI|ELECTRON|TAURI`) refusé (422/403 selon policy)
 * `POST /auth/clients/{client_id}/rotate-secret`:
   * bearer admin valide + `client_id` valide => `200` + nouvelle `secret_key` (retournée une fois)
   * bearer absent/invalide => `401 UNAUTHORIZED`
@@ -91,6 +91,17 @@ Tests obligatoires :
 * même flux login/token validé sur clients interactifs: UI web, agent CLI, agent GUI
 * compatibilité desktop validée: client UI empaqueté Electron ou Rust Tauri utilise le même `POST /auth/login` + `Authorization: Bearer`
 * anti lock-out: l'UI n'expose jamais le token en clair et n'offre pas d'action d'auto-révocation du token UI actif
+
+## 1.2) Agent runtime (CLI/GUI, cross-platform)
+
+Tests obligatoires :
+
+* `CLI` agent fonctionne en Linux headless (sans dépendance GUI)
+* `GUI` agent (quand présent) utilise le même moteur de processing que `CLI` (mêmes capabilities et mêmes résultats)
+* `AGENT_CLI`/`AGENT_GUI` validés dans les deux modes d’auth: interactif (`/auth/login`) et technique (`/auth/clients/token` ou OAuth2)
+* mode service non-interactif redémarre sans login humain sur Linux/macOS/Windows
+* stockage secret conforme OS (Keychain macOS, Credential Manager/DPAPI Windows, secret store Linux)
+* rotation de secret client n’exige pas de réinstallation agent
 
 ## 2) Jobs & leases
 

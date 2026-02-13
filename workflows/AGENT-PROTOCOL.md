@@ -38,6 +38,34 @@ Champs minimum :
 
 Le serveur peut refuser l’enregistrement si la déclaration est invalide.
 
+### 3.2 Profils d’exécution (normatif)
+
+* l’agent DOIT fournir un mode `CLI` (obligatoire)
+* l’agent PEUT fournir un mode `GUI` (optionnel)
+* le mode `GUI` DOIT déléguer le processing au même moteur que `CLI` (mêmes capacités, mêmes règles)
+
+Support plateforme minimal attendu :
+
+* Linux headless (cible NAS/médiaserveur type Kodi/Plex) via `CLI` uniquement
+* macOS (laptop) via `CLI` et/ou `GUI`
+* Windows (desktop) via `CLI` et/ou `GUI`
+
+Contrainte d’implémentation :
+
+* la stack agent DOIT rester cross-platform; Rust est la baseline recommandée pour la portabilité binaire et service mode.
+
+### 3.3 Modes d’auth agent (normatif)
+
+* mode non-interactif (service/daemon): `client_id + secret_key -> POST /auth/clients/token` ou OAuth2 client-credentials
+* mode interactif opéré par un humain (CLI/GUI): login utilisateur via `POST /auth/login` (+ 2FA si active)
+* un agent non-interactif NE DOIT PAS dépendre d’un login UI pour redémarrer
+
+Secrets :
+
+* `secret_key` ne DOIT jamais être loggée
+* stockage secret DOIT utiliser le magasin sécurisé OS (Linux Secret Service/file perms stricts, macOS Keychain, Windows Credential Manager/DPAPI)
+* rotation `POST /auth/clients/{client_id}/rotate-secret` DOIT être supportée sans réinstallation complète
+
 
 ## 4. Cycle de vie d’un job
 
@@ -133,6 +161,7 @@ L’agent ne décide jamais de la stratégie globale de retry.
 
 * Les agents n’ont accès qu’aux endpoints nécessaires.
 * Les actions destructives (purge, move) ne sont jamais exposées aux agents.
+* le mode `GUI` ne DOIT PAS exposer ni exporter les tokens en clair.
 
 
 ## 9. Observabilité
