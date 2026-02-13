@@ -39,13 +39,11 @@ Objectif : fournir une surface stable consommée par :
 * Convention de nommage : `features.<domaine>.<fonction>` (ex: `features.ai.suggest_tags`).
 * Contrat de transport : l’état effectif des flags DOIT être transporté dans un payload standard `server_policy.feature_flags` pour tous les clients (`UI_RUST`, `AGENT`, `MCP`), avec endpoint d’accès runtime dédié ou payload équivalent.
 * Distinction normative (sans ambiguïté) :
-  * `feature_flags` = activation runtime globale des fonctionnalités côté Core
-  * `app_feature_enabled` = préférences utilisateur d’activation applicative, pilotées depuis l'UI
+  * `feature_flags` = activation runtime des fonctionnalités côté Core
   * `capabilities` = aptitudes techniques déclarées par les agents pour exécuter des jobs
   * `contracts/` = snapshots versionnés pour détecter un drift du contrat OpenAPI
 * Règle de combinaison (obligatoire) :
   * exécution autorisée uniquement si `capability requise présente` **ET** `feature_flag(s) requis actif(s)`
-  * pour les features IA interactives: disponibilité effective = `feature_flag Core` **ET** `app_feature_enabled utilisateur`
   * capability présente + flag OFF => refus normatif (`403 FORBIDDEN_SCOPE`/équivalent policy)
   * flag ON + capability absente => non exécutable (`pending`, `403` ou `409` selon endpoint/policy)
 * Sémantique stricte :
@@ -71,11 +69,6 @@ Mapping normatif v1.1 (base actuelle, obligatoire pour tous les consommateurs) :
 * `features.ai.provider.claude` :
   * autorise le provider `claude` pour `suggest_tags`
   * rollout initial: OFF (activation progressive)
-* `app.features.ai.enabled` :
-  * switch utilisateur global pour activer/désactiver les features IA côté application
-* `app.features.ai.suggest_tags.enabled` :
-  * switch utilisateur dédié à la suggestion de tags
-  * OFF => Core NE DOIT PAS planifier de jobs `suggest_tags` pour ce scope utilisateur
 * `features.ai.suggested_tags_filters` :
   * autorise les query params `suggested_tags`, `suggested_tags_mode` sur `GET /assets`
   * client: OFF => ne pas exposer ces filtres ni les envoyer ; ON => disponible sans redéploiement
@@ -264,26 +257,6 @@ Baseline sécurité/fuite (normatif) :
 * réponses:
   * `200` utilisateur courant
   * `401 UNAUTHORIZED`
-
-`GET /app/features`
-
-* security: `UserBearerAuth`
-* effet: retourne les switches applicatifs pilotés par l'utilisateur courant (`app_feature_enabled`)
-* réponses:
-  * `200` switches applicatifs utilisateur
-  * `401 UNAUTHORIZED`
-
-`PATCH /app/features`
-
-* security: `UserBearerAuth` + policy admin
-* body requis: `{ app_feature_enabled: { ... } }`
-* effet: met à jour les switches applicatifs (admin-only)
-* règle: si IA désactivée via `app_feature_enabled`, Core DOIT arrêter la planification des jobs IA correspondants (ex: `suggest_tags`) pour ce scope
-* réponses:
-  * `200` switches applicatifs mis à jour
-  * `401 UNAUTHORIZED`
-  * `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
-  * `422 VALIDATION_FAILED`
 
 `POST /auth/lost-password/request`
 

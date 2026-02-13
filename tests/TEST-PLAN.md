@@ -46,15 +46,6 @@ Tests obligatoires :
 * `GET /auth/me`:
   * bearer valide => `200` + payload utilisateur courant
   * bearer absent/invalide => `401 UNAUTHORIZED`
-* `GET /app/features`:
-  * bearer valide => `200` + `app_feature_enabled`
-  * bearer absent/invalide => `401 UNAUTHORIZED`
-* `PATCH /app/features`:
-  * bearer admin valide + body valide => `200` + flags mis à jour
-  * bearer absent/invalide => `401 UNAUTHORIZED`
-  * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
-  * body invalide => `422 VALIDATION_FAILED`
-  * `app.features.ai.suggest_tags.enabled=OFF` => Core ne planifie plus de jobs `suggest_tags` pour ce scope utilisateur
 * `POST /auth/lost-password/request`:
   * body valide (`email`) => `202`
   * body invalide => `422 VALIDATION_FAILED`
@@ -244,9 +235,7 @@ Tests obligatoires :
 * source de vérité des flags = payload runtime de Core (`server_policy.feature_flags`), jamais un hardcode client
 * canal runtime flags défini et testé pour `UI_RUST`, `AGENT`, `MCP` (pas seulement `POST /agents/register`)
 * distinction opposable: `capabilities` (agent/client) et `feature_flags` (Core) sont testées séparément
-* distinction opposable: `app_feature_enabled` (préférences utilisateur) testées séparément des `feature_flags` Core
 * règle AND validée: capability + flag requis pour exécuter une action feature
-* règle AND IA validée: `feature_flag Core` + `app_feature_enabled` requis pour exécuter/planifier une feature IA
 * flag absent dans le payload runtime => traité comme `false`
 * flags inconnus côté client => ignorés sans erreur
 * flag désactivé => la feature est refusée explicitement avec un code normatif
@@ -263,8 +252,6 @@ Cas OFF/ON minimum :
 
 * `features.ai.suggest_tags=OFF` : refus `job_type=suggest_tags`, `suggestions_patch` et actions UI associées
 * `features.ai.suggest_tags=ON` : `suggest_tags` opérationnel sans impact sur les flux `v1`
-* `app.features.ai.enabled=OFF` : features IA désactivées pour l'utilisateur (UI + planification jobs IA)
-* `app.features.ai.suggest_tags.enabled=OFF` : jobs `suggest_tags` non planifiés pour ce scope utilisateur
 * `features.ai.provider.ollama=ON` (phase 1) : provider `ollama` autorisé
 * `features.ai.provider.chatgpt=OFF` : provider `chatgpt` refusé (`FORBIDDEN_SCOPE`)
 * `features.ai.provider.claude=OFF` : provider `claude` refusé (`FORBIDDEN_SCOPE`)

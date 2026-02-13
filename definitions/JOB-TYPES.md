@@ -174,6 +174,7 @@ Produire une transcription (et éventuellement des timecodes) à partir de l’a
 **Required capabilities**
 
 * `speech.transcription@1`
+* `speech.transcription.local.whispercpp@1` (minimum local-first)
 
 **Inputs**
 
@@ -181,6 +182,8 @@ Produire une transcription (et éventuellement des timecodes) à partir de l’a
 * source_path (read-only)
 * language (optionnel)
 * transcription_profile (optionnel)
+* transcription_engine (optionnel; ex: `whispercpp`)
+* remote_transcription_allowed (optionnel, défaut: `false`)
 
 **Expected outputs**
 
@@ -199,6 +202,7 @@ Produire une transcription (et éventuellement des timecodes) à partir de l’a
 * pas de piste audio → fatal
 * timeout / OOM → retryable (selon policy serveur)
 * moteur indisponible → retryable
+* backend distant demandé sans opt-in explicite → failed non bloquant (policy violation)
 
 
 ### 3.6 `suggest_tags`
@@ -212,8 +216,8 @@ Produire des suggestions de tags à partir des facts/transcript/metadata.
 
 * `meta.tags.suggestions@1`
 * `llm.client.ollama@1`
-* `llm.client.chatgpt@1`
-* `llm.client.anthropic@1`
+* `llm.client.chatgpt@1` (optionnel, sous flag)
+* `llm.client.claude@1` (optionnel, sous flag)
 
 **Inputs**
 
@@ -221,7 +225,8 @@ Produire des suggestions de tags à partir des facts/transcript/metadata.
 * facts_ref
 * transcript_ref (optionnel)
 * suggestion_profile (optionnel)
-* llm_provider (optionnel, runtime policy; valeurs: `ollama|chatgpt|anthropic`)
+* llm_provider (optionnel, runtime policy; valeurs: `ollama|chatgpt|claude`)
+* llm_model (recommandé; valeur issue du catalogue runtime choisi par l'utilisateur)
 
 **Expected outputs**
 
@@ -238,6 +243,8 @@ Produire des suggestions de tags à partir des facts/transcript/metadata.
 * modèle indisponible → retryable
 * entrée insuffisante → failed non bloquant
 * provider indisponible → fallback provider ou retryable selon policy serveur
+* modèle absent du catalogue runtime autorisé → `failed` non bloquant (validation configuration)
+* provider désactivé par feature flag runtime -> `failed` non bloquant (`FORBIDDEN_SCOPE`)
 
 
 ## 4. Règles d’évolution

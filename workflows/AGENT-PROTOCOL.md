@@ -14,6 +14,11 @@ Le protocole agent vise à :
 * rendre les retries sûrs et prévisibles
 * empêcher toute action destructive implicite
 
+Portée d'exécution :
+
+* seul un client `AGENT` exécute les jobs de processing
+* un client `MCP` peut piloter/orchestrer mais ne traite jamais les médias
+
 
 ## 2. Principes fondamentaux
 
@@ -65,6 +70,8 @@ Feature flags runtime :
 * l’agent DOIT consommer les `feature_flags` renvoyés par Core (au minimum via `POST /agents/register`)
 * l’agent NE DOIT PAS hardcoder l’état des flags
 * un changement runtime de flag DOIT être appliqué sans rebuild agent
+* `feature_flags` ne remplacent pas les `capabilities` déclarées de l'agent
+* une action agent n'est valide que si capability requise + flag(s) actif(s)
 
 Secrets :
 
@@ -77,14 +84,27 @@ Secrets :
 Pour les workloads AI `suggest_tags` (`meta.tags.suggestions@1`), l'agent DOIT supporter au minimum :
 
 * `ollama`
-* `chatgpt`
-* `anthropic`
+* `chatgpt` (phase 2, sous flag)
+* `claude` (phase 2, sous flag)
 
 Règles :
 
 * sélection provider explicite via config/runtime policy (pas de hardcode implicite)
 * indisponibilité d'un provider => fallback vers un provider disponible ou retryable (pas de crash global agent)
 * comportement déterministe du routing provider pour une même policy d'exécution
+* liste des modèles DOIT être lue depuis la policy/catalog runtime (pas de liste statique embarquée)
+* modèle effectif DOIT provenir d'un choix utilisateur explicite (CLI/GUI/config utilisateur)
+* en mode non-interactif, le modèle choisi par l'utilisateur DOIT rester traçable et réutilisable jusqu'à changement explicite
+* phase rollout: `ollama` activé en premier; `chatgpt` et `claude` activés uniquement derrière feature flags runtime
+
+### 3.5 Local-first AI/transcription (normatif)
+
+Pour `UI_RUST`, `AGENT` et `MCP` :
+
+* exécution local-first obligatoire pour les workloads AI/transcription quand un modèle local compatible est disponible
+* transcription locale minimum supportée: `Whisper.cpp`
+* usage d'un backend distant autorisé uniquement en opt-in explicite utilisateur/policy
+* le mode distant ne DOIT pas devenir le défaut implicite
 
 
 ## 4. Cycle de vie d’un job
@@ -206,6 +226,7 @@ Interdit :
 * retry infini côté agent
 * job complété sans outputs documentés
 * agent qui modifie des fichiers source
+* client `MCP` qui claim/heartbeat/submit un job de processing
 
 
 ## 11. Objectif

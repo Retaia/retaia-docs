@@ -4,6 +4,14 @@ Ce document définit le **système de capabilities** utilisé pour décrire, pla
 
 Ces règles sont **normatives**.
 
+## 0. Distinction normative (capabilities vs feature flags)
+
+* `capabilities` = capacités techniques déclarées par un client/agent (ce qu'il sait faire)
+* `feature_flags` = activation fonctionnelle globale pilotée par Core (ce qui est autorisé maintenant)
+* une capability n'active jamais une feature globale à elle seule
+* une feature flag n'accorde jamais une capacité technique absente
+* disponibilité effective d'une action = `capability requise` AND `feature_flag actif`
+
 
 ## 1. Définition
 
@@ -39,10 +47,11 @@ Exemples valides :
 * `media.thumbnails@1`
 * `audio.waveform@1`
 * `speech.transcription@1`
+* `speech.transcription.local.whispercpp@1`
 * `meta.tags.suggestions@1` (**v1.1+**, AI-powered)
 * `llm.client.ollama@1` (**v1.1+**, AI-powered)
 * `llm.client.chatgpt@1` (**v1.1+**, AI-powered)
-* `llm.client.anthropic@1` (**v1.1+**, AI-powered)
+* `llm.client.claude@1` (**v1.1+**, AI-powered)
 
 La version suit une logique **major only** :
 
@@ -121,9 +130,18 @@ Toute implémentation qui court‑circuite ces objectifs est invalide.
 
 Pour tout agent qui déclare `meta.tags.suggestions@1` :
 
-* le support des clients `llm.client.ollama@1`, `llm.client.chatgpt@1` et `llm.client.anthropic@1` est obligatoire
+* le support `llm.client.ollama@1` est obligatoire (phase 1)
+* `llm.client.chatgpt@1` et `llm.client.claude@1` sont activables en phase 2 via feature flags runtime
 * la sélection du client LLM DOIT rester explicite (configuration/feature flag/runtime policy)
 * un client LLM indisponible ne DOIT PAS casser le runtime agent global (fallback ou retry policy)
+
+## 10. Transcription local-first (normatif)
+
+Pour tout agent qui déclare `speech.transcription@1` :
+
+* le mode local-first est obligatoire
+* le support `speech.transcription.local.whispercpp@1` est obligatoire (minimum actuel)
+* un backend distant de transcription PEUT exister, mais uniquement en opt-in explicite utilisateur/policy
 
 ## Références associées
 
