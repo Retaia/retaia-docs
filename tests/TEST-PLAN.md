@@ -262,6 +262,20 @@ Tests obligatoires :
 * toute mise à jour de snapshot est visible dans la PR (pas de mutation implicite en post-merge)
 * non-régression v1 : un refresh de snapshot ne modifie pas la sémantique des comportements `v1` existants
 
+## 8.6) Security baseline (assume breach)
+
+Tests obligatoires :
+
+* aucun token (`access_token`, refresh token, token technique) n'apparaît en clair dans logs, traces, UI ou crash reports
+* aucune `secret_key` client (`AGENT`/`MCP`) n'est persistée en clair côté Core
+* `secret_key` n'est renvoyée qu'une fois lors de l'émission/rotation
+* rotation `secret_key` invalide immédiatement les tokens actifs du `client_id`
+* claims token minimales présentes (`sub`, `principal_type`, `client_id`, `client_kind`, `scope`, `jti`, `exp`) et absence de PII sensible
+* chiffrement au repos activé pour données sensibles et backups
+* flux auth sensibles soumis au rate-limit (login, lost-password, verify-email, token mint, device flow)
+* actions sécurité critiques auditées (login/logout, revoke-token, rotate-secret, 2FA enable/disable, device approval)
+* régression interdite: aucune réintroduction de `SessionCookieAuth`
+
 ## 9) Couverture minimale
 
 Minimum :
@@ -286,6 +300,7 @@ Tests obligatoires :
 * [API-CONTRACTS.md](../api/API-CONTRACTS.md)
 * [ERROR-MODEL.md](../api/ERROR-MODEL.md)
 * [AUTHZ-MATRIX.md](../policies/AUTHZ-MATRIX.md)
+* [SECURITY-BASELINE.md](../policies/SECURITY-BASELINE.md)
 * [LOCK-LIFECYCLE.md](../policies/LOCK-LIFECYCLE.md)
 * [CODE-QUALITY.md](../change-management/CODE-QUALITY.md)
 * [I18N-LOCALIZATION.md](../policies/I18N-LOCALIZATION.md)
