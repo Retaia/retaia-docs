@@ -182,6 +182,11 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 * `UI_RUST`, `AGENT` et `MCP` NE DOIVENT PAS hardcoder providers/modèles
 * le modèle LLM effectif DOIT être choisi explicitement par l'utilisateur (UI/CLI/config utilisateur), puis appliqué par le client
 * l’admin DOIT définir un provider/modèle global par défaut via `PATCH /app/ai-defaults`
+* valeurs par défaut normatives initiales:
+  * `default_llm_provider=ollama`
+  * `default_llm_model=mistral:latest`
+  * `default_stt_provider=whispercpp`
+  * `default_stt_model=ggml-large-v3-turbo.bin`
 * stratégie AI/transcription: local-first obligatoire pour `UI_RUST`, `AGENT`, `MCP`
 * transcription locale minimum actuelle: `Whisper.cpp`
 * backend distant autorisé uniquement en opt-in explicite utilisateur/policy (jamais par défaut implicite)

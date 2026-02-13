@@ -57,6 +57,11 @@ Tests obligatoires :
   * `app.features.ai.enabled=OFF` ou `app.features.ai.suggest_tags.enabled=OFF` => arrêt planification jobs IA correspondants côté Core
 * `GET /app/ai-defaults`:
   * bearer utilisateur valide => `200` + provider/model globaux par défaut + modèles autorisés
+  * defaults initiaux attendus:
+    * `default_llm_provider=ollama`
+    * `default_llm_model=mistral:latest`
+    * `default_stt_provider=whispercpp`
+    * `default_stt_model=ggml-large-v3-turbo.bin`
   * bearer absent/invalide => `401 UNAUTHORIZED`
 * `PATCH /app/ai-defaults`:
   * bearer admin valide + body valide => `200`

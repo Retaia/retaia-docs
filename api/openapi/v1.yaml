@@ -1869,13 +1869,17 @@ components:
         default_llm_provider:
           type: string
           enum: [ollama, chatgpt, claude]
+          default: ollama
         default_llm_model:
           type: string
+          default: mistral:latest
         default_stt_provider:
           type: string
           enum: [whispercpp]
+          default: whispercpp
         default_stt_model:
           type: string
+          default: ggml-large-v3-turbo.bin
         authorized_models:
           type: object
           description: Provider/model allowlist enforced by Core policy.
