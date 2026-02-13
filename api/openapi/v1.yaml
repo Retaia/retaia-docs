@@ -241,6 +241,7 @@ paths:
       summary: Update current user app feature switches
       description: |
         Updates user-controlled app switches (`app_feature_enabled`).
+        Admin-only operation.
         When AI app switches are disabled, Core MUST stop scheduling corresponding AI jobs for this user scope.
       security:
         - UserBearerAuth: []
@@ -259,6 +260,12 @@ paths:
                 $ref: "#/components/schemas/AppFeaturesResponse"
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden actor or scope (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`)
           content:
             application/json:
               schema:

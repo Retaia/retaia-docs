@@ -275,13 +275,14 @@ Baseline sécurité/fuite (normatif) :
 
 `PATCH /app/features`
 
-* security: `UserBearerAuth`
+* security: `UserBearerAuth` + policy admin
 * body requis: `{ app_feature_enabled: { ... } }`
-* effet: met à jour les switches applicatifs utilisateur
+* effet: met à jour les switches applicatifs (admin-only)
 * règle: si IA désactivée via `app_feature_enabled`, Core DOIT arrêter la planification des jobs IA correspondants (ex: `suggest_tags`) pour ce scope
 * réponses:
   * `200` switches applicatifs mis à jour
   * `401 UNAUTHORIZED`
+  * `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
   * `422 VALIDATION_FAILED`
 
 `POST /auth/lost-password/request`

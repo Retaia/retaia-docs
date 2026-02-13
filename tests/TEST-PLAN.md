@@ -50,8 +50,9 @@ Tests obligatoires :
   * bearer valide => `200` + `app_feature_enabled`
   * bearer absent/invalide => `401 UNAUTHORIZED`
 * `PATCH /app/features`:
-  * bearer valide + body valide => `200` + flags mis à jour
+  * bearer admin valide + body valide => `200` + flags mis à jour
   * bearer absent/invalide => `401 UNAUTHORIZED`
+  * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
   * body invalide => `422 VALIDATION_FAILED`
   * `app.features.ai.suggest_tags.enabled=OFF` => Core ne planifie plus de jobs `suggest_tags` pour ce scope utilisateur
 * `POST /auth/lost-password/request`:
