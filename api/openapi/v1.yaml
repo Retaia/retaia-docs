@@ -699,17 +699,6 @@ paths:
           schema:
             type: string
             enum: [AND, OR]
-        - name: suggested_tags
-          in: query
-          schema:
-            type: string
-          description: Suggested tags filter (AI-powered, planned v1.1+).
-        - name: suggested_tags_mode
-          in: query
-          schema:
-            type: string
-            enum: [AND, OR]
-          description: Suggested tags matching mode (AI-powered, planned v1.1+).
         - name: q
           in: query
           schema:
@@ -829,10 +818,6 @@ paths:
                   type: array
                   items:
                     type: string
-                model_inventory:
-                  type: array
-                  items:
-                    $ref: "#/components/schemas/AgentModelInventoryEntry"
                 max_parallel_jobs:
                   type: integer
       responses:
@@ -1000,8 +985,6 @@ paths:
       summary: Submit job result patch
       description: |
         Submits one job result patch.
-        For `job_type=suggest_tags` (planned v1.1+), server-side policy enforcement is defined in the v1.1 normative docs.
-        If the flag is absent, it MUST be treated as `false`.
       security:
         - OAuth2ClientCredentials: ["jobs:submit"]
       parameters:
@@ -1752,23 +1735,6 @@ components:
         app_feature_enabled:
           $ref: "#/components/schemas/AppFeatureEnabled"
 
-    AgentModelInventoryEntry:
-      type: object
-      additionalProperties: false
-      required: [kind, provider, model, installed]
-      properties:
-        kind:
-          type: string
-          enum: [llm, stt]
-        provider:
-          type: string
-        model:
-          type: string
-        installed:
-          type: boolean
-        install_supported:
-          type: boolean
-
     AppPolicyResponse:
       type: object
       additionalProperties: false
@@ -1839,9 +1805,6 @@ components:
           $ref: "#/components/schemas/AssetDerived"
         transcript:
           $ref: "#/components/schemas/AssetTranscript"
-        suggestions:
-          description: Available in v1.1+.
-          $ref: "#/components/schemas/AssetSuggestions"
         decisions:
           $ref: "#/components/schemas/AssetDecisions"
         audit:
@@ -1911,22 +1874,6 @@ components:
           format: date-time
           nullable: true
 
-    AssetSuggestions:
-      type: object
-      description: AI-powered suggestions payload (available in v1.1+).
-      additionalProperties: false
-      properties:
-        status:
-          type: string
-          enum: [NONE, RUNNING, DONE, FAILED]
-        tags_suggested:
-          type: array
-          items:
-            type: string
-        source:
-          type: string
-          nullable: true
-
     AssetDecisions:
       type: object
       additionalProperties: false
@@ -1974,14 +1921,11 @@ components:
           type: string
         job_type:
           type: string
-          description: suggest_tags and transcribe_audio are planned in v1.1+.
           enum:
             - extract_facts
             - generate_proxy
             - generate_thumbnails
             - generate_audio_waveform
-            - transcribe_audio
-            - suggest_tags
         status:
           type: string
           enum: [pending, claimed, completed, failed]
@@ -2006,8 +1950,6 @@ components:
       oneOf:
         - $ref: "#/components/schemas/SubmitExtractFacts"
         - $ref: "#/components/schemas/SubmitDerived"
-        - $ref: "#/components/schemas/SubmitTranscribe"
-        - $ref: "#/components/schemas/SubmitSuggest"
 
     SubmitExtractFacts:
       type: object
@@ -2059,57 +2001,6 @@ components:
               type: object
               additionalProperties: true
 
-    SubmitTranscribe:
-      type: object
-      additionalProperties: false
-      required: [lock_token, job_type, result]
-      properties:
-        lock_token:
-          type: string
-        job_type:
-          type: string
-          enum: [transcribe_audio]
-        result:
-          type: object
-          additionalProperties: false
-          required: [transcript_patch]
-          properties:
-            transcript_patch:
-              $ref: "#/components/schemas/TranscriptPatch"
-            warnings:
-              type: array
-              items:
-                type: string
-            metrics:
-              type: object
-              additionalProperties: true
-
-    SubmitSuggest:
-      type: object
-      description: AI-powered suggestions submission (planned v1.1+).
-      additionalProperties: false
-      required: [lock_token, job_type, result]
-      properties:
-        lock_token:
-          type: string
-        job_type:
-          type: string
-          enum: [suggest_tags]
-        result:
-          type: object
-          additionalProperties: false
-          required: [suggestions_patch]
-          properties:
-            suggestions_patch:
-              $ref: "#/components/schemas/SuggestionsPatch"
-            warnings:
-              type: array
-              items:
-                type: string
-            metrics:
-              type: object
-              additionalProperties: true
-
     ProcessingResultPatch:
       type: object
       additionalProperties: false
@@ -2118,11 +2009,6 @@ components:
           $ref: "#/components/schemas/FactsPatch"
         derived_patch:
           $ref: "#/components/schemas/DerivedPatch"
-        transcript_patch:
-          $ref: "#/components/schemas/TranscriptPatch"
-        suggestions_patch:
-          description: Available in v1.1+.
-          $ref: "#/components/schemas/SuggestionsPatch"
         warnings:
           type: array
           items:
@@ -2170,40 +2056,6 @@ components:
                 type: integer
               sha256:
                 type: string
-
-    TranscriptPatch:
-      type: object
-      additionalProperties: false
-      properties:
-        transcript_text:
-          type: string
-        confidence:
-          type: number
-        segments:
-          type: array
-          items:
-            type: object
-            additionalProperties: false
-            required: [start_ms, end_ms, text]
-            properties:
-              start_ms:
-                type: integer
-              end_ms:
-                type: integer
-              text:
-                type: string
-
-    SuggestionsPatch:
-      type: object
-      description: AI-powered suggestions patch (available in v1.1+).
-      additionalProperties: false
-      properties:
-        suggested_tags:
-          type: array
-          items:
-            type: string
-        source:
-          type: string
 
     ErrorResponse:
       type: object
