@@ -96,6 +96,9 @@ Règles client (normatives, UI/agents/MCP) :
 * aucun client ne DOIT hardcoder l’état d’un flag ni dépendre d’un flag local statique
 * toute décision de disponibilité fonctionnelle côté client DOIT être dérivée du dernier payload runtime reçu
 * un client DOIT accepter `feature_flags_compatibility_mode=COMPAT` sans échec fonctionnel
+* `UI_RUST` DOIT piloter l'affichage/actions avec `effective_feature_enabled` (jamais avec une heuristique locale sur les flags bruts)
+* `AGENT` et `MCP` DOIVENT bloquer toute action liée à une feature marquée OFF dans `effective_feature_enabled`
+* un opt-out utilisateur (`user_feature_enabled=false`) reste persistant même si l’admin remet ensuite la feature ON globalement
 
 Gouvernance des `app_feature_enabled` (opposable) :
 
