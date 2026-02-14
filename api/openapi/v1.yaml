@@ -2079,6 +2079,9 @@ components:
         waveform_url:
           type: string
           nullable: true
+          description: |
+            Optional server-generated waveform file URL.
+            If absent, UI clients must render a simple local waveform from audio (pure JS).
         thumbs:
           type: array
           items:
