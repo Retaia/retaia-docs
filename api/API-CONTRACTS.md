@@ -737,6 +737,7 @@ Note v1 (important) :
 * Les binaires (proxies/thumbs/waveforms) sont uploadés via l’API Derived.
 * `submit` référence les dérivés déjà uploadés.
 * Le serveur applique un merge partiel par domaine ; un job ne peut pas écraser les domaines qu'il ne possède pas.
+* `generate_audio_waveform` est supporté mais optionnel : l’absence de `waveform` dérivée ne bloque pas le flux v1.
 * ownership de patch par `job_type` :
   * `extract_facts` -> `facts_patch`
   * `generate_proxy|generate_thumbnails|generate_audio_waveform` -> `derived_patch`
@@ -761,6 +762,8 @@ Principe v1 :
 
 * les dérivés sont **uploadés via HTTP** par les agents
 * l’UI y accède via HTTP (URLs stables), pas via SMB
+* pour l’audio waveform, l’UI DOIT supporter un rendu local simple type YouTube en JS pur si `waveform_url` est absent
+* le rendu local waveform est côté client (pas de traitement serveur supplémentaire requis)
 
 ### POST `/assets/{uuid}/derived/upload/init`
 

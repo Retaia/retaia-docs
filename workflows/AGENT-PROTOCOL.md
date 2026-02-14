@@ -173,6 +173,12 @@ Le résultat DOIT inclure :
 * `result` (patch par domaine, selon le `job_type`)
 * `warnings[]` / `metrics` (optionnels)
 
+Règle waveform audio (v1) :
+
+* la génération serveur/agent de `waveform` est optionnelle
+* si aucun dérivé `waveform` n’est produit, le client UI gère un rendu local simple (JS pur, style YouTube)
+* l’agent NE DOIT PAS échouer un job uniquement parce que la waveform dérivée n’est pas produite
+
 Le serveur :
 
 * valide le résultat
