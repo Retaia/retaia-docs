@@ -25,3 +25,4 @@ Toute implémentation Core/UI/Agent/MCP doit suivre ces specs.
 - Ne pas introduire de legacy non nécessaire avant publication v1.
 - Maintenir la cohérence: authz, error model, feature governance, sécurité.
 - Les règles MUST/SHOULD de la spec sont opposables.
+- Approche préférée pour les implémentations: DDD, avec TDD + BDD.

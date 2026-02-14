@@ -23,6 +23,7 @@ Objectif : fournir une surface stable consommée par :
 * Dates : ISO‑8601 UTC (`YYYY-MM-DDTHH:mm:ssZ`)
 * Pagination : `limit` + `cursor`
 * Idempotence : header `Idempotency-Key` sur endpoints critiques
+* Approche d'implémentation préférée : **DDD** (Domain-Driven Design), avec **TDD** et **BDD** comme pratiques de validation par défaut
 
 ### Versioning mineur (v1 / v1.1)
 
