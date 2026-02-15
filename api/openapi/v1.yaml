@@ -113,6 +113,10 @@ paths:
       responses:
         "200":
           description: 2FA enabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Auth2faEnableResponse"
         "400":
           description: Invalid TOTP code (`INVALID_2FA_CODE`)
           content:
@@ -173,6 +177,32 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "422":
           description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/2fa/recovery-codes/regenerate:
+    post:
+      tags: [Auth]
+      summary: Regenerate backup recovery codes for current user
+      security:
+        - UserBearerAuth: []
+      responses:
+        "200":
+          description: Recovery codes regenerated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Auth2faRecoveryCodesResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: 2FA is not enabled (`MFA_NOT_ENABLED`)
           content:
             application/json:
               schema:
@@ -1508,6 +1538,9 @@ components:
         otp_code:
           type: string
           description: 6-digit TOTP code when 2FA is enabled on account.
+        recovery_code:
+          type: string
+          description: One-shot backup code when TOTP app is unavailable.
 
     AuthLoginSuccess:
       type: object
@@ -1609,6 +1642,31 @@ components:
         qr_svg:
           type: string
           description: Optional inline SVG QR code payload.
+
+    Auth2faEnableResponse:
+      type: object
+      additionalProperties: false
+      required: [mfa_enabled, recovery_codes]
+      properties:
+        mfa_enabled:
+          type: boolean
+          enum: [true]
+        recovery_codes:
+          type: array
+          minItems: 1
+          items:
+            type: string
+
+    Auth2faRecoveryCodesResponse:
+      type: object
+      additionalProperties: false
+      required: [recovery_codes]
+      properties:
+        recovery_codes:
+          type: array
+          minItems: 1
+          items:
+            type: string
 
     AuthRevokeClientTokenResponse:
       type: object
