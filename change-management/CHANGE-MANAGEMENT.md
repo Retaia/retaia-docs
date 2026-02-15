@@ -184,6 +184,20 @@ Règles :
 - Les branches `feature/*` sont de courte durée.
 - Les branches `hotfix/*` sont créées depuis `master` pour les correctifs urgents.
 
+Exception contrôlée (auto-update runtime delivery) :
+
+- Deux canaux d'auto-update sont autorisés sans validation manuelle préalable :
+  - mise à jour de la référence d'image Docker de base (pin tag+digest)
+  - mise à jour du manifeste de release UI consommé par le client
+- Ces updates sont effectués par un compte bot CI dédié.
+- Le bot peut pousser directement sur `master` uniquement pour les chemins suivants :
+  - `Dockerfile.prod`
+  - `docker-compose.prod.yaml`
+  - `public/releases/latest.json`
+- Tout autre fichier modifié par ce bot DOIT invalider le workflow (auto-update refusé).
+- Les commits automatiques DOIVENT rester en Conventional Commits (`chore(...)`).
+- Le mode de fonctionnement attendu est "auto-update" (pas de gate de validation métier bloquante sur ces jobs).
+
 Le projet adopte une stratégie **trunk-based** :
 
 - Les fonctionnalités stables sont mergées dès qu’elles sont prêtes.
