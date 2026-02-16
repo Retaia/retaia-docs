@@ -26,3 +26,7 @@ Toute implémentation Core/UI/Agent/MCP doit suivre ces specs.
 - Maintenir la cohérence: authz, error model, feature governance, sécurité.
 - Les règles MUST/SHOULD de la spec sont opposables.
 - Approche préférée pour les implémentations: DDD, avec TDD + BDD.
+
+## Licence des contributions
+- Toute contribution est publiée sous `AGPL-3.0-or-later`.
+- En soumettant une PR, vous acceptez que votre code et votre documentation soient distribués sous cette licence.

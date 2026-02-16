@@ -61,4 +61,5 @@ Changes must follow this order:
 
 ## License
 
-Internal project specification repository (no public OSS license declared in this repo).
+Licensed under the GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later).
+See [`LICENSE`](LICENSE).
