@@ -1,0 +1,13 @@
+{
+  "name": "retaia-docs",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Normative specs and contracts for Retaia.",
+  "scripts": {
+    "prepare": "husky",
+    "check:contract-drift": "bash scripts/check-contract-drift.sh"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}
