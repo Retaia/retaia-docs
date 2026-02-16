@@ -29,14 +29,16 @@ Portée d'exécution :
 * L’agent est un exécuteur : il ne prend **jamais** de décision métier.
 * Les jobs sont **idempotents**.
 * Tout claim est **atomique**.
-* Le pilotage runtime est **pull-only**: l'agent lit l'état Core par polling HTTP.
-* Aucun canal push serveur-vers-agent n'est requis ni opposable (WebSocket/SSE/webhook).
+* Le pilotage runtime est status-driven par polling HTTP: l'agent lit l'état Core par polling.
+* Un canal push serveur-vers-agent/client peut exister pour réveiller/alerter/diffuser des infos (WebSocket, SSE, webhook, autres push).
+* Les push mobiles/wallet (`FCM`, `APNs`, Push Protocol/EPNS) sont planifiés en **v1.2** (avec support mobile).
+* Ces push sont autorisés, mais ne sont jamais la source de vérité métier.
 
 ### 2.1 Polling runtime (normatif)
 
 * Les boucles de polling (`GET /jobs`, device flow poll, policy refresh) DOIVENT respecter les intervalles contractuels renvoyés par Core.
 * En cas de `429` (`SLOW_DOWN`/`TOO_MANY_ATTEMPTS`), l'agent DOIT appliquer un backoff avec jitter.
-* Le refresh des flags/policy DOIT être périodique; l'agent NE DOIT PAS attendre un signal push pour appliquer un changement.
+* Le refresh des flags/policy DOIT être périodique; l'agent NE DOIT PAS attendre un signal push pour appliquer un changement de vérité métier.
 * Les actions mutatrices (claim/submit/fail) ne partent qu'après lecture d'un état compatible via polling.
 
 

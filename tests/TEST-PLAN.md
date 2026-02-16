@@ -176,7 +176,8 @@ Tests obligatoires :
 * rotation de secret client n’exige pas de réinstallation agent
 * cible Linux headless Raspberry Pi (Kodi/Plex) validée en non-régression
 * capacités IA (providers/modèles/transcription/suggestions) couvertes par le plan de tests v1.1 (hors conformité v1)
-* runtime pull-only validé: pas de dépendance WebSocket/SSE/webhook pour piloter l'exécution agent
+* runtime status-driven validé: la vérité d'état est synchronisée par polling, même si un canal push existe (WebSocket, SSE, webhook, autres push)
+* push mobiles/wallet (`FCM`, `APNs`, Push Protocol/EPNS) couverts dans les gates `v1.2` (quand le support mobile est livré)
 * polling jobs/policy respecte les intervalles contractuels et applique backoff+jitter sur `429`
 
 ## 1.3) Gates de non-régression obligatoires (release blockers)
@@ -195,7 +196,7 @@ Tests obligatoires :
   * UI_RUST, AGENT, MCP compatibles avec le flux status-driven (`PENDING|APPROVED|DENIED|EXPIRED`) (gate `v1.1` global pour UI_RUST/MCP)
   * AGENT/MCP gèrent `429` (`SLOW_DOWN`/`TOO_MANY_ATTEMPTS`) avec retry/backoff déterministe
   * aucun client ne dépend encore de `401/403` pour la machine d’état device flow
-  * aucun client ne dépend d'un canal push serveur (WebSocket/SSE/webhook) pour la cohérence runtime
+* aucun client ne traite un canal push serveur (WebSocket/SSE/webhook/notification) comme source de vérité runtime
   * un changement `server_policy.feature_flags` est pris en compte au prochain polling sans redéploiement client
 
 ## 2) Jobs & leases
