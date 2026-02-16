@@ -11,6 +11,7 @@ Objectif : fournir une surface stable consommée par :
 
 * client Agent (`AGENT`) — livré en v1 projet global
 * client UI web principal (`UI_WEB_APP`, `client_kind=UI_WEB`) — livré en v1.1 projet global
+* client UI desktop Rust/Tauri (`RUST_UI`, `client_kind=UI_WEB`) — livré en v1.1 projet global
 * client MCP (`MCP_CLIENT`, `client_kind=MCP`) — livré en v1.1 projet global
 
 
@@ -40,6 +41,7 @@ Objectif : fournir une surface stable consommée par :
   * système `feature_flags` v1
 * `v1.1` (projet global) :
   * client `UI_WEB_APP` (mappé sur `client_kind=UI_WEB`)
+  * client `RUST_UI` (mappé sur `client_kind=UI_WEB`)
   * client `MCP_CLIENT` (mappé sur `client_kind=MCP`)
 * `v1.2` (projet global) :
   * client UI mobile Android/iOS (`client_kind=UI_MOBILE`)
@@ -224,7 +226,7 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 
 ### Typologie des acteurs (normatif)
 
-* `USER_INTERACTIVE` : utilisateur humain connecté via client `UI_WEB` (web app) ou `UI_MOBILE` (Android/iOS), ou client `AGENT` en mode interactif
+* `USER_INTERACTIVE` : utilisateur humain connecté via client `UI_WEB` (web app ou desktop `RUST_UI`) ou `UI_MOBILE` (Android/iOS), ou client `AGENT` en mode interactif
 * `CLIENT_TECHNICAL` : client non-humain authentifié par `client_id + secret_key`
 * `AGENT_TECHNICAL` : agent non-interactif (daemon/service) authentifié par `client_id + secret_key` ou client-credentials OAuth2
 * `client_kind` interactif est borné à `UI_WEB`, `UI_MOBILE` ou `AGENT`; le mode technique autorise `AGENT` et `MCP`
@@ -234,7 +236,7 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 
 * Bearer token utilisateur obtenu via login (`POST /auth/login`)
 * l'interface de login est normative pour permettre l'obtention du token utilisateur
-* le `client_kind=UI_WEB` DOIT être implémenté en web app servie par Core
+* le `client_kind=UI_WEB` couvre l'UI web servie par Core et le client desktop Rust/Tauri (`RUST_UI`)
 * le `client_kind=UI_MOBILE` DOIT être implémenté sur Android/iOS (v1.2)
 * le token UI est non exportable dans l'interface (jamais affiché en clair)
 * un utilisateur ne peut pas invalider son token UI depuis l'UI (anti lock-out)

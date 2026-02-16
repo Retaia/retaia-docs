@@ -7,7 +7,7 @@ Ce document définit le minimum de tests opposables pour valider une implémenta
 Tests obligatoires :
 
 * `v1` projet global : Core + Agent + `capabilities` + `feature_flags`
-* `v1.1` projet global : client `UI_WEB_APP` (`client_kind=UI_WEB`) + client `MCP_CLIENT` (`client_kind=MCP`)
+* `v1.1` projet global : clients `UI_WEB_APP` + `RUST_UI` (`client_kind=UI_WEB`) + client `MCP_CLIENT` (`client_kind=MCP`)
 * `v1.2` projet global : client mobile Android/iOS (`client_kind=UI_MOBILE`) + push mobile (status-driven)
 * les suites UI/MCP sont classées en gates `v1.1` global; les suites UI mobile/push en gates `v1.2`
 
@@ -153,7 +153,7 @@ Matrice de migration v1 runtime (gelée) :
 * toutes réponses d’erreur 4xx/5xx auth conformes au schéma `ErrorResponse`
 * endpoints humains mutateurs exigent un bearer token (`UserBearerAuth`) conforme à la spec
 * même flux login/token validé sur clients interactifs: `UI_WEB`, `UI_MOBILE` et `AGENT` (gate `v1.2` pour `UI_MOBILE`)
-* compatibilité web validée: client `UI_WEB` (web app) utilise `POST /auth/login` + `Authorization: Bearer`
+* compatibilité UI validée: `UI_WEB_APP` et `RUST_UI` (même `client_kind=UI_WEB`) utilisent `POST /auth/login` + `Authorization: Bearer`
 * anti lock-out: l'UI n'expose jamais le token en clair et n'offre pas d'action d'auto-révocation du token UI actif (gate `v1.1` global)
 * régression interdite: aucun endpoint runtime n'accepte encore `SessionCookieAuth` (Bearer-only)
 * 2FA optionnelle: compte sans 2FA active ne requiert pas OTP
