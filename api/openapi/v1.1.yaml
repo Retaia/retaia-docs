@@ -1196,6 +1196,13 @@ paths:
     post:
       tags: [Derived]
       summary: Initialize derived upload
+      description: |
+        Initializes upload for one derived file.
+        Normative media profile constraints:
+        - `proxy_video`: `video/mp4` (H.264/AVC, browser-compatible), source framerate preserved.
+        - `proxy_audio`: `audio/mp4` (AAC-LC) or `audio/mpeg`.
+        - `proxy_photo` / `thumb`: `image/jpeg` or `image/webp`.
+        - `waveform`: `application/json` (preferred) or `application/octet-stream`.
       security:
         - OAuth2ClientCredentials: ["jobs:submit"]
       parameters:
@@ -1214,6 +1221,8 @@ paths:
                   enum: [proxy_video, proxy_audio, proxy_photo, thumb, waveform]
                 content_type:
                   type: string
+                  description: |
+                    MIME type constrained by `kind` (see endpoint description).
                 size_bytes:
                   type: integer
                 sha256:

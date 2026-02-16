@@ -897,6 +897,56 @@ Règles :
 * support Range requests pour proxies
 * 404 si `state == PURGED`
 
+### Profils de formats dérivés (normatif)
+
+Objectif :
+
+* tous les dérivés consommés par l'UI DOIVENT être lisibles par un navigateur moderne (desktop/mobile)
+* les proxies DOIVENT privilégier la compatibilité de lecture plutôt que l'optimisation codec agressive
+
+`proxy_video` (obligatoire pour vidéo) :
+
+* conteneur : `MP4` (`video/mp4`)
+* codec vidéo : `H.264/AVC` (`yuv420p`, progressif, non interlacé)
+* codec audio (si piste audio présente) : `AAC-LC` (`audio/mp4`, 44.1kHz ou 48kHz)
+* framerate : DOIT conserver le framerate source (tolérance max ±0.01 fps)
+* cadence : DOIT rester en `CFR` (constant frame rate) pour stabilité seek/timeline
+* dimensions : ratio d'aspect conservé, upscale interdit
+* keyframe interval : maximum 2 secondes
+* fichier MP4 : `moov` atom placé en tête (fast start)
+
+`proxy_audio` (obligatoire pour audio) :
+
+* conteneur : `M4A` (`audio/mp4`) ou `MP3` (`audio/mpeg`)
+* codec recommandé : `AAC-LC` (fallback `MP3` autorisé)
+* sample rate : conserver la source si standard navigateur, sinon normaliser en 44.1kHz ou 48kHz
+* canaux : conserver mono/stéréo source (downmix explicite autorisé si documenté)
+
+`proxy_photo` (obligatoire pour image) :
+
+* format : `JPEG` (`image/jpeg`) ou `WEBP` (`image/webp`)
+* espace couleur : `sRGB`
+* orientation EXIF : normalisée (image visuellement orientée, pas de dépendance EXIF runtime)
+* dimensions : ratio d'aspect conservé, upscale interdit
+
+`thumb` :
+
+* format : `JPEG` (`image/jpeg`) ou `WEBP` (`image/webp`)
+* espace couleur : `sRGB`
+* au moins une taille de preview web (ex: largeur 320px ou 480px) DOIT être fournie
+* ratio d'aspect conservé, upscale interdit
+
+`waveform` :
+
+* format : `JSON` (`application/json`) ou binaire léger documenté (`application/octet-stream`)
+* si JSON : amplitudes normalisées (0..1), séquence ordonnée, métadonnées min (`duration_ms`, `bucket_count`)
+* absence de `waveform` NE DOIT PAS bloquer l'UI (fallback waveform locale déjà normative)
+
+Règle de cohérence source/dérivé (obligatoire) :
+
+* un dérivé ne DOIT PAS modifier le sens temporel du média (pas d'inversion/cut implicite)
+* les métadonnées techniques exposées (`duration`, `fps`, dimensions) DOIVENT être cohérentes avec le fichier livré
+
 
 ## 7) Batch moves
 
