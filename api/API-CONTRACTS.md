@@ -82,6 +82,15 @@ Objectif : fournir une surface stable consommée par :
 * Ownership runtime: `accepted_feature_flags_contract_versions` est piloté par release/config Core (pas modifiable via endpoint admin runtime).
 * Les kill-switches permanents autorisés DOIVENT être listés dans [`FEATURE-FLAG-KILLSWITCH-REGISTRY.md`](../change-management/FEATURE-FLAG-KILLSWITCH-REGISTRY.md).
 
+### Orchestration runtime (normatif)
+
+* Core est l'orchestrateur unique des états métier, jobs, policies et flags.
+* Les clients (`UI_RUST`, `AGENT`, `MCP`) DOIVENT fonctionner en mode **pull-only** (polling HTTP).
+* Les clients NE DOIVENT PAS dépendre d'un canal push serveur-vers-client pour le pilotage runtime (WebSocket, SSE, webhook client).
+* Tout changement de disponibilité fonctionnelle DOIT être observé via polling des endpoints contractuels (notamment `GET /app/policy`).
+* Sur `429` (`SLOW_DOWN`/`TOO_MANY_ATTEMPTS`), le client DOIT appliquer backoff + jitter avant la tentative suivante.
+* Le pilotage d'état du device flow reste strictement status-driven via `POST /auth/clients/device/poll` (`200` + `status`).
+
 Mapping normatif v1.1 (base actuelle, obligatoire pour tous les consommateurs) :
 
 * `features.decisions.bulk` :
