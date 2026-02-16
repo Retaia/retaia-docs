@@ -97,6 +97,13 @@ Si une logique devient complexe :
 - pas de secrets dans le code, les commits ou les logs
 - pas de données réelles sensibles dans les tests
 
+### 6.1 Politique lib-first (normatif)
+
+- pour une préoccupation transverse (parsing CLI, sérialisation, gestion d'erreurs, notification OS, etc.), une librairie maintenue DOIT être utilisée
+- une implémentation locale de cette préoccupation est interdite tant qu'une librairie maintenue existe
+- cette politique s'applique à toute implémentation (Rust ou autre stack)
+- pour les implémentations Rust, la baseline attendue est : `clap` (CLI), `thiserror` (erreurs typées), `tauri-plugin-notification` (notifications GUI Tauri)
+
 
 ## 7) Qualité spécifique par repo
 
