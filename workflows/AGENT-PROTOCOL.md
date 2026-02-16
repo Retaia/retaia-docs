@@ -73,14 +73,13 @@ Contrainte d’implémentation :
 
 * la stack agent DOIT être implémentée en Rust pour la portabilité binaire cross-platform et le service mode.
 
-### 3.2.1 Baseline implémentation Rust (normatif)
+### 3.2.1 Baseline implémentation (normatif)
 
-Pour éviter le code local à maintenir :
+Pour éviter le code local à maintenir, cette règle s'applique à toute implémentation (quel que soit le langage) :
 
-* le parsing CLI DOIT reposer sur une librairie dédiée et maintenue (`clap`)
-* les types d'erreurs applicatives/infra DOIVENT utiliser une librairie standard d'errors typées (`thiserror`)
-* pour les agents GUI basés Tauri, les notifications desktop DOIVENT utiliser le plugin officiel `tauri-plugin-notification`
+* pour une préoccupation transverse (parsing CLI, sérialisation, erreurs typées, notification OS, retry/backoff, etc.), une librairie dédiée et maintenue DOIT être utilisée
 * l'implémentation locale d'une préoccupation transverse est interdite tant qu'une librairie maintenue existe
+* si l'implémentation est en Rust, baseline attendue: `clap` (CLI), `thiserror` (erreurs typées), `tauri-plugin-notification` (notifications GUI Tauri)
 
 ### 3.3 Modes d’auth agent (normatif)
 
