@@ -85,11 +85,12 @@ Objectif : fournir une surface stable consommée par :
 ### Orchestration runtime (normatif)
 
 * Core est l'orchestrateur unique des états métier, jobs, policies et flags.
-* Les clients (`UI_RUST`, `AGENT`, `MCP`) DOIVENT fonctionner en mode **pull-only** (polling HTTP).
-* Les clients NE DOIVENT PAS dépendre d'un canal push serveur-vers-client pour le pilotage runtime (WebSocket, SSE, webhook client).
+* Les clients (`UI_RUST`, `AGENT`, `MCP`) DOIVENT synchroniser l'état runtime via **polling HTTP** (source de vérité).
+* Les canaux push serveur-vers-client (notification mobile, WebSocket, SSE, webhook client) SONT AUTORISÉS comme signaux d'éveil/UX, mais NE SONT PAS source de vérité métier.
 * Tout changement de disponibilité fonctionnelle DOIT être observé via polling des endpoints contractuels (notamment `GET /app/policy`).
 * Sur `429` (`SLOW_DOWN`/`TOO_MANY_ATTEMPTS`), le client DOIT appliquer backoff + jitter avant la tentative suivante.
 * Le pilotage d'état du device flow reste strictement status-driven via `POST /auth/clients/device/poll` (`200` + `status`).
+* Les opérations mutatrices REST (`POST`, `PATCH`, etc.) restent autorisées selon la matrice auth/authz.
 
 Mapping normatif v1.1 (base actuelle, obligatoire pour tous les consommateurs) :
 
