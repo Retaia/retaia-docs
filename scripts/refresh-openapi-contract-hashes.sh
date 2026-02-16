@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-declare -a versions=("v1" "v1.1" "v1.2")
+declare -a versions=()
+
+if [[ "$#" -gt 0 ]]; then
+  versions=("$@")
+else
+  versions=("v1" "v1.1" "v1.2")
+fi
 
 for version in "${versions[@]}"; do
   spec_file="api/openapi/${version}.yaml"

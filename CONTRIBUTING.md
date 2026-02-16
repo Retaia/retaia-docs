@@ -12,7 +12,7 @@ Toute implémentation Core/UI/Agent/MCP doit suivre ces specs.
 - Activer les hooks Husky (obligatoire en local):
   - `npm install`
   - `npm run prepare`
-  - le hook `pre-commit` régénère automatiquement les snapshots OpenAPI:
+  - le hook `pre-commit` régénère automatiquement les snapshots OpenAPI **uniquement pour les specs modifiées**:
     - `contracts/openapi-v1.sha256`
     - `contracts/openapi-v1.1.sha256`
     - `contracts/openapi-v1.2.sha256`

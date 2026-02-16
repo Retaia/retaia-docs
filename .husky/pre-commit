@@ -1,5 +1,16 @@
 #!/usr/bin/env sh
 set -eu
 
-npm run -s refresh:contract-hashes
-git add contracts/openapi-v1.sha256 contracts/openapi-v1.1.sha256 contracts/openapi-v1.2.sha256
+CHANGED_FILES="$(git diff --cached --name-only)"
+VERSIONS=""
+
+echo "$CHANGED_FILES" | grep -q "^api/openapi/v1.yaml$" && VERSIONS="$VERSIONS v1" || true
+echo "$CHANGED_FILES" | grep -q "^api/openapi/v1.1.yaml$" && VERSIONS="$VERSIONS v1.1" || true
+echo "$CHANGED_FILES" | grep -q "^api/openapi/v1.2.yaml$" && VERSIONS="$VERSIONS v1.2" || true
+
+if [ -n "$VERSIONS" ]; then
+  npm run -s refresh:contract-hashes -- $VERSIONS
+  for v in $VERSIONS; do
+    git add "contracts/openapi-$v.sha256"
+  done
+fi
