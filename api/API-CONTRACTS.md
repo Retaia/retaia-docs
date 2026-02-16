@@ -86,7 +86,8 @@ Objectif : fournir une surface stable consommée par :
 
 * Core est l'orchestrateur unique des états métier, jobs, policies et flags.
 * Les clients (`UI_RUST`, `AGENT`, `MCP`) DOIVENT synchroniser l'état runtime via **polling HTTP** (source de vérité).
-* Les canaux push serveur-vers-client sont autorisés pour diffusion d'information/alerte (ex: notifications mobiles Android/iOS via `FCM`/`APNs`, Push Protocol/EPNS, WebSocket, SSE, webhook client, autres canaux push).
+* Les canaux push serveur-vers-client sont autorisés pour diffusion d'information/alerte (WebSocket, SSE, webhook client, autres canaux push).
+* Les push mobiles/wallet (`FCM`, `APNs`, Push Protocol/EPNS) sont planifiés en **v1.2** (activation quand le support mobile est livré).
 * Ces canaux push servent de signal temps réel/UX, mais NE SONT PAS source de vérité métier.
 * Tout changement de disponibilité fonctionnelle DOIT être observé via polling des endpoints contractuels (notamment `GET /app/policy`).
 * Sur `429` (`SLOW_DOWN`/`TOO_MANY_ATTEMPTS`), le client DOIT appliquer backoff + jitter avant la tentative suivante.

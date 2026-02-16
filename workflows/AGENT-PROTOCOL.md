@@ -30,7 +30,8 @@ Portée d'exécution :
 * Les jobs sont **idempotents**.
 * Tout claim est **atomique**.
 * Le pilotage runtime est status-driven par polling HTTP: l'agent lit l'état Core par polling.
-* Un canal push serveur-vers-agent/client peut exister pour réveiller/alerter/diffuser des infos (ex: `FCM`, `APNs`, Push Protocol/EPNS, WebSocket, SSE, webhook, autres push).
+* Un canal push serveur-vers-agent/client peut exister pour réveiller/alerter/diffuser des infos (WebSocket, SSE, webhook, autres push).
+* Les push mobiles/wallet (`FCM`, `APNs`, Push Protocol/EPNS) sont planifiés en **v1.2** (avec support mobile).
 * Ces push sont autorisés, mais ne sont jamais la source de vérité métier.
 
 ### 2.1 Polling runtime (normatif)
