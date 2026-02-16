@@ -180,6 +180,7 @@ Règles :
 
 - `master` est **toujours déployable**.
 - Aucun push direct n’est autorisé sur `master`.
+- Les outillages locaux DOIVENT bloquer tout commit direct sur `master` au stade `pre-commit`.
 - Tout changement passe par une Pull Request.
 - Les branches `feature/*` sont de courte durée.
 - Les branches `hotfix/*` sont créées depuis `master` pour les correctifs urgents.
