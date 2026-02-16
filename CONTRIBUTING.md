@@ -12,7 +12,10 @@ Toute implémentation Core/UI/Agent/MCP doit suivre ces specs.
 - Activer les hooks Husky (obligatoire en local):
   - `npm install`
   - `npm run prepare`
-  - le hook `pre-commit` bloque le drift OpenAPI (`contracts/openapi-v1.sha256` vs `api/openapi/v1.yaml`).
+  - le hook `pre-commit` régénère automatiquement les snapshots OpenAPI:
+    - `contracts/openapi-v1.sha256`
+    - `contracts/openapi-v1.1.sha256`
+    - `contracts/openapi-v1.2.sha256`
 
 ## Exigences de PR
 - Mettre à jour les documents normatifs impactés ensemble:
@@ -20,7 +23,7 @@ Toute implémentation Core/UI/Agent/MCP doit suivre ces specs.
   - `api/API-CONTRACTS.md`
   - `tests/TEST-PLAN.md`
   - policies/workflows associés si nécessaire
-- Si `api/openapi/v1.yaml` change: mettre à jour `contracts/openapi-v1.sha256`.
+- Si un fichier `api/openapi/v*.yaml` change: mettre à jour les snapshots `contracts/openapi-*.sha256` (automatique via hook).
 - Vérifier les gates CI obligatoires:
   - `branch-up-to-date`
   - `contract-drift`

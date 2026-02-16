@@ -1,4 +1,5 @@
 #!/usr/bin/env sh
 set -eu
 
-npm run -s check:contract-drift
+npm run -s refresh:contract-hashes
+git add contracts/openapi-v1.sha256 contracts/openapi-v1.1.sha256 contracts/openapi-v1.2.sha256

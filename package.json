@@ -5,7 +5,8 @@
   "description": "Normative specs and contracts for Retaia.",
   "scripts": {
     "prepare": "husky",
-    "check:contract-drift": "bash scripts/check-contract-drift.sh"
+    "check:contract-drift": "bash scripts/check-contract-drift.sh",
+    "refresh:contract-hashes": "bash scripts/refresh-openapi-contract-hashes.sh"
   },
   "devDependencies": {
     "husky": "^9.1.7"

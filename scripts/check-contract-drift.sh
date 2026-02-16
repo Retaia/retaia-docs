@@ -1,29 +1,33 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-EXPECTED_FILE="contracts/openapi-v1.sha256"
-SPEC_FILE="api/openapi/v1.yaml"
+declare -a versions=("v1" "v1.1" "v1.2")
 
-if [[ ! -f "$EXPECTED_FILE" ]]; then
-  echo "contract-drift: missing $EXPECTED_FILE"
-  exit 1
-fi
+for version in "${versions[@]}"; do
+  expected_file="contracts/openapi-${version}.sha256"
+  spec_file="api/openapi/${version}.yaml"
 
-if [[ ! -f "$SPEC_FILE" ]]; then
-  echo "contract-drift: missing $SPEC_FILE"
-  exit 1
-fi
+  if [[ ! -f "$expected_file" ]]; then
+    echo "contract-drift: missing $expected_file"
+    exit 1
+  fi
 
-EXPECTED="$(cat "$EXPECTED_FILE")"
-CURRENT="$(shasum -a 256 "$SPEC_FILE" | awk '{print $1}')"
+  if [[ ! -f "$spec_file" ]]; then
+    echo "contract-drift: missing $spec_file"
+    exit 1
+  fi
 
-if [[ "$EXPECTED" != "$CURRENT" ]]; then
-  echo "contract-drift: detected"
-  echo "expected: $EXPECTED"
-  echo "current:  $CURRENT"
-  echo "refresh with:"
-  echo "  shasum -a 256 api/openapi/v1.yaml | awk '{print \$1}' > contracts/openapi-v1.sha256"
-  exit 1
-fi
+  expected="$(cat "$expected_file")"
+  current="$(shasum -a 256 "$spec_file" | awk '{print $1}')"
+
+  if [[ "$expected" != "$current" ]]; then
+    echo "contract-drift: detected for $version"
+    echo "expected: $expected"
+    echo "current:  $current"
+    echo "refresh with:"
+    echo "  bash scripts/refresh-openapi-contract-hashes.sh"
+    exit 1
+  fi
+done
 
 echo "contract-drift: OK"
