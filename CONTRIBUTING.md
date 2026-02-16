@@ -9,6 +9,9 @@ Toute implémentation Core/UI/Agent/MCP doit suivre ces specs.
 - Travailler en commits atomiques et intentionnels.
 - Rebase sur `master` avant merge (pas de merge commit de synchronisation).
 - PR atomique (un objectif clair par PR).
+- Activer les hooks versionnés du repo (obligatoire en local):
+  - `git config core.hooksPath .githooks`
+  - le hook `pre-commit` bloque le drift OpenAPI (`contracts/openapi-v1.sha256` vs `api/openapi/v1.yaml`).
 
 ## Exigences de PR
 - Mettre à jour les documents normatifs impactés ensemble:
