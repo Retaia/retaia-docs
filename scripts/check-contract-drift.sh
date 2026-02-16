@@ -28,6 +28,8 @@ for version in "${versions[@]}"; do
     echo "  bash scripts/refresh-openapi-contract-hashes.sh"
     exit 1
   fi
+
+  echo "contract-drift: $version OK"
 done
 
 echo "contract-drift: OK"
