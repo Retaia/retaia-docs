@@ -10,7 +10,7 @@ Ce document doit rester strictement aligné avec `openapi/v1.yaml`.
 Objectif : fournir une surface stable consommée par :
 
 * client Agent (`AGENT`) — livré en v1 projet global
-* client UI Rust/Tauri (`RUST_UI`, `client_kind=UI_RUST`) — livré en v1.1 projet global
+* client UI web principal (`UI_WEB_APP`, `client_kind=UI_WEB`) — livré en v1.1 projet global
 * client MCP (`MCP_CLIENT`, `client_kind=MCP`) — livré en v1.1 projet global
 
 
@@ -39,8 +39,11 @@ Objectif : fournir une surface stable consommée par :
   * système `capabilities` v1
   * système `feature_flags` v1
 * `v1.1` (projet global) :
-  * client `RUST_UI` (mappé sur `client_kind=UI_RUST`)
+  * client `UI_WEB_APP` (mappé sur `client_kind=UI_WEB`)
   * client `MCP_CLIENT` (mappé sur `client_kind=MCP`)
+* `v1.2` (projet global) :
+  * client UI mobile Android/iOS (`client_kind=UI_MOBILE`)
+  * push mobile status-driven (`FCM`, `APNs`, Push Protocol/EPNS) pour UI mobile uniquement
 
 ### Feature flags (normatif)
 
@@ -49,7 +52,7 @@ Objectif : fournir une surface stable consommée par :
 * Une feature stabilisée DOIT être assimilée au comportement nominal puis son feature flag DOIT être supprimé (pas de flag permanent hors kill-switch explicite).
 * Les fonctionnalités `v1.1+` suivent la même règle et restent inactives tant que leur flag n'est pas activé.
 * Convention de nommage : `features.<domaine>.<fonction>`.
-* Contrat de transport : l’état effectif des flags DOIT être transporté dans un payload standard `server_policy.feature_flags` pour tous les clients (`UI_RUST`, `AGENT`, `MCP`) via `GET /app/policy`.
+* Contrat de transport : l’état effectif des flags DOIT être transporté dans un payload standard `server_policy.feature_flags` pour tous les clients (`UI_WEB`, `AGENT`, `MCP`) via `GET /app/policy`.
 * Versionnement/acceptance obligatoire des flags :
   * client -> Core : `client_feature_flags_contract_version` (query `GET /app/policy` ou body `POST /agents/register`)
   * Core -> client : `feature_flags_contract_version`, `accepted_feature_flags_contract_versions`, `effective_feature_flags_contract_version`, `feature_flags_compatibility_mode`
@@ -85,14 +88,26 @@ Objectif : fournir une surface stable consommée par :
 ### Orchestration runtime (normatif)
 
 * Core est l'orchestrateur unique des états métier, jobs, policies et flags.
-* Les clients (`UI_RUST`, `AGENT`, `MCP`) DOIVENT synchroniser l'état runtime via **polling HTTP** (source de vérité).
+* Les clients (`UI_WEB`, `UI_MOBILE`, `AGENT`, `MCP`) DOIVENT synchroniser l'état runtime via **polling HTTP** (source de vérité).
 * Les canaux push serveur-vers-client sont autorisés pour diffusion d'information/alerte (WebSocket, SSE, webhook client, autres canaux push).
-* Les push mobiles/wallet (`FCM`, `APNs`, Push Protocol/EPNS) sont planifiés en **v1.2** (activation quand le support mobile est livré).
+* Les push mobiles/wallet (`FCM`, `APNs`, Push Protocol/EPNS) sont planifiés en **v1.2** pour le client UI mobile uniquement (`UI_MOBILE`).
 * Ces canaux push servent de signal temps réel/UX, mais NE SONT PAS source de vérité métier.
 * Tout changement de disponibilité fonctionnelle DOIT être observé via polling des endpoints contractuels (notamment `GET /app/policy`).
 * Sur `429` (`SLOW_DOWN`/`TOO_MANY_ATTEMPTS`), le client DOIT appliquer backoff + jitter avant la tentative suivante.
 * Le pilotage d'état du device flow reste strictement status-driven via `POST /auth/clients/device/poll` (`200` + `status`).
 * Les opérations mutatrices REST (`POST`, `PATCH`, etc.) restent autorisées selon la matrice auth/authz.
+
+Règles push mobile v1.2 (opposables) :
+
+* `MOBILE_UI_ONLY_SCOPE` : les règles push mobile v1.2 s'appliquent uniquement au client UI Android/iOS (`UI_MOBILE`).
+* `PUSH_NOT_AUTHORITATIVE` : un push mobile ne DOIT JAMAIS être traité comme état métier final.
+* `PUSH_TRIGGERS_POLL` : la réception d'un push mobile DOIT déclencher un poll des endpoints contractuels.
+* `POLL_IS_SOURCE_OF_TRUTH` : seule la réponse API Core fait foi pour appliquer un changement d'état.
+* `NO_SENSITIVE_PUSH_PAYLOAD` : un push mobile NE DOIT PAS contenir token, secret, PII, adresse, GPS, transcription.
+* `PUSH_MINIMAL_PAYLOAD` : payload limité à des hints techniques (ex: `event_type`, `hint_id`, `issued_at`, `ttl`).
+* `PUSH_DEDUP_REQUIRED` : le client DOIT dédupliquer via `hint_id` (ou identifiant équivalent) pour éviter les doubles traitements.
+* `PUSH_REPLAY_PROTECTION` : push expiré/dupliqué ignoré; TTL et unicité obligatoires.
+* `PUSH_OPTIONAL_FALLBACK_POLL` : absence de push ne doit jamais bloquer; polling périodique reste actif.
 
 Mapping normatif v1.1 (base actuelle, obligatoire pour tous les consommateurs) :
 
@@ -101,15 +116,22 @@ Mapping normatif v1.1 (base actuelle, obligatoire pour tous les consommateurs) :
   * client: OFF => interdire toute UI/action bulk decisions et tout appel API associé ; ON => disponible sans redéploiement
 * les capacités AI (`transcribe_audio`, `suggest_tags`, providers/modèles, filtres `suggested_tags*`) sont planifiées en v1.1+ et hors validation de conformité v1.
 
+Prévision de mapping v1.2 (mobile) :
+
+* `features.mobile.push` :
+  * active l'inscription push mobile (`/auth/me/mobile-push/register`) et la désinscription (`/auth/me/mobile-push/unregister`)
+  * scope client: `UI_MOBILE` uniquement
+  * OFF => aucun enregistrement push mobile accepté
+
 Règles client (normatives, UI/agents/MCP) :
 
 * feature OFF => appel API de la feature interdit et UI correspondante masquée/désactivée
 * feature ON => feature disponible immédiatement, sans déploiement client supplémentaire
-* `UI_RUST`, `AGENT` et `MCP` DOIVENT tous consommer les `feature_flags` runtime pilotés par Core
+* `UI_WEB`, `UI_MOBILE`, `AGENT` et `MCP` DOIVENT tous consommer les `feature_flags` runtime pilotés par Core
 * aucun client ne DOIT hardcoder l’état d’un flag ni dépendre d’un flag local statique
 * toute décision de disponibilité fonctionnelle côté client DOIT être dérivée du dernier payload runtime reçu
 * un client DOIT accepter `feature_flags_compatibility_mode=COMPAT` sans échec fonctionnel
-* `UI_RUST` DOIT piloter l'affichage/actions avec `effective_feature_enabled` (jamais avec une heuristique locale sur les flags bruts)
+* `UI_WEB` DOIT piloter l'affichage/actions avec `effective_feature_enabled` (jamais avec une heuristique locale sur les flags bruts)
 * `AGENT` et `MCP` DOIVENT bloquer toute action liée à une feature marquée OFF dans `effective_feature_enabled`
 * un opt-out utilisateur (`user_feature_enabled=false`) reste persistant même si l’admin remet ensuite la feature ON globalement
 
@@ -202,17 +224,18 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 
 ### Typologie des acteurs (normatif)
 
-* `USER_INTERACTIVE` : utilisateur humain connecté via client `UI_RUST` (Rust/Tauri) ou client `AGENT` en mode interactif
+* `USER_INTERACTIVE` : utilisateur humain connecté via client `UI_WEB` (web app) ou `UI_MOBILE` (Android/iOS), ou client `AGENT` en mode interactif
 * `CLIENT_TECHNICAL` : client non-humain authentifié par `client_id + secret_key`
 * `AGENT_TECHNICAL` : agent non-interactif (daemon/service) authentifié par `client_id + secret_key` ou client-credentials OAuth2
-* `client_kind` interactif est borné à `UI_RUST` ou `AGENT`; le mode technique autorise `AGENT` et `MCP`
-* rollout projet global : `UI_RUST` et `MCP` sont intégrés côté clients applicatifs à partir de la v1.1 globale
+* `client_kind` interactif est borné à `UI_WEB`, `UI_MOBILE` ou `AGENT`; le mode technique autorise `AGENT` et `MCP`
+* rollout projet global : `UI_WEB` et `MCP` sont intégrés à partir de la v1.1 globale; `UI_MOBILE` à partir de la v1.2 globale
 
 ### UI (humain)
 
 * Bearer token utilisateur obtenu via login (`POST /auth/login`)
 * l'interface de login est normative pour permettre l'obtention du token utilisateur
-* le `client_kind=UI_RUST` DOIT être implémenté en Rust/Tauri (Electron non supporté)
+* le `client_kind=UI_WEB` DOIT être implémenté en web app servie par Core
+* le `client_kind=UI_MOBILE` DOIT être implémenté sur Android/iOS (v1.2)
 * le token UI est non exportable dans l'interface (jamais affiché en clair)
 * un utilisateur ne peut pas invalider son token UI depuis l'UI (anti lock-out)
 * l'UI DOIT supporter l'enrôlement 2FA TOTP via app externe (Authy, Google Authenticator, etc.)
@@ -227,12 +250,12 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 * les capacités IA (providers, modèles, transcription, suggestions) sont planifiées en v1.1+
 * l’agent reste propriétaire du runtime provider/model (découverte locale, disponibilité, installation) dans le paquet normatif v1.1
 * Core NE DOIT PAS exposer de catalogue runtime global de modèles
-* `UI_RUST`, `AGENT` et `MCP` NE DOIVENT PAS hardcoder providers/modèles
+* `UI_WEB`, `AGENT` et `MCP` NE DOIVENT PAS hardcoder providers/modèles
 
 Règles 2FA par client (obligatoire) :
 
 * la 2FA est optionnelle au niveau compte utilisateur
-* `UI_RUST` : login utilisateur (`/auth/login`) avec 2FA obligatoire uniquement si activée sur le compte
+* `UI_WEB` et `UI_MOBILE` : login utilisateur (`/auth/login`) avec 2FA obligatoire uniquement si activée sur le compte
 * `AGENT` / `MCP` en mode technique (`/auth/clients/token`) : pas de 2FA directe au runtime
 * création d’un `secret_key` pour `AGENT`/`MCP` : DOIT passer par une validation utilisateur via UI
 * si 2FA est activée sur ce compte utilisateur, la validation UI de création `secret_key` DOIT exiger la 2FA
@@ -400,7 +423,7 @@ Normalisation HTTP (normatif) :
 * security: `UserBearerAuth` ou `OAuth2ClientCredentials`
 * paramètre optionnel: `client_feature_flags_contract_version`
 * effet: retourne `server_policy` (incluant `feature_flags`) pour clients interactifs et techniques
-* règle: `UI_RUST`, `AGENT` et `MCP` DOIVENT consommer cet endpoint pour la disponibilité runtime des features
+* règle: `UI_WEB`, `UI_MOBILE`, `AGENT` et `MCP` DOIVENT consommer cet endpoint pour la disponibilité runtime des features
 * versionnement: Core retourne la version effective servie et le mode `STRICT|COMPAT`
 * réponses:
   * `200` succès
@@ -459,7 +482,7 @@ Normalisation HTTP (normatif) :
 * security: `UserBearerAuth`
 * prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
 * effet: invalide les bearer tokens actifs du client ciblé (pas d'arrêt de process)
-* contrainte: un `client_kind=UI_RUST` est protégé et NE DOIT PAS être révocable via cet endpoint
+* contrainte: un `client_kind=UI_WEB` est protégé et NE DOIT PAS être révocable via cet endpoint
 * réponses:
   * `200` token(s) invalide(s)
   * `401 UNAUTHORIZED`
@@ -470,7 +493,7 @@ Normalisation HTTP (normatif) :
 
 * security: aucune (`security: []`)
 * body requis: `{ client_id, client_kind, secret_key }`
-* `client_kind` autorisés: `AGENT | MCP` (`UI_RUST` exclu)
+* `client_kind` autorisés: `AGENT | MCP` (`UI_WEB` exclu)
 * effet: émet un bearer token client
 * règle stricte: **1 token actif par client_id** (mint d’un nouveau token => révocation de l’ancien token pour ce client)
 * gate applicatif: si `app_feature_enabled.features.ai=false`, un `client_kind=MCP` DOIT être refusé (`403 FORBIDDEN_SCOPE`)
@@ -531,7 +554,7 @@ Matrice de migration v1 runtime (gelée) :
   * les clients DOIVENT lire l’état depuis le payload `200` (`status`)
   * les clients NE DOIVENT PLUS interpréter `401`/`403` pour piloter le state machine device flow
 * `POST /auth/clients/token` :
-  * `client_kind=UI_RUST` DOIT retourner `403 FORBIDDEN_ACTOR`
+  * `client_kind=UI_WEB` DOIT retourner `403 FORBIDDEN_ACTOR`
   * `422` n’est plus autorisé pour ce cas de refus
 
 Règle de sécurité :
@@ -555,7 +578,36 @@ Règle d'erreur (obligatoire) :
 
 Règle d’unification clients (obligatoire) :
 
-* le flux login utilisateur (`POST /auth/login`) et `UserBearerAuth` DOIVENT être communs pour les clients interactifs `UI_RUST` et `AGENT`
+* le flux login utilisateur (`POST /auth/login`) et `UserBearerAuth` DOIVENT être communs pour les clients interactifs `UI_WEB`, `UI_MOBILE` et `AGENT`
+
+### Endpoints push mobile (planned v1.2)
+
+`POST /auth/me/mobile-push/register`
+
+* security: `UserBearerAuth`
+* scope acteur: `USER_INTERACTIVE` (`client_kind=UI_MOBILE`) ; appel depuis autre `client_kind` refusé (`403 FORBIDDEN_ACTOR`)
+* body requis: `{ provider, device_token, platform, app_instance_id }`
+  * `provider in {FCM, APNS, PUSH_PROTOCOL}`
+  * `platform in {ANDROID, IOS}`
+* idempotence: même `(user_id, app_instance_id, device_token)` => upsert sans doublon
+* réponses:
+  * `200` succès (registration active)
+  * `401 UNAUTHORIZED`
+  * `403 FORBIDDEN_ACTOR|FORBIDDEN_SCOPE`
+  * `422 VALIDATION_FAILED`
+  * `429 TOO_MANY_ATTEMPTS`
+
+`POST /auth/me/mobile-push/unregister`
+
+* security: `UserBearerAuth`
+* scope acteur: `USER_INTERACTIVE` (`client_kind=UI_MOBILE`)
+* body requis: `{ app_instance_id }`
+* idempotence: unregister idempotent (deuxième appel => `200`)
+* réponses:
+  * `200` succès
+  * `401 UNAUTHORIZED`
+  * `403 FORBIDDEN_ACTOR|FORBIDDEN_SCOPE`
+  * `422 VALIDATION_FAILED`
 
 
 ## 2) Assets

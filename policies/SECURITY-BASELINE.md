@@ -40,7 +40,7 @@ Objectif: en cas d'exfiltration partielle (DB, logs, token, backup), les donnée
 
 ## 5) Règles client UI (MUST)
 
-* UI (`UI_RUST`) DOIT utiliser login utilisateur (`POST /auth/login`)
+* UI web (`UI_WEB`) et UI mobile (`UI_MOBILE`) DOIVENT utiliser login utilisateur (`POST /auth/login`)
 * le token UI ne DOIT jamais être affiché/exporté en clair
 * l'UI ne DOIT pas proposer l'auto-révocation du token actif UI (anti lock-out)
 * stockage secret OS obligatoire:
@@ -48,6 +48,13 @@ Objectif: en cas d'exfiltration partielle (DB, logs, token, backup), les donnée
   * Windows: DPAPI/Credential Manager
   * Linux: Secret Service (ou store OS équivalent)
 * 2FA TOTP optionnelle au niveau compte, mais si active elle DOIT être appliquée au login UI et aux approvals sensibles UI
+
+Règles push mobile (v1.2, `UI_MOBILE`) :
+
+* un push mobile ne DOIT JAMAIS contenir token, secret, PII, adresse, GPS ou transcription
+* un push mobile DOIT rester un signal non autoritaire et déclencher un poll
+* le payload push DOIT être minimal (hint technique) et protégé contre replay (TTL/identifiant unique)
+* réception de push et poll déclenché DOIVENT être auditables, sans données sensibles
 
 ## 6) Règles client Agent/MCP (MUST)
 
