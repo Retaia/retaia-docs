@@ -176,7 +176,7 @@ Tests obligatoires :
 * rotation de secret client n’exige pas de réinstallation agent
 * cible Linux headless Raspberry Pi (Kodi/Plex) validée en non-régression
 * capacités IA (providers/modèles/transcription/suggestions) couvertes par le plan de tests v1.1 (hors conformité v1)
-* runtime status-driven validé: la vérité d'état est synchronisée par polling, même si un canal push (notification/WebSocket/SSE/webhook) existe
+* runtime status-driven validé: la vérité d'état est synchronisée par polling, même si un canal push existe (`FCM`, `APNs`, Push Protocol/EPNS, WebSocket, SSE, webhook, autres push)
 * polling jobs/policy respecte les intervalles contractuels et applique backoff+jitter sur `429`
 
 ## 1.3) Gates de non-régression obligatoires (release blockers)
