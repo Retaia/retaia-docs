@@ -97,6 +97,12 @@ Si une logique devient complexe :
 - pas de secrets dans le code, les commits ou les logs
 - pas de données réelles sensibles dans les tests
 
+### 6.1 Politique lib-first (normatif)
+
+- pour une préoccupation transverse (parsing CLI, sérialisation, gestion d'erreurs, notification OS, etc.), une librairie maintenue DOIT être préférée à une implémentation locale
+- une implémentation locale NE DOIT être introduite que si aucune librairie mature ne couvre le besoin, avec justification explicite en PR
+- les implémentations locales transitoires DOIVENT être planifiées pour migration vers une librairie cible
+
 
 ## 7) Qualité spécifique par repo
 

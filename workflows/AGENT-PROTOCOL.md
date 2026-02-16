@@ -73,6 +73,15 @@ Contrainte d’implémentation :
 
 * la stack agent DOIT être implémentée en Rust pour la portabilité binaire cross-platform et le service mode.
 
+### 3.2.1 Baseline implémentation Rust (normatif)
+
+Pour éviter la duplication locale de logique transverse :
+
+* le parsing CLI DOIT reposer sur une librairie dédiée et maintenue (`clap` recommandé), pas sur un parseur ad hoc
+* les types d'erreurs applicatives/infra DOIVENT utiliser une librairie standard d'errors typées (`thiserror` recommandé)
+* pour les agents GUI basés Tauri, les notifications desktop DOIVENT utiliser le plugin officiel `tauri-plugin-notification`
+* une implémentation locale n'est acceptable que si aucune librairie mature n'existe ou si une contrainte technique documentée l'impose
+
 ### 3.3 Modes d’auth agent (normatif)
 
 * mode non-interactif (service/daemon): `client_id + secret_key -> POST /auth/clients/token` ou OAuth2 client-credentials
