@@ -11,12 +11,12 @@ Ce document définit la matrice d'autorisation normative par endpoint, scope et 
 
 Acteurs normatifs :
 
-* `USER_INTERACTIVE` (client `UI_RUST` Rust/Tauri ou client `AGENT` opéré par un humain)
+* `USER_INTERACTIVE` (client `UI_WEB` web app ou desktop `RUST_UI`, `UI_MOBILE` Android/iOS, ou client `AGENT` opéré par un humain)
 * `AGENT_TECHNICAL` (daemon/service non-interactif)
 * `CLIENT_TECHNICAL` (client technique non-interactif, incluant MCP)
 * `ADMIN_INTERACTIVE` (sous-ensemble `USER_INTERACTIVE` avec droits admin)
-* `client_kind` interactif: `UI_RUST|AGENT`; `client_kind` technique: `AGENT|MCP`
-* rollout projet global: `UI_RUST` (client `RUST_UI`) et `MCP` (client `MCP_CLIENT`) sont livrés côté clients applicatifs à partir de la v1.1 globale
+* `client_kind` interactif: `UI_WEB|UI_MOBILE|AGENT`; `client_kind` technique: `AGENT|MCP`
+* rollout projet global: `UI_WEB` (clients `UI_WEB_APP` + `RUST_UI`) et `MCP` (`MCP_CLIENT`) en v1.1, `UI_MOBILE` en v1.2
 * gate applicatif: `app_feature_enabled.features.ai=false` => acteur `client_kind=MCP` refusé (`403 FORBIDDEN_SCOPE`) sur bootstrap/token/runtime
 
 ## 2) Matrice v1 (résumé)
@@ -67,7 +67,7 @@ Acteurs normatifs :
 
 * acteur: `ADMIN_INTERACTIVE`
 * scope: policy admin
-* contrainte: `client_kind=UI_RUST` => révocation refusée (`403`)
+* contrainte: `client_kind=UI_WEB` => révocation refusée (`403`)
 
 `POST /auth/clients/token`
 

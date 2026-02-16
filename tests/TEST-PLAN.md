@@ -7,8 +7,9 @@ Ce document définit le minimum de tests opposables pour valider une implémenta
 Tests obligatoires :
 
 * `v1` projet global : Core + Agent + `capabilities` + `feature_flags`
-* `v1.1` projet global : client `RUST_UI` (`client_kind=UI_RUST`) + client `MCP_CLIENT` (`client_kind=MCP`)
-* les suites UI/MCP sont classées en gates `v1.1` global même si l'API v1 les supporte contractuellement
+* `v1.1` projet global : clients `UI_WEB_APP` + `RUST_UI` (`client_kind=UI_WEB`) + client `MCP_CLIENT` (`client_kind=MCP`)
+* `v1.2` projet global : client mobile Android/iOS (`client_kind=UI_MOBILE`) + push mobile (status-driven)
+* les suites UI/MCP sont classées en gates `v1.1` global; les suites UI mobile/push en gates `v1.2`
 
 ## 1) State machine
 
@@ -84,7 +85,7 @@ Tests obligatoires :
   * bearer utilisateur valide => `200` + `server_policy.feature_flags`
   * bearer client technique valide (`OAuth2ClientCredentials`) => `200`
   * bearer absent/invalide => `401 UNAUTHORIZED`
-  * endpoint runtime canonique pour `UI_RUST`, `AGENT`, `MCP`
+  * endpoint runtime canonique pour `UI_WEB`, `AGENT`, `MCP`
 * `POST /auth/lost-password/request`:
   * body valide (`email`) => `202`
   * body invalide => `422 VALIDATION_FAILED`
@@ -111,14 +112,14 @@ Tests obligatoires :
   * bearer absent/invalide => `401 UNAUTHORIZED`
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
   * `client_id` invalide => `422 VALIDATION_FAILED`
-  * `client_id` de type `UI_RUST` protégé => `403` (non révocable via cet endpoint)
+  * `client_id` de type `UI_WEB` protégé => `403` (non révocable via cet endpoint)
 * `POST /auth/clients/token`:
   * `client_id + client_kind in {AGENT, MCP} + secret_key` valides => `200` + bearer token client
   * credentials client invalides => `401 UNAUTHORIZED`
   * body invalide => `422 VALIDATION_FAILED`
   * rate limit => `429 TOO_MANY_ATTEMPTS`
   * invariant: nouveau token minté pour un client révoque l’ancien token (1 token actif / client)
-  * `client_kind=UI_RUST` refusé (`403 FORBIDDEN_ACTOR`)
+  * `client_kind=UI_WEB` refusé (`403 FORBIDDEN_ACTOR`)
   * `client_kind=MCP` + `app_feature_enabled.features.ai=false` => `403 FORBIDDEN_SCOPE`
 * `POST /auth/clients/device/start`:
   * `client_kind in {AGENT, MCP}` => `200` + `device_code`, `user_code`, `verification_uri`, `verification_uri_complete`
@@ -147,12 +148,12 @@ Matrice de migration v1 runtime (gelée) :
   * le pilotage client est fait uniquement via `200` + `status in {PENDING, APPROVED, DENIED, EXPIRED}`
   * aucun pilotage via `401`/`403` n'est autorisé
 * `POST /auth/clients/token`:
-  * `client_kind=UI_RUST` doit être rejeté en `403 FORBIDDEN_ACTOR` uniquement
+  * `client_kind=UI_WEB` doit être rejeté en `403 FORBIDDEN_ACTOR` uniquement
   * rotation invalide immédiatement les tokens actifs du client
 * toutes réponses d’erreur 4xx/5xx auth conformes au schéma `ErrorResponse`
 * endpoints humains mutateurs exigent un bearer token (`UserBearerAuth`) conforme à la spec
-* même flux login/token validé sur clients interactifs: `UI_RUST` et `AGENT` (gate `v1.1` global pour `UI_RUST`)
-* compatibilité desktop validée: client `UI_RUST` (Rust/Tauri) utilise `POST /auth/login` + `Authorization: Bearer` (gate `v1.1` global)
+* même flux login/token validé sur clients interactifs: `UI_WEB`, `UI_MOBILE` et `AGENT` (gate `v1.2` pour `UI_MOBILE`)
+* compatibilité UI validée: `UI_WEB_APP` et `RUST_UI` (même `client_kind=UI_WEB`) utilisent `POST /auth/login` + `Authorization: Bearer`
 * anti lock-out: l'UI n'expose jamais le token en clair et n'offre pas d'action d'auto-révocation du token UI actif (gate `v1.1` global)
 * régression interdite: aucun endpoint runtime n'accepte encore `SessionCookieAuth` (Bearer-only)
 * 2FA optionnelle: compte sans 2FA active ne requiert pas OTP
@@ -177,7 +178,7 @@ Tests obligatoires :
 * cible Linux headless Raspberry Pi (Kodi/Plex) validée en non-régression
 * capacités IA (providers/modèles/transcription/suggestions) couvertes par le plan de tests v1.1 (hors conformité v1)
 * runtime status-driven validé: la vérité d'état est synchronisée par polling, même si un canal push existe (WebSocket, SSE, webhook, autres push)
-* push mobiles/wallet (`FCM`, `APNs`, Push Protocol/EPNS) couverts dans les gates `v1.2` pour le client UI Android/iOS uniquement
+* push mobiles/wallet (`FCM`, `APNs`, Push Protocol/EPNS) couverts dans les gates `v1.2` pour `UI_MOBILE` uniquement
 * polling jobs/policy respecte les intervalles contractuels et applique backoff+jitter sur `429`
 
 ## 1.3) Gates de non-régression obligatoires (release blockers)
@@ -191,15 +192,16 @@ Tests obligatoires :
 * Intégration auth/device:
   * `POST /auth/clients/device/poll` piloté uniquement via `200` + `status`
   * `POST /auth/clients/device/poll` -> `400 INVALID_DEVICE_CODE` pour code invalide
-  * `POST /auth/clients/token` -> `403 FORBIDDEN_ACTOR` pour `client_kind=UI_RUST`
+  * `POST /auth/clients/token` -> `403 FORBIDDEN_ACTOR` pour `client_kind=UI_WEB`
 * Compat client UI/Agent/MCP:
-  * UI_RUST, AGENT, MCP compatibles avec le flux status-driven (`PENDING|APPROVED|DENIED|EXPIRED`) (gate `v1.1` global pour UI_RUST/MCP)
+  * UI_WEB, AGENT, MCP compatibles avec le flux status-driven (`PENDING|APPROVED|DENIED|EXPIRED`) (gate `v1.1` global pour UI_WEB/MCP)
+  * UI_MOBILE compatible avec le modèle "push triggers poll only" (gate `v1.2`)
   * AGENT/MCP gèrent `429` (`SLOW_DOWN`/`TOO_MANY_ATTEMPTS`) avec retry/backoff déterministe
   * aucun client ne dépend encore de `401/403` pour la machine d’état device flow
   * aucun client ne traite un canal push serveur (WebSocket/SSE/webhook/notification) comme source de vérité runtime
   * un changement `server_policy.feature_flags` est pris en compte au prochain polling sans redéploiement client
 * Push mobile v1.2 (gates dédiées):
-  * scope limité au client UI mobile (Android/iOS), hors agent/MCP mobile
+  * scope limité au client `UI_MOBILE` (Android/iOS), hors agent/MCP mobile
   * un push mobile reçu déclenche un poll immédiat (`PUSH_TRIGGERS_POLL`)
   * un push mobile seul ne modifie aucun état sans confirmation poll (`PUSH_NOT_AUTHORITATIVE`)
   * payload push mobile ne contient aucune donnée sensible (`NO_SENSITIVE_PUSH_PAYLOAD`)
@@ -309,7 +311,7 @@ Tests obligatoires :
 * toute nouvelle feature est introduite derrière un flag
 * toute feature `v1.1+` est désactivée par défaut
 * source de vérité des flags = payload runtime de Core (`server_policy.feature_flags`), jamais un hardcode client
-* canal runtime flags défini et testé pour `AGENT` en v1, puis `UI_RUST` et `MCP` en v1.1 global via `GET /app/policy` (pas seulement `POST /agents/register`)
+* canal runtime flags défini et testé pour `AGENT` en v1, puis `UI_WEB` et `MCP` en v1.1, puis `UI_MOBILE` en v1.2 via `GET /app/policy` (pas seulement `POST /agents/register`)
 * distinction opposable: `capabilities` (agent/client), `feature_flags` (Core), `app_feature_enabled` (application) et `user_feature_enabled` (utilisateur) sont testées séparément
 * règle AND validée: capability + flag requis pour exécuter une action feature
 * ordre d’arbitrage validé: `feature_flags` -> `app_feature_enabled` -> `user_feature_enabled` -> dépendances/escalade
@@ -322,7 +324,7 @@ Tests obligatoires :
 * mapping des flags v1.1 conforme : `features.decisions.bulk` (+ flags IA dans le paquet normatif v1.1)
 * client feature OFF => UI/action API de la feature interdite
 * client feature ON => disponibilité immédiate sans redéploiement
-* `AGENT` applique les `feature_flags` runtime du Core en v1 ; `UI_RUST` et `MCP` les appliquent en v1.1 global
+* `AGENT` applique les `feature_flags` runtime du Core en v1 ; `UI_WEB` et `MCP` les appliquent en v1.1 ; `UI_MOBILE` les applique en v1.2
 
 Cas OFF/ON minimum :
 
@@ -330,10 +332,10 @@ Cas OFF/ON minimum :
 * flag ON + capability manquante côté agent => job non exécutable (`pending`/refus selon policy)
 * `features.decisions.bulk=OFF` : `/decisions/preview` et `/decisions/apply` non utilisables
 * `features.decisions.bulk=ON` : flux preview/apply utilisable
-* `UI_RUST` : OFF masque/neutralise la feature, ON l’active au prochain refresh flags
+* `UI_WEB` : OFF masque/neutralise la feature, ON l’active au prochain refresh flags
 * `AGENT` : OFF interdit job/patch liés à la feature, ON les autorise sans rebuild agent
 * `MCP` : OFF interdit les commandes/actions liées à la feature, ON les autorise sans redéploiement MCP
-* `UI_RUST` se base uniquement sur `effective_feature_enabled` (pas de décision locale sur flags bruts)
+* `UI_WEB` se base uniquement sur `effective_feature_enabled` (pas de décision locale sur flags bruts)
 * `app_feature_enabled.features.ai=OFF` : client `MCP` entièrement désactivé (bootstrap/token/appels runtime refusés)
 * `app_feature_enabled.features.ai=ON` : client `MCP` autorisé selon matrice authz et capabilities
 * `user_feature_enabled.features.ai=OFF` : fonctionnalités AI désactivées pour l’utilisateur courant sans impact global
@@ -418,7 +420,7 @@ Tests obligatoires :
 
 Tests obligatoires :
 
-* conformité au standard [`GPG-OPENPGP-STANDARD.md`](../policies/GPG-OPENPGP-STANDARD.md) sur tous les clients (`UI_RUST`, `AGENT`, `MCP`)
+* conformité au standard [`GPG-OPENPGP-STANDARD.md`](../policies/GPG-OPENPGP-STANDARD.md) sur tous les clients (`UI_WEB`, `UI_MOBILE`, `AGENT`, `MCP`)
 
 ## 8.9) Observabilité feature governance
 

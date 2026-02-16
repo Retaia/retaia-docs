@@ -26,7 +26,10 @@ The following consumer repositories must align with these specs:
 
 - Product vision: [`vision/PROJECT-BRIEF.md`](vision/PROJECT-BRIEF.md)
 - API contract: [`api/API-CONTRACTS.md`](api/API-CONTRACTS.md)
-- OpenAPI source: [`api/openapi/v1.yaml`](api/openapi/v1.yaml)
+- OpenAPI sources:
+  - [`api/openapi/v1.yaml`](api/openapi/v1.yaml) (runtime contract gate)
+  - [`api/openapi/v1.1.yaml`](api/openapi/v1.1.yaml) (planned)
+  - [`api/openapi/v1.2.yaml`](api/openapi/v1.2.yaml) (planned)
 - Authz matrix: [`policies/AUTHZ-MATRIX.md`](policies/AUTHZ-MATRIX.md)
 - Agent protocol: [`workflows/AGENT-PROTOCOL.md`](workflows/AGENT-PROTOCOL.md)
 - Test plan: [`tests/TEST-PLAN.md`](tests/TEST-PLAN.md)

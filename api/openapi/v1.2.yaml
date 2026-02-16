@@ -2,9 +2,9 @@ openapi: 3.1.0
 
 info:
   title: Retaia Core API
-  version: 1.1.0
+  version: 1.2.0
   description: |
-    Normative OpenAPI v1 for Retaia Core (minor features up to v1.1).
+    Normative OpenAPI v1.2 for Retaia Core (includes planned mobile UI scope).
 
     This API coordinates assets, processing jobs and agents.
     Agents are non-reliable by design.
@@ -296,6 +296,96 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "403":
           description: Forbidden scope (`FORBIDDEN_SCOPE`) when disabling protected core feature(s)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/me/mobile-push/register:
+    post:
+      tags: [Auth]
+      summary: Register mobile push endpoint for current user
+      description: |
+        Registers or updates a mobile push target for the authenticated user.
+        Planned v1.2 scope: `client_kind=UI_MOBILE` only.
+        Push notifications are non-authoritative signals and must trigger polling.
+      security:
+        - UserBearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MobilePushRegisterRequest"
+      responses:
+        "200":
+          description: Mobile push endpoint registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MobilePushRegisterResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden actor or scope (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many attempts (`TOO_MANY_ATTEMPTS`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/me/mobile-push/unregister:
+    post:
+      tags: [Auth]
+      summary: Unregister mobile push endpoint for current user
+      description: |
+        Unregisters a mobile push target for the authenticated user.
+        Planned v1.2 scope: `client_kind=UI_MOBILE` only.
+        Operation is idempotent.
+      security:
+        - UserBearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MobilePushUnregisterRequest"
+      responses:
+        "200":
+          description: Mobile push endpoint unregistered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MobilePushUnregisterResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden actor or scope (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`)
           content:
             application/json:
               schema:
@@ -1840,6 +1930,65 @@ components:
       properties:
         canceled:
           type: boolean
+
+    MobilePushProvider:
+      type: string
+      enum: [FCM, APNS, PUSH_PROTOCOL]
+
+    MobilePushPlatform:
+      type: string
+      enum: [ANDROID, IOS]
+
+    MobilePushRegisterRequest:
+      type: object
+      additionalProperties: false
+      required: [provider, device_token, platform, app_instance_id]
+      properties:
+        provider:
+          $ref: "#/components/schemas/MobilePushProvider"
+        device_token:
+          type: string
+        platform:
+          $ref: "#/components/schemas/MobilePushPlatform"
+        app_instance_id:
+          type: string
+
+    MobilePushRegisterResponse:
+      type: object
+      additionalProperties: false
+      required: [registered, provider, platform, app_instance_id]
+      properties:
+        registered:
+          type: boolean
+          enum: [true]
+        provider:
+          $ref: "#/components/schemas/MobilePushProvider"
+        platform:
+          $ref: "#/components/schemas/MobilePushPlatform"
+        app_instance_id:
+          type: string
+        registered_at:
+          type: string
+          format: date-time
+
+    MobilePushUnregisterRequest:
+      type: object
+      additionalProperties: false
+      required: [app_instance_id]
+      properties:
+        app_instance_id:
+          type: string
+
+    MobilePushUnregisterResponse:
+      type: object
+      additionalProperties: false
+      required: [unregistered, app_instance_id]
+      properties:
+        unregistered:
+          type: boolean
+          enum: [true]
+        app_instance_id:
+          type: string
 
     ServerPolicy:
       type: object

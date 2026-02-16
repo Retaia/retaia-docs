@@ -31,7 +31,7 @@ Portée d'exécution :
 * Tout claim est **atomique**.
 * Le pilotage runtime est status-driven par polling HTTP: l'agent lit l'état Core par polling.
 * Un canal push serveur-vers-agent/client peut exister pour réveiller/alerter/diffuser des infos (WebSocket, SSE, webhook, autres push).
-* Les push mobiles/wallet (`FCM`, `APNs`, Push Protocol/EPNS) sont planifiés en **v1.2** (avec support mobile).
+* Les push mobiles/wallet (`FCM`, `APNs`, Push Protocol/EPNS) sont planifiés en **v1.2** pour `UI_MOBILE` uniquement.
 * Ces push sont autorisés, mais ne sont jamais la source de vérité métier.
 
 ### 2.1 Polling runtime (normatif)
@@ -116,7 +116,7 @@ Règles :
 
 ### 3.5 Local-first AI/transcription (planned v1.1+)
 
-Pour `UI_RUST`, `AGENT` et `MCP` :
+Pour `UI_WEB`, `UI_MOBILE`, `AGENT` et `MCP` :
 
 * exécution local-first obligatoire pour les workloads AI/transcription quand un modèle local compatible est disponible
 * transcription locale minimum supportée: `Whisper.cpp`
