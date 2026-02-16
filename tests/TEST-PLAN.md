@@ -177,7 +177,7 @@ Tests obligatoires :
 * cible Linux headless Raspberry Pi (Kodi/Plex) validée en non-régression
 * capacités IA (providers/modèles/transcription/suggestions) couvertes par le plan de tests v1.1 (hors conformité v1)
 * runtime status-driven validé: la vérité d'état est synchronisée par polling, même si un canal push existe (WebSocket, SSE, webhook, autres push)
-* push mobiles/wallet (`FCM`, `APNs`, Push Protocol/EPNS) couverts dans les gates `v1.2` (quand le support mobile est livré)
+* push mobiles/wallet (`FCM`, `APNs`, Push Protocol/EPNS) couverts dans les gates `v1.2` pour le client UI Android/iOS uniquement
 * polling jobs/policy respecte les intervalles contractuels et applique backoff+jitter sur `429`
 
 ## 1.3) Gates de non-régression obligatoires (release blockers)
@@ -199,6 +199,7 @@ Tests obligatoires :
   * aucun client ne traite un canal push serveur (WebSocket/SSE/webhook/notification) comme source de vérité runtime
   * un changement `server_policy.feature_flags` est pris en compte au prochain polling sans redéploiement client
 * Push mobile v1.2 (gates dédiées):
+  * scope limité au client UI mobile (Android/iOS), hors agent/MCP mobile
   * un push mobile reçu déclenche un poll immédiat (`PUSH_TRIGGERS_POLL`)
   * un push mobile seul ne modifie aucun état sans confirmation poll (`PUSH_NOT_AUTHORITATIVE`)
   * payload push mobile ne contient aucune donnée sensible (`NO_SENSITIVE_PUSH_PAYLOAD`)
