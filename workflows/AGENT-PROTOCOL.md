@@ -75,12 +75,12 @@ Contrainte d’implémentation :
 
 ### 3.2.1 Baseline implémentation Rust (normatif)
 
-Pour éviter la duplication locale de logique transverse :
+Pour éviter le code local à maintenir :
 
-* le parsing CLI DOIT reposer sur une librairie dédiée et maintenue (`clap` recommandé), pas sur un parseur ad hoc
-* les types d'erreurs applicatives/infra DOIVENT utiliser une librairie standard d'errors typées (`thiserror` recommandé)
+* le parsing CLI DOIT reposer sur une librairie dédiée et maintenue (`clap`)
+* les types d'erreurs applicatives/infra DOIVENT utiliser une librairie standard d'errors typées (`thiserror`)
 * pour les agents GUI basés Tauri, les notifications desktop DOIVENT utiliser le plugin officiel `tauri-plugin-notification`
-* une implémentation locale n'est acceptable que si aucune librairie mature n'existe ou si une contrainte technique documentée l'impose
+* l'implémentation locale d'une préoccupation transverse est interdite tant qu'une librairie maintenue existe
 
 ### 3.3 Modes d’auth agent (normatif)
 
