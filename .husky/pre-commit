@@ -14,3 +14,5 @@ if [ -n "$VERSIONS" ]; then
     git add "contracts/openapi-$v.sha256"
   done
 fi
+
+npm run -s check:contract-drift

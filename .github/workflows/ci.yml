@@ -33,9 +33,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Verify OpenAPI contract snapshot
+      - name: Verify OpenAPI contract snapshots
         run: |
-          test -f contracts/openapi-v1.sha256
-          EXPECTED="$(cat contracts/openapi-v1.sha256)"
-          CURRENT="$(shasum -a 256 api/openapi/v1.yaml | awk '{print $1}')"
-          test "$EXPECTED" = "$CURRENT"
+          for VERSION in v1 v1.1 v1.2; do
+            HASH_FILE="contracts/openapi-${VERSION}.sha256"
+            SPEC_FILE="api/openapi/${VERSION}.yaml"
+            test -f "$HASH_FILE"
+            test -f "$SPEC_FILE"
+            EXPECTED="$(cat "$HASH_FILE")"
+            CURRENT="$(shasum -a 256 "$SPEC_FILE" | awk '{print $1}')"
+            test "$EXPECTED" = "$CURRENT"
+          done
