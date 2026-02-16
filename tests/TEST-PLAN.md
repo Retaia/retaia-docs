@@ -196,8 +196,14 @@ Tests obligatoires :
   * UI_RUST, AGENT, MCP compatibles avec le flux status-driven (`PENDING|APPROVED|DENIED|EXPIRED`) (gate `v1.1` global pour UI_RUST/MCP)
   * AGENT/MCP gèrent `429` (`SLOW_DOWN`/`TOO_MANY_ATTEMPTS`) avec retry/backoff déterministe
   * aucun client ne dépend encore de `401/403` pour la machine d’état device flow
-* aucun client ne traite un canal push serveur (WebSocket/SSE/webhook/notification) comme source de vérité runtime
+  * aucun client ne traite un canal push serveur (WebSocket/SSE/webhook/notification) comme source de vérité runtime
   * un changement `server_policy.feature_flags` est pris en compte au prochain polling sans redéploiement client
+* Push mobile v1.2 (gates dédiées):
+  * un push mobile reçu déclenche un poll immédiat (`PUSH_TRIGGERS_POLL`)
+  * un push mobile seul ne modifie aucun état sans confirmation poll (`PUSH_NOT_AUTHORITATIVE`)
+  * payload push mobile ne contient aucune donnée sensible (`NO_SENSITIVE_PUSH_PAYLOAD`)
+  * push dupliqué/rejoué est ignoré (dédup + TTL)
+  * perte de push n'empêche pas la convergence d'état (polling périodique)
 
 ## 2) Jobs & leases
 

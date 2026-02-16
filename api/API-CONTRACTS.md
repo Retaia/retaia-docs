@@ -94,6 +94,17 @@ Objectif : fournir une surface stable consommée par :
 * Le pilotage d'état du device flow reste strictement status-driven via `POST /auth/clients/device/poll` (`200` + `status`).
 * Les opérations mutatrices REST (`POST`, `PATCH`, etc.) restent autorisées selon la matrice auth/authz.
 
+Règles push mobile v1.2 (opposables) :
+
+* `PUSH_NOT_AUTHORITATIVE` : un push mobile ne DOIT JAMAIS être traité comme état métier final.
+* `PUSH_TRIGGERS_POLL` : la réception d'un push mobile DOIT déclencher un poll des endpoints contractuels.
+* `POLL_IS_SOURCE_OF_TRUTH` : seule la réponse API Core fait foi pour appliquer un changement d'état.
+* `NO_SENSITIVE_PUSH_PAYLOAD` : un push mobile NE DOIT PAS contenir token, secret, PII, adresse, GPS, transcription.
+* `PUSH_MINIMAL_PAYLOAD` : payload limité à des hints techniques (ex: `event_type`, `hint_id`, `issued_at`, `ttl`).
+* `PUSH_DEDUP_REQUIRED` : le client DOIT dédupliquer via `hint_id` (ou identifiant équivalent) pour éviter les doubles traitements.
+* `PUSH_REPLAY_PROTECTION` : push expiré/dupliqué ignoré; TTL et unicité obligatoires.
+* `PUSH_OPTIONAL_FALLBACK_POLL` : absence de push ne doit jamais bloquer; polling périodique reste actif.
+
 Mapping normatif v1.1 (base actuelle, obligatoire pour tous les consommateurs) :
 
 * `features.decisions.bulk` :
