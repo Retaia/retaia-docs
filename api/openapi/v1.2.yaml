@@ -1,0 +1,2387 @@
+openapi: 3.1.0
+
+info:
+  title: Retaia Core API
+  version: 1.2.0
+  description: |
+    Normative OpenAPI v1.2 for Retaia Core (includes planned mobile UI scope).
+
+    This API coordinates assets, processing jobs and agents.
+    Agents are non-reliable by design.
+    Jobs may remain pending indefinitely if no compatible agent is available.
+    AI-powered features are planned for v1.1+ and are out of v1 conformance scope.
+
+servers:
+  - url: /api/v1
+
+tags:
+  - name: Auth
+  - name: Assets
+  - name: Agents
+  - name: Jobs
+  - name: Derived
+  - name: Batches
+  - name: Decisions
+  - name: Purge
+
+paths:
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: User login with email and password
+      description: Interactive login endpoint for supported human-operated clients (`UI_WEB`, `UI_MOBILE`, and `AGENT`). Supports optional TOTP 2FA code when enabled.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthLoginRequest"
+      responses:
+        "200":
+          description: Login success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthLoginSuccess"
+        "401":
+          description: Invalid credentials or 2FA challenge failure (`UNAUTHORIZED`, `MFA_REQUIRED`, `INVALID_2FA_CODE`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Email not verified (`EMAIL_NOT_VERIFIED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many attempts (`TOO_MANY_ATTEMPTS`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/2fa/setup:
+    post:
+      tags: [Auth]
+      summary: Setup TOTP 2FA for current user
+      description: |
+        Starts TOTP enrollment for external authenticator apps (Authy, Google Authenticator, 1Password, etc.).
+        Returns provisioning material (`otpauth://` URI and secret) to be confirmed by `/auth/2fa/enable`.
+      security:
+        - UserBearerAuth: []
+      responses:
+        "200":
+          description: TOTP enrollment material generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Auth2faSetupResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: 2FA already enabled (`MFA_ALREADY_ENABLED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/2fa/enable:
+    post:
+      tags: [Auth]
+      summary: Confirm and enable TOTP 2FA
+      security:
+        - UserBearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Auth2faOtpRequest"
+      responses:
+        "200":
+          description: 2FA enabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Auth2faEnableResponse"
+        "400":
+          description: Invalid TOTP code (`INVALID_2FA_CODE`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: 2FA already enabled (`MFA_ALREADY_ENABLED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/2fa/disable:
+    post:
+      tags: [Auth]
+      summary: Disable TOTP 2FA
+      security:
+        - UserBearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Auth2faOtpRequest"
+      responses:
+        "200":
+          description: 2FA disabled
+        "400":
+          description: Invalid TOTP code (`INVALID_2FA_CODE`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: 2FA is not enabled (`MFA_NOT_ENABLED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/2fa/recovery-codes/regenerate:
+    post:
+      tags: [Auth]
+      summary: Regenerate backup recovery codes for current user
+      security:
+        - UserBearerAuth: []
+      responses:
+        "200":
+          description: Recovery codes regenerated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Auth2faRecoveryCodesResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: 2FA is not enabled (`MFA_NOT_ENABLED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout current user token session
+      security:
+        - UserBearerAuth: []
+      responses:
+        "200":
+          description: Logout success
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current authenticated user
+      security:
+        - UserBearerAuth: []
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthCurrentUser"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/me/features:
+    get:
+      tags: [Auth]
+      summary: Get current user feature preferences
+      description: |
+        Returns user-level feature preferences (`user_feature_enabled`) and effective availability.
+        Effective availability is computed with AND semantics:
+        `feature_flags` AND `app_feature_enabled` AND `user_feature_enabled` AND dependency constraints.
+      security:
+        - UserBearerAuth: []
+      responses:
+        "200":
+          description: Current user feature preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserFeaturesResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      tags: [Auth]
+      summary: Update current user feature preferences
+      description: |
+        Updates user-level feature preferences (`user_feature_enabled`) for the current authenticated user.
+        Core v1 global features are protected and cannot be disabled at user scope.
+      security:
+        - UserBearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserFeaturesUpdateRequest"
+      responses:
+        "200":
+          description: Updated current user feature preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserFeaturesResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden scope (`FORBIDDEN_SCOPE`) when disabling protected core feature(s)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /app/features:
+    get:
+      tags: [Auth]
+      summary: Get effective app feature switches
+      description: |
+        Returns global app switches (`app_feature_enabled`).
+        Also returns dependency/escalation metadata for deterministic client behavior.
+        Effective global availability requires Core `feature_flags` AND `app_feature_enabled`.
+        Normative gate: when `app_feature_enabled.features.ai=false`, `client_kind=MCP` is disabled at runtime.
+        Admin-only endpoint.
+        Runtime payload contract is stable: `app_feature_enabled`, `feature_governance`, `core_v1_global_features`.
+      security:
+        - UserBearerAuth: []
+      responses:
+        "200":
+          description: Effective app feature switches
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppFeaturesResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden actor or scope (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      tags: [Auth]
+      summary: Update effective app feature switches
+      description: |
+        Updates effective app switches (`app_feature_enabled`).
+        Admin-only operation.
+      security:
+        - UserBearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppFeaturesUpdateRequest"
+      responses:
+        "200":
+          description: Updated effective app feature switches
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppFeaturesResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden actor or scope (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /app/policy:
+    get:
+      tags: [Auth]
+      summary: Get runtime app policy
+      description: |
+        Returns runtime `server_policy` including `feature_flags`.
+        This endpoint is the canonical runtime policy transport for UI_WEB, UI_MOBILE, AGENT, and MCP clients.
+        Clients may optionally send their supported feature-flags contract version for compatibility negotiation.
+      security:
+        - UserBearerAuth: []
+        - OAuth2ClientCredentials: []
+      parameters:
+        - name: client_feature_flags_contract_version
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+            examples: ["1.2.0"]
+          description: Optional client-advertised feature-flags contract version (SemVer).
+      responses:
+        "200":
+          description: Runtime app policy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppPolicyResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "426":
+          description: Unsupported feature-flags contract version (`UNSUPPORTED_FEATURE_FLAGS_CONTRACT_VERSION`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/lost-password/request:
+    post:
+      tags: [Auth]
+      summary: Request lost password reset email
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthEmailRequest"
+      responses:
+        "202":
+          description: Request accepted
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many attempts (`TOO_MANY_ATTEMPTS`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/lost-password/reset:
+    post:
+      tags: [Auth]
+      summary: Reset password with token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthLostPasswordResetRequest"
+      responses:
+        "200":
+          description: Password reset success
+        "400":
+          description: Invalid token (`INVALID_TOKEN`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/verify-email/request:
+    post:
+      tags: [Auth]
+      summary: Request verification email
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthEmailRequest"
+      responses:
+        "202":
+          description: Request accepted
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many attempts (`TOO_MANY_ATTEMPTS`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/verify-email/confirm:
+    post:
+      tags: [Auth]
+      summary: Confirm email verification token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthTokenRequest"
+      responses:
+        "200":
+          description: Email verified
+        "400":
+          description: Invalid token (`INVALID_TOKEN`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/verify-email/admin-confirm:
+    post:
+      tags: [Auth]
+      summary: Admin confirms user email verification
+      description: Requires an authenticated admin actor, per AUTHZ matrix (FORBIDDEN_ACTOR or FORBIDDEN_SCOPE on authz failure).
+      security:
+        - UserBearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthEmailRequest"
+      responses:
+        "200":
+          description: Email verified by admin
+        "403":
+          description: Forbidden actor or scope (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: User not found (`USER_NOT_FOUND`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/clients/{client_id}/revoke-token:
+    post:
+      tags: [Auth]
+      summary: Revoke one technical client token access
+      description: |
+        Admin-only endpoint for base UI operations.
+        Invalidates active bearer token(s) for the targeted technical client.
+      security:
+        - UserBearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ClientIdPath"
+      responses:
+        "200":
+          description: Client token(s) revoked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthRevokeClientTokenResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden actor or scope (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`). UI interactive client token is protected and cannot be revoked here.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/clients/token:
+    post:
+      tags: [Auth]
+      summary: Mint client bearer token from secret key
+      description: |
+        Exchanges `(client_id, secret_key)` for a bearer token.
+        Normative rule: one active token per technical client_id; minting a new token revokes the previous one.
+        This endpoint is for technical non-interactive clients only.
+        Runtime gate: when `app_feature_enabled.features.ai=false`, `client_kind=MCP` MUST be rejected.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthClientTokenRequest"
+      responses:
+        "200":
+          description: Client token minted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthClientTokenSuccess"
+        "401":
+          description: Invalid client credentials (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden client kind or disabled app switch for this flow (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many attempts (`TOO_MANY_ATTEMPTS`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/clients/device/start:
+    post:
+      tags: [Auth]
+      summary: Start device authorization flow for technical client bootstrap
+      description: |
+        Starts a browser-assisted authorization flow (GitHub-style) for `AGENT`/`MCP`.
+        User validation (and optional 2FA) happens via `verification_uri`.
+        Runtime gate: when `app_feature_enabled.features.ai=false`, `client_kind=MCP` MUST be rejected.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthDeviceStartRequest"
+      responses:
+        "200":
+          description: Device flow started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthDeviceStartResponse"
+        "403":
+          description: Forbidden actor or disabled app switch (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many attempts (`TOO_MANY_ATTEMPTS`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/clients/device/poll:
+    post:
+      tags: [Auth]
+      summary: Poll device authorization status
+      description: |
+        Polls authorization status for a previously started device flow.
+        On approval, returns one-shot `secret_key`.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthDevicePollRequest"
+      responses:
+        "200":
+          description: Device authorization status (`PENDING`, `APPROVED`, `DENIED`, `EXPIRED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthDevicePollResponse"
+        "400":
+          description: Invalid device code (`INVALID_DEVICE_CODE`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Polling too fast (`SLOW_DOWN` or `TOO_MANY_ATTEMPTS`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/clients/device/cancel:
+    post:
+      tags: [Auth]
+      summary: Cancel an in-progress device authorization flow
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthDeviceCancelRequest"
+      responses:
+        "200":
+          description: Device flow canceled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthDeviceCancelResponse"
+        "400":
+          description: Invalid or expired device code (`INVALID_DEVICE_CODE` or `EXPIRED_DEVICE_CODE`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/clients/{client_id}/rotate-secret:
+    post:
+      tags: [Auth]
+      summary: Rotate client secret key
+      description: |
+        Admin-only operation.
+        Rotates secret key for one client and invalidates active bearer token(s).
+      security:
+        - UserBearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ClientIdPath"
+      responses:
+        "200":
+          description: Client secret rotated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthRotateClientSecretResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden actor or scope (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /assets:
+    get:
+      tags: [Assets]
+      summary: List assets
+      security:
+        - UserBearerAuth: []
+        - OAuth2ClientCredentials: ["assets:read"]
+      parameters:
+        - name: state
+          in: query
+          schema:
+            $ref: "#/components/schemas/AssetState"
+        - name: media_type
+          in: query
+          schema:
+            type: string
+            enum: [VIDEO, PHOTO, AUDIO]
+        - name: tags
+          in: query
+          schema:
+            type: string
+        - name: has_proxy
+          in: query
+          schema:
+            type: boolean
+        - name: tags_mode
+          in: query
+          schema:
+            type: string
+            enum: [AND, OR]
+        - name: q
+          in: query
+          schema:
+            type: string
+          description: Full-text query over filename, notes and transcript_text (available in v1).
+        - name: location_country
+          in: query
+          schema:
+            type: string
+          description: Country-level location filter (uses secure derived search index).
+        - name: location_city
+          in: query
+          schema:
+            type: string
+          description: City-level location filter (uses secure derived search index).
+        - name: geo_bbox
+          in: query
+          schema:
+            type: string
+            example: "4.30,50.80,4.45,50.92"
+          description: Bounding box filter `min_lon,min_lat,max_lon,max_lat` (uses secure derived spatial index).
+        - name: sort
+          in: query
+          schema:
+            type: string
+            example: -created_at
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Asset list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AssetSummary"
+                  next_cursor:
+                    type: string
+                    nullable: true
+
+  /assets/{uuid}:
+    get:
+      tags: [Assets]
+      summary: Get one asset detail
+      security:
+        - UserBearerAuth: []
+        - OAuth2ClientCredentials: ["assets:read"]
+      parameters:
+        - $ref: "#/components/parameters/UuidPath"
+      responses:
+        "200":
+          description: Asset detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetDetail"
+    patch:
+      tags: [Assets]
+      summary: Update human metadata on one asset
+      security:
+        - UserBearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/UuidPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tags:
+                  type: array
+                  items:
+                    type: string
+                notes:
+                  type: string
+                fields:
+                  type: object
+                  additionalProperties: true
+      responses:
+        "200":
+          description: Asset updated
+        "410":
+          description: Asset is purged
+
+  /agents/register:
+    post:
+      tags: [Agents]
+      summary: Register a processing agent
+      security:
+        - OAuth2ClientCredentials: ["jobs:claim"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [agent_name, agent_version, capabilities]
+              properties:
+                agent_name:
+                  type: string
+                agent_version:
+                  type: string
+                platform:
+                  type: string
+                capabilities:
+                  type: array
+                  items:
+                    type: string
+                client_feature_flags_contract_version:
+                  type: string
+                  pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+                  description: Optional client-advertised feature-flags contract version (SemVer).
+                max_parallel_jobs:
+                  type: integer
+      responses:
+        "200":
+          description: Agent registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  agent_id:
+                    type: string
+                  effective_capabilities:
+                    type: array
+                    items:
+                      type: string
+                  capability_warnings:
+                    type: array
+                    items:
+                      type: string
+                  server_policy:
+                    $ref: "#/components/schemas/ServerPolicy"
+        "426":
+          description: Unsupported feature-flags contract version (`UNSUPPORTED_FEATURE_FLAGS_CONTRACT_VERSION`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /assets/{uuid}/reprocess:
+    post:
+      tags: [Assets]
+      summary: Trigger explicit reprocess
+      security:
+        - UserBearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/UuidPath"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: Reprocess accepted
+        "409":
+          description: State conflict or idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /assets/{uuid}/decision:
+    post:
+      tags: [Decisions]
+      summary: Set or update a human decision
+      security:
+        - UserBearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/UuidPath"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [KEEP, REJECT, CLEAR]
+      responses:
+        "200":
+          description: Decision applied
+        "409":
+          description: State conflict or idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /assets/{uuid}/reopen:
+    post:
+      tags: [Decisions]
+      summary: Reopen archived or rejected asset to decision pending
+      security:
+        - UserBearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/UuidPath"
+      responses:
+        "200":
+          description: Asset reopened
+        "409":
+          description: State conflict
+
+  /jobs:
+    get:
+      tags: [Jobs]
+      summary: List claimable jobs for the authenticated agent
+      security:
+        - OAuth2ClientCredentials: ["jobs:claim"]
+      description: |
+        Returns jobs with status `pending`
+        and compatible with the agent capabilities.
+      responses:
+        "200":
+          description: List of jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Job"
+
+  /jobs/{job_id}/claim:
+    post:
+      tags: [Jobs]
+      summary: Claim a job (atomic lease)
+      security:
+        - OAuth2ClientCredentials: ["jobs:claim"]
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Job claimed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "409":
+          description: Job not claimable
+
+  /jobs/{job_id}/heartbeat:
+    post:
+      tags: [Jobs]
+      summary: Extend job lease
+      security:
+        - OAuth2ClientCredentials: ["jobs:heartbeat"]
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lock_token]
+              properties:
+                lock_token:
+                  type: string
+      responses:
+        "200":
+          description: Lease extended
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  locked_until:
+                    type: string
+                    format: date-time
+
+  /jobs/{job_id}/submit:
+    post:
+      tags: [Jobs]
+      summary: Submit job result patch
+      description: |
+        Submits one job result patch.
+      security:
+        - OAuth2ClientCredentials: ["jobs:submit"]
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobSubmitRequest"
+      responses:
+        "200":
+          description: Job completed
+        "409":
+          description: Idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "423":
+          description: Invalid or missing lock
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /jobs/{job_id}/fail:
+    post:
+      tags: [Jobs]
+      summary: Mark job as failed
+      security:
+        - OAuth2ClientCredentials: ["jobs:submit"]
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lock_token, error_code, retryable]
+              properties:
+                lock_token:
+                  type: string
+                error_code:
+                  type: string
+                message:
+                  type: string
+                retryable:
+                  type: boolean
+      responses:
+        "200":
+          description: Job failed recorded
+        "409":
+          description: Idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /assets/{uuid}/derived/upload/init:
+    post:
+      tags: [Derived]
+      summary: Initialize derived upload
+      security:
+        - OAuth2ClientCredentials: ["jobs:submit"]
+      parameters:
+        - $ref: "#/components/parameters/UuidPath"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kind, content_type, size_bytes]
+              properties:
+                kind:
+                  type: string
+                  enum: [proxy_video, proxy_audio, proxy_photo, thumb, waveform]
+                content_type:
+                  type: string
+                size_bytes:
+                  type: integer
+                sha256:
+                  type: string
+      responses:
+        "200":
+          description: Upload initialized
+
+  /assets/{uuid}/derived/upload/part:
+    post:
+      tags: [Derived]
+      summary: Upload one part
+      security:
+        - OAuth2ClientCredentials: ["jobs:submit"]
+      parameters:
+        - $ref: "#/components/parameters/UuidPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [upload_id, part_number]
+              properties:
+                upload_id:
+                  type: string
+                part_number:
+                  type: integer
+      responses:
+        "200":
+          description: Part uploaded
+
+  /assets/{uuid}/derived/upload/complete:
+    post:
+      tags: [Derived]
+      summary: Complete derived upload
+      security:
+        - OAuth2ClientCredentials: ["jobs:submit"]
+      parameters:
+        - $ref: "#/components/parameters/UuidPath"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [upload_id]
+              properties:
+                upload_id:
+                  type: string
+                parts:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        "200":
+          description: Upload completed
+
+  /assets/{uuid}/derived:
+    get:
+      tags: [Derived]
+      summary: List available derived files for one asset
+      security:
+        - UserBearerAuth: []
+        - OAuth2ClientCredentials: ["assets:read"]
+      parameters:
+        - $ref: "#/components/parameters/UuidPath"
+      responses:
+        "200":
+          description: Derived list
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /assets/{uuid}/derived/{kind}:
+    get:
+      tags: [Derived]
+      summary: Fetch one derived file by kind
+      security:
+        - UserBearerAuth: []
+        - OAuth2ClientCredentials: ["assets:read"]
+      parameters:
+        - $ref: "#/components/parameters/UuidPath"
+        - name: kind
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [proxy_video, proxy_audio, proxy_photo, thumb, waveform]
+      responses:
+        "200":
+          description: Derived content
+        "404":
+          description: Not found
+
+  /batches/moves/preview:
+    post:
+      tags: [Batches]
+      summary: Preview move batch
+      security:
+        - UserBearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [include]
+              properties:
+                include:
+                  type: string
+                  enum: [KEEP, REJECT, BOTH]
+                limit:
+                  type: integer
+      responses:
+        "200":
+          description: Move preview
+
+  /batches/moves:
+    post:
+      tags: [Batches]
+      summary: Execute or dry-run move batch
+      security:
+        - UserBearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [selection, mode]
+              properties:
+                selection:
+                  type: object
+                  additionalProperties: true
+                mode:
+                  type: string
+                  enum: [DRY_RUN, EXECUTE]
+      responses:
+        "200":
+          description: Batch accepted
+
+  /batches/moves/{batch_id}:
+    get:
+      tags: [Batches]
+      summary: Get move batch status and report
+      security:
+        - UserBearerAuth: []
+      parameters:
+        - name: batch_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Batch status
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /decisions/preview:
+    post:
+      tags: [Decisions]
+      summary: Preview bulk decisions
+      description: Available in v1.1+ when `features.decisions.bulk=true`.
+      security:
+        - UserBearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action, filter, max_items]
+              properties:
+                action:
+                  type: string
+                  enum: [KEEP, REJECT]
+                filter:
+                  type: object
+                  additionalProperties: true
+                max_items:
+                  type: integer
+      responses:
+        "200":
+          description: Decision preview
+
+  /decisions/apply:
+    post:
+      tags: [Decisions]
+      summary: Apply bulk decisions from preview token
+      description: Available in v1.1+ when `features.decisions.bulk=true`.
+      security:
+        - UserBearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [approval_token, confirm]
+              properties:
+                approval_token:
+                  type: string
+                confirm:
+                  type: boolean
+                  enum: [true]
+      responses:
+        "200":
+          description: Decisions applied
+
+  /assets/{uuid}/purge:
+    post:
+      tags: [Purge]
+      summary: Purge one rejected asset
+      security:
+        - UserBearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/UuidPath"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirm]
+              properties:
+                confirm:
+                  type: boolean
+                  enum: [true]
+      responses:
+        "200":
+          description: Purge executed
+        "409":
+          description: State conflict or idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /assets/{uuid}/purge/preview:
+    post:
+      tags: [Purge]
+      summary: Preview purge impact for one asset
+      security:
+        - UserBearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/UuidPath"
+      responses:
+        "200":
+          description: Purge preview
+
+components:
+  securitySchemes:
+    UserBearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: User bearer token used by human-operated interactive clients.
+    OAuth2ClientCredentials:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: /api/v1/oauth/token
+          scopes:
+            assets:read: Read assets and derived metadata.
+            assets:write: Update human metadata and trigger reprocess.
+            decisions:write: Apply human decisions.
+            jobs:claim: Discover and claim jobs.
+            jobs:heartbeat: Extend job leases.
+            jobs:submit: Submit job completion/failure and derived uploads.
+            batches:execute: Preview and execute move batches.
+            purge:execute: Preview and execute purge operations.
+
+  parameters:
+    UuidPath:
+      name: uuid
+      in: path
+      required: true
+      schema:
+        type: string
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+    ClientIdPath:
+      name: client_id
+      in: path
+      required: true
+      schema:
+        type: string
+
+  schemas:
+    AuthLoginRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        client_id:
+          type: string
+          description: Optional client identifier. If omitted, server derives one from runtime client identity.
+        client_kind:
+          $ref: "#/components/schemas/ClientKind"
+        otp_code:
+          type: string
+          description: 6-digit TOTP code when 2FA is enabled on account.
+        recovery_code:
+          type: string
+          description: One-shot backup code when TOTP app is unavailable.
+
+    AuthLoginSuccess:
+      type: object
+      additionalProperties: false
+      required: [access_token, token_type]
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          enum: [Bearer]
+        expires_in:
+          type: integer
+          description: Access token lifetime in seconds.
+        refresh_token:
+          type: string
+        client_id:
+          type: string
+          description: Effective client identifier bound to this token.
+        client_kind:
+          $ref: "#/components/schemas/ClientKind"
+
+    AuthEmailRequest:
+      type: object
+      additionalProperties: false
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+
+    AuthTokenRequest:
+      type: object
+      additionalProperties: false
+      required: [token]
+      properties:
+        token:
+          type: string
+
+    AuthLostPasswordResetRequest:
+      type: object
+      additionalProperties: false
+      required: [token, new_password]
+      properties:
+        token:
+          type: string
+        new_password:
+          type: string
+
+    AuthCurrentUser:
+      type: object
+      additionalProperties: true
+      required: [email]
+      properties:
+        uuid:
+          type: string
+        email:
+          type: string
+          format: email
+        display_name:
+          type: string
+        email_verified:
+          type: boolean
+        roles:
+          type: array
+          items:
+            type: string
+        mfa_enabled:
+          type: boolean
+
+    Auth2faOtpRequest:
+      type: object
+      additionalProperties: false
+      required: [otp_code]
+      properties:
+        otp_code:
+          type: string
+          pattern: "^[0-9]{6}$"
+
+    Auth2faSetupResponse:
+      type: object
+      additionalProperties: false
+      required: [method, issuer, account_name, secret, otpauth_uri]
+      properties:
+        method:
+          type: string
+          enum: [TOTP]
+        issuer:
+          type: string
+        account_name:
+          type: string
+          description: Login identifier shown in authenticator app.
+        secret:
+          type: string
+          description: Base32 TOTP secret (show once during setup).
+        otpauth_uri:
+          type: string
+          description: Provisioning URI for authenticator apps.
+        qr_svg:
+          type: string
+          description: Optional inline SVG QR code payload.
+
+    Auth2faEnableResponse:
+      type: object
+      additionalProperties: false
+      required: [mfa_enabled, recovery_codes]
+      properties:
+        mfa_enabled:
+          type: boolean
+          enum: [true]
+        recovery_codes:
+          type: array
+          minItems: 1
+          items:
+            type: string
+
+    Auth2faRecoveryCodesResponse:
+      type: object
+      additionalProperties: false
+      required: [recovery_codes]
+      properties:
+        recovery_codes:
+          type: array
+          minItems: 1
+          items:
+            type: string
+
+    AuthRevokeClientTokenResponse:
+      type: object
+      additionalProperties: false
+      required: [client_id, revoked]
+      properties:
+        client_id:
+          type: string
+        revoked:
+          type: boolean
+        revoked_at:
+          type: string
+          format: date-time
+
+    AuthClientTokenRequest:
+      type: object
+      additionalProperties: false
+      required: [client_id, client_kind, secret_key]
+      properties:
+        client_id:
+          type: string
+        client_kind:
+          $ref: "#/components/schemas/NonUiClientKind"
+        secret_key:
+          type: string
+
+    AuthClientTokenSuccess:
+      type: object
+      additionalProperties: false
+      required: [client_id, client_kind, access_token, token_type]
+      properties:
+        client_id:
+          type: string
+        client_kind:
+          $ref: "#/components/schemas/NonUiClientKind"
+        access_token:
+          type: string
+        token_type:
+          type: string
+          enum: [Bearer]
+        expires_in:
+          type: integer
+          description: Access token lifetime in seconds.
+
+    ClientKind:
+      type: string
+      description: Form factor identifier for interactive login flows.
+      enum: [UI_WEB, UI_MOBILE, AGENT]
+
+    NonUiClientKind:
+      type: string
+      description: Allowed client kinds for technical secret-key token minting.
+      enum: [AGENT, MCP]
+
+    AuthRotateClientSecretResponse:
+      type: object
+      additionalProperties: false
+      required: [client_id, secret_key]
+      properties:
+        client_id:
+          type: string
+        secret_key:
+          type: string
+          description: Returned once at rotation time.
+        rotated_at:
+          type: string
+          format: date-time
+
+    AuthDeviceStartRequest:
+      type: object
+      additionalProperties: false
+      required: [client_kind]
+      properties:
+        client_kind:
+          $ref: "#/components/schemas/NonUiClientKind"
+        client_label:
+          type: string
+
+    AuthDeviceStartResponse:
+      type: object
+      additionalProperties: false
+      required: [device_code, user_code, verification_uri, verification_uri_complete, expires_in, interval]
+      properties:
+        device_code:
+          type: string
+        user_code:
+          type: string
+        verification_uri:
+          type: string
+          format: uri
+        verification_uri_complete:
+          type: string
+          format: uri
+        expires_in:
+          type: integer
+        interval:
+          type: integer
+
+    AuthDevicePollRequest:
+      type: object
+      additionalProperties: false
+      required: [device_code]
+      properties:
+        device_code:
+          type: string
+
+    AuthDevicePollResponse:
+      oneOf:
+        - $ref: "#/components/schemas/AuthDevicePollPending"
+        - $ref: "#/components/schemas/AuthDevicePollApproved"
+        - $ref: "#/components/schemas/AuthDevicePollDenied"
+        - $ref: "#/components/schemas/AuthDevicePollExpired"
+
+    AuthDevicePollPending:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [PENDING]
+        interval:
+          type: integer
+
+    AuthDevicePollApproved:
+      type: object
+      additionalProperties: false
+      required: [status, client_id, client_kind, secret_key]
+      properties:
+        status:
+          type: string
+          enum: [APPROVED]
+        client_id:
+          type: string
+        client_kind:
+          $ref: "#/components/schemas/NonUiClientKind"
+        secret_key:
+          type: string
+          description: One-shot credential shown only once after approval.
+
+    AuthDevicePollDenied:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [DENIED]
+
+    AuthDevicePollExpired:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [EXPIRED]
+
+    AuthDeviceCancelRequest:
+      type: object
+      additionalProperties: false
+      required: [device_code]
+      properties:
+        device_code:
+          type: string
+
+    AuthDeviceCancelResponse:
+      type: object
+      additionalProperties: false
+      required: [canceled]
+      properties:
+        canceled:
+          type: boolean
+
+    ServerPolicy:
+      type: object
+      description: |
+        Runtime server policy returned by Core.
+        `feature_flags` is the source of truth for client feature availability.
+      required:
+        - feature_flags
+        - feature_flags_contract_version
+        - effective_feature_flags_contract_version
+        - accepted_feature_flags_contract_versions
+        - feature_flags_compatibility_mode
+      additionalProperties: true
+      properties:
+        min_poll_interval_seconds:
+          type: integer
+        max_parallel_jobs_allowed:
+          type: integer
+        allowed_job_types:
+          type: array
+          items:
+            type: string
+        quiet_hours:
+          type: object
+          additionalProperties: true
+        feature_flags:
+          $ref: "#/components/schemas/FeatureFlags"
+        feature_flags_contract_version:
+          type: string
+          pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+          description: Latest feature-flags contract version served by Core (SemVer).
+        accepted_feature_flags_contract_versions:
+          type: array
+          description: Feature-flags contract versions still accepted by Core for compatibility.
+          items:
+            type: string
+            pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        effective_feature_flags_contract_version:
+          type: string
+          pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+          description: Feature-flags contract version effectively served to this client request (SemVer).
+        feature_flags_compatibility_mode:
+          type: string
+          enum: [STRICT, COMPAT]
+          description: |
+            STRICT = latest contract served.
+            COMPAT = compatibility profile served (including retired-flag tombstones when required).
+
+    FeatureFlags:
+      type: object
+      description: |
+        Runtime flags controlled by Core.
+        Client semantics: missing flag = false, unknown flags are ignored, safe-by-default.
+      additionalProperties:
+        type: boolean
+      properties:
+        features.decisions.bulk:
+          type: boolean
+          default: false
+
+    AppFeatureEnabled:
+      type: object
+      description: |
+        Application-level feature switches.
+        Effective feature availability requires Core `FeatureFlags` AND `AppFeatureEnabled`.
+        `features.ai` controls MCP global availability (false => MCP disabled).
+      additionalProperties:
+        type: boolean
+
+    UserFeatureEnabled:
+      type: object
+      description: |
+        User-level feature switches.
+        Only non-core features can be disabled at user scope.
+        Missing key is interpreted as `true` (migration-safe default).
+      additionalProperties:
+        type: boolean
+
+    EffectiveFeatureEnabled:
+      type: object
+      description: |
+        Effective availability after all gates (`feature_flags`, `app_feature_enabled`, `user_feature_enabled`, dependencies).
+        Evaluation order is strict: feature_flags -> app_feature_enabled -> user_feature_enabled -> dependency/escalation rules.
+      additionalProperties:
+        type: boolean
+
+    FeatureGovernanceRule:
+      type: object
+      additionalProperties: false
+      required: [key, tier, user_can_disable, dependencies, disable_escalation]
+      properties:
+        key:
+          type: string
+          description: Feature key. Keys listed in `core_v1_global_features` are protected.
+        tier:
+          type: string
+          enum: [CORE_V1_GLOBAL, OPTIONAL]
+        user_can_disable:
+          type: boolean
+        dependencies:
+          type: array
+          items:
+            type: string
+        disable_escalation:
+          type: array
+          description: |
+            Features automatically disabled when this feature is disabled at app/user scope.
+          items:
+            type: string
+
+    AppFeaturesResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - app_feature_enabled
+        - feature_governance
+        - core_v1_global_features
+      properties:
+        app_feature_enabled:
+          $ref: "#/components/schemas/AppFeatureEnabled"
+        core_v1_global_features:
+          $ref: "#/components/schemas/CoreV1GlobalFeatures"
+        feature_governance:
+          type: array
+          items:
+            $ref: "#/components/schemas/FeatureGovernanceRule"
+
+    AppFeaturesUpdateRequest:
+      type: object
+      additionalProperties: false
+      required: [app_feature_enabled]
+      properties:
+        app_feature_enabled:
+          $ref: "#/components/schemas/AppFeatureEnabled"
+
+    UserFeaturesResponse:
+      type: object
+      additionalProperties: false
+      required: [user_feature_enabled, effective_feature_enabled, feature_governance, core_v1_global_features]
+      properties:
+        user_feature_enabled:
+          $ref: "#/components/schemas/UserFeatureEnabled"
+        effective_feature_enabled:
+          $ref: "#/components/schemas/EffectiveFeatureEnabled"
+        feature_governance:
+          type: array
+          items:
+            $ref: "#/components/schemas/FeatureGovernanceRule"
+        core_v1_global_features:
+          $ref: "#/components/schemas/CoreV1GlobalFeatures"
+
+    UserFeaturesUpdateRequest:
+      type: object
+      additionalProperties: false
+      required: [user_feature_enabled]
+      properties:
+        user_feature_enabled:
+          $ref: "#/components/schemas/UserFeatureEnabled"
+
+    CoreV1GlobalFeatureKey:
+      type: string
+      enum:
+        - features.core.auth
+        - features.core.assets.lifecycle
+        - features.core.jobs.runtime
+        - features.core.search.query
+        - features.core.policy.runtime
+        - features.core.derived.access
+        - features.core.clients.bootstrap
+
+    CoreV1GlobalFeatures:
+      type: array
+      uniqueItems: true
+      minItems: 1
+      description: Canonical list of non-disableable v1 global core feature keys.
+      items:
+        $ref: "#/components/schemas/CoreV1GlobalFeatureKey"
+
+    AppPolicyResponse:
+      type: object
+      additionalProperties: false
+      required: [server_policy]
+      properties:
+        server_policy:
+          $ref: "#/components/schemas/ServerPolicy"
+
+    AssetState:
+      type: string
+      enum:
+        - DISCOVERED
+        - READY
+        - PROCESSING_REVIEW
+        - PROCESSED
+        - DECISION_PENDING
+        - DECIDED_KEEP
+        - DECIDED_REJECT
+        - MOVE_QUEUED
+        - ARCHIVED
+        - REJECTED
+        - PURGED
+
+    AssetSummary:
+      type: object
+      required: [uuid, media_type, state, created_at]
+      additionalProperties: false
+      properties:
+        uuid:
+          type: string
+        media_type:
+          type: string
+          enum: [VIDEO, PHOTO, AUDIO]
+        state:
+          $ref: "#/components/schemas/AssetState"
+        created_at:
+          type: string
+          format: date-time
+        captured_at:
+          type: string
+          format: date-time
+          nullable: true
+        duration:
+          type: number
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        has_proxy:
+          type: boolean
+        thumb_url:
+          type: string
+          nullable: true
+
+    AssetDetail:
+      type: object
+      required: [summary]
+      additionalProperties: false
+      properties:
+        summary:
+          $ref: "#/components/schemas/AssetSummary"
+        paths:
+          $ref: "#/components/schemas/AssetPaths"
+        processing:
+          $ref: "#/components/schemas/AssetProcessing"
+        derived:
+          $ref: "#/components/schemas/AssetDerived"
+        transcript:
+          $ref: "#/components/schemas/AssetTranscript"
+        decisions:
+          $ref: "#/components/schemas/AssetDecisions"
+        audit:
+          $ref: "#/components/schemas/AssetAudit"
+
+    AssetPaths:
+      type: object
+      additionalProperties: false
+      properties:
+        original_relative:
+          type: string
+        sidecars_relative:
+          type: array
+          items:
+            type: string
+
+    AssetProcessing:
+      type: object
+      additionalProperties: false
+      properties:
+        facts_done:
+          type: boolean
+        thumbs_done:
+          type: boolean
+        proxy_done:
+          type: boolean
+        waveform_done:
+          type: boolean
+        processing_profile:
+          type: string
+        review_processing_version:
+          type: string
+
+    AssetDerived:
+      type: object
+      additionalProperties: false
+      properties:
+        proxy_video_url:
+          type: string
+          nullable: true
+        proxy_audio_url:
+          type: string
+          nullable: true
+        proxy_photo_url:
+          type: string
+          nullable: true
+        waveform_url:
+          type: string
+          nullable: true
+          description: |
+            Optional server-generated waveform file URL.
+            If absent, UI clients must render a simple local waveform from audio (pure JS).
+        thumbs:
+          type: array
+          items:
+            type: string
+
+    AssetTranscript:
+      type: object
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          enum: [NONE, RUNNING, DONE, FAILED]
+        text_preview:
+          type: string
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    AssetDecisions:
+      type: object
+      additionalProperties: false
+      properties:
+        current:
+          type: string
+          enum: [KEEP, REJECT]
+          nullable: true
+        history:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              action:
+                type: string
+                enum: [KEEP, REJECT, CLEAR]
+              at:
+                type: string
+                format: date-time
+              by:
+                type: string
+
+    AssetAudit:
+      type: object
+      additionalProperties: false
+      properties:
+        path_history:
+          type: array
+          items:
+            type: string
+
+    Job:
+      type: object
+      description: Processing job
+      required:
+        - job_id
+        - job_type
+        - status
+        - asset_uuid
+        - required_capabilities
+      additionalProperties: false
+      properties:
+        job_id:
+          type: string
+        job_type:
+          type: string
+          enum:
+            - extract_facts
+            - generate_proxy
+            - generate_thumbnails
+            - generate_audio_waveform
+        status:
+          type: string
+          enum: [pending, claimed, completed, failed]
+        asset_uuid:
+          type: string
+        required_capabilities:
+          type: array
+          items:
+            type: string
+        claimed_by:
+          type: string
+          nullable: true
+        lock_token:
+          type: string
+          nullable: true
+        locked_until:
+          type: string
+          format: date-time
+          nullable: true
+
+    JobSubmitRequest:
+      oneOf:
+        - $ref: "#/components/schemas/SubmitExtractFacts"
+        - $ref: "#/components/schemas/SubmitDerived"
+
+    SubmitExtractFacts:
+      type: object
+      additionalProperties: false
+      required: [lock_token, job_type, result]
+      properties:
+        lock_token:
+          type: string
+        job_type:
+          type: string
+          enum: [extract_facts]
+        result:
+          type: object
+          additionalProperties: false
+          required: [facts_patch]
+          properties:
+            facts_patch:
+              $ref: "#/components/schemas/FactsPatch"
+            warnings:
+              type: array
+              items:
+                type: string
+            metrics:
+              type: object
+              additionalProperties: true
+
+    SubmitDerived:
+      type: object
+      additionalProperties: false
+      required: [lock_token, job_type, result]
+      properties:
+        lock_token:
+          type: string
+        job_type:
+          type: string
+          enum: [generate_proxy, generate_thumbnails, generate_audio_waveform]
+        result:
+          type: object
+          additionalProperties: false
+          required: [derived_patch]
+          properties:
+            derived_patch:
+              $ref: "#/components/schemas/DerivedPatch"
+            warnings:
+              type: array
+              items:
+                type: string
+            metrics:
+              type: object
+              additionalProperties: true
+
+    ProcessingResultPatch:
+      type: object
+      additionalProperties: false
+      properties:
+        facts_patch:
+          $ref: "#/components/schemas/FactsPatch"
+        derived_patch:
+          $ref: "#/components/schemas/DerivedPatch"
+        warnings:
+          type: array
+          items:
+            type: string
+        metrics:
+          type: object
+          additionalProperties: true
+
+    FactsPatch:
+      type: object
+      additionalProperties: false
+      properties:
+        duration_ms:
+          type: integer
+        media_format:
+          type: string
+        video_codec:
+          type: string
+        audio_codec:
+          type: string
+        width:
+          type: integer
+        height:
+          type: integer
+        fps:
+          type: number
+
+    DerivedPatch:
+      type: object
+      additionalProperties: false
+      properties:
+        derived_manifest:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [kind, ref]
+            properties:
+              kind:
+                type: string
+                enum: [proxy_video, proxy_audio, proxy_photo, thumb, waveform]
+              ref:
+                type: string
+              size_bytes:
+                type: integer
+              sha256:
+                type: string
+
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [code, message, retryable, correlation_id]
+      properties:
+        code:
+          type: string
+          enum:
+            - UNAUTHORIZED
+            - EMAIL_NOT_VERIFIED
+            - FORBIDDEN_SCOPE
+            - FORBIDDEN_ACTOR
+            - USER_NOT_FOUND
+            - STATE_CONFLICT
+            - IDEMPOTENCY_CONFLICT
+            - STALE_LOCK_TOKEN
+            - NAME_COLLISION_EXHAUSTED
+            - PURGED
+            - VALIDATION_FAILED
+            - INVALID_TOKEN
+            - LOCK_REQUIRED
+            - LOCK_INVALID
+            - TOO_MANY_ATTEMPTS
+            - MFA_REQUIRED
+            - INVALID_2FA_CODE
+            - MFA_ALREADY_ENABLED
+            - MFA_NOT_ENABLED
+            - INVALID_DEVICE_CODE
+            - EXPIRED_DEVICE_CODE
+            - UNSUPPORTED_FEATURE_FLAGS_CONTRACT_VERSION
+            - SLOW_DOWN
+            - RATE_LIMITED
+            - TEMPORARY_UNAVAILABLE
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+        retryable:
+          type: boolean
+        correlation_id:
+          type: string

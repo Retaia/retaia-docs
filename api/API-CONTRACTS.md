@@ -4,7 +4,13 @@ Ce document décrit le **contrat API v1** de Retaia Core.
 
 Cette spécification est **normative**. Toute implémentation serveur, agent ou client doit s’y conformer strictement.
 
-Le fichier `openapi/v1.yaml` est la description contractuelle exécutable et fait foi en cas de divergence.
+Les fichiers OpenAPI versionnés sont :
+
+* `openapi/v1.yaml` (gate runtime actuelle, opposable)
+* `openapi/v1.1.yaml` (prévision version mineure)
+* `openapi/v1.2.yaml` (prévision version mineure)
+
+`openapi/v1.yaml` reste la description contractuelle exécutable de référence tant que les gates CI pointent v1.
 Ce document doit rester strictement aligné avec `openapi/v1.yaml`.
 
 Objectif : fournir une surface stable consommée par :
