@@ -235,6 +235,39 @@ Tests obligatoires :
 * si `derived.waveform_url` est absent, le client UI rend une waveform locale simple (JS pur, style YouTube)
 * absence de waveform dérivée ne bloque pas lecture audio ni navigation timeline
 
+## 3.2) Derived format compliance (obligatoire)
+
+Tests obligatoires :
+
+* `proxy_video` :
+  * conteneur `video/mp4`
+  * codec vidéo `H.264/AVC` lisible navigateur
+  * piste audio (si présente) en `AAC-LC`
+  * framerate dérivé = framerate source (tolérance max ±0.01 fps)
+  * `CFR` requis (pas de VFR non contrôlé)
+  * ratio d'aspect conservé, aucun upscale
+  * keyframe interval <= 2 secondes
+  * MP4 faststart (`moov` en tête)
+* `proxy_audio` :
+  * format `audio/mp4` (AAC-LC) ou `audio/mpeg`
+  * sample rate conforme (source conservée ou normalisée 44.1k/48k)
+  * canaux cohérents avec policy de downmix
+* `proxy_photo` :
+  * format `image/jpeg` ou `image/webp`
+  * `sRGB`
+  * orientation EXIF normalisée
+  * ratio d'aspect conservé, aucun upscale
+* `thumb` :
+  * format `image/jpeg` ou `image/webp`
+  * `sRGB`
+  * au moins une taille web exploitable
+* `waveform` :
+  * si présent en JSON: amplitudes normalisées + métadonnées minimales (`duration_ms`, `bucket_count`)
+  * si absent: fallback local UI validé (non bloquant)
+* cohérence globale :
+  * `duration`/`fps`/dimensions exposés cohérents avec le fichier dérivé livré
+  * aucun dérivé ne modifie implicitement le sens temporel du média
+
 ## 4) Merge patch par domaine
 
 Tests obligatoires :
