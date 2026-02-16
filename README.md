@@ -1,68 +1,64 @@
-# Retaia – Specifications
+# Retaia Docs
 
-Ce repository est la source de vérité (Single Source of Truth) du projet Retaia.
+Source of truth for Retaia specifications.
 
-Tout comportement du système (serveur, agent, CLI, UI, infrastructure)
-doit être conforme à ces spécifications.
+## Overview
 
-En cas de divergence entre le code et ce repository :
-les spécifications font foi.
+`retaia-docs` defines the normative contracts and policies for the Retaia platform:
 
-Aucune logique métier ne doit être définie ailleurs.
+- API contracts (OpenAPI v1)
+- security/authz policies
+- workflows and state machine
+- testing and release gates
 
-## Règle d’implémentation (doc → code)
+When runtime behavior diverges from this repository, this repository is authoritative.
 
-Ordre obligatoire :
+## Scope
 
-1. Mettre à jour la spec dans `retaia-docs`.
-2. Faire relire/valider la spec.
-3. Implémenter dans les repos applicatifs.
-4. Vérifier la conformité code ↔ spec (tests contractuels).
+The following consumer repositories must align with these specs:
 
-Si le code contredit cette documentation, le code est incorrect.
+- `retaia-core` (backend/API runtime)
+- `retaia-ui` (user interface client)
+- `retaia-agent` (CLI-first processing client)
+- `retaia-mcp` (MCP orchestration client, no media processing)
 
-## Navigation
+## Quick links
 
-* [Vision](vision/PROJECT-BRIEF.md)
-* [Architecture](architecture/CONCEPTUAL-ARCHITECTURE.md)
-* [Machine à états](state-machine/STATE-MACHINE.md)
-* [Workflows](workflows/WORKFLOWS.md)
-* [Protocole agent](workflows/AGENT-PROTOCOL.md)
-* [Définitions](definitions/DEFINITIONS.md)
-* [Job types](definitions/JOB-TYPES.md)
-* [Processing profiles](definitions/PROCESSING-PROFILES.md)
-* [Sidecar rules](definitions/SIDECAR-RULES.md)
-* [Capabilities](definitions/CAPABILITIES.md)
-* [Locking matrix](policies/LOCKING-MATRIX.md)
-* [Hooks contract](policies/HOOKS-CONTRACT.md)
-* [Lock lifecycle](policies/LOCK-LIFECYCLE.md)
-* [Authz matrix](policies/AUTHZ-MATRIX.md)
-* [Security baseline](policies/SECURITY-BASELINE.md)
-* [GPG/OpenPGP standard](policies/GPG-OPENPGP-STANDARD.md)
-* [Crypto security model](policies/CRYPTO-SECURITY-MODEL.md)
-* [Search privacy index](policies/SEARCH-PRIVACY-INDEX.md)
-* [RGPD data protection](policies/RGPD-DATA-PROTECTION.md)
-* [I18N & localization policy](policies/I18N-LOCALIZATION.md)
-* [Test plan](tests/TEST-PLAN.md)
-* [Anti-patterns](anti-patterns/ANTI-PATTERNS.md)
-* [Success criteria](success-criteria/SUCCESS-CRITERIA.md)
-* [Change management](change-management/CHANGE-MANAGEMENT.md)
-* [AI-assisted development](change-management/AI-ASSISTED-DEVELOPMENT.md)
-* [Code quality](change-management/CODE-QUALITY.md)
-* [API contracts](api/API-CONTRACTS.md)
-* [Error model](api/ERROR-MODEL.md)
+- Product vision: [`vision/PROJECT-BRIEF.md`](vision/PROJECT-BRIEF.md)
+- API contract: [`api/API-CONTRACTS.md`](api/API-CONTRACTS.md)
+- OpenAPI source: [`api/openapi/v1.yaml`](api/openapi/v1.yaml)
+- Authz matrix: [`policies/AUTHZ-MATRIX.md`](policies/AUTHZ-MATRIX.md)
+- Agent protocol: [`workflows/AGENT-PROTOCOL.md`](workflows/AGENT-PROTOCOL.md)
+- Test plan: [`tests/TEST-PLAN.md`](tests/TEST-PLAN.md)
+- Change management: [`change-management/CHANGE-MANAGEMENT.md`](change-management/CHANGE-MANAGEMENT.md)
+- Contributing: [`CONTRIBUTING.md`](CONTRIBUTING.md)
 
-## Repos enfants (consommateurs de la spec)
+## Documentation map
 
-Ce repo (`retaia-docs`) est la source de vérité contractuelle.
-Les repos ci-dessous DOIVENT implémenter ces specs sans divergence.
+- Architecture: [`architecture/CONCEPTUAL-ARCHITECTURE.md`](architecture/CONCEPTUAL-ARCHITECTURE.md)
+- State machine: [`state-machine/STATE-MACHINE.md`](state-machine/STATE-MACHINE.md)
+- Domain definitions: [`definitions/DEFINITIONS.md`](definitions/DEFINITIONS.md)
+- Job types: [`definitions/JOB-TYPES.md`](definitions/JOB-TYPES.md)
+- Capabilities: [`definitions/CAPABILITIES.md`](definitions/CAPABILITIES.md)
+- Security baseline: [`policies/SECURITY-BASELINE.md`](policies/SECURITY-BASELINE.md)
+- RGPD: [`policies/RGPD-DATA-PROTECTION.md`](policies/RGPD-DATA-PROTECTION.md)
 
-* `retaia-core` : backend/API, auth, policy runtime, orchestration jobs
-* `retaia-ui` : client UI (web/Rust UI app), UX admin/user, application des policies runtime
-* `retaia-agent` : client agent Rust (CLI obligatoire, GUI optionnelle), exécution processing (repo séparé, à créer)
-* `retaia-mcp` : client MCP (pilotage/orchestration uniquement, sans processing) (repo séparé, à créer)
+## Spec-first workflow
 
-Notes de structure actuelle :
+Changes must follow this order:
 
-* dans ce workspace local, `retaia-core` et `retaia-ui` sont présents
-* `retaia-agent` et `retaia-mcp` sont planifiés comme repos dédiés
+1. Update specs in `retaia-docs`.
+2. Review and approve spec changes.
+3. Implement in consumer repos (`core`, `ui`, `agent`, `mcp`).
+4. Validate contract/runtime alignment through tests and CI gates.
+
+## Versioning and governance
+
+- v1 is contract-first and Bearer-only.
+- No legacy behavior before v1 publication.
+- Feature lifecycle and compatibility are governed by specs/policies.
+- Branch policy: rebase on `master`, linear history, PR-only integration.
+
+## License
+
+Internal project specification repository (no public OSS license declared in this repo).
