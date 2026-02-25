@@ -2106,6 +2106,9 @@ components:
       type: object
       additionalProperties: false
       properties:
+        storage_id:
+          type: string
+          description: Logical storage identifier used by agents to resolve local mount mapping.
         original_relative:
           type: string
         sidecars_relative:
@@ -2226,6 +2229,10 @@ components:
           enum: [pending, claimed, completed, failed]
         asset_uuid:
           type: string
+        source:
+          allOf:
+            - $ref: "#/components/schemas/AssetPaths"
+          description: Source locator (relative paths + storage id) for local media access.
         required_capabilities:
           type: array
           items:
