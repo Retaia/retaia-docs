@@ -786,6 +786,7 @@ Règles :
   * `original_relative` (chemin relatif du média principal)
   * `sidecars_relative[]` (chemins relatifs des sidecars)
 * `source.*` DOIT rester relatif (jamais de chemin absolu NAS/hôte/conteneur)
+* `source.*` NE DOIT PAS contenir de parent traversal (`..`) ni de null byte
 * l’agent DOIT résoudre `source` via sa configuration locale de montages, jamais via une inférence locale sur le path Core
 
 ### POST `/jobs/{job_id}/heartbeat`
