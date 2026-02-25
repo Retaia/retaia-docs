@@ -25,6 +25,7 @@ The following consumer repositories must align with these specs:
 ## Quick links
 
 - Product vision: [`vision/PROJECT-BRIEF.md`](vision/PROJECT-BRIEF.md)
+- Deployment topology (NAS + workstations): [`architecture/DEPLOYMENT-TOPOLOGY.md`](architecture/DEPLOYMENT-TOPOLOGY.md)
 - API contract: [`api/API-CONTRACTS.md`](api/API-CONTRACTS.md)
 - OpenAPI sources:
   - [`api/openapi/v1.yaml`](api/openapi/v1.yaml) (runtime contract gate)
@@ -39,6 +40,7 @@ The following consumer repositories must align with these specs:
 ## Documentation map
 
 - Architecture: [`architecture/CONCEPTUAL-ARCHITECTURE.md`](architecture/CONCEPTUAL-ARCHITECTURE.md)
+- Deployment profile: [`architecture/DEPLOYMENT-TOPOLOGY.md`](architecture/DEPLOYMENT-TOPOLOGY.md)
 - State machine: [`state-machine/STATE-MACHINE.md`](state-machine/STATE-MACHINE.md)
 - Domain definitions: [`definitions/DEFINITIONS.md`](definitions/DEFINITIONS.md)
 - Job types: [`definitions/JOB-TYPES.md`](definitions/JOB-TYPES.md)
