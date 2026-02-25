@@ -181,7 +181,7 @@ Configuration agent obligatoire:
 * l’agent DOIT exposer une configuration locale `storage_mounts` (map `storage_id -> absolute_local_mount_path`)
 * la résolution du fichier source DOIT se faire par concaténation contrôlée:
   * `absolute_input_path = storage_mounts[source.storage_id] + "/" + source.original_relative`
-* `source.*` DOIT rester relatif et ne DOIT PAS contenir `..` ni de chemin absolu
+* `source.*` DOIT rester relatif et ne DOIT PAS contenir `..`, de chemin absolu, ni de null byte
 * en cas de mapping absent/invalide, l’agent DOIT échouer explicitement (erreur claire, pas de fallback implicite)
 
 
