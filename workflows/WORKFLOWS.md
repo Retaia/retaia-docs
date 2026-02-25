@@ -71,7 +71,7 @@ Retaia Core Server, Retaia Agent
 
 1. L’agent récupère les jobs claimables via `GET /jobs`.
 2. L’agent tente un claim atomique via `POST /jobs/{job_id}/claim`.
-3. Le serveur crée une réservation (lock + TTL) et retourne `asset_uuid`, `lock_token`, chemins d’accès et métadonnées nécessaires.
+3. Le serveur crée une réservation (lock + TTL) et retourne `asset_uuid`, `lock_token`, `source` (`storage_id`, `original_relative`, `sidecars_relative[]`) et métadonnées nécessaires.
 4. Le job passe en `claimed`.
 5. L’asset passe en `PROCESSING_REVIEW` dès qu’au moins un job review est en cours.
 
@@ -94,8 +94,8 @@ Retaia Agent
 
 ### Étapes
 
-1. Vérifier que le NAS est monté (SMB/NFS).
-2. Lire le fichier principal et ses sidecars (read-only).
+1. Vérifier qu'un mount local existe pour `source.storage_id` (SMB/NFS/NAS local).
+2. Résoudre puis lire le fichier principal et ses sidecars (read-only) via `storage_mounts[source.storage_id] + source.*_relative`.
 3. Extraire les facts (métadonnées techniques) et les envoyer au serveur.
 4. Générer les dérivés en local temporaire côté agent :
 

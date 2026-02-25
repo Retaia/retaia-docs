@@ -53,7 +53,7 @@ Extraire les métadonnées techniques minimales (durée, codec, format, dimensio
 **Inputs**
 
 * asset_uuid
-* source_path (read-only)
+* source_locator (read-only: `storage_id`, `original_relative`, `sidecars_relative[]`)
 
 **Expected outputs**
 
@@ -84,7 +84,7 @@ Générer un proxy de review (video, audio ou image) selon le type média.
 **Inputs**
 
 * asset_uuid
-* source_path (read-only)
+* source_locator (read-only: `storage_id`, `original_relative`, `sidecars_relative[]`)
 * media_type
 * proxy_profile
 
@@ -116,7 +116,7 @@ Générer des vignettes à partir d’un média.
 **Inputs**
 
 * asset_uuid
-* source_path (read-only)
+* source_locator (read-only: `storage_id`, `original_relative`, `sidecars_relative[]`)
 * thumbnail_profile
 
 **Expected outputs**
@@ -146,7 +146,7 @@ Extraire une waveform audio quand le `processing_profile` l'exige.
 **Inputs**
 
 * asset_uuid
-* source_path (read-only)
+* source_locator (read-only: `storage_id`, `original_relative`, `sidecars_relative[]`)
 
 **Expected outputs**
 
@@ -179,7 +179,7 @@ Produire une transcription (et éventuellement des timecodes) à partir de l’a
 **Inputs**
 
 * asset_uuid
-* source_path (read-only)
+* source_locator (read-only: `storage_id`, `original_relative`, `sidecars_relative[]`)
 * language (optionnel)
 * transcription_profile (optionnel)
 * transcription_engine (optionnel; ex: `whispercpp`)

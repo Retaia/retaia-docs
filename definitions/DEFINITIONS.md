@@ -37,13 +37,32 @@ Le UUID n’est pas un hash de contenu et n’implique aucune lecture lourde.
 
 ## Path
 
-Le **path** est l’emplacement physique courant du fichier principal sur le NAS.
+Le **path** est l’emplacement logique courant du fichier principal dans un storage donné.
 
 * Le path est **mutable**.
 * Il change lors des batch moves.
 * Tous les changements de path sont historisés.
+* Le path transporté par API est **relatif** (jamais absolu hôte/NAS/conteneur).
 
 Le path n’est jamais une identité.
+
+
+## Storage ID
+
+Le **storage_id** identifie un storage logique côté Core (ex: NAS principal, volume secondaire).
+
+* Il est stable et déterministe côté serveur.
+* Il ne transporte jamais un chemin absolu hôte.
+* Il permet à l'agent de résoudre un path relatif via son mapping local `storage_mounts`.
+
+
+## Relative Path
+
+Un **relative_path** est un chemin relatif à la racine d’un `storage_id`.
+
+* ne DOIT PAS être absolu
+* ne DOIT PAS contenir de traversée (`..`)
+* doit rester transportable entre environnements (hôte, conteneur, OS)
 
 
 ## Sidecar

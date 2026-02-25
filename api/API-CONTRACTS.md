@@ -781,6 +781,12 @@ Response :
 Règles :
 
 * lock + TTL obligatoires
+* pour un `claim` accepté (`200`), la réponse DOIT inclure un `source` locator :
+  * `storage_id` (identifiant logique du storage, stable côté Core)
+  * `original_relative` (chemin relatif du média principal)
+  * `sidecars_relative[]` (chemins relatifs des sidecars)
+* `source.*` DOIT rester relatif (jamais de chemin absolu NAS/hôte/conteneur)
+* l’agent DOIT résoudre `source` via sa configuration locale de montages, jamais via une inférence locale sur le path Core
 
 ### POST `/jobs/{job_id}/heartbeat`
 
@@ -1087,7 +1093,7 @@ Effet :
 ### AssetDetail
 
 * `summary: AssetSummary`
-* `paths: { original_relative, sidecars_relative[] }`
+* `paths: { storage_id, original_relative, sidecars_relative[] }`
 * `processing: { facts_done, thumbs_done, proxy_done, waveform_done, review_processing_version }`
 * `derived: { proxy_video_url?, proxy_audio_url?, waveform_url?, thumbs[] }`
 * `transcript: { status, text_preview?, updated_at? }`
@@ -1101,8 +1107,7 @@ Effet :
 * `asset_uuid`
 * `lock_token`
 * `locked_until`
-* `paths`
-* `derived_target_dir`
+* `source: { storage_id, original_relative, sidecars_relative[] }`
 
 ### ProcessingResultPatch
 

@@ -168,6 +168,22 @@ Le claim crée une **lease** (verrou temporaire) :
 
 Si le job est déjà claim, le serveur DOIT refuser.
 
+### 4.3.1 Résolution des paths source (normatif)
+
+Pour tout job de processing claimé, l'agent reçoit un locator source:
+
+* `source.storage_id`
+* `source.original_relative`
+* `source.sidecars_relative[]`
+
+Configuration agent obligatoire:
+
+* l’agent DOIT exposer une configuration locale `storage_mounts` (map `storage_id -> absolute_local_mount_path`)
+* la résolution du fichier source DOIT se faire par concaténation contrôlée:
+  * `absolute_input_path = storage_mounts[source.storage_id] + "/" + source.original_relative`
+* `source.*` DOIT rester relatif et ne DOIT PAS contenir `..` ni de chemin absolu
+* en cas de mapping absent/invalide, l’agent DOIT échouer explicitement (erreur claire, pas de fallback implicite)
+
 
 ### 4.4 Heartbeat
 
