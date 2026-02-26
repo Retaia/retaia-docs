@@ -942,6 +942,18 @@ paths:
           schema:
             type: string
             example: -created_at
+        - name: captured_at_from
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Include assets with `captured_at` greater than or equal to this timestamp (UTC ISO-8601).
+        - name: captured_at_to
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Include assets with `captured_at` lower than or equal to this timestamp (UTC ISO-8601).
         - name: limit
           in: query
           schema:
