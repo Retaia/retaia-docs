@@ -851,6 +851,17 @@ paths:
           in: query
           schema:
             type: string
+            enum:
+              - created_at
+              - -created_at
+              - captured_at
+              - -captured_at
+              - duration
+              - -duration
+              - media_type
+              - -media_type
+              - state
+              - -state
             example: -created_at
         - name: captured_at_from
           in: query
