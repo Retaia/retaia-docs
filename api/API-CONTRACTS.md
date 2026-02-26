@@ -638,7 +638,7 @@ Query params (exemples) :
 * `location_country=BE` (optionnel, filtre localisation)
 * `location_city=Brussels` (optionnel, filtre localisation)
 * `geo_bbox=min_lon,min_lat,max_lon,max_lat` (optionnel, filtre géospatial bbox)
-* `sort=created_at|-created_at|captured_at|-captured_at|duration|-duration|media_type|-media_type|state|-state`
+* `sort=name|-name|created_at|-created_at|updated_at|-updated_at|captured_at|-captured_at|duration|-duration|media_type|-media_type|state|-state`
 * `captured_at_from=2026-01-01T00:00:00Z` (optionnel, borne basse incluse sur `captured_at`)
 * `captured_at_to=2026-01-31T23:59:59Z` (optionnel, borne haute incluse sur `captured_at`)
 * `limit=50&cursor=...`

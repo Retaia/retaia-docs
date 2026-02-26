@@ -942,8 +942,12 @@ paths:
           schema:
             type: string
             enum:
+              - name
+              - -name
               - created_at
               - -created_at
+              - updated_at
+              - -updated_at
               - captured_at
               - -captured_at
               - duration
@@ -2229,6 +2233,8 @@ components:
       properties:
         uuid:
           type: string
+        name:
+          type: string
         media_type:
           type: string
           enum: [VIDEO, PHOTO, AUDIO]
@@ -2237,6 +2243,10 @@ components:
         created_at:
           type: string
           format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
         captured_at:
           type: string
           format: date-time
