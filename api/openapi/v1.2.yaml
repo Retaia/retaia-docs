@@ -941,7 +941,34 @@ paths:
           in: query
           schema:
             type: string
+            enum:
+              - name
+              - -name
+              - created_at
+              - -created_at
+              - updated_at
+              - -updated_at
+              - captured_at
+              - -captured_at
+              - duration
+              - -duration
+              - media_type
+              - -media_type
+              - state
+              - -state
             example: -created_at
+        - name: captured_at_from
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Include assets with `captured_at` greater than or equal to this timestamp (UTC ISO-8601).
+        - name: captured_at_to
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Include assets with `captured_at` lower than or equal to this timestamp (UTC ISO-8601).
         - name: limit
           in: query
           schema:
@@ -2206,6 +2233,8 @@ components:
       properties:
         uuid:
           type: string
+        name:
+          type: string
         media_type:
           type: string
           enum: [VIDEO, PHOTO, AUDIO]
@@ -2214,6 +2243,10 @@ components:
         created_at:
           type: string
           format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
         captured_at:
           type: string
           format: date-time
