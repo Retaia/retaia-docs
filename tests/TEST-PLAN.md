@@ -340,6 +340,10 @@ Tests obligatoires :
 * enum d’état `AssetState` strict sur les payloads d’assets
 * exigences de sécurité/scopes OpenAPI présentes sur chaque endpoint mutateur
 * schéma `SessionCookieAuth` absent de la spec OpenAPI
+* endpoint `GET /ops/ingest/diagnostics` présent et conforme :
+  * compteurs `queued`, `missing`, `unmatched_sidecars`
+  * `latest_unmatched[]` avec `path`, `reason`, `detected_at`
+  * `reason` limité à `missing_parent|ambiguous_parent|disabled_by_policy`
 
 ## 8.1) Authz matrix
 

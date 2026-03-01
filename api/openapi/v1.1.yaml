@@ -23,6 +23,7 @@ tags:
   - name: Batches
   - name: Decisions
   - name: Purge
+  - name: Ops
 
 paths:
   /auth/login:
@@ -1512,6 +1513,59 @@ paths:
       responses:
         "200":
           description: Purge preview
+
+  /ops/ingest/diagnostics:
+    get:
+      tags: [Ops]
+      summary: Get ingest diagnostics counters and latest unmatched sidecars
+      security:
+        - UserBearerAuth: []
+      responses:
+        "200":
+          description: Ingest diagnostics snapshot
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [queued, missing, unmatched_sidecars, latest_unmatched]
+                properties:
+                  queued:
+                    type: integer
+                    minimum: 0
+                  missing:
+                    type: integer
+                    minimum: 0
+                  unmatched_sidecars:
+                    type: integer
+                    minimum: 0
+                  latest_unmatched:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required: [path, reason, detected_at]
+                      properties:
+                        path:
+                          type: string
+                        reason:
+                          type: string
+                          enum: [missing_parent, ambiguous_parent, disabled_by_policy]
+                        detected_at:
+                          type: string
+                          format: date-time
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden (`FORBIDDEN_SCOPE` or `FORBIDDEN_ACTOR`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
 components:
   securitySchemes:

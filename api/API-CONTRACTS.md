@@ -1078,6 +1078,31 @@ Effet :
 * claim job : atomique, lease TTL obligatoire, heartbeat obligatoire pour jobs longs
 * cycle de vie détaillé des verrous défini dans [`LOCK-LIFECYCLE.md`](../policies/LOCK-LIFECYCLE.md)
 
+## 8.2) Diagnostic ingest (ops)
+
+### GET `/ops/ingest/diagnostics`
+
+Objectif :
+
+* exposer les compteurs ingest sans dépendre des logs CLI
+* fournir les derniers sidecars/proxies non rattachés pour debug ops
+
+Response :
+
+* `queued` (integer)
+* `missing` (integer)
+* `unmatched_sidecars` (integer)
+* `latest_unmatched[]` :
+  * `path` (relative path)
+  * `reason` (`missing_parent | ambiguous_parent | disabled_by_policy`)
+  * `detected_at` (UTC ISO-8601)
+
+Règles :
+
+* endpoint read-only
+* aucune donnée sensible (pas de secret/token)
+* exposition réservée aux rôles/scopes ops
+
 
 ## 9) Schémas (objets)
 
