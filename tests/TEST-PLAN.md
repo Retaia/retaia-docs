@@ -362,6 +362,10 @@ Tests obligatoires :
   * filtres `reason`, `since`, `limit`
   * `reason`/`since` invalides renvoient `400 VALIDATION_FAILED`
   * payload `items[]` + `total`
+* endpoint `POST /ops/ingest/requeue` présent et conforme :
+  * body accepte `asset_uuid` ou `path` (au moins un)
+  * `path` absolu/unsafe et `reason` vide renvoient `400 VALIDATION_FAILED`
+  * payload `202` avec `accepted`, `target`, `requeued_assets`, `requeued_jobs`, `deduplicated_jobs`
 * cohérence validation:
   * `VALIDATION_FAILED` en `400` pour `path/query/header`
   * `VALIDATION_FAILED` en `422` pour body JSON valide mais payload métier invalide
