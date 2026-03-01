@@ -26,13 +26,13 @@ Toutes les erreurs JSON DOIVENT suivre :
 
 ## 3) Mapping recommandé
 
-* `400` -> `INVALID_TOKEN`, `INVALID_2FA_CODE`, `INVALID_DEVICE_CODE`, `EXPIRED_DEVICE_CODE`
+* `400` -> `INVALID_TOKEN`, `INVALID_2FA_CODE`, `INVALID_DEVICE_CODE`, `EXPIRED_DEVICE_CODE`, `VALIDATION_FAILED` (paramètres query/path/header invalides)
 * `401` -> `UNAUTHORIZED`, `MFA_REQUIRED`
 * `403` -> `FORBIDDEN_SCOPE`, `FORBIDDEN_ACTOR`
 * `409` -> `STATE_CONFLICT`, `IDEMPOTENCY_CONFLICT`, `STALE_LOCK_TOKEN`, `NAME_COLLISION_EXHAUSTED`, `MFA_ALREADY_ENABLED`, `MFA_NOT_ENABLED`
 * `410` -> `PURGED`
 * `404` -> `USER_NOT_FOUND`
-* `422` -> `VALIDATION_FAILED`
+* `422` -> `VALIDATION_FAILED` (body JSON valide mais payload métier invalide)
 * `423` -> `LOCK_REQUIRED`, `LOCK_INVALID`
 * `426` -> `UNSUPPORTED_FEATURE_FLAGS_CONTRACT_VERSION`
 * `429` -> `RATE_LIMITED`, `TOO_MANY_ATTEMPTS`, `SLOW_DOWN`
@@ -47,6 +47,12 @@ Codes auth complémentaires (selon endpoint/policy) :
 * pas de payload d'erreur ad-hoc par endpoint
 * `correlation_id` présent sur toute réponse d'erreur
 * `retryable` reflète la policy serveur, pas une supposition client
+
+## 5) Règle Validation (`400` vs `422`)
+
+* `400 VALIDATION_FAILED` : paramètres URL/query/header invalides (enum invalide, date-heure invalide, format d'identifiant invalide)
+* `422 VALIDATION_FAILED` : body JSON correctement parsé mais ne respectant pas le contrat métier attendu
+* ce découpage est normatif pour les nouvelles routes; les écarts historiques doivent être alignés progressivement
 
 ## Références associées
 

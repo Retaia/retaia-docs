@@ -313,6 +313,17 @@ Normalisation HTTP (normatif) :
 * `422` = validation de payload échouée (`VALIDATION_FAILED`)
 * `429` = anti-abus/rate-limit (`TOO_MANY_ATTEMPTS`, `SLOW_DOWN`)
 
+Règle `VALIDATION_FAILED` (normatif) :
+
+* `400 VALIDATION_FAILED` : paramètres `path/query/header` invalides (enum, format date-heure, format identifiant)
+* `422 VALIDATION_FAILED` : body JSON valide mais non conforme au contrat métier attendu
+
+Normalisation des timestamps (normatif) :
+
+* tous les champs `*_at` exposés par l'API DOIVENT être ISO-8601 (`date-time`) en UTC
+* les filtres temporels (ex: `since`) DOIVENT accepter ISO-8601; les valeurs invalides renvoient `400 VALIDATION_FAILED`
+* les clients DEVRAIENT envoyer des timestamps explicites UTC (suffixe `Z` ou offset `+00:00`)
+
 ### Endpoints auth applicatifs (normatif)
 
 `POST /auth/login`
@@ -1119,6 +1130,12 @@ Response :
   * `status` (`ok|fail`)
   * `message`
 
+Règles de calcul (normatif) :
+
+* `down` : le check `database` est `fail`
+* `degraded` : `database=ok` mais au moins un check critique (`ingest_watch_path`, `storage_writable`) est `fail`
+* `ok` : tous les checks critiques sont `ok`
+
 ## 8.4) Locks ops
 
 ### GET `/ops/locks`
@@ -1145,6 +1162,12 @@ Response :
   * `released_at?`
 * `total`
 
+Règles pagination :
+
+* `items[]` correspond à la page demandée (`limit`/`offset`)
+* `total` représente le total filtré avant pagination (pas seulement la taille de page)
+* tri par défaut recommandé : `acquired_at DESC`
+
 ### POST `/ops/locks/recover`
 
 Objectif :
@@ -1155,6 +1178,11 @@ Body :
 
 * `stale_lock_minutes?` (default `30`)
 * `dry_run?` (default `false`)
+
+Validation attendue :
+
+* les clients DOIVENT envoyer `stale_lock_minutes` en entier >= 1
+* les implémentations peuvent coerce les types en v1; un durcissement explicite `400 VALIDATION_FAILED` est recommandé
 
 Response :
 
