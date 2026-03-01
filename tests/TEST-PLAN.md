@@ -348,7 +348,7 @@ Tests obligatoires :
   * `status` global
   * `checks[]` avec `name`, `status`, `message`
 * endpoint `GET /ops/locks` présent et conforme :
-  * filtres `asset_uuid`, `lock_type`
+  * filtres `asset_uuid`, `lock_type`, pagination `limit`, `offset`
   * payload `items[]` + `total`
 * endpoint `POST /ops/locks/recover` présent et conforme :
   * body `stale_lock_minutes`, `dry_run`
@@ -358,6 +358,7 @@ Tests obligatoires :
   * `by_type[]` avec `job_type`, `pending`, `claimed`, `failed`, `oldest_pending_age_seconds`
 * endpoint `GET /ops/ingest/unmatched` présent et conforme :
   * filtres `reason`, `since`, `limit`
+  * `reason`/`since` invalides renvoient `400 VALIDATION_FAILED`
   * payload `items[]` + `total`
 
 ## 8.1) Authz matrix

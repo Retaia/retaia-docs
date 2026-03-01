@@ -1131,6 +1131,8 @@ Query params :
 
 * `asset_uuid?`
 * `lock_type?`
+* `limit?` (default `50`, max `200`)
+* `offset?` (default `0`)
 
 Response :
 
@@ -1194,6 +1196,11 @@ Query params :
 * `reason?` (`missing_parent|ambiguous_parent|disabled_by_policy`)
 * `since?` (UTC ISO-8601)
 * `limit?` (default `50`, max `200`)
+
+Validation :
+
+* `reason` invalide -> `400 VALIDATION_FAILED`
+* `since` invalide -> `400 VALIDATION_FAILED`
 
 Response :
 
