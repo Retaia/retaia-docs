@@ -1657,6 +1657,302 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /ops/readiness:
+    get:
+      tags: [Ops]
+      summary: Get operational readiness checks
+      security:
+        - UserBearerAuth: []
+      responses:
+        "200":
+          description: Readiness snapshot
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [status, checks]
+                properties:
+                  status:
+                    type: string
+                    enum: [ok, degraded, down]
+                  checks:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required: [name, status, message]
+                      properties:
+                        name:
+                          type: string
+                        status:
+                          type: string
+                          enum: [ok, fail]
+                        message:
+                          type: string
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden (`FORBIDDEN_SCOPE` or `FORBIDDEN_ACTOR`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /ops/locks:
+    get:
+      tags: [Ops]
+      summary: List active operation locks
+      security:
+        - UserBearerAuth: []
+      parameters:
+        - name: asset_uuid
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: lock_type
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Locks list
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [items, total]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required: [id, asset_uuid, lock_type, actor_id, acquired_at]
+                      properties:
+                        id:
+                          type: string
+                        asset_uuid:
+                          type: string
+                        lock_type:
+                          type: string
+                        actor_id:
+                          type: string
+                        acquired_at:
+                          type: string
+                          format: date-time
+                        released_at:
+                          type: string
+                          format: date-time
+                          nullable: true
+                  total:
+                    type: integer
+                    minimum: 0
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden (`FORBIDDEN_SCOPE` or `FORBIDDEN_ACTOR`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /ops/locks/recover:
+    post:
+      tags: [Ops]
+      summary: Recover stale operation locks
+      security:
+        - UserBearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                stale_lock_minutes:
+                  type: integer
+                  minimum: 1
+                  default: 30
+                dry_run:
+                  type: boolean
+                  default: false
+      responses:
+        "200":
+          description: Recovery summary
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [stale_examined, recovered, dry_run]
+                properties:
+                  stale_examined:
+                    type: integer
+                    minimum: 0
+                  recovered:
+                    type: integer
+                    minimum: 0
+                  dry_run:
+                    type: boolean
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden (`FORBIDDEN_SCOPE` or `FORBIDDEN_ACTOR`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /ops/jobs/queue:
+    get:
+      tags: [Ops]
+      summary: Get jobs queue diagnostics
+      security:
+        - UserBearerAuth: []
+      responses:
+        "200":
+          description: Queue diagnostics snapshot
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [summary, by_type]
+                properties:
+                  summary:
+                    type: object
+                    additionalProperties: false
+                    required: [pending_total, claimed_total, failed_total]
+                    properties:
+                      pending_total:
+                        type: integer
+                        minimum: 0
+                      claimed_total:
+                        type: integer
+                        minimum: 0
+                      failed_total:
+                        type: integer
+                        minimum: 0
+                  by_type:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required: [job_type, pending, claimed, failed]
+                      properties:
+                        job_type:
+                          type: string
+                        pending:
+                          type: integer
+                          minimum: 0
+                        claimed:
+                          type: integer
+                          minimum: 0
+                        failed:
+                          type: integer
+                          minimum: 0
+                        oldest_pending_age_seconds:
+                          type: integer
+                          minimum: 0
+                          nullable: true
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden (`FORBIDDEN_SCOPE` or `FORBIDDEN_ACTOR`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /ops/ingest/unmatched:
+    get:
+      tags: [Ops]
+      summary: List unmatched ingest sidecars
+      security:
+        - UserBearerAuth: []
+      parameters:
+        - name: reason
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [missing_parent, ambiguous_parent, disabled_by_policy]
+        - name: since
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+      responses:
+        "200":
+          description: Unmatched sidecars list
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [items, total]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required: [path, reason, detected_at]
+                      properties:
+                        path:
+                          type: string
+                        reason:
+                          type: string
+                          enum: [missing_parent, ambiguous_parent, disabled_by_policy]
+                        detected_at:
+                          type: string
+                          format: date-time
+                  total:
+                    type: integer
+                    minimum: 0
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden (`FORBIDDEN_SCOPE` or `FORBIDDEN_ACTOR`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   securitySchemes:
     UserBearerAuth:

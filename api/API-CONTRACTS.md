@@ -1103,6 +1103,106 @@ Règles :
 * aucune donnée sensible (pas de secret/token)
 * exposition réservée aux rôles/scopes ops
 
+## 8.3) Readiness ops
+
+### GET `/ops/readiness`
+
+Objectif :
+
+* exposer l'état de disponibilité opérationnelle côté API
+
+Response :
+
+* `status` (`ok|degraded|down`)
+* `checks[]` :
+  * `name` (ex: `database`, `ingest_watch_path`, `storage_writable`, `migrations`)
+  * `status` (`ok|fail`)
+  * `message`
+
+## 8.4) Locks ops
+
+### GET `/ops/locks`
+
+Objectif :
+
+* lister les verrous actifs pour diagnostic concurrence
+
+Query params :
+
+* `asset_uuid?`
+* `lock_type?`
+
+Response :
+
+* `items[]` :
+  * `id`
+  * `asset_uuid`
+  * `lock_type`
+  * `actor_id`
+  * `acquired_at`
+  * `released_at?`
+* `total`
+
+### POST `/ops/locks/recover`
+
+Objectif :
+
+* forcer la récupération des verrous stale via endpoint ops
+
+Body :
+
+* `stale_lock_minutes?` (default `30`)
+* `dry_run?` (default `false`)
+
+Response :
+
+* `stale_examined`
+* `recovered`
+* `dry_run`
+
+## 8.5) Job queue ops
+
+### GET `/ops/jobs/queue`
+
+Objectif :
+
+* exposer backlog jobs pour diagnostic saturation agents
+
+Response :
+
+* `summary` :
+  * `pending_total`
+  * `claimed_total`
+  * `failed_total`
+* `by_type[]` :
+  * `job_type`
+  * `pending`
+  * `claimed`
+  * `failed`
+  * `oldest_pending_age_seconds?`
+
+## 8.6) Ingest unmatched listing (ops)
+
+### GET `/ops/ingest/unmatched`
+
+Objectif :
+
+* exposer la liste paginée des sidecars/proxies non rattachés
+
+Query params :
+
+* `reason?` (`missing_parent|ambiguous_parent|disabled_by_policy`)
+* `since?` (UTC ISO-8601)
+* `limit?` (default `50`, max `200`)
+
+Response :
+
+* `items[]` :
+  * `path`
+  * `reason`
+  * `detected_at` (UTC ISO-8601)
+* `total`
+
 
 ## 9) Schémas (objets)
 

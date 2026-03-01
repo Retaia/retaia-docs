@@ -344,6 +344,21 @@ Tests obligatoires :
   * compteurs `queued`, `missing`, `unmatched_sidecars`
   * `latest_unmatched[]` avec `path`, `reason`, `detected_at`
   * `reason` limité à `missing_parent|ambiguous_parent|disabled_by_policy`
+* endpoint `GET /ops/readiness` présent et conforme :
+  * `status` global
+  * `checks[]` avec `name`, `status`, `message`
+* endpoint `GET /ops/locks` présent et conforme :
+  * filtres `asset_uuid`, `lock_type`
+  * payload `items[]` + `total`
+* endpoint `POST /ops/locks/recover` présent et conforme :
+  * body `stale_lock_minutes`, `dry_run`
+  * payload `stale_examined`, `recovered`, `dry_run`
+* endpoint `GET /ops/jobs/queue` présent et conforme :
+  * `summary.pending_total|claimed_total|failed_total`
+  * `by_type[]` avec `job_type`, `pending`, `claimed`, `failed`, `oldest_pending_age_seconds`
+* endpoint `GET /ops/ingest/unmatched` présent et conforme :
+  * filtres `reason`, `since`, `limit`
+  * payload `items[]` + `total`
 
 ## 8.1) Authz matrix
 
