@@ -347,18 +347,24 @@ Tests obligatoires :
 * endpoint `GET /ops/readiness` présent et conforme :
   * `status` global
   * `checks[]` avec `name`, `status`, `message`
+  * mapping `status` conforme (`database=fail` => `down`; check critique fail avec DB OK => `degraded`)
 * endpoint `GET /ops/locks` présent et conforme :
-  * filtres `asset_uuid`, `lock_type`
-  * payload `items[]` + `total`
+  * filtres `asset_uuid`, `lock_type`, pagination `limit`, `offset`
+  * payload `items[]` + `total` (total avant pagination)
 * endpoint `POST /ops/locks/recover` présent et conforme :
   * body `stale_lock_minutes`, `dry_run`
   * payload `stale_examined`, `recovered`, `dry_run`
+  * `stale_lock_minutes` non entier ou < 1: comportement explicite documenté (coercion v1 ou `400 VALIDATION_FAILED`)
 * endpoint `GET /ops/jobs/queue` présent et conforme :
   * `summary.pending_total|claimed_total|failed_total`
   * `by_type[]` avec `job_type`, `pending`, `claimed`, `failed`, `oldest_pending_age_seconds`
 * endpoint `GET /ops/ingest/unmatched` présent et conforme :
   * filtres `reason`, `since`, `limit`
+  * `reason`/`since` invalides renvoient `400 VALIDATION_FAILED`
   * payload `items[]` + `total`
+* cohérence validation:
+  * `VALIDATION_FAILED` en `400` pour `path/query/header`
+  * `VALIDATION_FAILED` en `422` pour body JSON valide mais payload métier invalide
 
 ## 8.1) Authz matrix
 

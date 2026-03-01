@@ -1676,6 +1676,7 @@ paths:
                   status:
                     type: string
                     enum: [ok, degraded, down]
+                    description: Overall status (`down` when database check fails; `degraded` when critical non-database checks fail).
                   checks:
                     type: array
                     items:
@@ -1685,6 +1686,7 @@ paths:
                       properties:
                         name:
                           type: string
+                          description: Check identifier (e.g. `database`, `ingest_watch_path`, `storage_writable`).
                         status:
                           type: string
                           enum: [ok, fail]
@@ -1720,6 +1722,23 @@ paths:
           required: false
           schema:
             type: string
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of items to return.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+        - name: offset
+          in: query
+          required: false
+          description: Zero-based pagination offset.
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
       responses:
         "200":
           description: Locks list
@@ -1755,6 +1774,7 @@ paths:
                   total:
                     type: integer
                     minimum: 0
+                    description: Total count after filters, before pagination.
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
           content:
@@ -1901,6 +1921,7 @@ paths:
         - name: since
           in: query
           required: false
+          description: ISO-8601 UTC lower bound for `detected_at` (invalid values return `400 VALIDATION_FAILED`).
           schema:
             type: string
             format: date-time
@@ -1948,6 +1969,12 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "403":
           description: Forbidden (`FORBIDDEN_SCOPE` or `FORBIDDEN_ACTOR`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: Validation failed (`VALIDATION_FAILED`)
           content:
             application/json:
               schema:
