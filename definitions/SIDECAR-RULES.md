@@ -62,6 +62,7 @@ AUDIO :
 * `video_legacy_sidecars_enabled = false` (`.lrv`, `.thm` désactivés par défaut)
 * `audio_sidecars_enabled = false` (aucun sidecar audio attachable en v1)
 * tout fichier sidecar hors liste active reste `UNMATCHED_SIDECAR`
+* implémentation locale v1 : activation legacy via `APP_INGEST_VIDEO_LEGACY_SIDECARS_ENABLED`
 
 ## 4) Conflits et ambiguïtés
 
@@ -75,6 +76,10 @@ Règle :
 * aucun attach automatique
 * état `UNMATCHED_SIDECAR`
 * résolution humaine explicite requise
+* raison d'unmatched obligatoire parmi :
+  * `missing_parent`
+  * `ambiguous_parent`
+  * `disabled_by_policy`
 
 ## 5) Moves et purge
 
@@ -89,6 +94,13 @@ Pour chaque décision d'association :
 * `sidecar_path`
 * règle appliquée
 * résultat (`attached|unmatched|ambiguous`)
+* `unmatched_reason` si résultat `unmatched`
+
+En plus, au niveau du cycle ingest :
+
+* l'exécution d'enqueue expose les compteurs `queued`, `missing`, `unmatched_sidecars`
+* un sidecar/proxy `UNMATCHED_SIDECAR` est marqué `queued` dans l'état de scan (pas de retry infini)
+* un sidecar/proxy `UNMATCHED_SIDECAR` ne crée jamais d'asset standalone
 
 ## 7) Évolution
 

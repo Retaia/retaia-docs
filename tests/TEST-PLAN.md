@@ -295,7 +295,26 @@ Tests obligatoires :
 * purge supprime originaux + sidecars + dérivés
 * purge idempotente avec `Idempotency-Key`
 
-## 6.1) Lock lifecycle recovery
+## 6.1) Sidecars unmatched observability
+
+Tests obligatoires :
+
+* sidecar/proxy orphelin (ex: `.lrf` sans parent) :
+  * ne crée pas d'asset standalone
+  * est marqué `queued` dans l'état de scan
+  * incrémente `unmatched_sidecars` dans la sortie ingest
+* sidecar ambigu (plusieurs parents possibles) :
+  * n'est pas auto-attaché
+  * expose `unmatched_reason = ambiguous_parent`
+* sidecar désactivé par policy (ex: `lrv/thm` si legacy off) :
+  * n'est pas auto-attaché
+  * expose `unmatched_reason = disabled_by_policy`
+* reporting ingest inclut toujours les 3 compteurs :
+  * `queued`
+  * `missing`
+  * `unmatched_sidecars`
+
+## 6.2) Lock lifecycle recovery
 
 Tests obligatoires :
 

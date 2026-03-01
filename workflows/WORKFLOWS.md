@@ -21,18 +21,21 @@ Retaia Core Server (NAS)
 2. Détection des fichiers vidéo, photo et audio supportés.
 3. Enregistrement ou mise à jour de l’asset (UUID, path, size, mtime).
 4. Association des sidecars connus (même dossier, même base name).
-5. Vérification de stabilité :
+5. Sidecars/proxies non rattachables : marquer `UNMATCHED_SIDECAR` + raison (`missing_parent|ambiguous_parent|disabled_by_policy`).
+6. Vérification de stabilité :
 
    * taille identique sur **2 scans consécutifs**
    * `mtime` plus ancien que **5–6 minutes**
-6. Passage de l’état `DISCOVERED` à `READY` si conditions remplies.
-7. Attribution d'un `processing_profile` (auto par défaut, modifiable manuellement avant claim).
+7. Passage de l’état `DISCOVERED` à `READY` si conditions remplies.
+8. Attribution d'un `processing_profile` (auto par défaut, modifiable manuellement avant claim).
 
 ### Règles
 
 * Aucun traitement média n’est effectué.
 * Aucun move ou rename n’est effectué.
 * Le discovery est **read-only**.
+* Les sidecars/proxies `UNMATCHED_SIDECAR` n'engendrent pas d'asset autonome.
+* L'observabilité ingest expose au minimum `queued`, `missing`, `unmatched_sidecars`.
 
 
 ## Workflow 2 — Enregistrement d’un agent Retaia Agent
