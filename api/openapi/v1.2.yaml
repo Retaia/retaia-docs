@@ -632,6 +632,12 @@ paths:
             schema:
               $ref: "#/components/schemas/AuthEmailRequest"
       responses:
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Email verified by admin
         "403":
@@ -979,6 +985,12 @@ paths:
           schema:
             type: string
       responses:
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Asset list
           content:
@@ -1004,6 +1016,12 @@ paths:
       parameters:
         - $ref: "#/components/parameters/UuidPath"
       responses:
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Asset detail
           content:
@@ -1034,6 +1052,12 @@ paths:
                   type: object
                   additionalProperties: true
       responses:
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Asset updated
         "410":
@@ -1070,6 +1094,12 @@ paths:
                 max_parallel_jobs:
                   type: integer
       responses:
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Agent registered
           content:
@@ -1106,6 +1136,12 @@ paths:
         - $ref: "#/components/parameters/UuidPath"
         - $ref: "#/components/parameters/IdempotencyKey"
       responses:
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Reprocess accepted
         "409":
@@ -1136,6 +1172,12 @@ paths:
                   type: string
                   enum: [KEEP, REJECT, CLEAR]
       responses:
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Decision applied
         "409":
@@ -1154,6 +1196,12 @@ paths:
       parameters:
         - $ref: "#/components/parameters/UuidPath"
       responses:
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Asset reopened
         "409":
@@ -1169,6 +1217,12 @@ paths:
         Returns jobs with status `pending`
         and compatible with the agent capabilities.
       responses:
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: List of jobs
           content:
@@ -1191,6 +1245,12 @@ paths:
           schema:
             type: string
       responses:
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Job claimed
           content:
@@ -1223,6 +1283,12 @@ paths:
                 lock_token:
                   type: string
       responses:
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Lease extended
           content:
@@ -1256,6 +1322,12 @@ paths:
             schema:
               $ref: "#/components/schemas/JobSubmitRequest"
       responses:
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Job completed
         "409":
@@ -1301,6 +1373,12 @@ paths:
                 retryable:
                   type: boolean
       responses:
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Job failed recorded
         "409":
@@ -1346,6 +1424,12 @@ paths:
                 sha256:
                   type: string
       responses:
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Upload initialized
 
@@ -1370,6 +1454,12 @@ paths:
                 part_number:
                   type: integer
       responses:
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Part uploaded
 
@@ -1397,6 +1487,12 @@ paths:
                   items:
                     type: object
       responses:
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Upload completed
 
@@ -1410,6 +1506,12 @@ paths:
       parameters:
         - $ref: "#/components/parameters/UuidPath"
       responses:
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Derived list
           content:
@@ -1434,6 +1536,12 @@ paths:
             type: string
             enum: [proxy_video, proxy_audio, proxy_photo, thumb, waveform]
       responses:
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Derived content
         "404":
@@ -1459,6 +1567,12 @@ paths:
                 limit:
                   type: integer
       responses:
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Move preview
 
@@ -1485,6 +1599,12 @@ paths:
                   type: string
                   enum: [DRY_RUN, EXECUTE]
       responses:
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Batch accepted
 
@@ -1501,6 +1621,12 @@ paths:
           schema:
             type: string
       responses:
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Batch status
           content:
@@ -1533,6 +1659,12 @@ paths:
                 max_items:
                   type: integer
       responses:
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Decision preview
 
@@ -1559,6 +1691,12 @@ paths:
                   type: boolean
                   enum: [true]
       responses:
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Decisions applied
 
@@ -1583,6 +1721,12 @@ paths:
                   type: boolean
                   enum: [true]
       responses:
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Purge executed
         "409":
@@ -1601,6 +1745,12 @@ paths:
       parameters:
         - $ref: "#/components/parameters/UuidPath"
       responses:
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Purge preview
 
