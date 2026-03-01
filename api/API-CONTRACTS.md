@@ -1238,6 +1238,40 @@ Response :
   * `detected_at` (UTC ISO-8601)
 * `total`
 
+## 8.7) Ingest targeted requeue (ops)
+
+### POST `/ops/ingest/requeue`
+
+Objectif :
+
+* relancer l’enqueue ingest pour une cible précise sans relancer un scan global
+* fournir une primitive ops pour recovery ciblé (asset unique ou path unique)
+
+Request body :
+
+* `asset_uuid?` (UUID)
+* `path?` (relative path ingest)
+* `include_sidecars?` (default `true`)
+* `include_derived?` (default `true`)
+* `reason` (string non vide)
+
+Validation :
+
+* au moins un de `asset_uuid` ou `path` DOIT être fourni
+* `asset_uuid` invalide -> `400 VALIDATION_FAILED`
+* `path` absolu ou unsafe (`..`) -> `400 VALIDATION_FAILED`
+* `reason` vide -> `400 VALIDATION_FAILED`
+
+Response (`202 Accepted`) :
+
+* `accepted` (`true`)
+* `target` :
+  * `asset_uuid?`
+  * `path?`
+* `requeued_assets` (integer >= 0)
+* `requeued_jobs` (integer >= 0)
+* `deduplicated_jobs` (integer >= 0)
+
 
 ## 9) Schémas (objets)
 

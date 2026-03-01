@@ -1980,6 +1980,99 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /ops/ingest/requeue:
+    post:
+      tags: [Ops]
+      summary: Requeue ingest processing for a specific target
+      security:
+        - UserBearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [reason]
+              properties:
+                asset_uuid:
+                  type: string
+                  format: uuid
+                path:
+                  type: string
+                  minLength: 1
+                include_sidecars:
+                  type: boolean
+                  default: true
+                include_derived:
+                  type: boolean
+                  default: true
+                reason:
+                  type: string
+                  minLength: 1
+            examples:
+              by_asset:
+                value:
+                  asset_uuid: "550e8400-e29b-41d4-a716-446655440000"
+                  include_sidecars: true
+                  include_derived: true
+                  reason: "manual_recovery"
+              by_path:
+                value:
+                  path: "DJI/DCIM/100MEDIA/DJI_0123.MP4"
+                  include_sidecars: true
+                  include_derived: true
+                  reason: "proxy_backfill"
+      responses:
+        "202":
+          description: Target accepted for requeue processing
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [accepted, target, requeued_assets, requeued_jobs, deduplicated_jobs]
+                properties:
+                  accepted:
+                    type: boolean
+                    enum: [true]
+                  target:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      asset_uuid:
+                        type: string
+                        format: uuid
+                      path:
+                        type: string
+                  requeued_assets:
+                    type: integer
+                    minimum: 0
+                  requeued_jobs:
+                    type: integer
+                    minimum: 0
+                  deduplicated_jobs:
+                    type: integer
+                    minimum: 0
+        "400":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden (`FORBIDDEN_SCOPE` or `FORBIDDEN_ACTOR`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   securitySchemes:
     UserBearerAuth:
