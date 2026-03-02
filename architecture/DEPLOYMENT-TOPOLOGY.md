@@ -48,8 +48,8 @@ Rules:
 - Runtime shell env remains the final source of truth and MUST override any `.env*` value.
 - Core startup MUST validate `APP_STORAGE_ID` consistency against the mounted marker `/.retaia.storage_id`.
 - If `/.retaia` is missing, Core MUST create it during boot/update migration before startup validation.
-- If marker creation fails, marker JSON is invalid, required marker schema update fails, or `APP_STORAGE_ID` mismatches marker `storage_id`, Core MUST fail fast at boot with an explicit startup error.
-- Marker migration/update failure (including required schema-version upgrade, create/write/atomic rename) MUST fail fast at boot/update; degraded mode is forbidden for this control.
+- If marker creation fails, marker JSON is invalid, required marker schema update fails (based on `/.retaia.version`), or `APP_STORAGE_ID` mismatches marker `storage_id`, Core MUST fail fast at boot with an explicit startup error.
+- Marker migration/update failure (including required upgrade of `/.retaia.version`, create/write/atomic rename) MUST fail fast at boot/update; degraded mode is forbidden for this control.
 
 ## 5. Example compose pattern
 

@@ -168,7 +168,8 @@ Schéma JSON minimal (v1) :
 Règles de schéma :
 
 * `version` DOIT être un entier strictement positif
-* tout changement de schéma du marker `/.retaia` DOIT incrémenter `version`
+* `version` est la version du marker `/.retaia` (pas une version Core)
+* tout changement de schéma du marker `/.retaia` DOIT incrémenter `/.retaia.version`
 * `storage_id` DOIT être une string non vide
 * `paths` DOIT contenir exactement `inbox`, `archive`, `rejects` (v1)
 * aucune clé inconnue ne DOIT être requise pour valider le marker v1

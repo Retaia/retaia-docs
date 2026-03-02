@@ -35,7 +35,7 @@ Retaia Core Server (NAS)
 * Aucun traitement média n’est effectué.
 * Aucun move ou rename n’est effectué.
 * Le discovery est **read-only**.
-* Si la migration `/.retaia` échoue (create/update atomique ou upgrade de schéma requis), Core DOIT échouer explicitement au boot/update (pas de mode dégradé implicite).
+* Si la migration `/.retaia` échoue (create/update atomique ou upgrade requis de `/.retaia.version`), Core DOIT échouer explicitement au boot/update (pas de mode dégradé implicite).
 * `APP_STORAGE_ID` DOIT matcher strictement `/.retaia.storage_id` pour chaque mount ciblé; sinon boot refusé.
 * Les sidecars/proxies `UNMATCHED_SIDECAR` n'engendrent pas d'asset autonome.
 * L'observabilité ingest expose au minimum `queued`, `missing`, `unmatched_sidecars`.
