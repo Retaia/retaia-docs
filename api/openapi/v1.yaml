@@ -1735,8 +1735,8 @@ paths:
                 properties:
                   status:
                     type: string
-                    enum: [ok, degraded, down]
-                    description: Overall status (`down` when database check fails; `degraded` when critical non-database checks fail).
+                    enum: [ok, down]
+                    description: Overall status (`down` when database check fails or when critical non-database checks fail).
                   checks:
                     type: array
                     items:

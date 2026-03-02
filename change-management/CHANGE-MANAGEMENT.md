@@ -17,6 +17,13 @@ Principe directeur :
 
 > **Aucun changement ne doit diminuer le contrôle humain ni introduire un comportement destructif implicite.**
 
+Principe runtime global (normatif) :
+
+* le système DOIT appliquer une stratégie **fail-fast globale**
+* aucun composant Core/Agent ne DOIT continuer en **mode dégradé** pour un contrôle critique
+* en cas d'échec critique, le startup/runtime DOIT échouer explicitement avec un code d'erreur opérable
+* les modes partiels implicites et les fallback silencieux sont interdits
+
 
 ## Catégories de changements
 

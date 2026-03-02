@@ -27,6 +27,7 @@ Le système Retaia vise à :
 * **Idempotence partout** : retries sûrs par design
 * **Capabilities explicites** : aucun pouvoir implicite côté agent
 * **Humain au centre** : aucune décision métier automatisée
+* **Fail-fast global** : aucun mode dégradé implicite sur les contrôles critiques
 
 
 ## 3) Composants principaux
