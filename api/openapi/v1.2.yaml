@@ -1821,12 +1821,28 @@ paths:
               schema:
                 type: object
                 additionalProperties: false
-                required: [status, checks]
+                required: [status, self_healing, checks]
                 properties:
                   status:
                     type: string
                     enum: [ok, degraded, down]
-                    description: Overall status (`down` when database check fails; `degraded` when critical non-database checks fail).
+                    description: Overall status (`down` when database check fails; `degraded` when critical non-database checks fail but auto-repair is active).
+                  self_healing:
+                    type: object
+                    additionalProperties: false
+                    required: [active, deadline_at, max_self_healing_seconds]
+                    properties:
+                      active:
+                        type: boolean
+                      deadline_at:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        description: Auto-repair deadline in UTC; null when `active=false`.
+                      max_self_healing_seconds:
+                        type: integer
+                        enum: [300]
+                        description: Normative maximum auto-repair window in seconds.
                   checks:
                     type: array
                     items:

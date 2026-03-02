@@ -17,6 +17,14 @@ Principe directeur :
 
 > **Aucun changement ne doit diminuer le contrôle humain ni introduire un comportement destructif implicite.**
 
+Principe runtime global (normatif) :
+
+* le système DOIT appliquer une stratégie **fail-fast par défaut**
+* un mode **degraded** est autorisé uniquement si une auto-réparation explicite est en cours
+* un mode **degraded** DOIT être borné dans le temps, observable, et sans action destructive implicite
+* si l'auto-réparation échoue ou dépasse le délai borné, le système DOIT basculer en fail-fast explicite (code d'erreur opérable)
+* les modes partiels implicites et les fallback silencieux sont interdits
+
 
 ## Catégories de changements
 

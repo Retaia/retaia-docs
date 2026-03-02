@@ -11,6 +11,22 @@ Tests obligatoires :
 * `v1.2` projet global : client mobile Android/iOS (`client_kind=UI_MOBILE`) + push mobile (status-driven)
 * les suites UI/MCP sont classées en gates `v1.1` global; les suites UI mobile/push en gates `v1.2`
 
+## 0.1) Configuration Core (.env layering + marker)
+
+Tests obligatoires :
+
+* precedence de config Core respectée : `.env` < `.env.<APP_ENV>` < `.env.local` < variables shell runtime (la valeur finale DOIT être celle de la dernière couche)
+* absence de `.env.<APP_ENV>` et/ou `.env.local` ne fait pas échouer le boot si les variables requises sont résolues
+* `APP_STORAGE_ID` mismatch avec `/.retaia.storage_id` => boot refusé (erreur explicite)
+* marker `/.retaia` absent => création automatique par Core au boot/update, puis validation
+* marker `/.retaia` JSON invalide => boot refusé (erreur explicite)
+* échec de migration atomique du marker (`create/write/rename`) => boot/update refusé (pas de mode dégradé)
+* upgrade de schéma du marker requis (drift du champ JSON `version` dans `/.retaia`) mais échoué => boot/update refusé (erreur explicite)
+* changement de schéma `/.retaia` sans incrément du champ JSON `version` dans `/.retaia` => non conforme (gate bloquant)
+* suppression manuelle de `/.retaia` suivie d'un redémarrage Core => recréation automatique puis validation
+* multi-mount: un seul mount en échec de migration/validation marker => startup global refusé (pas de mode partiel)
+* erreurs startup marker exposent un code normatif parmi: `CORE_STORAGE_MARKER_CREATE_FAILED`, `CORE_STORAGE_MARKER_JSON_INVALID`, `CORE_STORAGE_MARKER_STORAGE_ID_MISMATCH`, `CORE_STORAGE_MARKER_SCHEMA_UPGRADE_FAILED`
+
 ## 1) State machine
 
 Tests obligatoires :
@@ -346,8 +362,9 @@ Tests obligatoires :
   * `reason` limité à `missing_parent|ambiguous_parent|disabled_by_policy`
 * endpoint `GET /ops/readiness` présent et conforme :
   * `status` global
+  * `self_healing` avec `active`, `deadline_at`, `max_self_healing_seconds=300`
   * `checks[]` avec `name`, `status`, `message`
-  * mapping `status` conforme (`database=fail` => `down`; check critique fail avec DB OK => `degraded`)
+  * mapping `status` conforme (`database=fail` => `down`; check critique fail avec DB OK + `self_healing.active=true` et `now < deadline_at` => `degraded`; sinon `down`)
 * endpoint `GET /ops/locks` présent et conforme :
   * filtres `asset_uuid`, `lock_type`, pagination `limit`, `offset`
   * payload `items[]` + `total` (total avant pagination)

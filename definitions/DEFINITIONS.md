@@ -150,6 +150,30 @@ Contraintes :
 * `paths.*` ne DOIT PAS contenir `..` ni null byte
 * le marker DOIT être valide JSON; sinon il est considéré invalide
 * la mise à jour DOIT être atomique (jamais de fichier partiellement écrit visible)
+* la suppression manuelle du fichier `/.retaia` est autorisée pour recovery opérateur; Core DOIT le recréer au boot/update suivant
+
+Schéma JSON minimal (v1) :
+
+```json
+{
+  "version": 1,
+  "storage_id": "nas-main",
+  "paths": {
+    "inbox": "INBOX",
+    "archive": "ARCHIVE",
+    "rejects": "REJECTS"
+  }
+}
+```
+
+Règles de schéma :
+
+* `version` DOIT être un entier strictement positif
+* `version` est la version du marker `/.retaia` (pas une version Core, ni une version OpenAPI)
+* tout changement de schéma du marker `/.retaia` DOIT incrémenter le champ JSON `version` du fichier `/.retaia`
+* `storage_id` DOIT être une string non vide
+* `paths` DOIT contenir exactement `inbox`, `archive`, `rejects` (v1)
+* aucune clé inconnue ne DOIT être requise pour valider le marker v1
 
 
 ## INBOX

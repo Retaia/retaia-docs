@@ -112,7 +112,7 @@ Pour les workloads AI `suggest_tags` (`meta.tags.suggestions@1`), planifiés en 
 Règles :
 
 * sélection provider explicite via config/runtime policy (pas de hardcode implicite)
-* indisponibilité d'un provider => fallback vers un provider disponible ou retryable (pas de crash global agent)
+* indisponibilité d'un provider requis => échec explicite (retryable si policy le permet), ou mode dégradé seulement si une auto-réparation explicite est active
 * comportement déterministe du routing provider pour une même policy d'exécution
 * inventaire provider/modèle DOIT être publié par l'agent (pas de liste statique embarquée côté UI/Core)
 * modèle effectif DOIT provenir d'un choix utilisateur explicite (CLI/GUI/config utilisateur)
