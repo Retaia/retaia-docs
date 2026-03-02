@@ -47,7 +47,8 @@ Rules:
 - Missing optional file (`.env.<APP_ENV>` or `.env.local`) MUST NOT fail boot by itself.
 - Runtime shell env remains the final source of truth and MUST override any `.env*` value.
 - Core startup MUST validate `APP_STORAGE_ID` consistency against the mounted marker `/.retaia.storage_id`.
-- If `/.retaia` is missing/invalid or `APP_STORAGE_ID` mismatches marker `storage_id`, Core MUST fail fast at boot with an explicit startup error.
+- If `/.retaia` is missing, Core MUST create it during boot/update migration before startup validation.
+- If marker creation fails, marker JSON is invalid, or `APP_STORAGE_ID` mismatches marker `storage_id`, Core MUST fail fast at boot with an explicit startup error.
 - Marker migration/update failure (create/write/atomic rename) MUST fail fast at boot/update; degraded mode is forbidden for this control.
 
 ## 5. Example compose pattern
