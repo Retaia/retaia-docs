@@ -19,9 +19,10 @@ Principe directeur :
 
 Principe runtime global (normatif) :
 
-* le système DOIT appliquer une stratégie **fail-fast globale**
-* aucun composant Core/Agent ne DOIT continuer en **mode dégradé** pour un contrôle critique
-* en cas d'échec critique, le startup/runtime DOIT échouer explicitement avec un code d'erreur opérable
+* le système DOIT appliquer une stratégie **fail-fast par défaut**
+* un mode **degraded** est autorisé uniquement si une auto-réparation explicite est en cours
+* un mode **degraded** DOIT être borné dans le temps, observable, et sans action destructive implicite
+* si l'auto-réparation échoue ou dépasse le délai borné, le système DOIT basculer en fail-fast explicite (code d'erreur opérable)
 * les modes partiels implicites et les fallback silencieux sont interdits
 
 

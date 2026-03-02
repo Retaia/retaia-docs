@@ -363,7 +363,7 @@ Tests obligatoires :
 * endpoint `GET /ops/readiness` présent et conforme :
   * `status` global
   * `checks[]` avec `name`, `status`, `message`
-  * mapping `status` conforme (`database=fail` => `down`; check critique fail avec DB OK => `down`)
+  * mapping `status` conforme (`database=fail` => `down`; check critique fail avec DB OK + auto-réparation active => `degraded`; sinon `down`)
 * endpoint `GET /ops/locks` présent et conforme :
   * filtres `asset_uuid`, `lock_type`, pagination `limit`, `offset`
   * payload `items[]` + `total` (total avant pagination)

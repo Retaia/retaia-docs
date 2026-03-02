@@ -1124,7 +1124,7 @@ Objectif :
 
 Response :
 
-* `status` (`ok|down`)
+* `status` (`ok|degraded|down`)
 * `checks[]` :
   * `name` (ex: `database`, `ingest_watch_path`, `storage_writable`, `migrations`)
   * `status` (`ok|fail`)
@@ -1133,7 +1133,8 @@ Response :
 Règles de calcul (normatif) :
 
 * `down` : le check `database` est `fail`
-* `down` : `database=ok` mais au moins un check critique (`ingest_watch_path`, `storage_writable`) est `fail`
+* `degraded` : `database=ok`, au moins un check critique (`ingest_watch_path`, `storage_writable`) est `fail`, et une auto-réparation explicite est en cours
+* `down` : `database=ok`, au moins un check critique est `fail`, et aucune auto-réparation active ne permet le retour à `ok` dans le délai borné
 * `ok` : tous les checks critiques sont `ok`
 
 ## 8.4) Locks ops
