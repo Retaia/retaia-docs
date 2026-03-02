@@ -1125,6 +1125,10 @@ Objectif :
 Response :
 
 * `status` (`ok|degraded|down`)
+* `self_healing` :
+  * `active` (`boolean`)
+  * `deadline_at` (`ISO-8601 UTC` ou `null`)
+  * `max_self_healing_seconds` (`300`)
 * `checks[]` :
   * `name` (ex: `database`, `ingest_watch_path`, `storage_writable`, `migrations`)
   * `status` (`ok|fail`)
@@ -1133,9 +1137,10 @@ Response :
 Règles de calcul (normatif) :
 
 * `down` : le check `database` est `fail`
-* `degraded` : `database=ok`, au moins un check critique (`ingest_watch_path`, `storage_writable`) est `fail`, et une auto-réparation explicite est en cours
+* `degraded` : `database=ok`, au moins un check critique (`ingest_watch_path`, `storage_writable`) est `fail`, `self_healing.active=true`, et `now < self_healing.deadline_at`
 * `down` : `database=ok`, au moins un check critique est `fail`, et aucune auto-réparation active ne permet le retour à `ok` dans le délai borné
 * `ok` : tous les checks critiques sont `ok`
+* borne normative unique : `self_healing.max_self_healing_seconds = 300`
 
 ## 8.4) Locks ops
 

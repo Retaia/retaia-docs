@@ -362,8 +362,9 @@ Tests obligatoires :
   * `reason` limité à `missing_parent|ambiguous_parent|disabled_by_policy`
 * endpoint `GET /ops/readiness` présent et conforme :
   * `status` global
+  * `self_healing` avec `active`, `deadline_at`, `max_self_healing_seconds=300`
   * `checks[]` avec `name`, `status`, `message`
-  * mapping `status` conforme (`database=fail` => `down`; check critique fail avec DB OK + auto-réparation active => `degraded`; sinon `down`)
+  * mapping `status` conforme (`database=fail` => `down`; check critique fail avec DB OK + `self_healing.active=true` et `now < deadline_at` => `degraded`; sinon `down`)
 * endpoint `GET /ops/locks` présent et conforme :
   * filtres `asset_uuid`, `lock_type`, pagination `limit`, `offset`
   * payload `items[]` + `total` (total avant pagination)
