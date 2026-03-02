@@ -27,6 +27,15 @@ Tests obligatoires :
 * multi-mount: un seul mount en échec de migration/validation marker => startup global refusé (pas de mode partiel)
 * erreurs startup marker exposent un code normatif parmi: `CORE_STORAGE_MARKER_CREATE_FAILED`, `CORE_STORAGE_MARKER_JSON_INVALID`, `CORE_STORAGE_MARKER_STORAGE_ID_MISMATCH`, `CORE_STORAGE_MARKER_SCHEMA_UPGRADE_FAILED`
 
+## 0.2) Discipline des tests unitaires
+
+Tests obligatoires :
+
+* toute suite marquée "unitaire" n'accède ni au réseau, ni à la DB, ni au vrai filesystem, ni à des processus externes
+* les libs externes et tout module/fichier applicatif autre que l'unité testée sont mockés/stubbés/fakés
+* l'horloge et les sources d'aléa sont contrôlées (mock/fake) pour garantir le déterminisme
+* un test "unitaire" qui dépend d'une ressource réelle est reclassé en test d'intégration
+
 ## 1) State machine
 
 Tests obligatoires :

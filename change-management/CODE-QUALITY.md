@@ -49,6 +49,12 @@ Minimum attendu :
 - intégration API / DB / IO : **tests d’intégration**
 - contrats API / protocoles : **tests contractuels** (au moins scénarios)
 
+Règle d'isolation des tests unitaires (normatif) :
+- un test unitaire DOIT tester un seul fichier/unité de code à la fois
+- toute dépendance externe au fichier testé (librairie tierce, filesystem, réseau, horloge, processus, DB, autre module/fichier applicatif) DOIT être mockée/stubbée/fakée
+- un test unitaire NE DOIT PAS lire/écrire de vrais fichiers hors fixtures explicitement mockées
+- si une dépendance ne peut pas être mockée proprement, le test DOIT être classé en test d'intégration
+
 ### Bugs
 Tout bug corrigé DOIT ajouter un test de non-régression.
 
