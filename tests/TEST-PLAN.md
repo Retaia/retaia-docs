@@ -23,6 +23,9 @@ Tests obligatoires :
 * échec de migration atomique du marker (`create/write/rename`) => boot/update refusé (pas de mode dégradé)
 * upgrade de schéma du marker requis (drift du champ JSON `version` dans `/.retaia`) mais échoué => boot/update refusé (erreur explicite)
 * changement de schéma `/.retaia` sans incrément du champ JSON `version` dans `/.retaia` => non conforme (gate bloquant)
+* suppression manuelle de `/.retaia` suivie d'un redémarrage Core => recréation automatique puis validation
+* multi-mount: un seul mount en échec de migration/validation marker => startup global refusé (pas de mode partiel)
+* erreurs startup marker exposent un code normatif parmi: `CORE_STORAGE_MARKER_CREATE_FAILED`, `CORE_STORAGE_MARKER_JSON_INVALID`, `CORE_STORAGE_MARKER_STORAGE_ID_MISMATCH`, `CORE_STORAGE_MARKER_SCHEMA_UPGRADE_FAILED`
 
 ## 1) State machine
 

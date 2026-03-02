@@ -50,6 +50,14 @@ Rules:
 - If `/.retaia` is missing, Core MUST create it during boot/update migration before startup validation.
 - If marker creation fails, marker JSON is invalid, required marker schema update fails (based on the JSON field `version` in `/.retaia`), or `APP_STORAGE_ID` mismatches marker `storage_id`, Core MUST fail fast at boot with an explicit startup error.
 - Marker migration/update failure (including required upgrade of the JSON field `version` in `/.retaia`, create/write/atomic rename) MUST fail fast at boot/update; degraded mode is forbidden for this control.
+- In multi-mount setups, validation/migration MUST succeed for every configured `storage_id`; one failing mount MUST fail startup globally.
+
+Startup error code mapping (normative):
+
+- `CORE_STORAGE_MARKER_CREATE_FAILED`
+- `CORE_STORAGE_MARKER_JSON_INVALID`
+- `CORE_STORAGE_MARKER_STORAGE_ID_MISMATCH`
+- `CORE_STORAGE_MARKER_SCHEMA_UPGRADE_FAILED`
 
 ## 5. Example compose pattern
 

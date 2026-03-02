@@ -150,6 +150,7 @@ Contraintes :
 * `paths.*` ne DOIT PAS contenir `..` ni null byte
 * le marker DOIT être valide JSON; sinon il est considéré invalide
 * la mise à jour DOIT être atomique (jamais de fichier partiellement écrit visible)
+* la suppression manuelle du fichier `/.retaia` est autorisée pour recovery opérateur; Core DOIT le recréer au boot/update suivant
 
 Schéma JSON minimal (v1) :
 
