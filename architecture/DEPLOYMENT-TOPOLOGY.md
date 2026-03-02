@@ -32,13 +32,31 @@ This profile is normative for interoperability expectations between `core`, `ui`
 - Only the Caddy reverse-proxy port is exposed to LAN users/agents.
 - Access control (authN/authZ, network policy, optional VPN/allowlist) remains mandatory.
 
-## 4. Example compose pattern
+## 4. Core env loading order (normative)
+
+Core configuration MUST be loaded with this precedence order (lowest -> highest), where each next layer overrides previous values:
+
+1. `.env` (generic defaults)
+2. `.env.<environment>` (environment-specific; typically `.env.dev`, `.env.test`, `.env.prod`)
+3. `.env.local` (machine/operator local overrides, never versioned)
+4. Runtime shell environment variables (process/container env)
+
+Rules:
+
+- `APP_ENV` selects the environment file (`dev|test|prod`), then Core loads `.env.<APP_ENV>`.
+- Missing optional file (`.env.<APP_ENV>` or `.env.local`) MUST NOT fail boot by itself.
+- Runtime shell env remains the final source of truth and MUST override any `.env*` value.
+
+## 5. Example compose pattern
 
 ```yaml
 services:
   core:
     image: ghcr.io/retaia/retaia-core:v1.0.0
-    env_file: .env
+    env_file:
+      - .env
+      - .env.prod
+      - .env.local
     environment:
       APP_ENV: prod
       APP_DEBUG: "0"
@@ -106,7 +124,7 @@ Agent workstation configuration example:
 CORE_API_URL=http://192.168.0.14:8080/api/v1
 ```
 
-## 5. API request flow
+## 6. API request flow
 
 1. Browser/UI and workstation agents call `http://<nas-ip>:8080/api/v1/...`.
 2. Front Caddy matches `/api/*` and forwards to Core PHP-FPM (`core:9000`).

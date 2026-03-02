@@ -125,6 +125,33 @@ Il inclut :
 Ce n’est pas un simple dossier.
 
 
+## RUSHES_DB Marker (`/.retaia`)
+
+Chaque mount local racine d'un `storage_id` DOIT contenir un fichier caché `/.retaia` (sans extension), au format JSON.
+
+Ce marker :
+
+* est créé et maintenu exclusivement par Retaia Core
+* est (re)généré par Retaia Core au boot et à chaque update applicatif, avec une logique de migration non destructive
+* permet de vérifier qu'un agent est monté sur le bon volume
+* publie les chemins relatifs canoniques des zones fonctionnelles
+
+Format minimal :
+
+* `version` (entier, ex: `1`)
+* `storage_id` (string, identique au locator API)
+* `paths.inbox` (relative path)
+* `paths.archive` (relative path)
+* `paths.rejects` (relative path)
+
+Contraintes :
+
+* `paths.*` DOIT rester relatif (jamais absolu)
+* `paths.*` ne DOIT PAS contenir `..` ni null byte
+* le marker DOIT être valide JSON; sinon il est considéré invalide
+* la mise à jour DOIT être atomique (jamais de fichier partiellement écrit visible)
+
+
 ## INBOX
 
 `INBOX` est l’état et l’emplacement des médias nouvellement découverts.

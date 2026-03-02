@@ -17,17 +17,18 @@ Retaia Core Server (NAS)
 
 ### Étapes
 
-1. Scan périodique des dossiers configurés (polling).
-2. Détection des fichiers vidéo, photo et audio supportés.
-3. Enregistrement ou mise à jour de l’asset (UUID, path, size, mtime).
-4. Association des sidecars connus (même dossier, même base name).
-5. Sidecars/proxies non rattachables : marquer `UNMATCHED_SIDECAR` + raison (`missing_parent|ambiguous_parent|disabled_by_policy`).
-6. Vérification de stabilité :
+1. Au boot puis à chaque update applicatif, exécuter la migration de marker `/.retaia` sur chaque mount `storage_id` configuré (création si absent, mise à jour atomique si drift).
+2. Scan périodique des dossiers configurés (polling).
+3. Détection des fichiers vidéo, photo et audio supportés.
+4. Enregistrement ou mise à jour de l’asset (UUID, path, size, mtime).
+5. Association des sidecars connus (même dossier, même base name).
+6. Sidecars/proxies non rattachables : marquer `UNMATCHED_SIDECAR` + raison (`missing_parent|ambiguous_parent|disabled_by_policy`).
+7. Vérification de stabilité :
 
    * taille identique sur **2 scans consécutifs**
    * `mtime` plus ancien que **5–6 minutes**
-7. Passage de l’état `DISCOVERED` à `READY` si conditions remplies.
-8. Attribution d'un `processing_profile` (auto par défaut, modifiable manuellement avant claim).
+8. Passage de l’état `DISCOVERED` à `READY` si conditions remplies.
+9. Attribution d'un `processing_profile` (auto par défaut, modifiable manuellement avant claim).
 
 ### Règles
 
@@ -98,18 +99,22 @@ Retaia Agent
 ### Étapes
 
 1. Vérifier qu'un mount local existe pour `source.storage_id` (SMB/NFS/NAS local).
-2. Résoudre puis lire le fichier principal et ses sidecars (read-only) via `storage_mounts[source.storage_id] + source.*_relative`.
-3. Extraire les facts (métadonnées techniques) et les envoyer au serveur.
-4. Générer les dérivés en local temporaire côté agent :
+2. Lire et valider `storage_mounts[source.storage_id]/.retaia` (JSON) :
+
+   * `storage_id` DOIT matcher `source.storage_id`
+   * `paths.inbox|archive|rejects` DOIVENT être relatifs et sans traversée
+3. Résoudre puis lire le fichier principal et ses sidecars (read-only) via `storage_mounts[source.storage_id] + source.*_relative`.
+4. Extraire les facts (métadonnées techniques) et les envoyer au serveur.
+5. Générer les dérivés en local temporaire côté agent :
 
    * VIDEO : proxy (obligatoire), thumbs
    * AUDIO : proxy (obligatoire), waveform (recommandé)
    * PHOTO : proxy (obligatoire), thumbs
-5. Uploader les dérivés via l'API (`/assets/{uuid}/derived/upload/*`).
-6. Enregistrer les références de dérivés côté serveur.
-7. En cas de job long : envoyer des heartbeats pour prolonger le TTL.
-8. Soumettre le résultat final, libérer le lock.
-9. Le serveur passe l’asset à `PROCESSED` quand tous les jobs requis par le `processing_profile` sont terminés.
+6. Uploader les dérivés via l'API (`/assets/{uuid}/derived/upload/*`).
+7. Enregistrer les références de dérivés côté serveur.
+8. En cas de job long : envoyer des heartbeats pour prolonger le TTL.
+9. Soumettre le résultat final, libérer le lock.
+10. Le serveur passe l’asset à `PROCESSED` quand tous les jobs requis par le `processing_profile` sont terminés.
 
 ### Règles
 
@@ -117,6 +122,7 @@ Retaia Agent
 * L’agent ne prend jamais de décision KEEP/REJECT.
 * Les agents n'écrivent jamais directement dans `RUSHES_DB/.derived`.
 * `PROCESSED` dépend du `processing_profile` de l'asset.
+* Le fichier `/.retaia` est créé et maintenu par Retaia Core uniquement.
 
 
 ## Workflow 5 — Jobs secondaires post-review
