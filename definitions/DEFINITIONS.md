@@ -169,7 +169,7 @@ Règles de schéma :
 
 * `version` DOIT être un entier strictement positif
 * `version` est la version du marker `/.retaia` (pas une version Core, ni une version OpenAPI)
-* tout changement de schéma du marker `/.retaia` DOIT incrémenter `/.retaia.version`
+* tout changement de schéma du marker `/.retaia` DOIT incrémenter le champ JSON `version` du fichier `/.retaia`
 * `storage_id` DOIT être une string non vide
 * `paths` DOIT contenir exactement `inbox`, `archive`, `rejects` (v1)
 * aucune clé inconnue ne DOIT être requise pour valider le marker v1

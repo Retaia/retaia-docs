@@ -21,8 +21,8 @@ Tests obligatoires :
 * marker `/.retaia` absent => création automatique par Core au boot/update, puis validation
 * marker `/.retaia` JSON invalide => boot refusé (erreur explicite)
 * échec de migration atomique du marker (`create/write/rename`) => boot/update refusé (pas de mode dégradé)
-* upgrade de schéma du marker requis (drift de `/.retaia.version`) mais échoué => boot/update refusé (erreur explicite)
-* changement de schéma `/.retaia` sans incrément de `/.retaia.version` => non conforme (gate bloquant)
+* upgrade de schéma du marker requis (drift du champ JSON `version` dans `/.retaia`) mais échoué => boot/update refusé (erreur explicite)
+* changement de schéma `/.retaia` sans incrément du champ JSON `version` dans `/.retaia` => non conforme (gate bloquant)
 
 ## 1) State machine
 
