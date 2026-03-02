@@ -11,6 +11,16 @@ Tests obligatoires :
 * `v1.2` projet global : client mobile Android/iOS (`client_kind=UI_MOBILE`) + push mobile (status-driven)
 * les suites UI/MCP sont classées en gates `v1.1` global; les suites UI mobile/push en gates `v1.2`
 
+## 0.1) Configuration Core (.env layering + marker)
+
+Tests obligatoires :
+
+* precedence de config Core respectée : `.env` < `.env.<APP_ENV>` < `.env.local` < variables shell runtime (la valeur finale DOIT être celle de la dernière couche)
+* absence de `.env.<APP_ENV>` et/ou `.env.local` ne fait pas échouer le boot si les variables requises sont résolues
+* `APP_STORAGE_ID` mismatch avec `/.retaia.storage_id` => boot refusé (erreur explicite)
+* marker `/.retaia` absent ou JSON invalide => boot refusé (erreur explicite)
+* échec de migration atomique du marker (`create/write/rename`) => boot/update refusé (pas de mode dégradé)
+
 ## 1) State machine
 
 Tests obligatoires :
