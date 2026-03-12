@@ -120,9 +120,6 @@ Règles push mobile v1.2 (opposables) :
 
 Mapping normatif v1.1 (base actuelle, obligatoire pour tous les consommateurs) :
 
-* `features.decisions.bulk` :
-  * autorise `POST /decisions/preview` et `POST /decisions/apply`
-  * client: OFF => interdire toute UI/action bulk decisions et tout appel API associé ; ON => disponible sans redéploiement
 * les capacités AI (`transcribe_audio`, `suggest_tags`, providers/modèles, filtres `suggested_tags*`) sont planifiées en v1.1+ et hors validation de conformité v1.
 
 Prévision de mapping v1.2 (mobile) :
@@ -195,9 +192,6 @@ Arbitrage admin/user (opposable) :
 Endpoints avec `Idempotency-Key` obligatoire :
 
 * `POST /assets/{uuid}/reprocess`
-* `POST /assets/{uuid}/decision`
-* `POST /batches/moves` (`mode=EXECUTE`)
-* `POST /decisions/apply` (**v1.1+**)
 * `POST /assets/{uuid}/purge`
 * `POST /jobs/{job_id}/submit`
 * `POST /jobs/{job_id}/fail`
@@ -224,7 +218,7 @@ Comportement :
 
 ### États (doit matcher [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md))
 
-`DISCOVERED, READY, PROCESSING_REVIEW, PROCESSED, DECISION_PENDING, DECIDED_KEEP, DECIDED_REJECT, MOVE_QUEUED, ARCHIVED, REJECTED, PURGED`
+`DISCOVERED, READY, PROCESSING_REVIEW, PROCESSED, DECISION_PENDING, DECIDED_KEEP, DECIDED_REJECT, ARCHIVED, REJECTED, PURGED`
 
 Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`).
 
@@ -285,7 +279,6 @@ Règle de cardinalité des tokens (obligatoire) :
 * `jobs:heartbeat` (**agents uniquement**)
 * `jobs:submit` (**agents uniquement**)
 * `suggestions:write` (**v1.1+**, agents/MCP)
-* `batches:execute` (**humain uniquement**)
 * `purge:execute` (**humain uniquement**)
 
 La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md).
@@ -675,17 +668,26 @@ Response : `AssetDetail`
 
 ### PATCH `/assets/{uuid}` (humain)
 
-Modifications humaines : tags/notes/custom fields.
+Modifications humaines : tags/notes/custom fields + transitions d'état métier autorisées.
 
 Body (exemple) :
 
 * `tags: string[]`
 * `notes: string`
 * `fields: Record<string, any>`
+* `state: DECISION_PENDING | DECIDED_KEEP | DECIDED_REJECT | ARCHIVED | REJECTED` (transition explicite)
 
 Règles :
 
 * refuse si `state == PURGED`
+* la multi-sélection UI (ex: ajout d'un keyword) DOIT envoyer des appels unitaires `PATCH /assets/{uuid}` (un par asset)
+* transitions via `state` :
+  * `DECISION_PENDING -> DECIDED_KEEP | DECIDED_REJECT`
+  * `DECIDED_KEEP -> DECISION_PENDING | DECIDED_REJECT | ARCHIVED`
+  * `DECIDED_REJECT -> DECISION_PENDING | DECIDED_KEEP | REJECTED`
+* toute transition non listée DOIT être refusée (`409 STATE_CONFLICT`)
+* mise à jour metadata (`tags/notes/fields`) et transition `state` peuvent être combinées dans un même `PATCH`
+* toute mutation validée DOIT être tracée dans l'historique de révisions de l'asset
 
 ### POST `/assets/{uuid}/reprocess` (humain)
 
@@ -701,16 +703,13 @@ Effet (normatif) :
 
 ## 3) Decisions (humain)
 
-### POST `/assets/{uuid}/decision`
-
-Body :
-
-* `action: KEEP | REJECT | CLEAR`
+Les décisions humaines passent par `PATCH /assets/{uuid}` via le champ `state`.
 
 Règles (strictes) :
 
-* `KEEP/REJECT` : si `state in {DECISION_PENDING, DECIDED_KEEP, DECIDED_REJECT}`
-* `CLEAR` : uniquement si `state in {DECIDED_KEEP, DECIDED_REJECT}`
+* `state=DECIDED_KEEP|DECIDED_REJECT` pour poser une décision
+* `state=DECISION_PENDING` pour annuler/clear une décision
+* la multi-sélection UI (KEEP/REJECT) DOIT envoyer des appels unitaires `PATCH /assets/{uuid}` (un par asset)
 
 ### POST `/assets/{uuid}/reopen`
 
@@ -779,7 +778,7 @@ Response :
 
 Règles :
 
-* ne jamais retourner un asset `MOVE_QUEUED`
+* ne jamais retourner un asset avec `asset_move_lock` actif
 * le serveur peut limiter la liste (pagination, quotas)
 
 ### POST `/jobs/{job_id}/claim`
@@ -968,97 +967,35 @@ Règle de cohérence source/dérivé (obligatoire) :
 * les métadonnées techniques exposées (`duration`, `fps`, dimensions) DOIVENT être cohérentes avec le fichier livré
 
 
-## 7) Batch moves
+## 7) Apply decision (move unitaire)
 
-### POST `/batches/moves/preview`
+Le Core n'expose pas de concept/ressource "bulk" ou "batch".
+Le bulk est un concept UI : l'ensemble des assets modifiés non appliqués.
+L'exécution Core est toujours par asset.
+Tout bulk change DOIT être validé explicitement dans l'UI avant l'envoi des appels unitaires Core.
 
-Retourne un plan de move (dry-run).
+### PATCH `/assets/{uuid}` avec `state=ARCHIVED|REJECTED`
 
-Body :
-
-* `include: KEEP | REJECT | BOTH`
-* `limit?`
-
-Response :
-
-* `eligible[]`
-* `collisions[]`
-* `blocked[]`
-* `summary`
-
-### POST `/batches/moves`
-
-Crée (et éventuellement exécute) un batch.
+Applique la décision humaine déjà posée sur un asset.
 
 Body :
 
-* `selection` (ids depuis preview ou critères)
-* `mode: DRY_RUN | EXECUTE`
+* `state: ARCHIVED | REJECTED`
 
-Response :
+Effet :
 
-* `batch_id`
-* `status`
+* `DECIDED_KEEP -> ARCHIVED`
+* `DECIDED_REJECT -> REJECTED`
 
-### GET `/batches/moves/{batch_id}`
-
-Retourne statut + rapport.
-
-### Règles d'exécution batch move
+Règles d'exécution :
 
 * seuls les assets `DECIDED_KEEP` et `DECIDED_REJECT` sont éligibles
+* côté UI, le bulk de décisions correspond exactement aux assets `DECIDED_KEEP|DECIDED_REJECT` non encore appliqués
 * lock exclusif par asset (fichier/rush) pendant l'opération filesystem
 * release du lock asset après opération filesystem et avant transition d'état
 * suffixe de collision obligatoire : `__{short_nonce}`
 * un asset locké pour move n'est pas claimable pour processing
 * `short_nonce` suit la spec [`NAMING-AND-NONCE.md`](../policies/NAMING-AND-NONCE.md)
-
-
-## 7.1) Bulk decisions (v1.1)
-
-Objectif : permettre à un client d’automatisation de **préparer** une action de décision en masse, sans laisser l’automatisation décider silencieusement.
-
-Principe :
-
-* étape 1 : preview (liste + impact + token)
-* étape 2 : apply (confirmation explicite)
-
-### POST `/decisions/preview` (v1.1)
-
-Body :
-
-* `action: KEEP | REJECT`
-* `filter: { state, tags, tags_mode: AND|OR, media_type?, has_proxy? }`
-* `max_items` (obligatoire)
-
-Response :
-
-* `approval_token` (one-shot)
-* `eligible_uuids[]`
-* `blocked[]` (uuid + reason)
-* `summary`
-
-Règles :
-
-* seuls les assets `DECISION_PENDING` sont éligibles
-* `max_items` est obligatoire et plafonné par policy serveur
-
-### POST `/decisions/apply` (v1.1)
-
-Body :
-
-* `approval_token`
-* `confirm: true`
-
-Effet :
-
-* transitions de tous les assets éligibles vers `DECIDED_KEEP` ou `DECIDED_REJECT`
-
-Règles :
-
-* nécessite `decisions:write`
-* `approval_token` expire rapidement
-* l’apply est idempotent (Idempotency-Key)
 
 
 ## 8) Purge (destructif)
@@ -1082,7 +1019,7 @@ Effet :
 
 ## 8.1) Concurrence & verrous (normatif)
 
-* `MOVE_QUEUED` interdit : claim job, reprocess, reopen, decision write, purge
+* un asset sous `asset_move_lock` interdit : claim job, reprocess, reopen, decision write, purge
 * `PURGED` interdit toute mutation
 * `reprocess` est refusé si un lock move est actif sur l'asset
 * `purge` est refusé si un job est `claimed` pour l'asset
@@ -1301,7 +1238,18 @@ Response (`202 Accepted`) :
 * `derived: { proxy_video_url?, proxy_audio_url?, waveform_url?, thumbs[] }`
 * `transcript: { status, text_preview?, updated_at? }`
 * `decisions: { current?, history[] }`
-* `audit: { path_history[] }`
+* `audit: { path_history[], revision_history[] }`
+
+`revision_history[]` (normatif) :
+
+* `revision` (int >= 1)
+* `is_current` (bool)
+* `published_at` (UTC ISO-8601, nullable)
+* `validation_status` (`VALIDATED | PENDING_VALIDATION | REJECTED`)
+
+Règle :
+
+* une révision peut être `VALIDATED` et publiée alors qu'une révision suivante est `PENDING_VALIDATION`
 
 ### Job
 
@@ -1354,8 +1302,8 @@ Le payload d’erreur normatif est défini dans [`ERROR-MODEL.md`](ERROR-MODEL.m
 * URLs de dérivés : stables (same-origin)
 * Claim jobs : `GET /jobs` pour discovery + `POST /jobs/{job_id}/claim` pour lease atomique
 * Dérivés : upload HTTP, pas d’écriture directe côté client sur le filesystem NAS
-* Batch move : sélection v1 via ids depuis preview, lock par asset
-* Purge : purge unitaire v1 (+ batch purge plus tard si nécessaire)
+* Move apply : endpoint unitaire `PATCH /assets/{uuid}` avec `state=ARCHIVED|REJECTED`, lock par asset (multi-sélection gérée UI)
+* Purge : purge unitaire v1 (+ multi-sélection UI possible plus tard, sans entité batch Core)
 * Scopes : agents strictement limités aux scopes jobs (jamais décisions/moves/purge)
 * Filtres `tags=` : tags humains uniquement
 * Recherche full-text `q=` disponible
@@ -1367,11 +1315,11 @@ Le payload d’erreur normatif est défini dans [`ERROR-MODEL.md`](ERROR-MODEL.m
 * Introduction des capacités AI-powered (`transcribe_audio`, `suggest_tags`, patch domains IA, enrichissements `AssetDetail`)
 * Introduction de `suggested_tags=` et `suggested_tags_mode=`
 * Scope `suggestions:write` pour les flux AI dédiés
-* Bulk decisions via preview/apply (`/decisions/preview`, `/decisions/apply`)
+* Multi-sélection UI : envoi d'appels unitaires `PATCH /assets/{uuid}`
 
 ## 13) Points en suspens
 
-* Batch purge : si nécessaire plus tard
+* Purge multi-sélection UI : si nécessaire plus tard (toujours par appels unitaires Core)
 
 ## 14) Contrat snapshot local (`contracts/`) pour détecter le drift OpenAPI
 

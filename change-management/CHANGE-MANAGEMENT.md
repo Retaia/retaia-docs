@@ -68,7 +68,7 @@ Exemples :
 
 * modification de la machine à états
 * modification du lifecycle (nouvel état, transition)
-* modification des règles de batch move
+* modification des règles d'apply decision (move)
 * modification de la politique de purge
 * modification du rôle des agents
 
@@ -256,7 +256,7 @@ Règles :
 - Toute modification incompatible avec l’existant doit être marquée `BREAKING CHANGE`
 
 Exemples valides :
-- feat(api): add batch move preview endpoint
+- feat(api): extend decision endpoint with explicit apply flag
 - fix(agent): prevent double claim on job
 - docs(specs): clarify state transition constraints
 

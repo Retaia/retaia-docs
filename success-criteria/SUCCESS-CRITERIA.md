@@ -48,10 +48,12 @@ Le projet est considéré comme réussi si :
 
 ### 5) Déplacements sûrs et prévisibles
 
-* Aucun fichier n’est déplacé sans batch explicite.
-* Un dry-run précède chaque batch move.
+* Aucun fichier n’est déplacé sans apply explicite.
+* Le bulk UI correspond aux assets modifiés mais non encore appliqués, sans ressource Core dédiée.
+* Tout bulk change passe par une validation explicite utilisateur dans l’UI.
+* L’asset conserve un historique de révisions où une version validée/publiée peut coexister avec une version suivante en attente de validation.
 * Les collisions de noms sont gérées de manière déterministe.
-* Un rapport de batch est toujours disponible.
+* Un rapport d’exécution par asset est toujours disponible.
 
 
 ### 6) Cycle de vie long terme maîtrisé
@@ -65,7 +67,7 @@ Le projet est considéré comme réussi si :
 ### 7) Robustesse face aux erreurs
 
 * Aucun traitement concurrent sur un même asset.
-* Aucun processing pendant un batch move.
+* Aucun processing pendant un move en cours (asset_move_lock actif).
 * Les locks expirent correctement.
 * Les transitions interdites sont refusées par le système.
 

@@ -20,7 +20,6 @@ tags:
   - name: Agents
   - name: Jobs
   - name: Derived
-  - name: Batches
   - name: Decisions
   - name: Purge
   - name: Ops
@@ -940,7 +939,7 @@ paths:
                 $ref: "#/components/schemas/AssetDetail"
     patch:
       tags: [Assets]
-      summary: Update human metadata on one asset
+      summary: Update one asset (metadata and lifecycle transitions)
       security:
         - UserBearerAuth: []
       parameters:
@@ -961,6 +960,9 @@ paths:
                 fields:
                   type: object
                   additionalProperties: true
+                state:
+                  type: string
+                  enum: [DECISION_PENDING, DECIDED_KEEP, DECIDED_REJECT, ARCHIVED, REJECTED]
       responses:
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
@@ -1054,42 +1056,6 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Reprocess accepted
-        "409":
-          description: State conflict or idempotency conflict
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  /assets/{uuid}/decision:
-    post:
-      tags: [Decisions]
-      summary: Set or update a human decision
-      security:
-        - UserBearerAuth: []
-      parameters:
-        - $ref: "#/components/parameters/UuidPath"
-        - $ref: "#/components/parameters/IdempotencyKey"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [action]
-              properties:
-                action:
-                  type: string
-                  enum: [KEEP, REJECT, CLEAR]
-      responses:
-        "401":
-          description: Unauthorized (`UNAUTHORIZED`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "200":
-          description: Decision applied
         "409":
           description: State conflict or idempotency conflict
           content:
@@ -1456,159 +1422,6 @@ paths:
           description: Derived content
         "404":
           description: Not found
-
-  /batches/moves/preview:
-    post:
-      tags: [Batches]
-      summary: Preview move batch
-      security:
-        - UserBearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [include]
-              properties:
-                include:
-                  type: string
-                  enum: [KEEP, REJECT, BOTH]
-                limit:
-                  type: integer
-      responses:
-        "401":
-          description: Unauthorized (`UNAUTHORIZED`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "200":
-          description: Move preview
-
-  /batches/moves:
-    post:
-      tags: [Batches]
-      summary: Execute or dry-run move batch
-      security:
-        - UserBearerAuth: []
-      parameters:
-        - $ref: "#/components/parameters/IdempotencyKey"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [selection, mode]
-              properties:
-                selection:
-                  type: object
-                  additionalProperties: true
-                mode:
-                  type: string
-                  enum: [DRY_RUN, EXECUTE]
-      responses:
-        "401":
-          description: Unauthorized (`UNAUTHORIZED`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "200":
-          description: Batch accepted
-
-  /batches/moves/{batch_id}:
-    get:
-      tags: [Batches]
-      summary: Get move batch status and report
-      security:
-        - UserBearerAuth: []
-      parameters:
-        - name: batch_id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "401":
-          description: Unauthorized (`UNAUTHORIZED`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "200":
-          description: Batch status
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties: true
-
-  /decisions/preview:
-    post:
-      tags: [Decisions]
-      summary: Preview bulk decisions
-      description: Available in v1.1+ when `features.decisions.bulk=true`.
-      security:
-        - UserBearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [action, filter, max_items]
-              properties:
-                action:
-                  type: string
-                  enum: [KEEP, REJECT]
-                filter:
-                  type: object
-                  additionalProperties: true
-                max_items:
-                  type: integer
-      responses:
-        "401":
-          description: Unauthorized (`UNAUTHORIZED`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "200":
-          description: Decision preview
-
-  /decisions/apply:
-    post:
-      tags: [Decisions]
-      summary: Apply bulk decisions from preview token
-      description: Available in v1.1+ when `features.decisions.bulk=true`.
-      security:
-        - UserBearerAuth: []
-      parameters:
-        - $ref: "#/components/parameters/IdempotencyKey"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [approval_token, confirm]
-              properties:
-                approval_token:
-                  type: string
-                confirm:
-                  type: boolean
-                  enum: [true]
-      responses:
-        "401":
-          description: Unauthorized (`UNAUTHORIZED`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "200":
-          description: Decisions applied
 
   /assets/{uuid}/purge:
     post:
@@ -2168,7 +1981,6 @@ components:
             jobs:claim: Discover and claim jobs.
             jobs:heartbeat: Extend job leases.
             jobs:submit: Submit job completion/failure and derived uploads.
-            batches:execute: Preview and execute move batches.
             purge:execute: Preview and execute purge operations.
 
   parameters:
@@ -2567,10 +2379,7 @@ components:
         Client semantics: missing flag = false, unknown flags are ignored, safe-by-default.
       additionalProperties:
         type: boolean
-      properties:
-        features.decisions.bulk:
-          type: boolean
-          default: false
+      properties: {}
 
     AppFeatureEnabled:
       type: object
@@ -2708,7 +2517,6 @@ components:
         - DECISION_PENDING
         - DECIDED_KEEP
         - DECIDED_REJECT
-        - MOVE_QUEUED
         - ARCHIVED
         - REJECTED
         - PURGED
@@ -2886,6 +2694,25 @@ components:
           type: array
           items:
             type: string
+        revision_history:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [revision, is_current, validation_status]
+            properties:
+              revision:
+                type: integer
+                minimum: 1
+              is_current:
+                type: boolean
+              published_at:
+                type: string
+                format: date-time
+                nullable: true
+              validation_status:
+                type: string
+                enum: [VALIDATED, PENDING_VALIDATION, REJECTED]
 
     Job:
       type: object

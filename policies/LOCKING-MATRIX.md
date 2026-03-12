@@ -12,14 +12,13 @@ Ce document définit la matrice normative de concurrence entre actions.
 
 * un asset avec `asset_move_lock` est non claimable
 * un asset avec `asset_purge_lock` est non claimable
-* `MOVE_QUEUED` interdit toute mutation hors moteur de move
 * `PURGED` interdit toute mutation
 
 ## 3) Matrice d'action (ALLOW/DENY)
 
 `claim_job` vs état/lock :
 
-* ALLOW si `state != MOVE_QUEUED` et `state != PURGED` et aucun `asset_move_lock`/`asset_purge_lock`
+* ALLOW si `state != PURGED` et aucun `asset_move_lock`/`asset_purge_lock`
 * DENY sinon (`409 STATE_CONFLICT`)
 
 `reprocess` :

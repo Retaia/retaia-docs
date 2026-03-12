@@ -40,11 +40,24 @@ Le UUID n’est pas un hash de contenu et n’implique aucune lecture lourde.
 Le **path** est l’emplacement logique courant du fichier principal dans un storage donné.
 
 * Le path est **mutable**.
-* Il change lors des batch moves.
+* Il change lors de l'application d'une décision (`DECIDED_* -> ARCHIVED|REJECTED`).
 * Tous les changements de path sont historisés.
 * Le path transporté par API est **relatif** (jamais absolu hôte/NAS/conteneur).
 
 Le path n’est jamais une identité.
+
+
+## Asset Revision
+
+Une **Asset Revision** est une version métier d'un asset.
+
+* elle est ordonnée (`revision=1,2,3...`)
+* elle est historisée
+* son statut de validation est indépendant des autres révisions
+
+Règle normative :
+
+* une révision publiée et validée peut coexister avec une révision suivante encore en attente de validation
 
 
 ## Storage ID
@@ -269,11 +282,6 @@ Aucun move n’est autorisé dans cet état.
 Ces états ne déclenchent aucun move immédiat.
 
 
-## MOVE_QUEUED
-
-État indiquant qu’un MediaAsset est planifié pour un batch move.
-
-
 ## ARCHIVED
 
 État indiquant qu’un MediaAsset a été déplacé vers ARCHIVE.
@@ -336,13 +344,23 @@ Règles :
 * toujours validées par un humain
 
 
-## Batch Move
+## Bulk (UI)
 
-Un **Batch Move** est une action explicite appliquant plusieurs décisions en une fois.
+Le **Bulk** est un concept d'interface utilisateur uniquement.
 
-* précédé d’un dry-run
-* journalisé
-* seul mécanisme autorisé pour déplacer des originaux
+* il représente l'ensemble des assets modifiés mais non encore appliqués
+* pour les décisions KEEP/REJECT, cela correspond aux assets en `DECIDED_KEEP|DECIDED_REJECT`
+* il n'existe pas comme entité métier Core
+* il ne crée aucun état lifecycle supplémentaire
+
+
+## Apply Decision (Core)
+
+L'**apply decision** est une action explicite par asset côté Core.
+
+* `DECIDED_KEEP -> ARCHIVED`
+* `DECIDED_REJECT -> REJECTED`
+* journalisé, idempotent et verrouillé par asset pendant l'opération filesystem
 
 
 ## Source de vérité
