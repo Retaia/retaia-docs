@@ -301,8 +301,11 @@ Tests obligatoires :
 * `extract_facts` n'efface jamais `transcript`
 * clés hors domaine autorisé renvoient `422 VALIDATION_FAILED`
 * `job_type` vs domaine patch suit strictement l'ownership spécifié
+* multi-sélection UI "ajout keyword" : N appels `PATCH /assets/{uuid}` indépendants, erreurs partielles isolées
+* bulk change UI sans validation explicite (annulation de confirmation) : aucun appel unitaire Core émis
+* historique de révisions asset mis à jour après mutation validée (`revision_history[]` append + `is_current=true` sur la dernière)
 
-## 5) Batch move
+## 5) Apply decision (move unitaire)
 
 Tests obligatoires :
 
@@ -310,7 +313,10 @@ Tests obligatoires :
 * lock par asset posé pendant filesystem op
 * release lock avant transition finale
 * collision nom => suffixe `__{short_nonce}`
-* un échec asset ne bloque pas tout le batch
+* une erreur sur un asset ne bloque pas l’application sur les autres assets sélectionnés en UI
+* multi-sélection UI KEEP/REJECT : N appels `PATCH /assets/{uuid}` avec `state=DECIDED_KEEP|DECIDED_REJECT`
+* bulk change UI avec validation explicite : exécution autorisée et traçable
+* cas versionning: une révision `VALIDATED` publiée reste exploitable pendant qu'une révision suivante est `PENDING_VALIDATION`
 
 ## 6) Purge
 
@@ -409,7 +415,6 @@ Tests obligatoires :
 
 * `q` (full-text) fonctionne en `v1`
 * `transcribe_audio`, `suggest_tags` et `suggested_tags*` sont hors périmètre v1 et planifiés en `v1.1+`
-* endpoints bulk decisions (`/decisions/preview`, `/decisions/apply`) ne sont actifs qu'en `v1.1+`
 
 ## 8.3) Feature flags (général)
 
@@ -428,7 +433,6 @@ Tests obligatoires :
 * flag désactivé => la feature est refusée explicitement avec un code normatif
 * activation du flag active la feature sans régression sur les flux `v1`
 * `server_policy` expose l’état effectif des flags utiles aux agents
-* mapping des flags v1.1 conforme : `features.decisions.bulk` (+ flags IA dans le paquet normatif v1.1)
 * client feature OFF => UI/action API de la feature interdite
 * client feature ON => disponibilité immédiate sans redéploiement
 * `AGENT` applique les `feature_flags` runtime du Core en v1 ; `UI_WEB` et `MCP` les appliquent en v1.1 ; `UI_MOBILE` les applique en v1.2
@@ -437,8 +441,6 @@ Cas OFF/ON minimum :
 
 * cas OFF/ON IA déplacés dans le plan de tests v1.1
 * flag ON + capability manquante côté agent => job non exécutable (`pending`/refus selon policy)
-* `features.decisions.bulk=OFF` : `/decisions/preview` et `/decisions/apply` non utilisables
-* `features.decisions.bulk=ON` : flux preview/apply utilisable
 * `UI_WEB` : OFF masque/neutralise la feature, ON l’active au prochain refresh flags
 * `AGENT` : OFF interdit job/patch liés à la feature, ON les autorise sans rebuild agent
 * `MCP` : OFF interdit les commandes/actions liées à la feature, ON les autorise sans redéploiement MCP

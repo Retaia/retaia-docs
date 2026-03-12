@@ -45,7 +45,7 @@ Il manque un outil qui respecte :
 * Permettre une **review fluide via proxies** après processing
 * Séparer strictement **facts**, **suggestions** et **decisions**
 * Permettre un tri humain clair (KEEP / REJECT)
-* Appliquer les déplacements **en batch** pour éviter les erreurs
+* Permettre la sélection multiple en UI, avec application des déplacements asset par asset côté Core
 * Gérer proprement le cycle de vie long terme (réouverture, purge différée)
 
 
@@ -57,7 +57,7 @@ Il manque un outil qui respecte :
 * **Décisions humaines uniquement** pour KEEP / REJECT
 * **Review via proxies**, jamais via originaux SMB dans le navigateur
 * **Aucune action destructive implicite**
-* **Batch move obligatoire**
+* **Batch = concept UI uniquement (sélection multiple)**
 * **Purge destructive uniquement sur REJECTED et explicitement configurée**
 * **Architecture boring, lisible et durable**
 
@@ -76,7 +76,7 @@ Responsabilités :
 * gestion des tags (libres + structurés)
 * gestion des décisions humaines
 * orchestration des jobs de processing
-* gestion des batch moves
+* application des décisions de move par asset (multi-sélection UI possible)
 * gestion des sidecars
 * exposition des proxies/dérivés
 * purge différée avec état `PURGED`
@@ -138,7 +138,7 @@ Tous sont modélisés comme **MediaAsset**.
 
 * `DISCOVERED → READY → PROCESSING_REVIEW → PROCESSED`
 * `PROCESSED → DECISION_PENDING → DECIDED_KEEP / DECIDED_REJECT`
-* `DECIDED_* → MOVE_QUEUED → ARCHIVED / REJECTED`
+* `DECIDED_KEEP → ARCHIVED` et `DECIDED_REJECT → REJECTED` (apply explicite)
 * `REJECTED → PURGED` (optionnel, destructif)
 
 

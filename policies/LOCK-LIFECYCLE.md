@@ -52,7 +52,7 @@ Ordre obligatoire :
 Si crash entre étapes :
 
 * watchdog détecte lock expiré
-* statut batch/asset passe en `recovering`
+* statut move/asset passe en `recovering`
 * reprise idempotente depuis dernier point audité
 * jamais de transition d'état sans validation FS réussie
 

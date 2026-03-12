@@ -44,7 +44,7 @@ Interdit :
 ## 6) Contrat UI
 
 * toute chaîne visible utilisateur doit être externalisée
-* les écrans de review, décision et batch move doivent être entièrement localisables
+* les écrans de review, décision et apply decision doivent être entièrement localisables
 * les formats date/heure/nombre utilisent la locale utilisateur
 * les termes critiques (KEEP / REJECT) doivent conserver un mapping explicite vers leurs constantes métier
 

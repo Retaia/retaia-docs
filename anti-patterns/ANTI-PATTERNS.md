@@ -96,11 +96,11 @@ Les jobs doivent être réservés avec :
 * heartbeat
 
 
-### 10) Processing pendant un batch move
+### 10) Processing pendant un move en cours
 
 ❌ Laisser un agent traiter un asset en cours de déplacement.
 
-Les assets `MOVE_QUEUED` ne sont jamais claimables.
+Les assets sous `asset_move_lock` ne sont jamais claimables.
 
 
 ### 11) Travailler offline en modifiant l’inventaire

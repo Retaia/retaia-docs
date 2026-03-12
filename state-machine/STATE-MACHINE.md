@@ -10,7 +10,8 @@ Il est **normatif** : toute implémentation doit respecter strictement ces état
 * Les **états** décrivent le **cycle de vie métier** (découverte → traitement → décision → move).
 * Les détails de traitement (proxy/thumb/transcription/suggestions) sont des **phases/flags**, pas des états principaux.
 * KEEP/REJECT est une **décision humaine**.
-* Les moves sont **batch**.
+* L'application d'un move est **unitaire par asset** côté Core.
+* Une sélection de plusieurs assets ("batch") est un concept UI uniquement.
 
 
 ## États principaux
@@ -99,7 +100,7 @@ Décision humaine KEEP.
 
 #### Transitions autorisées
 
-* `DECIDED_KEEP → MOVE_QUEUED`
+* `DECIDED_KEEP → ARCHIVED` (application explicite de la décision)
 * `DECIDED_KEEP → DECIDED_REJECT` (changement d’avis humain)
 * `DECIDED_KEEP → DECISION_PENDING` (annulation explicite)
 
@@ -112,25 +113,9 @@ Décision humaine REJECT.
 
 #### Transitions autorisées
 
-* `DECIDED_REJECT → MOVE_QUEUED`
+* `DECIDED_REJECT → REJECTED` (application explicite de la décision)
 * `DECIDED_REJECT → DECIDED_KEEP` (changement d’avis humain)
 * `DECIDED_REJECT → DECISION_PENDING` (annulation explicite)
-
-
-### MOVE_QUEUED
-
-#### Signification
-
-Asset planifié pour un batch move (apply).
-
-#### Transitions autorisées
-
-* `MOVE_QUEUED → ARCHIVED`
-* `MOVE_QUEUED → REJECTED`
-
-#### Règles
-
-* Verrou par asset (fichier/rush) : aucun job processing ne peut être claim sur ces assets
 
 
 ### ARCHIVED
@@ -251,9 +236,8 @@ Règles :
 
 * `DISCOVERED → PROCESSING_REVIEW`
 * `READY → DECIDED_*`
-* `PROCESSED → ARCHIVED/REJECTED` (sans décision + batch)
-* `DECISION_PENDING → MOVE_QUEUED`
-* `DECIDED_* → ARCHIVED/REJECTED` (sans batch)
+* `PROCESSED → ARCHIVED/REJECTED` (sans décision)
+* `DECISION_PENDING → ARCHIVED/REJECTED` (sans décision explicite + apply)
 * `ARCHIVED/REJECTED → PROCESSED` (doit repasser par `READY` via reprocess explicite)
 * `PURGED → *` (état terminal)
 
@@ -274,8 +258,6 @@ PROCESSED
 DECISION_PENDING
   ↓
 DECIDED_KEEP / DECIDED_REJECT
-  ↓
-MOVE_QUEUED
   ↓
 ARCHIVED / REJECTED
   ↘

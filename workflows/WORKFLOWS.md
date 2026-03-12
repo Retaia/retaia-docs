@@ -179,13 +179,15 @@ Utilisateur via l’interface Retaia Core
 * Les décisions sont **humaines uniquement**.
 * Aucun move n’est déclenché à ce stade.
 * Une décision peut être annulée (retour `DECISION_PENDING`).
+* L'UI peut appliquer une même action sur une sélection multiple d'assets (ex: ajout d'un keyword, KEEP, REJECT) via appels unitaires Core.
+* Chaque mutation d'asset alimente l'historique de révisions; la révision courante peut rester en attente de validation sans invalider une révision précédente déjà validée/publiée.
 
 
-## Workflow 7 — Batch apply (déplacements)
+## Workflow 7 — Apply decisions (déplacements)
 
 ### Objectif
 
-Appliquer en une fois les décisions KEEP / REJECT.
+Appliquer explicitement les décisions KEEP / REJECT, asset par asset côté Core.
 
 ### Acteurs
 
@@ -193,13 +195,9 @@ Utilisateur, Retaia Core Server
 
 ### Étapes
 
-1. L’utilisateur déclenche l’action "Apply moves".
-2. Dry-run :
-
-   * liste des assets éligibles (`DECIDED_KEEP` et `DECIDED_REJECT`)
-   * détection des collisions de noms
-   * liste des sidecars concernés
-3. Passage des assets en `MOVE_QUEUED`.
+1. L’utilisateur déclenche l’action "Apply bulk decisions".
+2. L’UI affiche une validation explicite (confirmation utilisateur) avec résumé d’impact.
+3. L’UI cible le bulk courant (assets modifiés non appliqués) et envoie des demandes unitaires (une par asset).
 4. Pour chaque asset : lock exclusif par fichier/rush.
 5. Déplacement des groupes (parent + sidecars) :
 
@@ -215,7 +213,9 @@ Utilisateur, Retaia Core Server
 
 * Aucun move sans décision humaine.
 * Un asset locké pour move n'est pas claimable pour processing.
-* Les erreurs sur un asset ne bloquent pas le batch complet.
+* Une erreur sur un asset ne bloque pas l'application des autres assets sélectionnés.
+* Pour les décisions, le bulk courant correspond aux assets en `DECIDED_KEEP|DECIDED_REJECT`.
+* Tout bulk change DOIT exiger une validation explicite dans l'UI avant envoi des appels unitaires Core.
 
 
 ## Workflow 8 — Réouverture (re-review) d’un asset ARCHIVED/REJECTED
@@ -234,7 +234,7 @@ Utilisateur via l’UI
 2. Action explicite "Reopen".
 3. Le serveur passe l’asset en `DECISION_PENDING`.
 4. L’utilisateur redécide KEEP/REJECT.
-5. Application via batch move.
+5. Application explicite de la décision.
 
 ### Règles
 
@@ -352,7 +352,7 @@ Appliquer le même lifecycle aux photos qu’aux vidéos.
 2. Passage `DISCOVERED → READY`.
 3. Processing review (EXIF + proxy + thumbs).
 4. Décision humaine KEEP/REJECT.
-5. Batch apply.
+5. Apply decision.
 
 ### Règles
 
@@ -371,7 +371,7 @@ Gérer musique et prises son comme des assets de production.
 1. Discovery des fichiers audio.
 2. Processing review (facts + proxy + waveform).
 3. Décision humaine KEEP/REJECT.
-4. Batch apply.
+4. Apply decision.
 
 ### Règles
 
@@ -400,7 +400,7 @@ Gérer musique et prises son comme des assets de production.
 * UUID = identité stable
 * Path = attribut mutable
 * Décisions humaines uniquement
-* Déplacements uniquement en batch
+* Déplacements uniquement via application explicite de décision par asset
 * Purge destructive uniquement sur `REJECTED` et explicitement configurée
 * Aucune action destructive sans traçabilité
 

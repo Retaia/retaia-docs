@@ -99,7 +99,7 @@ Responsabilités :
 
 * revue des médias (via proxies)
 * décisions KEEP / REJECT
-* déclenchement d’actions explicites (reprocess, batch moves, purge)
+* déclenchement d’actions explicites (reprocess, apply decision, purge)
 
 Contraintes :
 
@@ -140,7 +140,7 @@ Aucune automatisation ne peut produire cette décision.
 
 ### 4.4 Actions destructives
 
-* batch moves
+* apply decision (multi-sélection UI possible)
 * purge
 
 Principes :
