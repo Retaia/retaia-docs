@@ -836,7 +836,7 @@ paths:
           in: query
           schema:
             type: string
-          description: Full-text query over filename, notes and transcript_text (available in v1).
+          description: Full-text query over filename, notes and transcript_text when available.
         - name: location_country
           in: query
           schema:
@@ -1492,6 +1492,8 @@ paths:
     get:
       tags: [Ops]
       summary: Get ingest diagnostics counters and latest unmatched sidecars
+      description: |
+        Requires `UserBearerAuth` and an authenticated admin actor, per AUTHZ matrix.
       security:
         - UserBearerAuth: []
       responses:
@@ -1545,6 +1547,8 @@ paths:
     get:
       tags: [Ops]
       summary: Get operational readiness checks
+      description: |
+        Requires `UserBearerAuth` and an authenticated admin actor, per AUTHZ matrix.
       security:
         - UserBearerAuth: []
       responses:
@@ -1609,6 +1613,8 @@ paths:
     get:
       tags: [Ops]
       summary: List active operation locks
+      description: |
+        Requires `UserBearerAuth` and an authenticated admin actor, per AUTHZ matrix.
       security:
         - UserBearerAuth: []
       parameters:
@@ -1692,6 +1698,8 @@ paths:
     post:
       tags: [Ops]
       summary: Recover stale operation locks
+      description: |
+        Requires `UserBearerAuth` and an authenticated admin actor, per AUTHZ matrix.
       security:
         - UserBearerAuth: []
       requestBody:
@@ -1744,6 +1752,8 @@ paths:
     get:
       tags: [Ops]
       summary: Get jobs queue diagnostics
+      description: |
+        Requires `UserBearerAuth` and an authenticated admin actor, per AUTHZ matrix.
       security:
         - UserBearerAuth: []
       responses:
@@ -1982,6 +1992,8 @@ paths:
     get:
       tags: [Ops]
       summary: List unmatched ingest sidecars
+      description: |
+        Requires `UserBearerAuth` and an authenticated admin actor, per AUTHZ matrix.
       security:
         - UserBearerAuth: []
       parameters:
@@ -2057,6 +2069,8 @@ paths:
     post:
       tags: [Ops]
       summary: Requeue ingest processing for a specific target
+      description: |
+        Requires `UserBearerAuth` and an authenticated admin actor, per AUTHZ matrix.
       security:
         - UserBearerAuth: []
       requestBody:

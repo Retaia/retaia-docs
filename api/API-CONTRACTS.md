@@ -589,7 +589,7 @@ Query params (exemples) :
 * `tags_mode=AND|OR` (défaut: AND)
 * `suggested_tags=foo,bar` (**v1.1+**, suggestions uniquement)
 * `suggested_tags_mode=AND|OR` (**v1.1+**, défaut: AND)
-* `q=texte` (optionnel, **v1**, recherche full-text sur `filename`, `notes`, `transcript_text`)
+* `q=texte` (optionnel, **v1**, recherche full-text sur `filename`, `notes`)
 * `location_country=BE` (optionnel, filtre localisation)
 * `location_city=Brussels` (optionnel, filtre localisation)
 * `geo_bbox=min_lon,min_lat,max_lon,max_lat` (optionnel, filtre géospatial bbox)
@@ -798,7 +798,7 @@ Note v1 (important) :
 * Les binaires (proxies/thumbs/waveforms) sont uploadés via l’API Derived.
 * `submit` référence les dérivés déjà uploadés.
 * Le serveur applique un merge partiel par domaine ; un job ne peut pas écraser les domaines qu'il ne possède pas.
-* `generate_audio_waveform` est supporté mais optionnel : l’absence de `waveform` dérivée ne bloque pas le flux v1.
+* `generate_audio_waveform` est obligatoire pour les profils audio qui l'exigent ; l’absence de `waveform` dérivée rend le résultat de processing incomplet.
 * ownership de patch par `job_type` :
   * `extract_facts` -> `facts_patch`
   * `generate_proxy|generate_thumbnails|generate_audio_waveform` -> `derived_patch`
@@ -1025,7 +1025,7 @@ Règles :
 
 * endpoint read-only
 * aucune donnée sensible (pas de secret/token)
-* exposition réservée aux rôles/scopes ops
+* exposition réservée aux rôles/scopes ops admin (`UserBearerAuth` + statut admin)
 
 ## 8.3) Readiness ops
 
@@ -1086,6 +1086,7 @@ Règles pagination :
 * `items[]` correspond à la page demandée (`limit`/`offset`)
 * `total` représente le total filtré avant pagination (pas seulement la taille de page)
 * tri par défaut recommandé : `acquired_at DESC`
+* authentification HTTP via `UserBearerAuth`, puis vérification du statut admin obligatoire
 
 ### POST `/ops/locks/recover`
 
@@ -1109,6 +1110,10 @@ Response :
 * `recovered`
 * `dry_run`
 
+Règle :
+
+* authentification HTTP via `UserBearerAuth`, puis vérification du statut admin obligatoire
+
 ## 8.5) Job queue ops
 
 ### GET `/ops/jobs/queue`
@@ -1129,6 +1134,10 @@ Response :
   * `claimed`
   * `failed`
   * `oldest_pending_age_seconds?`
+
+Règle :
+
+* authentification HTTP via `UserBearerAuth`, puis vérification du statut admin obligatoire
 
 ## 8.6) Agents ops
 
@@ -1216,6 +1225,10 @@ Validation :
 
 * `reason` invalide -> `400 VALIDATION_FAILED`
 * `since` invalide -> `400 VALIDATION_FAILED`
+
+Règle :
+
+* authentification HTTP via `UserBearerAuth`, puis vérification du statut admin obligatoire
 
 Response :
 

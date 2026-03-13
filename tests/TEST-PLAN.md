@@ -249,7 +249,7 @@ Tests obligatoires :
 * `audio_music` n'exige pas `transcribe_audio`
 * `audio_voice` exige `transcribe_audio`
 * changement de profil après claim exige reprocess
-* `generate_audio_waveform` peut être absent sans casser le flux processing v1
+* pour un profil audio qui exige `generate_audio_waveform`, son absence rend le flux processing non conforme
 
 ## 3.1) Audio waveform UX (client)
 
@@ -257,7 +257,7 @@ Tests obligatoires :
 
 * si `derived.waveform_url` est présent, le client peut l’utiliser
 * si `derived.waveform_url` est absent, le client UI rend une waveform locale simple (JS pur, style YouTube)
-* absence de waveform dérivée ne bloque pas lecture audio ni navigation timeline
+* absence de waveform dérivée ne bloque pas lecture audio ni navigation timeline côté UI, mais reste une non-conformité processing si le profil l’exige
 
 ## 3.2) Derived format compliance (obligatoire)
 

@@ -230,9 +230,9 @@ Le résultat DOIT inclure :
 
 Règle waveform audio (v1) :
 
-* la génération serveur/agent de `waveform` est optionnelle
-* si aucun dérivé `waveform` n’est produit, le client UI gère un rendu local simple (JS pur, style YouTube)
-* l’agent NE DOIT PAS échouer un job uniquement parce que la waveform dérivée n’est pas produite
+* la génération serveur/agent de `waveform` est obligatoire pour les profils audio qui exigent `generate_audio_waveform`
+* si aucun dérivé `waveform` n’est produit pour un profil audio qui l'exige, le résultat est non conforme
+* le fallback UI local reste utile en dégradation de lecture, mais NE REMPLACE PAS l’obligation de production côté processing
 
 Le serveur :
 
