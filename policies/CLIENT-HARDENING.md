@@ -23,6 +23,8 @@ Ce document definit les exigences de durcissement des clients.
 * permissions filesystem minimales
 * service account dedie recommande
 * crash dump sans secret
+* cle privee agent `OpenPGP` stockee exclusivement via store OS ou stockage applicatif protege
+* aucune exportation/revelation de la cle privee via GUI, CLI ou logs
 
 ## 4) MCP
 

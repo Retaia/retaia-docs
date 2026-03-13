@@ -30,6 +30,7 @@ Toute traversee de frontiere DOIT etre authentifiee, autorisee et auditee.
 * P0: vol de base de donnees (comptes, tokens, secrets)
 * P0: elevation de privilege par scope/acteur mal controles
 * P0: usurpation client technique (replay secret, token reuse)
+* P0: usurpation d'instance agent par soumission non signee ou rejeu de signature
 * P1: abus brute force sur login, reset password, device flow agent, création d'API key
 * P1: compromission partielle d'une cle de signature/chiffrement
 
@@ -39,6 +40,7 @@ Toute traversee de frontiere DOIT etre authentifiee, autorisee et auditee.
 * vol DB -> hash Argon2id mots de passe + `secret_key`/API key hashée + chiffrement au repos
 * elevation privilege -> deny-by-default + matrice authz endpoint/scope/acteur + tests de non-regression
 * usurpation technique -> cardinalite 1 token actif/client + `jti` unique + `exp` court + rotation secrets
+* usurpation instance agent -> signature `OpenPGP` par requete mutatrice + nonce anti-rejeu + verification fraicheur timestamp
 * brute force -> rate limit + backoff + codes d'erreur normatifs
 * compromission cle -> key rotation procedure + invalidation token compatible `kid`
 

@@ -19,15 +19,15 @@ Objectif: en cas d'exfiltration partielle (DB, logs, token, backup), les donnée
 * toutes les erreurs 4xx/5xx exposées aux clients DOIVENT rester compatibles `ErrorResponse` (pas de stacktrace, pas de secret)
 * tous les tokens DOIVENT avoir `exp` borné et `jti` unique
 * tout endpoint mutateur DOIT appliquer authn + authz explicite (acteur + scope + contrainte d'état)
-* toute action de sécurité (login, logout, rotate-secret, revoke-token, create/revoke API key, 2FA enable/disable, approval device flow, `PATCH /app/features`, `POST /app/policy`) DOIT être auditée
+* toute action de sécurité (login, logout, rotate-secret, revoke-token, enregistrer/révoquer une clé technique, 2FA enable/disable, approval device flow, `PATCH /app/features`, `POST /app/policy`) DOIT être auditée
 
 ## 3) Gestion des secrets et credentials (MUST)
 
 * mot de passe utilisateur: hashé Argon2id (jamais stocké en clair)
 * `secret_key` client `AGENT`: stockée hashée (jamais persistée en clair côté Core)
-* API key `MCP`: stockée hashée (jamais persistée en clair côté Core)
-* `secret_key` ou API key ne DOIT être affichée qu'une seule fois lors de l'émission/rotation
-* rotation de `secret_key` ou révocation/rotation d'API key DOIT invalider immédiatement les accès techniques associés
+* credential technique `MCP` et clé publique associée: stockés selon le modèle asymétrique retenu, sans persistance en clair de secret privé côté Core
+* `secret_key` `AGENT` ou matériel d'enrôlement technique ne DOIT être affiché qu'une seule fois lors de l'émission/rotation quand applicable
+* rotation de `secret_key` `AGENT` ou révocation/rotation d'un credential `MCP` DOIT invalider immédiatement les accès techniques associés
 * secrets de chiffrement serveur DOIVENT être gérés via KMS/HSM ou équivalent (pas en dur dans le code)
 
 ## 4) Tokens et sessions (MUST)
@@ -41,25 +41,30 @@ Objectif: en cas d'exfiltration partielle (DB, logs, token, backup), les donnée
 
 ## 5) Règles client UI (MUST)
 
-* UI web (`UI_WEB`) DOIT utiliser login utilisateur (`POST /auth/login`)
+* UI web (`UI_WEB`) DOIT utiliser `WebAuthn` comme mécanisme primaire d'auth interactif, avec émission de bearer token et refresh token
+* `POST /auth/login` reste autorisé comme fallback de bootstrap/recovery interactif
 * le token UI ne DOIT jamais être affiché/exporté en clair
 * l'UI ne DOIT pas proposer l'auto-révocation du token actif UI (anti lock-out)
 * stockage secret OS obligatoire:
   * macOS: Keychain
   * Windows: DPAPI/Credential Manager
   * Linux: Secret Service (ou store OS équivalent)
-* 2FA TOTP optionnelle au niveau compte, mais si active elle DOIT être appliquée au login UI et aux approvals sensibles UI
+* 2FA TOTP optionnelle au niveau compte, mais si active elle DOIT être appliquée au fallback login UI et aux approvals sensibles UI
+* les refresh tokens interactifs DOIVENT être stockés de manière protégée, rotatables, révocables et tracés par device/browser
 
 ## 6) Règles client Agent/MCP (MUST)
 
 * `AGENT`:
-  * mode interactif: login utilisateur (Bearer user)
+  * mode interactif: login utilisateur (Bearer user), puis `WebAuthn` quand la surface le permet
   * mode technique: `client_id + secret_key -> POST /auth/clients/token`
-* `MCP`: mode technique uniquement via API key bearer créée depuis l'UI
+  * mode technique: n'utilise jamais `WebAuthn` au runtime
+* `MCP`: mode technique asymétrique standard, avec clé publique enregistrée côté Core, clé privée locale côté client et signatures obligatoires sur écritures sensibles
 * création d'un `secret_key` `AGENT` DOIT passer par validation UI utilisateur (device flow)
-* création d'une API key `MCP` DOIT passer par l'UI utilisateur
-* si 2FA utilisateur est active, la validation UI de création `secret_key` ou d'API key DOIT exiger OTP
-* secret/token/API key technique ne DOIT jamais être loggé
+* enregistrement d'une clé publique `MCP` DOIT passer par l'UI utilisateur
+* si 2FA utilisateur est active, la validation UI de création `secret_key` ou d'enregistrement de clé `MCP` DOIT exiger OTP
+* secret/token/credential technique ne DOIT jamais être loggé
+* toute écriture agent -> Core DOIT être signée avec la clé privée `OpenPGP` de l'agent
+* Core DOIT vérifier `agent_id`, fingerprint OpenPGP, timestamp, nonce anti-rejeu et signature avant toute mutation agent
 
 ## 7) Données et exfiltration (MUST)
 
@@ -73,7 +78,7 @@ Objectif: en cas d'exfiltration partielle (DB, logs, token, backup), les donnée
 
 ## 8) Contrôles anti-abus (MUST)
 
-* rate limiting sur login, reset password, verify email, device flow agent, token mint agent et création d'API key UI
+* rate limiting sur login, reset password, verify email, device flow agent, token mint agent et enrôlement de clé technique via UI
 * protection brute-force sur auth (backoff/temporisation et blocage progressif)
 * invalidation explicite en cas de credentials/tokens compromis
 * détection minimale d'anomalies (tentatives répétées, volumes anormaux, patterns d'échec)
@@ -92,7 +97,7 @@ Une livraison est non conforme si au moins un point ci-dessous échoue:
 * token/secrets observables en clair dans logs, UI ou telemetry
 * endpoint mutateur sans authz explicite
 * `SessionCookieAuth` réintroduit
-* `secret_key` ou API key persistée en clair
+* `secret_key` ou secret technique persistant stocké en clair
 * rotation secret sans invalidation des tokens actifs
 * adresse/GPS/transcription lisible(s) en clair dans DB ou backup exfiltré
 

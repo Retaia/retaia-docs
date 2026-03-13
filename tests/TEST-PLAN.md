@@ -58,6 +58,25 @@ Tests obligatoires :
   * email non vérifié => `403 EMAIL_NOT_VERIFIED`
   * body invalide => `422 VALIDATION_FAILED`
   * dépassement tentative => `429 TOO_MANY_ATTEMPTS`
+* `POST /auth/refresh`:
+  * refresh token valide => `200` + nouveau bearer token + refresh token rotaté
+  * refresh token invalide/révoqué/expiré => `401 UNAUTHORIZED`
+  * body invalide => `422 VALIDATION_FAILED`
+* `POST /auth/webauthn/register/options`:
+  * bearer utilisateur valide => `200`
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+* `POST /auth/webauthn/register/verify`:
+  * attestation valide + bearer utilisateur valide => `200`
+  * attestation invalide => `422 VALIDATION_FAILED`
+  * conflit device/credential => `409 STATE_CONFLICT`
+* `POST /auth/webauthn/authenticate/options`:
+  * credential connu / compte admissible => `200`
+  * demande invalide => `422 VALIDATION_FAILED`
+  * rate limit => `429 TOO_MANY_ATTEMPTS`
+* `POST /auth/webauthn/authenticate/verify`:
+  * assertion valide => `200` + bearer token + refresh token
+  * assertion invalide => `401 UNAUTHORIZED`
+  * body invalide => `422 VALIDATION_FAILED`
 * `POST /auth/2fa/setup`:
   * bearer valide + 2FA inactive => `200` + `otpauth_uri` / `secret` pour app externe (Authy...)
   * bearer absent/invalide => `401 UNAUTHORIZED`
@@ -174,11 +193,15 @@ Tests obligatoires :
 * `POST /agents/register`:
   * `agent_id` requis
   * `agent_id` conforme UUIDv4
+  * `openpgp_public_key` requis
+  * `openpgp_fingerprint` requis
+  * register signé avec la clé privée correspondant à la clé OpenPGP déclarée
   * `os_name`, `os_version`, `arch` requis
   * reconnexion avec le même `agent_id` => même instance corrélable côté Core
   * deux agents actifs avec le même `agent_id` : register autorisé, conflit journalisé et visible en ops
   * `agent_id` absent/vide => `422 VALIDATION_FAILED`
   * aucun identifiant DB interne Core distinct n'est exposé dans le payload API
+  * clé publique OpenPGP inconnue/invalide ou signature register invalide => refus auth explicite
 
 Matrice de migration v1 runtime (gelée) :
 
@@ -191,7 +214,10 @@ Matrice de migration v1 runtime (gelée) :
 * toutes réponses d’erreur 4xx/5xx auth conformes au schéma `ErrorResponse`
 * endpoints humains mutateurs exigent un bearer token (`UserBearerAuth`) conforme à la spec
 * même flux login/token validé sur clients interactifs: `UI_WEB` et `AGENT`
-* compatibilité UI validée: `UI_WEB_APP` et `AGENT_UI` utilisent `POST /auth/login` + `Authorization: Bearer` sur leurs `client_kind` interactifs respectifs
+* compatibilité UI validée:
+  * `UI_WEB_APP` utilise `WebAuthn` + bearer + refresh token comme auth primaire
+  * `AGENT_UI` utilise `POST /auth/login` + bearer dans un premier temps, puis peut adopter `WebAuthn` quand la surface le permet, sans changer le modèle de compte
+  * `AGENT_TECHNICAL` n'utilise jamais `WebAuthn` au runtime
 * anti lock-out: l'UI n'expose jamais le token en clair et n'offre pas d'action d'auto-révocation du token UI actif (gate `v1.1` global)
 * régression interdite: aucun endpoint runtime n'accepte encore `SessionCookieAuth` (Bearer-only)
 * 2FA optionnelle: compte sans 2FA active ne requiert pas OTP
@@ -199,10 +225,9 @@ Matrice de migration v1 runtime (gelée) :
   * sans 2FA active => approval UI sans OTP
   * avec 2FA active => OTP obligatoire à l’étape d’approval
   * sans validation UI => aucun `secret_key` ne peut être émise
-* création d’API key `MCP` via UI (gate `v1.1` global):
-  * sans 2FA active => création UI sans OTP
-  * avec 2FA active => OTP obligatoire à la création
-  * clé affichée une seule fois
+* enregistrement de clé publique `MCP` via UI (gate `v1.1` global):
+  * sans 2FA active => validation UI sans OTP
+  * avec 2FA active => OTP obligatoire à la validation
   * aucun login interactif MCP ni device flow MCP
 
 ## 1.2) Agent runtime (CLI/GUI, cross-platform)
@@ -212,13 +237,15 @@ Tests obligatoires :
 * `AGENT_UI` en mode `CLI` fonctionne en Linux headless (sans dépendance GUI)
 * `AGENT_UI` en mode `GUI` (quand présent) utilise le même moteur de processing que `CLI` (mêmes capabilities et mêmes résultats)
 * `AGENT_UI` en mode `CLI` et `GUI` expose les mêmes fonctionnalités opérateur
+* `AGENT_UI` en mode `GUI` PEUT couvrir les mêmes parcours humains que `UI_WEB` sans transférer l'identité utilisateur au daemon
+* aucune action user-scoped initiée depuis `AGENT_UI` n'est exécutée par `AGENT_TECHNICAL` sans contrat de délégation explicite
 * client `AGENT` validé dans les deux modes d’auth: interactif (`/auth/login`) et technique (`/auth/clients/token`)
-* client `MCP` validé en mode technique via API key bearer, sans login interactif ni device flow (gate `v1.1` global)
+* client `MCP` validé en mode technique asymétrique standard, sans login interactif ni device flow (gate `v1.1` global)
 * client `MCP` peut piloter/orchestrer l'agent sans exécuter de processing (gate `v1.1` global)
 * client `MCP` ne peut pas `claim/heartbeat/submit` de job (`/jobs/*` => `403 FORBIDDEN_ACTOR`) (gate `v1.1` global)
 * mode service non-interactif redémarre sans login humain sur Linux/macOS/Windows
 * stockage secret conforme OS (Keychain macOS, Credential Manager/DPAPI Windows, secret store Linux)
-* rotation de secret `AGENT` ou révocation d’API key `MCP` n’exige pas de réinstallation client
+* rotation de secret `AGENT` ou rotation/révocation du credential `MCP` n’exige pas de réinstallation client
 * cible Linux headless Raspberry Pi (Kodi/Plex) validée en non-régression
 * capacités IA (providers/modèles/transcription/suggestions) couvertes par le plan de tests v1.1 (hors conformité v1)
 * runtime status-driven validé: la vérité d'état est synchronisée par polling, même si un canal push existe (WebSocket, SSE, webhook, autres push)
@@ -251,6 +278,10 @@ Tests obligatoires :
 * lease expiry rend le job reclaimable
 * heartbeat prolonge `locked_until`
 * job `pending` sans agent compatible reste `pending` sans erreur
+* `claim`, `heartbeat`, `submit`, `fail`, `derived/upload/*` refusés si la signature agent est absente/invalide
+* rejeu d'un `X-Retaia-Signature-Nonce` déjà vu => refus explicite
+* skew temps hors fenêtre autorisée sur `X-Retaia-Signature-Timestamp` => refus explicite
+* rotation de clé agent explicite uniquement; aucune régénération silencieuse acceptée
 
 ## 3) Processing profiles
 
@@ -553,13 +584,13 @@ Tests obligatoires :
 Tests obligatoires :
 
 * aucun token (`access_token`, refresh token, token technique) n'apparaît en clair dans logs, traces, UI ou crash reports
-* aucune `secret_key` `AGENT` ni API key `MCP` n'est persistée en clair côté Core
-* `secret_key` ou API key n'est renvoyée qu'une fois lors de l'émission/rotation
-* rotation `secret_key` `AGENT` ou révocation/rotation d’API key `MCP` invalide immédiatement les accès techniques associés
+* aucune `secret_key` `AGENT` ni secret privé `MCP` n'est persistée en clair côté Core
+* `secret_key` `AGENT` n'est renvoyée qu'une fois lors de l'émission/rotation quand applicable
+* rotation `secret_key` `AGENT` ou révocation/rotation du credential `MCP` invalide immédiatement les accès techniques associés
 * claims token minimales présentes (`sub`, `principal_type`, `client_id`, `client_kind`, `scope`, `jti`, `exp`) et absence de PII sensible
 * chiffrement au repos activé pour données sensibles et backups
-* flux auth sensibles soumis au rate-limit (login, lost-password, verify-email, token mint agent, device flow agent, création d’API key UI)
-* actions sécurité critiques auditées (login/logout, revoke-token, rotate-secret, create/revoke API key, 2FA enable/disable, device approval, `PATCH /app/features`, `POST /app/policy`)
+* flux auth sensibles soumis au rate-limit (login, lost-password, verify-email, token mint agent, device flow agent, enregistrement de clé technique UI)
+* actions sécurité critiques auditées (login/logout, revoke-token, rotate-secret, enregistrer/révoquer une clé technique, 2FA enable/disable, device approval, `PATCH /app/features`, `POST /app/policy`)
 * régression interdite: aucune réintroduction de `SessionCookieAuth`
 
 ## 8.8) GPG/OpenPGP standardisation

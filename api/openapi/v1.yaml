@@ -30,7 +30,7 @@ paths:
     post:
       tags: [Auth]
       summary: User login with email and password
-      description: Interactive login endpoint for supported human-operated clients (`UI_WEB` and `AGENT`). Supports optional TOTP 2FA code when enabled.
+      description: Interactive bootstrap/recovery login endpoint for supported human-operated clients (`UI_WEB` and `AGENT`). Supports optional TOTP 2FA code when enabled.
       security: []
       requestBody:
         required: true
@@ -53,6 +53,181 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "403":
           description: Email not verified (`EMAIL_NOT_VERIFIED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many attempts (`TOO_MANY_ATTEMPTS`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh interactive user bearer token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthRefreshRequest"
+      responses:
+        "200":
+          description: Refresh success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthLoginSuccess"
+        "401":
+          description: Invalid or revoked refresh token (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many attempts (`TOO_MANY_ATTEMPTS`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/webauthn/register/options:
+    post:
+      tags: [Auth]
+      summary: Start WebAuthn device registration
+      security:
+        - UserBearerAuth: []
+      responses:
+        "200":
+          description: WebAuthn registration options
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebAuthnPublicKeyOptionsResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Registration conflict (`STATE_CONFLICT`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/webauthn/register/verify:
+    post:
+      tags: [Auth]
+      summary: Verify WebAuthn device registration
+      security:
+        - UserBearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebAuthnRegisterVerifyRequest"
+      responses:
+        "200":
+          description: WebAuthn device registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebAuthnDeviceResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Registration conflict (`STATE_CONFLICT`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/webauthn/authenticate/options:
+    post:
+      tags: [Auth]
+      summary: Start WebAuthn authentication
+      security: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebAuthnAuthenticateOptionsRequest"
+      responses:
+        "200":
+          description: WebAuthn authentication options
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebAuthnPublicKeyOptionsResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many attempts (`TOO_MANY_ATTEMPTS`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/webauthn/authenticate/verify:
+    post:
+      tags: [Auth]
+      summary: Verify WebAuthn authentication
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebAuthnAuthenticateVerifyRequest"
+      responses:
+        "200":
+          description: WebAuthn authentication success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthLoginSuccess"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
           content:
             application/json:
               schema:
@@ -990,6 +1165,11 @@ paths:
         - UserBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
+        - $ref: "#/components/parameters/AgentSignatureAgentId"
+        - $ref: "#/components/parameters/AgentSignatureOpenPgpFingerprint"
+        - $ref: "#/components/parameters/AgentSignatureValue"
+        - $ref: "#/components/parameters/AgentSignatureTimestamp"
+        - $ref: "#/components/parameters/AgentSignatureNonce"
       requestBody:
         required: true
         content:
@@ -1027,13 +1207,19 @@ paths:
       summary: Register a processing agent
       security:
         - TechnicalBearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/AgentSignatureAgentId"
+        - $ref: "#/components/parameters/AgentSignatureOpenPgpFingerprint"
+        - $ref: "#/components/parameters/AgentSignatureValue"
+        - $ref: "#/components/parameters/AgentSignatureTimestamp"
+        - $ref: "#/components/parameters/AgentSignatureNonce"
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [agent_id, agent_name, agent_version, os_name, os_version, arch, capabilities]
+              required: [agent_id, agent_name, agent_version, openpgp_public_key, openpgp_fingerprint, os_name, os_version, arch, capabilities]
               properties:
                 agent_id:
                   type: string
@@ -1043,6 +1229,12 @@ paths:
                   type: string
                 agent_version:
                   type: string
+                openpgp_public_key:
+                  type: string
+                  description: Agent OpenPGP public key in ASCII-armored format.
+                openpgp_fingerprint:
+                  type: string
+                  description: Canonical OpenPGP fingerprint of the active agent signing key.
                 os_name:
                   type: string
                   enum: [linux, macos, windows]
@@ -1177,6 +1369,11 @@ paths:
           required: true
           schema:
             type: string
+        - $ref: "#/components/parameters/AgentSignatureAgentId"
+        - $ref: "#/components/parameters/AgentSignatureOpenPgpFingerprint"
+        - $ref: "#/components/parameters/AgentSignatureValue"
+        - $ref: "#/components/parameters/AgentSignatureTimestamp"
+        - $ref: "#/components/parameters/AgentSignatureNonce"
       responses:
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
@@ -1205,6 +1402,11 @@ paths:
           required: true
           schema:
             type: string
+        - $ref: "#/components/parameters/AgentSignatureAgentId"
+        - $ref: "#/components/parameters/AgentSignatureOpenPgpFingerprint"
+        - $ref: "#/components/parameters/AgentSignatureValue"
+        - $ref: "#/components/parameters/AgentSignatureTimestamp"
+        - $ref: "#/components/parameters/AgentSignatureNonce"
       requestBody:
         required: true
         content:
@@ -1248,6 +1450,11 @@ paths:
           schema:
             type: string
         - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/AgentSignatureAgentId"
+        - $ref: "#/components/parameters/AgentSignatureOpenPgpFingerprint"
+        - $ref: "#/components/parameters/AgentSignatureValue"
+        - $ref: "#/components/parameters/AgentSignatureTimestamp"
+        - $ref: "#/components/parameters/AgentSignatureNonce"
       requestBody:
         required: true
         content:
@@ -1289,6 +1496,11 @@ paths:
           schema:
             type: string
         - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/AgentSignatureAgentId"
+        - $ref: "#/components/parameters/AgentSignatureOpenPgpFingerprint"
+        - $ref: "#/components/parameters/AgentSignatureValue"
+        - $ref: "#/components/parameters/AgentSignatureTimestamp"
+        - $ref: "#/components/parameters/AgentSignatureNonce"
       requestBody:
         required: true
         content:
@@ -1337,6 +1549,11 @@ paths:
       parameters:
         - $ref: "#/components/parameters/UuidPath"
         - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/AgentSignatureAgentId"
+        - $ref: "#/components/parameters/AgentSignatureOpenPgpFingerprint"
+        - $ref: "#/components/parameters/AgentSignatureValue"
+        - $ref: "#/components/parameters/AgentSignatureTimestamp"
+        - $ref: "#/components/parameters/AgentSignatureNonce"
       requestBody:
         required: true
         content:
@@ -1374,6 +1591,11 @@ paths:
         - TechnicalBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
+        - $ref: "#/components/parameters/AgentSignatureAgentId"
+        - $ref: "#/components/parameters/AgentSignatureOpenPgpFingerprint"
+        - $ref: "#/components/parameters/AgentSignatureValue"
+        - $ref: "#/components/parameters/AgentSignatureTimestamp"
+        - $ref: "#/components/parameters/AgentSignatureNonce"
       requestBody:
         required: true
         content:
@@ -1405,6 +1627,11 @@ paths:
       parameters:
         - $ref: "#/components/parameters/UuidPath"
         - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/AgentSignatureAgentId"
+        - $ref: "#/components/parameters/AgentSignatureOpenPgpFingerprint"
+        - $ref: "#/components/parameters/AgentSignatureValue"
+        - $ref: "#/components/parameters/AgentSignatureTimestamp"
+        - $ref: "#/components/parameters/AgentSignatureNonce"
       requestBody:
         required: true
         content:
@@ -2241,6 +2468,38 @@ components:
       required: true
       schema:
         type: string
+    AgentSignatureAgentId:
+      name: X-Retaia-Agent-Id
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+    AgentSignatureOpenPgpFingerprint:
+      name: X-Retaia-OpenPGP-Fingerprint
+      in: header
+      required: true
+      schema:
+        type: string
+    AgentSignatureValue:
+      name: X-Retaia-Signature
+      in: header
+      required: true
+      schema:
+        type: string
+    AgentSignatureTimestamp:
+      name: X-Retaia-Signature-Timestamp
+      in: header
+      required: true
+      schema:
+        type: string
+        format: date-time
+    AgentSignatureNonce:
+      name: X-Retaia-Signature-Nonce
+      in: header
+      required: true
+      schema:
+        type: string
 
   schemas:
     AuthLoginRequest:
@@ -2285,6 +2544,81 @@ components:
           description: Effective client identifier bound to this token.
         client_kind:
           $ref: "#/components/schemas/ClientKind"
+
+    AuthRefreshRequest:
+      type: object
+      additionalProperties: false
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+        client_id:
+          type: string
+        client_kind:
+          $ref: "#/components/schemas/ClientKind"
+
+    WebAuthnAuthenticateOptionsRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        email:
+          type: string
+          format: email
+        client_id:
+          type: string
+        client_kind:
+          $ref: "#/components/schemas/ClientKind"
+
+    WebAuthnRegisterVerifyRequest:
+      type: object
+      additionalProperties: false
+      required: [credential]
+      properties:
+        credential:
+          type: object
+          additionalProperties: true
+        device_id:
+          type: string
+          format: uuid
+        device_label:
+          type: string
+
+    WebAuthnAuthenticateVerifyRequest:
+      type: object
+      additionalProperties: false
+      required: [credential]
+      properties:
+        credential:
+          type: object
+          additionalProperties: true
+        client_id:
+          type: string
+        client_kind:
+          $ref: "#/components/schemas/ClientKind"
+
+    WebAuthnPublicKeyOptionsResponse:
+      type: object
+      additionalProperties: false
+      required: [public_key]
+      properties:
+        request_id:
+          type: string
+        public_key:
+          type: object
+          additionalProperties: true
+
+    WebAuthnDeviceResponse:
+      type: object
+      additionalProperties: false
+      required: [device_id]
+      properties:
+        device_id:
+          type: string
+          format: uuid
+        device_label:
+          type: string
+        webauthn_fingerprint:
+          type: string
 
     AuthEmailRequest:
       type: object
