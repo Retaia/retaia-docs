@@ -25,11 +25,11 @@ Jobs required :
 * `extract_facts`
 * `generate_proxy`
 * `generate_thumbnails`
+* `generate_audio_waveform` (si piste audio exploitable)
 
 Jobs optional :
 
-* `generate_audio_waveform` (si piste audio exploitable)
-* `transcribe_audio` (si activé, **v1+**)
+* `transcribe_audio` (si activé, **v1.1+**)
 * `suggest_tags` (si activé, **v1.1+**)
 
 ### `audio_music`
@@ -62,10 +62,11 @@ Jobs required :
 * `generate_proxy`
 * `generate_thumbnails`
 * `generate_audio_waveform`
-* `transcribe_audio`
 
 Jobs optional :
 
+* `transcribe_audio`
+  (AI-powered, **v1.1+**, obligatoire en phase `v1.1+` validée pour ce profil, activable plus tôt uniquement sous `feature_flags`)
 * `suggest_tags`
   (AI-powered, **v1.1+**)
 

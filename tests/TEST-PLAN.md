@@ -108,9 +108,15 @@ Tests obligatoires :
   * clé absente dans `user_feature_enabled` => traitée comme `true` (pas de régression pour utilisateurs existants)
 * `GET /app/policy`:
   * bearer utilisateur valide => `200` + `server_policy.feature_flags`
-  * bearer client technique valide (`OAuth2ClientCredentials`) => `200`
+  * bearer client technique valide (`TechnicalBearerAuth`) => `200`
   * bearer absent/invalide => `401 UNAUTHORIZED`
   * endpoint runtime canonique pour `UI_WEB`, `AGENT`, `MCP`
+* `POST /app/policy`:
+  * bearer admin valide + body valide (`feature_flags`) => `200`
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+  * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
+  * tentative de mutation d’un flag encore `code-backed` => `409 STATE_CONFLICT`
+  * body invalide => `422 VALIDATION_FAILED`
 * `POST /auth/lost-password/request`:
   * body valide (`email`) => `202`
   * body invalide => `422 VALIDATION_FAILED`
@@ -139,16 +145,15 @@ Tests obligatoires :
   * `client_id` invalide => `422 VALIDATION_FAILED`
   * `client_id` de type `UI_WEB` protégé => `403` (non révocable via cet endpoint)
 * `POST /auth/clients/token`:
-  * `client_id + client_kind in {AGENT, MCP} + secret_key` valides => `200` + bearer token client
+  * `client_id + client_kind=AGENT + secret_key` valides => `200` + bearer token client
   * credentials client invalides => `401 UNAUTHORIZED`
   * body invalide => `422 VALIDATION_FAILED`
   * rate limit => `429 TOO_MANY_ATTEMPTS`
   * invariant: nouveau token minté pour un client révoque l’ancien token (1 token actif / client)
-  * `client_kind=UI_WEB` refusé (`403 FORBIDDEN_ACTOR`)
-  * `client_kind=MCP` + `app_feature_enabled.features.ai=false` => `403 FORBIDDEN_SCOPE`
+  * `client_kind in {UI_WEB, MCP}` refusé (`403 FORBIDDEN_ACTOR`)
 * `POST /auth/clients/device/start`:
-  * `client_kind in {AGENT, MCP}` => `200` + `device_code`, `user_code`, `verification_uri`, `verification_uri_complete`
-  * `client_kind=MCP` + `app_feature_enabled.features.ai=false` => `403 FORBIDDEN_SCOPE`
+  * `client_kind=AGENT` => `200` + `device_code`, `user_code`, `verification_uri`, `verification_uri_complete`
+  * `client_kind=MCP` => `403 FORBIDDEN_ACTOR`
   * body invalide => `422 VALIDATION_FAILED`
   * rate limit => `429 TOO_MANY_ATTEMPTS`
 * `POST /auth/clients/device/poll`:
@@ -181,7 +186,7 @@ Matrice de migration v1 runtime (gelée) :
   * le pilotage client est fait uniquement via `200` + `status in {PENDING, APPROVED, DENIED, EXPIRED}`
   * aucun pilotage via `401`/`403` n'est autorisé
 * `POST /auth/clients/token`:
-  * `client_kind=UI_WEB` doit être rejeté en `403 FORBIDDEN_ACTOR` uniquement
+  * `client_kind in {UI_WEB, MCP}` doit être rejeté en `403 FORBIDDEN_ACTOR` uniquement
   * rotation invalide immédiatement les tokens actifs du client
 * toutes réponses d’erreur 4xx/5xx auth conformes au schéma `ErrorResponse`
 * endpoints humains mutateurs exigent un bearer token (`UserBearerAuth`) conforme à la spec
@@ -190,10 +195,15 @@ Matrice de migration v1 runtime (gelée) :
 * anti lock-out: l'UI n'expose jamais le token en clair et n'offre pas d'action d'auto-révocation du token UI actif (gate `v1.1` global)
 * régression interdite: aucun endpoint runtime n'accepte encore `SessionCookieAuth` (Bearer-only)
 * 2FA optionnelle: compte sans 2FA active ne requiert pas OTP
-* création de secret `AGENT`/`MCP` via UI (gate `v1.1` global):
+* création de secret `AGENT` via UI (gate `v1.1` global):
   * sans 2FA active => approval UI sans OTP
   * avec 2FA active => OTP obligatoire à l’étape d’approval
   * sans validation UI => aucun `secret_key` ne peut être émise
+* création d’API key `MCP` via UI (gate `v1.1` global):
+  * sans 2FA active => création UI sans OTP
+  * avec 2FA active => OTP obligatoire à la création
+  * clé affichée une seule fois
+  * aucun login interactif MCP ni device flow MCP
 
 ## 1.2) Agent runtime (CLI/GUI, cross-platform)
 
@@ -201,13 +211,13 @@ Tests obligatoires :
 
 * `CLI` agent fonctionne en Linux headless (sans dépendance GUI)
 * `GUI` agent (quand présent) utilise le même moteur de processing que `CLI` (mêmes capabilities et mêmes résultats)
-* client `AGENT` validé dans les deux modes d’auth: interactif (`/auth/login`) et technique (`/auth/clients/token` ou OAuth2)
-* client `MCP` validé en mode technique (`/auth/clients/token` ou OAuth2), sans login interactif (gate `v1.1` global)
+* client `AGENT` validé dans les deux modes d’auth: interactif (`/auth/login`) et technique (`/auth/clients/token`)
+* client `MCP` validé en mode technique via API key bearer, sans login interactif ni device flow (gate `v1.1` global)
 * client `MCP` peut piloter/orchestrer l'agent sans exécuter de processing (gate `v1.1` global)
 * client `MCP` ne peut pas `claim/heartbeat/submit` de job (`/jobs/*` => `403 FORBIDDEN_ACTOR`) (gate `v1.1` global)
 * mode service non-interactif redémarre sans login humain sur Linux/macOS/Windows
 * stockage secret conforme OS (Keychain macOS, Credential Manager/DPAPI Windows, secret store Linux)
-* rotation de secret client n’exige pas de réinstallation agent
+* rotation de secret `AGENT` ou révocation d’API key `MCP` n’exige pas de réinstallation client
 * cible Linux headless Raspberry Pi (Kodi/Plex) validée en non-régression
 * capacités IA (providers/modèles/transcription/suggestions) couvertes par le plan de tests v1.1 (hors conformité v1)
 * runtime status-driven validé: la vérité d'état est synchronisée par polling, même si un canal push existe (WebSocket, SSE, webhook, autres push)
@@ -224,10 +234,10 @@ Tests obligatoires :
 * Intégration auth/device:
   * `POST /auth/clients/device/poll` piloté uniquement via `200` + `status`
   * `POST /auth/clients/device/poll` -> `400 INVALID_DEVICE_CODE` pour code invalide
-  * `POST /auth/clients/token` -> `403 FORBIDDEN_ACTOR` pour `client_kind=UI_WEB`
+  * `POST /auth/clients/token` -> `403 FORBIDDEN_ACTOR` pour `client_kind in {UI_WEB, MCP}`
 * Compat client UI/Agent/MCP:
-  * UI_WEB, AGENT, MCP compatibles avec le flux status-driven (`PENDING|APPROVED|DENIED|EXPIRED`) (gate `v1.1` global pour UI_WEB/MCP)
-  * AGENT/MCP gèrent `429` (`SLOW_DOWN`/`TOO_MANY_ATTEMPTS`) avec retry/backoff déterministe
+  * AGENT compatible avec le flux status-driven device (`PENDING|APPROVED|DENIED|EXPIRED`)
+  * UI_WEB, AGENT et MCP gèrent `429` (`SLOW_DOWN`/`TOO_MANY_ATTEMPTS`) avec retry/backoff déterministe sur leurs endpoints auth/runtime respectifs
   * aucun client ne dépend encore de `401/403` pour la machine d’état device flow
   * aucun client ne traite un canal push serveur (WebSocket/SSE/webhook/notification) comme source de vérité runtime
   * un changement `server_policy.feature_flags` est pris en compte au prochain polling sans redéploiement client
@@ -249,7 +259,8 @@ Tests obligatoires :
 * `audio_music` n'exige pas `transcribe_audio`
 * `audio_voice` exige `transcribe_audio`
 * changement de profil après claim exige reprocess
-* `generate_audio_waveform` peut être absent sans casser le flux processing v1
+* pour un profil audio qui exige `generate_audio_waveform`, son absence rend le flux processing non conforme
+* pour tout média avec piste audio exploitable, l'absence de `generate_audio_waveform` rend le flux processing non conforme
 
 ## 3.1) Audio waveform UX (client)
 
@@ -257,7 +268,7 @@ Tests obligatoires :
 
 * si `derived.waveform_url` est présent, le client peut l’utiliser
 * si `derived.waveform_url` est absent, le client UI rend une waveform locale simple (JS pur, style YouTube)
-* absence de waveform dérivée ne bloque pas lecture audio ni navigation timeline
+* absence de waveform dérivée ne bloque pas lecture audio ni navigation timeline côté UI, mais reste une non-conformité processing si le profil l’exige
 
 ## 3.2) Derived format compliance (obligatoire)
 
@@ -269,9 +280,12 @@ Tests obligatoires :
   * piste audio (si présente) en `AAC-LC`
   * framerate dérivé = framerate source (tolérance max ±0.01 fps)
   * `CFR` requis (pas de VFR non contrôlé)
+  * hauteur cible `720px` si la source est plus grande, sinon hauteur source conservée
+  * bitrate vidéo dans la plage normative `1.5 Mbps` à `4 Mbps`
   * ratio d'aspect conservé, aucun upscale
   * keyframe interval <= 2 secondes
   * MP4 faststart (`moov` en tête)
+  * audio stéréo maximum, downmix multicanal autorisé
 * `proxy_audio` :
   * format `audio/mp4` (AAC-LC) ou `audio/mpeg`
   * sample rate conforme (source conservée ou normalisée 44.1k/48k)
@@ -284,13 +298,16 @@ Tests obligatoires :
 * `thumb` :
   * format `image/jpeg` ou `image/webp`
   * `sRGB`
-  * au moins une taille web exploitable
+  * taille preview par défaut largeur `480px`
   * vidéo courte (`< 120s`) : thumb principal extrait à `max(1s, 10% de la durée)`
   * vidéo longue (`>= 120s`) : thumb principal extrait à `5% de la durée`, avec fallback à `20s` si `5% > 20s`
   * si la frame cible est noire ou de fondu et qu'une heuristique légère est active, une frame voisine plus représentative est choisie
   * mode `storyboard` : `10` thumbs sont produits et répartis régulièrement sur la durée utile
+  * mode `storyboard` : ordre chronologique stable
 * `waveform` :
   * si présent en JSON: amplitudes normalisées + métadonnées minimales (`duration_ms`, `bucket_count`)
+  * `bucket_count` recommandé `1000`, minimum `100`
+  * bucketisation régulière sur toute la durée
   * si absent: fallback local UI validé (non bloquant)
 * cohérence globale :
   * `duration`/`fps`/dimensions exposés cohérents avec le fichier dérivé livré
@@ -432,6 +449,8 @@ Tests obligatoires :
 
 * `q` (full-text) fonctionne en `v1`
 * `transcribe_audio`, `suggest_tags` et `suggested_tags*` sont hors périmètre v1 et planifiés en `v1.1+`
+* `transcribe_audio` devient obligatoire pour les profils qui l'exigent à partir de la phase `v1.1+` validée
+* avant cette phase validée, `transcribe_audio` PEUT être exercé en pré-release uniquement via `feature_flags`
 
 ## 8.3) Feature flags (général)
 
@@ -533,13 +552,13 @@ Tests obligatoires :
 Tests obligatoires :
 
 * aucun token (`access_token`, refresh token, token technique) n'apparaît en clair dans logs, traces, UI ou crash reports
-* aucune `secret_key` client (`AGENT`/`MCP`) n'est persistée en clair côté Core
-* `secret_key` n'est renvoyée qu'une fois lors de l'émission/rotation
-* rotation `secret_key` invalide immédiatement les tokens actifs du `client_id`
+* aucune `secret_key` `AGENT` ni API key `MCP` n'est persistée en clair côté Core
+* `secret_key` ou API key n'est renvoyée qu'une fois lors de l'émission/rotation
+* rotation `secret_key` `AGENT` ou révocation/rotation d’API key `MCP` invalide immédiatement les accès techniques associés
 * claims token minimales présentes (`sub`, `principal_type`, `client_id`, `client_kind`, `scope`, `jti`, `exp`) et absence de PII sensible
 * chiffrement au repos activé pour données sensibles et backups
-* flux auth sensibles soumis au rate-limit (login, lost-password, verify-email, token mint, device flow)
-* actions sécurité critiques auditées (login/logout, revoke-token, rotate-secret, 2FA enable/disable, device approval, `PATCH /app/features`)
+* flux auth sensibles soumis au rate-limit (login, lost-password, verify-email, token mint agent, device flow agent, création d’API key UI)
+* actions sécurité critiques auditées (login/logout, revoke-token, rotate-secret, create/revoke API key, 2FA enable/disable, device approval, `PATCH /app/features`, `POST /app/policy`)
 * régression interdite: aucune réintroduction de `SessionCookieAuth`
 
 ## 8.8) GPG/OpenPGP standardisation

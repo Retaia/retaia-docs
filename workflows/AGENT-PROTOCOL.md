@@ -97,13 +97,14 @@ Pour éviter le code local à maintenir, cette règle s'applique à toute implé
 
 ### 3.3 Modes d’auth agent (normatif)
 
-* mode non-interactif (service/daemon): `client_id + secret_key -> POST /auth/clients/token` ou OAuth2 client-credentials
+* mode non-interactif (service/daemon): `client_id + secret_key -> POST /auth/clients/token`
 * mode interactif opéré par un humain (CLI/GUI): login utilisateur via `POST /auth/login` (+ 2FA si active)
 * un agent non-interactif NE DOIT PAS dépendre d’un login UI pour redémarrer
 
 Feature flags runtime :
 
-* l’agent DOIT consommer les `feature_flags` renvoyés par Core (au minimum via `POST /agents/register`)
+* l’agent DOIT consommer les `feature_flags` renvoyés par Core via `GET /app/policy` (canal runtime canonique)
+* `POST /agents/register` PEUT transporter un snapshot initial de compatibilité, mais NE DOIT PAS remplacer le refresh périodique via `GET /app/policy`
 * l’agent NE DOIT PAS hardcoder l’état des flags
 * un changement runtime de flag DOIT être appliqué sans rebuild agent
 * `feature_flags` ne remplacent pas les `capabilities` déclarées de l'agent
@@ -230,9 +231,9 @@ Le résultat DOIT inclure :
 
 Règle waveform audio (v1) :
 
-* la génération serveur/agent de `waveform` est optionnelle
-* si aucun dérivé `waveform` n’est produit, le client UI gère un rendu local simple (JS pur, style YouTube)
-* l’agent NE DOIT PAS échouer un job uniquement parce que la waveform dérivée n’est pas produite
+* la génération serveur/agent de `waveform` est obligatoire pour les profils audio qui exigent `generate_audio_waveform`
+* si aucun dérivé `waveform` n’est produit pour un profil audio qui l'exige, le résultat est non conforme
+* le fallback UI local reste utile en dégradation de lecture, mais NE REMPLACE PAS l’obligation de production côté processing
 
 Le serveur :
 

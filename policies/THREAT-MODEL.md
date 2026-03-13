@@ -8,7 +8,7 @@ Objectif: prioriser les risques qui peuvent provoquer une fuite ou une prise de 
 
 * identites utilisateur et comptes admin
 * bearer tokens utilisateur et techniques
-* `secret_key` clients `AGENT`/`MCP`
+* `secret_key` agent et API keys MCP
 * donnees assets, metadonnees et contenus derives
 * traces d'audit et journaux securite
 * cles de signature/chiffrement (JWT, KMS)
@@ -30,13 +30,13 @@ Toute traversee de frontiere DOIT etre authentifiee, autorisee et auditee.
 * P0: vol de base de donnees (comptes, tokens, secrets)
 * P0: elevation de privilege par scope/acteur mal controles
 * P0: usurpation client technique (replay secret, token reuse)
-* P1: abus brute force sur login, reset password, device flow
+* P1: abus brute force sur login, reset password, device flow agent, création d'API key
 * P1: compromission partielle d'une cle de signature/chiffrement
 
 ## 4) Controles obligatoires par menace
 
 * exfiltration token/secret -> redaction logs + stockage secret OS + rotation/revocation immediate
-* vol DB -> hash Argon2id mots de passe + `secret_key` hashee + chiffrement au repos
+* vol DB -> hash Argon2id mots de passe + `secret_key`/API key hashée + chiffrement au repos
 * elevation privilege -> deny-by-default + matrice authz endpoint/scope/acteur + tests de non-regression
 * usurpation technique -> cardinalite 1 token actif/client + `jti` unique + `exp` court + rotation secrets
 * brute force -> rate limit + backoff + codes d'erreur normatifs
@@ -47,7 +47,7 @@ Toute traversee de frontiere DOIT etre authentifiee, autorisee et auditee.
 * la 2FA est optionnelle au niveau compte utilisateur
 * `UI_RUST` applique la 2FA quand active
 * `AGENT`/`MCP` technique n'utilisent pas 2FA runtime
-* la creation/rotation de secret technique exige validation UI utilisateur (2FA si active)
+* la creation/rotation de credential technique exige validation UI utilisateur (2FA si active)
 
 ## 6) Exigences de verification
 

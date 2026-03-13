@@ -15,7 +15,7 @@ Champs minimum :
 
 * `event_name`
 * `timestamp`
-* `actor_type` (`ADMIN_INTERACTIVE|USER_INTERACTIVE|CLIENT_TECHNICAL|AGENT_TECHNICAL`)
+* `actor_type` (`ADMIN_INTERACTIVE|USER_INTERACTIVE|AGENT_TECHNICAL|MCP_TECHNICAL`)
 * `actor_id` (ou pseudonymisé si nécessaire)
 * `feature_key`
 * `old_value` / `new_value` (pour les updates)

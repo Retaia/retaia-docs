@@ -19,7 +19,7 @@ Champs obligatoires:
 * `event_version`
 * `timestamp_utc`
 * `severity` (`INFO|WARN|ERROR|CRITICAL`)
-* `actor_type` (`USER_INTERACTIVE|ADMIN_INTERACTIVE|AGENT_TECHNICAL|CLIENT_TECHNICAL|SYSTEM`)
+* `actor_type` (`USER_INTERACTIVE|ADMIN_INTERACTIVE|AGENT_TECHNICAL|MCP_TECHNICAL|SYSTEM`)
 * `actor_id` (ou `system`)
 * `client_id` (si applicable)
 * `request_id`
@@ -44,7 +44,7 @@ Champs obligatoires:
 
 ## 4) Redaction
 
-* champs interdits en clair: `password`, `otp_code`, `secret_key`, `access_token`, `refresh_token`
+* champs interdits en clair: `password`, `otp_code`, `secret_key`, `api_key`, `access_token`, `refresh_token`
 * valeurs sensibles remplacees par `[REDACTED]`
 * emails anonymises en sortie non admin (ex: hash/troncature)
 
