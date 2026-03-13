@@ -119,14 +119,34 @@ Générer des vignettes à partir d’un média.
 * source_locator (read-only: `storage_id`, `original_relative`, `sidecars_relative[]`)
 * thumbnail_profile
 
+`thumbnail_profile` (normatif) :
+
+* mode par défaut vidéo : `representative_frame`
+* mode optionnel : `storyboard`
+* vidéo courte : durée strictement inférieure à `120s`
+* vidéo longue : durée supérieure ou égale à `120s`
+* vidéo courte : frame de référence à `max(1s, 10% de la durée)`
+* vidéo longue : frame de référence à `5% de la durée`, avec fallback à `20s` si `5% > 20s`
+* le moteur DOIT éviter les frames noires ou de fondu si une heuristique légère permet d'en sélectionner une voisine plus représentative
+* mode `storyboard` : produire `10` thumbs répartis de manière régulière sur la durée utile, incluant la frame représentative principale
+* pour une image fixe, le thumb est dérivé directement de l'image source
+* pour un audio sans image, aucun thumb temporel n'est requis; seul le proxy/waveform couvre la review
+
 **Expected outputs**
 
 * thumbnails[]
+
+`thumbnails[]` (minimum normatif) :
+
+* en mode vidéo par défaut : au moins un thumb `representative`
+* en mode `storyboard` : exactement `10` thumbs vidéo DOIVENT être produits
+* chaque thumb DOIT rester dérivable de manière déterministe à partir du `thumbnail_profile`
 
 **Invariants**
 
 * aucune modification du média original
 * outputs entièrement recréables
+* la sélection temporelle DOIT rester stable pour un même média, un même profil et une même version d'algorithme
 
 **Failure modes**
 

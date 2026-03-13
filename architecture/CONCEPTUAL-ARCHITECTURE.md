@@ -21,7 +21,7 @@ Le système Retaia vise à :
 
 ## 2) Principes structurants
 
-* **Single Source of Truth** : le serveur est la source de vérité
+* **Single Source of Truth** : le serveur est la source de vérité métier et orchestre le filesystem
 * **Séparation des responsabilités** : inventaire ≠ processing ≠ décision
 * **Asynchronisme assumé** : les jobs peuvent rester `pending` longtemps
 * **Idempotence partout** : retries sûrs par design

@@ -180,6 +180,7 @@ Utilisateur via l’interface Retaia Core
 * Aucun move n’est déclenché à ce stade.
 * Une décision peut être annulée (retour `DECISION_PENDING`).
 * L'UI peut appliquer une même action sur une sélection multiple d'assets (ex: ajout d'un keyword, KEEP, REJECT) via appels unitaires Core.
+* Pour une mutation metadata (ex: ajout de keyword), la confirmation UI précède immédiatement l'envoi des `PATCH` unitaires; il n'existe pas d'état Core "metadata modifiée mais non appliquée".
 * Chaque mutation d'asset alimente l'historique de révisions; la révision courante peut rester en attente de validation sans invalider une révision précédente déjà validée/publiée.
 
 
@@ -195,9 +196,9 @@ Utilisateur, Retaia Core Server
 
 ### Étapes
 
-1. L’utilisateur déclenche l’action "Apply bulk decisions".
+1. L’utilisateur déclenche l’action "Appliquer les décisions en attente".
 2. L’UI affiche une validation explicite (confirmation utilisateur) avec résumé d’impact.
-3. L’UI cible le bulk courant (assets modifiés non appliqués) et envoie des demandes unitaires (une par asset).
+3. L’UI cible le sous-ensemble courant des assets à décision posée mais move non appliqué (`DECIDED_KEEP|DECIDED_REJECT`) et envoie des demandes unitaires (une par asset).
 4. Pour chaque asset : lock exclusif par fichier/rush.
 5. Déplacement des groupes (parent + sidecars) :
 
@@ -214,8 +215,8 @@ Utilisateur, Retaia Core Server
 * Aucun move sans décision humaine.
 * Un asset locké pour move n'est pas claimable pour processing.
 * Une erreur sur un asset ne bloque pas l'application des autres assets sélectionnés.
-* Pour les décisions, le bulk courant correspond aux assets en `DECIDED_KEEP|DECIDED_REJECT`.
-* Tout bulk change DOIT exiger une validation explicite dans l'UI avant envoi des appels unitaires Core.
+* Pour les décisions, la sélection courante à appliquer correspond aux assets en `DECIDED_KEEP|DECIDED_REJECT`.
+* Toute action groupée DOIT exiger une validation explicite dans l'UI avant envoi des appels unitaires Core.
 
 
 ## Workflow 8 — Réouverture (re-review) d’un asset ARCHIVED/REJECTED
@@ -395,7 +396,8 @@ Gérer musique et prises son comme des assets de production.
 
 ## Invariants globaux
 
-* NAS = source de vérité logistique
+* Core = source de vérité métier et manager des moves
+* NAS = support de stockage piloté par Core
 * Laptop/clients = compute only
 * UUID = identité stable
 * Path = attribut mutable

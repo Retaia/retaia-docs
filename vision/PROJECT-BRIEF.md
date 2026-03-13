@@ -52,8 +52,9 @@ Il manque un outil qui respecte :
 ## Principes non négociables
 
 * **Local-first** : aucune dépendance cloud
-* **NAS = source de vérité logistique**
-* **Agents = compute only**
+* **Core = source de vérité métier et manager**
+* **NAS = support de stockage piloté par Core**
+* **Agent daemon = compute only**
 * **Décisions humaines uniquement** pour KEEP / REJECT
 * **Review via proxies**, jamais via originaux SMB dans le navigateur
 * **Aucune action destructive implicite**
