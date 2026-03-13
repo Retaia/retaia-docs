@@ -11,7 +11,7 @@ These rules are the constitutional layer of the project. If a local implementati
 3. `retaia-docs` is the single source of truth for the whole project
 4. Core is the single source of truth for business logic
 5. NAS is storage only
-6. The API is bearer-only
+6. The API must stay stateless and sessionless
 7. Crypto must be standard, never homemade
 8. Human and technical identities must stay separate
 9. Polling carries runtime truth; push carries signal only

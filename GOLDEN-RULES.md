@@ -17,8 +17,8 @@ Ces règles sont la couche constitutionnelle du projet. Elles priment sur les ch
 5. **Le NAS n'est qu'un stockage**  
    Le `NAS` ne décide rien. Il stocke et déplace les fichiers sous le contrôle de `Core`.
 
-6. **L'API est bearer-only**  
-   L’API doit rester `bearer-only`. Les sessions serveur implicites, `SessionCookieAuth` et toute dépendance à un état web caché sont interdites.
+6. **L'API doit rester stateless et sessionless**  
+   L’API ne doit dépendre d’aucune session serveur implicite. `SessionCookieAuth`, les cookies de session et toute dépendance à un état web caché sont interdits.
 
 7. **La cryptographie doit être standard, jamais maison**  
    Aucune primitive, protocole ou implémentation cryptographique locale ne doit être inventé. Seuls des standards reconnus et des bibliothèques maintenues sont autorisés.
