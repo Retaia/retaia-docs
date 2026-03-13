@@ -166,6 +166,11 @@ Tests obligatoires :
   * bearer absent/invalide => `401 UNAUTHORIZED`
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
   * `client_id` invalide => `422 VALIDATION_FAILED`
+* `POST /agents/register`:
+  * `agent_fingerprint` requis
+  * `os_name`, `os_version`, `arch` requis
+  * reconnexion avec le même `agent_fingerprint` => même instance corrélable côté Core
+  * `agent_fingerprint` absent/vide => `422 VALIDATION_FAILED`
 
 Matrice de migration v1 runtime (gelée) :
 
@@ -387,6 +392,15 @@ Tests obligatoires :
 * endpoint `GET /ops/jobs/queue` présent et conforme :
   * `summary.pending_total|claimed_total|failed_total`
   * `by_type[]` avec `job_type`, `pending`, `claimed`, `failed`, `oldest_pending_age_seconds`
+* endpoint `GET /ops/agents` présent et conforme :
+  * filtres `status`, pagination `limit`, `offset`
+  * payload `items[]` + `total`
+  * `items[]` expose `agent_id`, `agent_fingerprint`, `client_id`, `agent_name`, `agent_version`, `os_name`, `os_version`, `arch`, `status`, `last_seen_at`, `effective_capabilities[]`
+  * `current_job?` expose `job_id`, `job_type`, `asset_uuid`, `claimed_at`, `locked_until`
+  * `last_successful_job?` expose `job_id`, `job_type`, `asset_uuid`, `completed_at`
+  * `last_failed_job?` expose `job_id`, `job_type`, `asset_uuid`, `failed_at`, `error_code`
+  * `debug.max_parallel_jobs` présent, aucun secret/token/path absolu exposé
+  * mapping `status` conforme : lease active => `online_busy`; agent actif sans lease => `online_idle`; agent expiré côté runtime => `stale`
 * endpoint `GET /ops/ingest/unmatched` présent et conforme :
   * filtres `reason`, `since`, `limit`
   * `reason`/`since` invalides renvoient `400 VALIDATION_FAILED`

@@ -110,6 +110,16 @@ Validation UI du device flow (`verification_uri*`)
 * acteur: `AGENT_TECHNICAL`
 * contrainte: `client_kind=MCP` interdit (`403 FORBIDDEN_ACTOR`)
 
+`GET /ops/ingest/diagnostics|/ops/readiness|/ops/locks|/ops/jobs/queue|/ops/agents|/ops/ingest/unmatched`
+
+* acteur: `ADMIN_INTERACTIVE`
+* scope: policy admin (sinon `403 FORBIDDEN_ACTOR` / `FORBIDDEN_SCOPE`)
+
+`POST /ops/locks/recover|/ops/ingest/requeue`
+
+* acteur: `ADMIN_INTERACTIVE`
+* scope: policy admin (sinon `403 FORBIDDEN_ACTOR` / `FORBIDDEN_SCOPE`)
+
 
 `POST /assets/{uuid}/purge`
 

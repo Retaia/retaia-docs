@@ -50,12 +50,23 @@ Un agent DOIT s’enregistrer avant de pouvoir claim des jobs.
 
 Champs minimum :
 
+* `agent_fingerprint`
 * `agent_name`
 * `agent_version`
 * `capabilities[]`
-* `platform` (optionnel)
+* `os_name`
+* `os_version`
+* `arch`
 
 Le serveur peut refuser l’enregistrement si la déclaration est invalide.
+
+Règle d'identité d'instance :
+
+* l'agent DOIT générer un `agent_fingerprint` stable lors de sa première initialisation
+* ce fingerprint DOIT être persisté localement puis réutilisé à chaque register
+* `client_id` identifie le client technique autorisé; plusieurs instances d'agent peuvent le partager
+* le fingerprint sert au suivi d'une instance réelle d'agent, indépendamment du `client_id`
+* `agent_id` reste une référence interne attribuée par Core
 
 ### 3.2 Profils d’exécution (normatif)
 

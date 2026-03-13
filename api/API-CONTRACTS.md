@@ -677,16 +677,30 @@ Enregistre un agent (optionnel mais recommandé).
 
 Body :
 
+* `agent_fingerprint`
 * `agent_name`
 * `agent_version`
-* `platform`
+* `os_name` (`linux|macos|windows`)
+* `os_version`
+* `arch` (`x86_64|arm64|armv7|other`)
 * `capabilities: string[]` (voir [`CAPABILITIES.md`](../definitions/CAPABILITIES.md))
 * `client_feature_flags_contract_version` (optionnel)
 * `max_parallel_jobs` (suggestion)
 
+Règles :
+
+* `agent_fingerprint` identifie de manière stable une instance/install d'agent
+* l'agent DOIT le générer une fois puis le persister localement
+* l'agent DOIT le réutiliser à chaque register/reconnexion
+* `client_id` identifie le client technique autorisé, généralement lié à l'utilisateur qui a connecté l'agent; plusieurs agents sur plusieurs machines PEUVENT partager le même `client_id`
+* `agent_fingerprint` identifie l'instance réelle d'agent; deux machines distinctes ne DOIVENT PAS partager le même fingerprint
+* `agent_id` est une référence interne Core pour l'enregistrement agent
+* une réinstallation explicite ou une rotation volontaire d'identité agent PEUT générer un nouveau `agent_fingerprint`
+
 Response :
 
 * `agent_id`
+* `agent_fingerprint`
 * `effective_capabilities: string[]` (capabilities retenues après policy Core)
 * `capability_warnings[]` (raisons d’invalidation capability, ex: provider/modèle indisponible ou non autorisé)
 * `server_policy` (quotas et règles serveur), incluant au minimum :
@@ -1113,7 +1127,73 @@ Response :
   * `failed`
   * `oldest_pending_age_seconds?`
 
-## 8.6) Ingest unmatched listing (ops)
+## 8.6) Agents ops
+
+### GET `/ops/agents`
+
+Objectif :
+
+* lister les agents connus avec leur état runtime, leur job en cours, leur dernier job réussi et les éléments utiles au debug
+
+Query params :
+
+* `status?` (`online_idle|online_busy|stale`)
+* `limit?` (default `50`, max `200`)
+* `offset?` (default `0`)
+
+Response :
+
+* `items[]` :
+  * `agent_id`
+  * `agent_fingerprint`
+  * `client_id`
+  * `agent_name`
+  * `agent_version`
+  * `os_name?`
+  * `os_version?`
+  * `arch?`
+  * `status` (`online_idle|online_busy|stale`)
+  * `last_seen_at`
+  * `last_register_at`
+  * `last_heartbeat_at?`
+  * `effective_capabilities[]`
+  * `capability_warnings[]`
+  * `current_job?` :
+    * `job_id`
+    * `job_type`
+    * `asset_uuid`
+    * `claimed_at`
+    * `locked_until`
+  * `last_successful_job?` :
+    * `job_id`
+    * `job_type`
+    * `asset_uuid`
+    * `completed_at`
+  * `last_failed_job?` :
+    * `job_id`
+    * `job_type`
+    * `asset_uuid`
+    * `failed_at`
+    * `error_code`
+  * `debug` :
+    * `max_parallel_jobs`
+    * `feature_flags_contract_version?`
+    * `effective_feature_flags_contract_version?`
+    * `server_time_skew_seconds?`
+* `total`
+
+Règles :
+
+* endpoint read-only
+* réservé aux rôles/scopes ops admin
+* ne DOIT exposer aucun secret (`secret_key`, token, refresh token, credentials, path absolu local)
+* `status=online_busy` si au moins une lease job active est détenue par l'agent
+* `status=online_idle` si l'agent est vu comme actif sans job claimé
+* `status=stale` si l'agent n'est plus vu actif au-delà de la fenêtre runtime serveur
+* `last_successful_job` représente le dernier job soumis avec succès et accepté par Core
+* tri par défaut recommandé : `last_seen_at DESC`
+
+## 8.7) Ingest unmatched listing (ops)
 
 ### GET `/ops/ingest/unmatched`
 
