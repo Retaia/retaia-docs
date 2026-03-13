@@ -8,8 +8,8 @@ Tests obligatoires :
 
 * `v1` projet global : Core + Agent + `capabilities` + `feature_flags`
 * `v1.1` projet global : clients `UI_WEB_APP` + `RUST_UI` (`client_kind=UI_WEB`) + client `MCP_CLIENT` (`client_kind=MCP`)
-* `v1.2` projet global : client mobile Android/iOS (`client_kind=UI_MOBILE`) + push mobile (status-driven)
-* les suites UI/MCP sont classées en gates `v1.1` global; les suites UI mobile/push en gates `v1.2`
+* aucune suite `v1.2` active : la piste mobile/push est actuellement non planifiée
+* les suites UI/MCP sont classées en gates `v1.1` global
 
 ## 0.1) Configuration Core (.env layering + marker)
 
@@ -166,6 +166,14 @@ Tests obligatoires :
   * bearer absent/invalide => `401 UNAUTHORIZED`
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
   * `client_id` invalide => `422 VALIDATION_FAILED`
+* `POST /agents/register`:
+  * `agent_id` requis
+  * `agent_id` conforme UUIDv4
+  * `os_name`, `os_version`, `arch` requis
+  * reconnexion avec le même `agent_id` => même instance corrélable côté Core
+  * deux agents actifs avec le même `agent_id` : register autorisé, conflit journalisé et visible en ops
+  * `agent_id` absent/vide => `422 VALIDATION_FAILED`
+  * aucun identifiant DB interne Core distinct n'est exposé dans le payload API
 
 Matrice de migration v1 runtime (gelée) :
 
@@ -177,7 +185,7 @@ Matrice de migration v1 runtime (gelée) :
   * rotation invalide immédiatement les tokens actifs du client
 * toutes réponses d’erreur 4xx/5xx auth conformes au schéma `ErrorResponse`
 * endpoints humains mutateurs exigent un bearer token (`UserBearerAuth`) conforme à la spec
-* même flux login/token validé sur clients interactifs: `UI_WEB`, `UI_MOBILE` et `AGENT` (gate `v1.2` pour `UI_MOBILE`)
+* même flux login/token validé sur clients interactifs: `UI_WEB` et `AGENT`
 * compatibilité UI validée: `UI_WEB_APP` et `RUST_UI` (même `client_kind=UI_WEB`) utilisent `POST /auth/login` + `Authorization: Bearer`
 * anti lock-out: l'UI n'expose jamais le token en clair et n'offre pas d'action d'auto-révocation du token UI actif (gate `v1.1` global)
 * régression interdite: aucun endpoint runtime n'accepte encore `SessionCookieAuth` (Bearer-only)
@@ -203,7 +211,6 @@ Tests obligatoires :
 * cible Linux headless Raspberry Pi (Kodi/Plex) validée en non-régression
 * capacités IA (providers/modèles/transcription/suggestions) couvertes par le plan de tests v1.1 (hors conformité v1)
 * runtime status-driven validé: la vérité d'état est synchronisée par polling, même si un canal push existe (WebSocket, SSE, webhook, autres push)
-* push mobiles/wallet (`FCM`, `APNs`, Push Protocol/EPNS) couverts dans les gates `v1.2` pour `UI_MOBILE` uniquement
 * polling jobs/policy respecte les intervalles contractuels et applique backoff+jitter sur `429`
 
 ## 1.3) Gates de non-régression obligatoires (release blockers)
@@ -220,18 +227,10 @@ Tests obligatoires :
   * `POST /auth/clients/token` -> `403 FORBIDDEN_ACTOR` pour `client_kind=UI_WEB`
 * Compat client UI/Agent/MCP:
   * UI_WEB, AGENT, MCP compatibles avec le flux status-driven (`PENDING|APPROVED|DENIED|EXPIRED`) (gate `v1.1` global pour UI_WEB/MCP)
-  * UI_MOBILE compatible avec le modèle "push triggers poll only" (gate `v1.2`)
   * AGENT/MCP gèrent `429` (`SLOW_DOWN`/`TOO_MANY_ATTEMPTS`) avec retry/backoff déterministe
   * aucun client ne dépend encore de `401/403` pour la machine d’état device flow
   * aucun client ne traite un canal push serveur (WebSocket/SSE/webhook/notification) comme source de vérité runtime
   * un changement `server_policy.feature_flags` est pris en compte au prochain polling sans redéploiement client
-* Push mobile v1.2 (gates dédiées):
-  * scope limité au client `UI_MOBILE` (Android/iOS), hors agent/MCP mobile
-  * un push mobile reçu déclenche un poll immédiat (`PUSH_TRIGGERS_POLL`)
-  * un push mobile seul ne modifie aucun état sans confirmation poll (`PUSH_NOT_AUTHORITATIVE`)
-  * payload push mobile ne contient aucune donnée sensible (`NO_SENSITIVE_PUSH_PAYLOAD`)
-  * push dupliqué/rejoué est ignoré (dédup + TTL)
-  * perte de push n'empêche pas la convergence d'état (polling périodique)
 
 ## 2) Jobs & leases
 
@@ -286,6 +285,10 @@ Tests obligatoires :
   * format `image/jpeg` ou `image/webp`
   * `sRGB`
   * au moins une taille web exploitable
+  * vidéo courte (`< 120s`) : thumb principal extrait à `max(1s, 10% de la durée)`
+  * vidéo longue (`>= 120s`) : thumb principal extrait à `5% de la durée`, avec fallback à `20s` si `5% > 20s`
+  * si la frame cible est noire ou de fondu et qu'une heuristique légère est active, une frame voisine plus représentative est choisie
+  * mode `storyboard` : `10` thumbs sont produits et répartis régulièrement sur la durée utile
 * `waveform` :
   * si présent en JSON: amplitudes normalisées + métadonnées minimales (`duration_ms`, `bucket_count`)
   * si absent: fallback local UI validé (non bloquant)
@@ -302,7 +305,8 @@ Tests obligatoires :
 * clés hors domaine autorisé renvoient `422 VALIDATION_FAILED`
 * `job_type` vs domaine patch suit strictement l'ownership spécifié
 * multi-sélection UI "ajout keyword" : N appels `PATCH /assets/{uuid}` indépendants, erreurs partielles isolées
-* bulk change UI sans validation explicite (annulation de confirmation) : aucun appel unitaire Core émis
+* ajout manuel de keywords : après confirmation UI, aucune liste Core "non appliquée" spécifique n'est créée; la mutation est immédiatement persistée par asset
+* action groupée UI sans validation explicite (annulation de confirmation) : aucun appel unitaire Core émis
 * historique de révisions asset mis à jour après mutation validée (`revision_history[]` append + `is_current=true` sur la dernière)
 
 ## 5) Apply decision (move unitaire)
@@ -310,12 +314,13 @@ Tests obligatoires :
 Tests obligatoires :
 
 * éligibilité limitée à `DECIDED_KEEP|DECIDED_REJECT`
+* la liste Core des décisions posées mais non appliquées est dérivable strictement depuis les assets en `DECIDED_KEEP|DECIDED_REJECT`
 * lock par asset posé pendant filesystem op
 * release lock avant transition finale
 * collision nom => suffixe `__{short_nonce}`
 * une erreur sur un asset ne bloque pas l’application sur les autres assets sélectionnés en UI
 * multi-sélection UI KEEP/REJECT : N appels `PATCH /assets/{uuid}` avec `state=DECIDED_KEEP|DECIDED_REJECT`
-* bulk change UI avec validation explicite : exécution autorisée et traçable
+* action groupée UI avec validation explicite : exécution autorisée et traçable
 * cas versionning: une révision `VALIDATED` publiée reste exploitable pendant qu'une révision suivante est `PENDING_VALIDATION`
 
 ## 6) Purge
@@ -390,6 +395,18 @@ Tests obligatoires :
 * endpoint `GET /ops/jobs/queue` présent et conforme :
   * `summary.pending_total|claimed_total|failed_total`
   * `by_type[]` avec `job_type`, `pending`, `claimed`, `failed`, `oldest_pending_age_seconds`
+* endpoint `GET /ops/agents` présent et conforme :
+  * filtres `status`, pagination `limit`, `offset`
+  * payload `items[]` + `total`
+  * `items[]` expose `agent_id`, `client_id`, `agent_name`, `agent_version`, `os_name`, `os_version`, `arch`, `status`, `last_seen_at`, `effective_capabilities[]`
+  * `agent_id` exposé correspond à l'identifiant public persistant d'instance, pas à une clé interne DB
+  * `identity_conflict` booléen exposé si le même `agent_id` est vu sur plusieurs agents actifs
+  * `current_job?` expose `job_id`, `job_type`, `asset_uuid`, `claimed_at`, `locked_until`
+  * `last_successful_job?` expose `job_id`, `job_type`, `asset_uuid`, `completed_at`
+  * `last_failed_job?` expose `job_id`, `job_type`, `asset_uuid`, `failed_at`, `error_code`
+  * `debug.max_parallel_jobs` présent, aucun secret/token/path absolu exposé
+  * mapping `status` conforme : lease active => `online_busy`; agent actif sans lease => `online_idle`; agent expiré côté runtime => `stale`
+  * `UserBearerAuth` seul n'est pas suffisant : l'utilisateur doit aussi avoir le statut admin
 * endpoint `GET /ops/ingest/unmatched` présent et conforme :
   * filtres `reason`, `since`, `limit`
   * `reason`/`since` invalides renvoient `400 VALIDATION_FAILED`
@@ -423,7 +440,7 @@ Tests obligatoires :
 * toute nouvelle feature est introduite derrière un flag
 * toute feature `v1.1+` est désactivée par défaut
 * source de vérité des flags = payload runtime de Core (`server_policy.feature_flags`), jamais un hardcode client
-* canal runtime flags défini et testé pour `AGENT` en v1, puis `UI_WEB` et `MCP` en v1.1, puis `UI_MOBILE` en v1.2 via `GET /app/policy` (pas seulement `POST /agents/register`)
+* canal runtime flags défini et testé pour `AGENT` en v1, puis `UI_WEB` et `MCP` en v1.1 via `GET /app/policy` (pas seulement `POST /agents/register`)
 * distinction opposable: `capabilities` (agent/client), `feature_flags` (Core), `app_feature_enabled` (application) et `user_feature_enabled` (utilisateur) sont testées séparément
 * règle AND validée: capability + flag requis pour exécuter une action feature
 * ordre d’arbitrage validé: `feature_flags` -> `app_feature_enabled` -> `user_feature_enabled` -> dépendances/escalade
@@ -435,7 +452,7 @@ Tests obligatoires :
 * `server_policy` expose l’état effectif des flags utiles aux agents
 * client feature OFF => UI/action API de la feature interdite
 * client feature ON => disponibilité immédiate sans redéploiement
-* `AGENT` applique les `feature_flags` runtime du Core en v1 ; `UI_WEB` et `MCP` les appliquent en v1.1 ; `UI_MOBILE` les applique en v1.2
+* `AGENT` applique les `feature_flags` runtime du Core en v1 ; `UI_WEB` et `MCP` les appliquent en v1.1
 
 Cas OFF/ON minimum :
 
@@ -529,7 +546,7 @@ Tests obligatoires :
 
 Tests obligatoires :
 
-* conformité au standard [`GPG-OPENPGP-STANDARD.md`](../policies/GPG-OPENPGP-STANDARD.md) sur tous les clients (`UI_WEB`, `UI_MOBILE`, `AGENT`, `MCP`)
+* conformité au standard [`GPG-OPENPGP-STANDARD.md`](../policies/GPG-OPENPGP-STANDARD.md) sur tous les clients actifs (`UI_WEB`, `AGENT`, `MCP`)
 
 ## 8.9) Observabilité feature governance
 

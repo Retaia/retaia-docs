@@ -348,8 +348,9 @@ Règles :
 
 Le **Bulk** est un concept d'interface utilisateur uniquement.
 
-* il représente l'ensemble des assets modifiés mais non encore appliqués
-* pour les décisions KEEP/REJECT, cela correspond aux assets en `DECIDED_KEEP|DECIDED_REJECT`
+* il représente une sélection multiple sur laquelle l'UI prépare une même action avant confirmation utilisateur
+* pour les décisions KEEP/REJECT, le Core conserve le sous-ensemble des assets à décision posée mais move non appliqué via les états `DECIDED_KEEP|DECIDED_REJECT`
+* pour les mutations metadata (ex: ajout manuel de keywords), une fois la validation UI effectuée et le `PATCH` envoyé, la mutation est déjà appliquée côté Core
 * il n'existe pas comme entité métier Core
 * il ne crée aucun état lifecycle supplémentaire
 
@@ -370,6 +371,8 @@ La **source de vérité** est Retaia Core Server.
 * décide des états
 * orchestre les moves
 * garantit la cohérence
+* pilote les mutations filesystem sur le NAS
+* le NAS réplique l'état décidé par Core; il n'est pas une source de vérité métier autonome
 
 
 ## Invariants terminologiques

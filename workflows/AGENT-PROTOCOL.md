@@ -16,22 +16,22 @@ Le protocole agent vise à :
 
 Portée d'exécution :
 
-* seul un client `AGENT` exécute les jobs de processing
+* seul un `AGENT_TECHNICAL` exécute les jobs de processing
 * un client `MCP` peut piloter/orchestrer mais ne traite jamais les médias
 * rollout projet global: le client applicatif `MCP_CLIENT` (mappé `client_kind=MCP`) est intégré à partir de la v1.1 globale
 * gate applicatif: `app_feature_enabled.features.ai=false` désactive le client `MCP` (bootstrap/token/runtime refusés)
 * un client `AGENT`/`MCP` DOIT appliquer `effective_feature_enabled` (pas de logique locale alternative)
+* un `AGENT` interactif opéré par un humain sert au bootstrap, au diagnostic ou à l'administration, pas au processing média
 
 
 ## 2. Principes fondamentaux
 
-* Le serveur est la **source de vérité** (jobs, états, décisions).
+* Le serveur est la **source de vérité** (jobs, états, décisions) et orchestre les moves sur le NAS.
 * L’agent est un exécuteur : il ne prend **jamais** de décision métier.
 * Les jobs sont **idempotents**.
 * Tout claim est **atomique**.
 * Le pilotage runtime est status-driven par polling HTTP: l'agent lit l'état Core par polling.
 * Un canal push serveur-vers-agent/client peut exister pour réveiller/alerter/diffuser des infos (WebSocket, SSE, webhook, autres push).
-* Les push mobiles/wallet (`FCM`, `APNs`, Push Protocol/EPNS) sont planifiés en **v1.2** pour `UI_MOBILE` uniquement.
 * Ces push sont autorisés, mais ne sont jamais la source de vérité métier.
 
 ### 2.1 Polling runtime (normatif)
@@ -50,12 +50,26 @@ Un agent DOIT s’enregistrer avant de pouvoir claim des jobs.
 
 Champs minimum :
 
+* `agent_id`
 * `agent_name`
 * `agent_version`
 * `capabilities[]`
-* `platform` (optionnel)
+* `os_name`
+* `os_version`
+* `arch`
 
 Le serveur peut refuser l’enregistrement si la déclaration est invalide.
+
+Règle d'identité d'instance :
+
+* l'agent DOIT générer un `agent_id` stable lors de sa première initialisation
+* cet `agent_id` DOIT être un `UUIDv4` aléatoire
+* cet identifiant DOIT être persisté localement puis réutilisé à chaque register
+* `client_id` identifie le client technique autorisé; plusieurs instances d'agent peuvent le partager
+* `agent_id` sert au suivi d'une instance réelle d'agent, indépendamment du `client_id`
+* un éventuel identifiant interne de persistance côté Core est hors contrat agent et ne DOIT pas être exposé
+* l'agent NE DOIT PAS dériver `agent_id` de l'environnement machine (hostname, MAC, serial, `machine-id`, etc.)
+* si deux agents actifs partagent le même `agent_id`, Core autorise le register mais DOIT signaler un conflit d'identité en diagnostics ops
 
 ### 3.2 Profils d’exécution (normatif)
 
@@ -124,7 +138,7 @@ Règles :
 
 ### 3.5 Local-first AI/transcription (planned v1.1+)
 
-Pour `UI_WEB`, `UI_MOBILE`, `AGENT` et `MCP` :
+Pour `UI_WEB`, `AGENT` et `MCP` :
 
 * exécution local-first obligatoire pour les workloads AI/transcription quand un modèle local compatible est disponible
 * transcription locale minimum supportée: `Whisper.cpp`

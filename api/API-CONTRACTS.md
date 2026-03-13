@@ -8,7 +8,7 @@ Les fichiers OpenAPI versionnés sont :
 
 * `openapi/v1.yaml` (gate runtime actuelle, opposable)
 * `openapi/v1.1.yaml` (prévision version mineure)
-* `openapi/v1.2.yaml` (prévision version mineure)
+* `openapi/v1.2.yaml` (piste reservee, actuellement non planifiee)
 
 `openapi/v1.yaml` reste la description contractuelle exécutable de référence tant que les gates CI pointent v1.
 Ce document doit rester strictement aligné avec `openapi/v1.yaml`.
@@ -49,9 +49,7 @@ Objectif : fournir une surface stable consommée par :
   * client `UI_WEB_APP` (mappé sur `client_kind=UI_WEB`)
   * client `RUST_UI` (mappé sur `client_kind=UI_WEB`)
   * client `MCP_CLIENT` (mappé sur `client_kind=MCP`)
-* `v1.2` (projet global) :
-  * client UI mobile Android/iOS (`client_kind=UI_MOBILE`)
-  * push mobile status-driven (`FCM`, `APNs`, Push Protocol/EPNS) pour UI mobile uniquement
+* `v1.2` : piste reservee, actuellement non planifiee au produit
 
 ### Feature flags (normatif)
 
@@ -96,44 +94,23 @@ Objectif : fournir une surface stable consommée par :
 ### Orchestration runtime (normatif)
 
 * Core est l'orchestrateur unique des états métier, jobs, policies et flags.
-* Les clients (`UI_WEB`, `UI_MOBILE`, `AGENT`, `MCP`) DOIVENT synchroniser l'état runtime via **polling HTTP** (source de vérité).
+* Les clients actifs (`UI_WEB`, `AGENT`, `MCP`) DOIVENT synchroniser l'état runtime via **polling HTTP** (source de vérité).
 * Les canaux push serveur-vers-client sont autorisés pour diffusion d'information/alerte (WebSocket, SSE, webhook client, autres canaux push).
-* Les push mobiles/wallet (`FCM`, `APNs`, Push Protocol/EPNS) sont planifiés en **v1.2** pour le client UI mobile uniquement (`UI_MOBILE`, Android/iOS).
-* En v1.2 mobile, le push ne cible pas `AGENT` ni `MCP` comme clients mobiles.
 * Ces canaux push servent de signal temps réel/UX, mais NE SONT PAS source de vérité métier.
 * Tout changement de disponibilité fonctionnelle DOIT être observé via polling des endpoints contractuels (notamment `GET /app/policy`).
 * Sur `429` (`SLOW_DOWN`/`TOO_MANY_ATTEMPTS`), le client DOIT appliquer backoff + jitter avant la tentative suivante.
 * Le pilotage d'état du device flow reste strictement status-driven via `POST /auth/clients/device/poll` (`200` + `status`).
 * Les opérations mutatrices REST (`POST`, `PATCH`, etc.) restent autorisées selon la matrice auth/authz.
 
-Règles push mobile v1.2 (opposables) :
-
-* `MOBILE_UI_ONLY_SCOPE` : les règles push mobile v1.2 s'appliquent uniquement au client UI Android/iOS (`UI_MOBILE`).
-* `PUSH_NOT_AUTHORITATIVE` : un push mobile ne DOIT JAMAIS être traité comme état métier final.
-* `PUSH_TRIGGERS_POLL` : la réception d'un push mobile DOIT déclencher un poll des endpoints contractuels.
-* `POLL_IS_SOURCE_OF_TRUTH` : seule la réponse API Core fait foi pour appliquer un changement d'état.
-* `NO_SENSITIVE_PUSH_PAYLOAD` : un push mobile NE DOIT PAS contenir token, secret, PII, adresse, GPS, transcription.
-* `PUSH_MINIMAL_PAYLOAD` : payload limité à des hints techniques (ex: `event_type`, `hint_id`, `issued_at`, `ttl`).
-* `PUSH_DEDUP_REQUIRED` : le client DOIT dédupliquer via `hint_id` (ou identifiant équivalent) pour éviter les doubles traitements.
-* `PUSH_REPLAY_PROTECTION` : push expiré/dupliqué ignoré; TTL et unicité obligatoires.
-* `PUSH_OPTIONAL_FALLBACK_POLL` : absence de push ne doit jamais bloquer; polling périodique reste actif.
-
 Mapping normatif v1.1 (base actuelle, obligatoire pour tous les consommateurs) :
 
 * les capacités AI (`transcribe_audio`, `suggest_tags`, providers/modèles, filtres `suggested_tags*`) sont planifiées en v1.1+ et hors validation de conformité v1.
-
-Prévision de mapping v1.2 (mobile) :
-
-* `features.mobile.push` :
-  * active l'inscription push mobile (`/auth/me/mobile-push/register`) et la désinscription (`/auth/me/mobile-push/unregister`)
-  * scope client: `UI_MOBILE` uniquement
-  * OFF => aucun enregistrement push mobile accepté
 
 Règles client (normatives, UI/agents/MCP) :
 
 * feature OFF => appel API de la feature interdit et UI correspondante masquée/désactivée
 * feature ON => feature disponible immédiatement, sans déploiement client supplémentaire
-* `UI_WEB`, `UI_MOBILE`, `AGENT` et `MCP` DOIVENT tous consommer les `feature_flags` runtime pilotés par Core
+* `UI_WEB`, `AGENT` et `MCP` DOIVENT tous consommer les `feature_flags` runtime pilotés par Core
 * aucun client ne DOIT hardcoder l’état d’un flag ni dépendre d’un flag local statique
 * toute décision de disponibilité fonctionnelle côté client DOIT être dérivée du dernier payload runtime reçu
 * un client DOIT accepter `feature_flags_compatibility_mode=COMPAT` sans échec fonctionnel
@@ -227,18 +204,17 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 
 ### Typologie des acteurs (normatif)
 
-* `USER_INTERACTIVE` : utilisateur humain connecté via client `UI_WEB` (web app ou desktop `RUST_UI`) ou `UI_MOBILE` (Android/iOS), ou client `AGENT` en mode interactif
+* `USER_INTERACTIVE` : utilisateur humain connecté via client `UI_WEB` (web app ou desktop `RUST_UI`) ou via un shell/CLI `AGENT` opéré manuellement pour bootstrap/administration
 * `CLIENT_TECHNICAL` : client non-humain authentifié par `client_id + secret_key`
-* `AGENT_TECHNICAL` : agent non-interactif (daemon/service) authentifié par `client_id + secret_key` ou client-credentials OAuth2
-* `client_kind` interactif est borné à `UI_WEB`, `UI_MOBILE` ou `AGENT`; le mode technique autorise `AGENT` et `MCP`
-* rollout projet global : `UI_WEB` et `MCP` sont intégrés à partir de la v1.1 globale; `UI_MOBILE` à partir de la v1.2 globale
+* `AGENT_TECHNICAL` : agent daemon non-interactif (service) authentifié par `client_id + secret_key` ou client-credentials OAuth2
+* `client_kind` interactif est borné à `UI_WEB` ou `AGENT`; le mode technique autorise `AGENT` et `MCP`
+* rollout projet global actif : `UI_WEB` et `MCP` sont intégrés à partir de la v1.1 globale
 
 ### UI (humain)
 
 * Bearer token utilisateur obtenu via login (`POST /auth/login`)
 * l'interface de login est normative pour permettre l'obtention du token utilisateur
 * le `client_kind=UI_WEB` couvre l'UI web servie par Core et le client desktop Rust/Tauri (`RUST_UI`)
-* le `client_kind=UI_MOBILE` DOIT être implémenté sur Android/iOS (v1.2)
 * le token UI est non exportable dans l'interface (jamais affiché en clair)
 * un utilisateur ne peut pas invalider son token UI depuis l'UI (anti lock-out)
 * l'UI DOIT supporter l'enrôlement 2FA TOTP via app externe (Authy, Google Authenticator, etc.)
@@ -246,8 +222,9 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 ### Agents / MCP
 
 * modes non interactifs : bearer technique (`OAuth2ClientCredentials`)
-* modes interactifs (agent CLI/GUI opéré par un humain) : bearer utilisateur via `POST /auth/login`
+* mode `AGENT` interactif : shell/CLI opéré par un humain pour bootstrap, approval ou diagnostics, avec bearer utilisateur via `POST /auth/login`
 * mode client applicatif non-interactif (`AGENT`, `MCP`) : `client_id + secret_key` pour obtenir un bearer token via `POST /auth/clients/token`
+* seul `AGENT_TECHNICAL` exécute les jobs de processing; un `AGENT` interactif ne claim pas de job et ne traite pas de média
 * `MCP` PEUT piloter/orchestrer l'agent (configuration, déclenchement, supervision) mais NE DOIT JAMAIS exécuter de traitement média
 * `MCP` est interdit sur les endpoints de processing `/jobs/*` (`claim`, `heartbeat`, `submit`) avec refus `403 FORBIDDEN_ACTOR`
 * les capacités IA (providers, modèles, transcription, suggestions) sont planifiées en v1.1+
@@ -258,7 +235,7 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 Règles 2FA par client (obligatoire) :
 
 * la 2FA est optionnelle au niveau compte utilisateur
-* `UI_WEB` et `UI_MOBILE` : login utilisateur (`/auth/login`) avec 2FA obligatoire uniquement si activée sur le compte
+* `UI_WEB` : login utilisateur (`/auth/login`) avec 2FA obligatoire uniquement si activée sur le compte
 * `AGENT` / `MCP` en mode technique (`/auth/clients/token`) : pas de 2FA directe au runtime
 * création d’un `secret_key` pour `AGENT`/`MCP` : DOIT passer par une validation utilisateur via UI
 * si 2FA est activée sur ce compte utilisateur, la validation UI de création `secret_key` DOIT exiger la 2FA
@@ -436,7 +413,7 @@ Normalisation des timestamps (normatif) :
 * security: `UserBearerAuth` ou `OAuth2ClientCredentials`
 * paramètre optionnel: `client_feature_flags_contract_version`
 * effet: retourne `server_policy` (incluant `feature_flags`) pour clients interactifs et techniques
-* règle: `UI_WEB`, `UI_MOBILE`, `AGENT` et `MCP` DOIVENT consommer cet endpoint pour la disponibilité runtime des features
+* règle: `UI_WEB`, `AGENT` et `MCP` DOIVENT consommer cet endpoint pour la disponibilité runtime des features
 * versionnement: Core retourne la version effective servie et le mode `STRICT|COMPAT`
 * réponses:
   * `200` succès
@@ -591,33 +568,7 @@ Règle d'erreur (obligatoire) :
 
 Règle d’unification clients (obligatoire) :
 
-* le flux login utilisateur (`POST /auth/login`) et `UserBearerAuth` DOIVENT être communs pour les clients interactifs `UI_WEB`, `UI_MOBILE` et `AGENT`
-
-### Endpoints push mobile (planned v1.2)
-
-`POST /auth/me/mobile-push/register`
-
-* security: `UserBearerAuth`
-* scope acteur: `USER_INTERACTIVE` (`client_kind=UI_MOBILE`) ; appel depuis autre `client_kind` refusé (`403 FORBIDDEN_ACTOR`)
-* body requis: `{ provider, device_token, platform, app_instance_id }`
-  * `provider in {FCM, APNS, PUSH_PROTOCOL}`
-  * `platform in {ANDROID, IOS}`
-* idempotence: même `(user_id, app_instance_id, device_token)` => upsert sans doublon
-* réponses:
-  * `200` succès (registration active)
-  * `401 UNAUTHORIZED`
-  * `403 FORBIDDEN_ACTOR|FORBIDDEN_SCOPE`
-  * `422 VALIDATION_FAILED`
-  * `429 TOO_MANY_ATTEMPTS`
-
-`POST /auth/me/mobile-push/unregister`
-
-* security: `UserBearerAuth`
-* scope acteur: `USER_INTERACTIVE` (`client_kind=UI_MOBILE`)
-* body requis: `{ app_instance_id }`
-* idempotence: unregister idempotent (deuxième appel => `200`)
-* réponses:
-  * `200` succès
+* le flux login utilisateur (`POST /auth/login`) et `UserBearerAuth` DOIVENT être communs pour les clients interactifs `UI_WEB` et `AGENT`
   * `401 UNAUTHORIZED`
   * `403 FORBIDDEN_ACTOR|FORBIDDEN_SCOPE`
   * `422 VALIDATION_FAILED`
@@ -722,16 +673,33 @@ Effet :
 
 ### POST `/agents/register`
 
-Enregistre un agent (optionnel mais recommandé).
+Enregistre un agent (obligatoire avant claim de jobs).
 
 Body :
 
+* `agent_id`
 * `agent_name`
 * `agent_version`
-* `platform`
+* `os_name` (`linux|macos|windows`)
+* `os_version`
+* `arch` (`x86_64|arm64|armv7|other`)
 * `capabilities: string[]` (voir [`CAPABILITIES.md`](../definitions/CAPABILITIES.md))
 * `client_feature_flags_contract_version` (optionnel)
 * `max_parallel_jobs` (suggestion)
+
+Règles :
+
+* `agent_id` identifie de manière stable une instance/install d'agent
+* `agent_id` DOIT être un `UUIDv4` généré aléatoirement lors de la première initialisation de l'agent
+* l'agent DOIT le générer une fois puis le persister localement
+* l'agent DOIT le réutiliser à chaque register/reconnexion
+* `client_id` identifie le client technique autorisé, généralement lié à l'utilisateur qui a connecté l'agent; plusieurs agents sur plusieurs machines PEUVENT partager le même `client_id`
+* `agent_id` identifie l'instance réelle d'agent; deux machines distinctes ne DOIVENT PAS partager le même identifiant
+* `agent_id` est l'identifiant public d'agent exposé par l'API
+* Core PEUT maintenir un identifiant DB interne distinct, mais celui-ci DOIT rester interne et NE DOIT JAMAIS être exposé par l'API
+* une réinstallation explicite ou une rotation volontaire d'identité agent PEUT générer un nouveau `agent_id`
+* `agent_id` NE DOIT PAS être dérivé du hostname, d'une MAC address, d'un serial disque, d'un `machine-id` OS ni d'une caractéristique matérielle/réseau
+* si deux agents actifs se présentent avec le même `agent_id`, Core DOIT autoriser la connexion/register, journaliser un conflit d'identité et exposer ce conflit dans les diagnostics ops; Core NE DOIT PAS invalider automatiquement l'une des deux sessions en v1
 
 Response :
 
@@ -954,6 +922,11 @@ Objectif :
 * espace couleur : `sRGB`
 * au moins une taille de preview web (ex: largeur 320px ou 480px) DOIT être fournie
 * ratio d'aspect conservé, upscale interdit
+* pour une vidéo, le thumb principal DOIT provenir d'une frame représentative déterminée par `thumbnail_profile`
+  * vidéo courte = durée `< 120s` ; thumb principal à `max(1s, 10% de la durée)`
+  * vidéo longue = durée `>= 120s` ; thumb principal à `5% de la durée`, avec fallback à `20s` si `5% > 20s`
+* si une heuristique légère détecte une frame noire ou de fondu au point cible, le moteur DOIT sélectionner une frame voisine plus représentative
+* un mode `storyboard` PEUT exiger `10` thumbs répartis régulièrement sur la durée utile, incluant le thumb principal
 
 `waveform` :
 
@@ -970,9 +943,12 @@ Règle de cohérence source/dérivé (obligatoire) :
 ## 7) Apply decision (move unitaire)
 
 Le Core n'expose pas de concept/ressource "bulk" ou "batch".
-Le bulk est un concept UI : l'ensemble des assets modifiés non appliqués.
+Le bulk est un concept UI : une sélection multiple sur laquelle l'UI prépare une même action.
+Le Core suit uniquement l'état de chaque asset.
+Pour KEEP/REJECT, la liste des décisions posées mais non appliquées correspond aux assets en `DECIDED_KEEP|DECIDED_REJECT`.
+Pour les mutations metadata (ex: keywords), après confirmation UI et `PATCH`, le changement est déjà appliqué côté Core.
 L'exécution Core est toujours par asset.
-Tout bulk change DOIT être validé explicitement dans l'UI avant l'envoi des appels unitaires Core.
+Toute action groupée DOIT être validée explicitement dans l'UI avant l'envoi des appels unitaires Core.
 
 ### PATCH `/assets/{uuid}` avec `state=ARCHIVED|REJECTED`
 
@@ -990,7 +966,7 @@ Effet :
 Règles d'exécution :
 
 * seuls les assets `DECIDED_KEEP` et `DECIDED_REJECT` sont éligibles
-* côté UI, le bulk de décisions correspond exactement aux assets `DECIDED_KEEP|DECIDED_REJECT` non encore appliqués
+* côté UI, la sélection de décisions à appliquer correspond exactement aux assets `DECIDED_KEEP|DECIDED_REJECT` non encore appliqués
 * lock exclusif par asset (fichier/rush) pendant l'opération filesystem
 * release du lock asset après opération filesystem et avant transition d'état
 * suffixe de collision obligatoire : `__{short_nonce}`
@@ -1154,7 +1130,75 @@ Response :
   * `failed`
   * `oldest_pending_age_seconds?`
 
-## 8.6) Ingest unmatched listing (ops)
+## 8.6) Agents ops
+
+### GET `/ops/agents`
+
+Objectif :
+
+* lister les agents connus avec leur état runtime, leur job en cours, leur dernier job réussi et les éléments utiles au debug
+
+Query params :
+
+* `status?` (`online_idle|online_busy|stale`)
+* `limit?` (default `50`, max `200`)
+* `offset?` (default `0`)
+
+Response :
+
+* `items[]` :
+  * `agent_id`
+  * `client_id`
+  * `agent_name`
+  * `agent_version`
+  * `os_name?`
+  * `os_version?`
+  * `arch?`
+  * `status` (`online_idle|online_busy|stale`)
+  * `identity_conflict` (`boolean`)
+  * `last_seen_at`
+  * `last_register_at`
+  * `last_heartbeat_at?`
+  * `effective_capabilities[]`
+  * `capability_warnings[]`
+  * `current_job?` :
+    * `job_id`
+    * `job_type`
+    * `asset_uuid`
+    * `claimed_at`
+    * `locked_until`
+  * `last_successful_job?` :
+    * `job_id`
+    * `job_type`
+    * `asset_uuid`
+    * `completed_at`
+  * `last_failed_job?` :
+    * `job_id`
+    * `job_type`
+    * `asset_uuid`
+    * `failed_at`
+    * `error_code`
+  * `debug` :
+    * `max_parallel_jobs`
+    * `feature_flags_contract_version?`
+    * `effective_feature_flags_contract_version?`
+    * `server_time_skew_seconds?`
+* `total`
+
+Règles :
+
+* endpoint read-only
+* réservé aux rôles/scopes ops admin
+* ne DOIT exposer aucun secret (`secret_key`, token, refresh token, credentials, path absolu local)
+* `status=online_busy` si au moins une lease job active est détenue par l'agent
+* `status=online_idle` si l'agent est vu comme actif sans job claimé
+* `status=stale` si l'agent n'est plus vu actif au-delà de la fenêtre runtime serveur
+* `last_successful_job` représente le dernier job soumis avec succès et accepté par Core
+* `identity_conflict=true` si plusieurs agents actifs partagent le même `agent_id`
+* tri par défaut recommandé : `last_seen_at DESC`
+* l'authentification HTTP utilise `UserBearerAuth`, puis l'autorisation DOIT vérifier le statut admin de l'utilisateur
+
+## 8.7) Ingest unmatched listing (ops)
 
 ### GET `/ops/ingest/unmatched`
 
