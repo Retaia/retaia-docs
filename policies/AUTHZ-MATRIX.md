@@ -64,6 +64,7 @@ Acteurs normatifs :
 * acteur: `ADMIN_INTERACTIVE`
 * scope: policy admin
 * portée: met à jour les `feature_flags` runtime quand ils sont DB-backed ou pilotés par un backend mutable équivalent
+* contrainte: tentative d'écriture sur un flag encore `code-backed` => `409 STATE_CONFLICT`
 
 `POST /auth/verify-email/admin-confirm`
 

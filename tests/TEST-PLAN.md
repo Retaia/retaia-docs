@@ -115,6 +115,7 @@ Tests obligatoires :
   * bearer admin valide + body valide (`feature_flags`) => `200`
   * bearer absent/invalide => `401 UNAUTHORIZED`
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
+  * tentative de mutation d’un flag encore `code-backed` => `409 STATE_CONFLICT`
   * body invalide => `422 VALIDATION_FAILED`
 * `POST /auth/lost-password/request`:
   * body valide (`email`) => `202`

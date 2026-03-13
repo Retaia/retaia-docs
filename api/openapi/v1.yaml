@@ -425,6 +425,8 @@ paths:
       description: |
         Updates runtime `feature_flags` when they are persisted in a mutable backend controlled by Core.
         Requires `UserBearerAuth` and an authenticated admin actor, per AUTHZ matrix.
+        Flags still in `code-backed` introduction/validation phase are visible in `GET /app/policy`
+        but MUST be rejected by this endpoint with `409 STATE_CONFLICT`.
       security:
         - UserBearerAuth: []
       requestBody:
@@ -448,6 +450,12 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "403":
           description: Forbidden actor or scope (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Flag is not runtime-mutable yet (`STATE_CONFLICT`)
           content:
             application/json:
               schema:

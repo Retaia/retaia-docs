@@ -84,6 +84,10 @@ Objectif : fournir une surface stable consommée par :
   * flag absent = `false`
   * flag inconnu côté client = ignoré
   * comportement safe-by-default : sans signal explicite `true` renvoyé par Core, la feature reste indisponible
+* Phases de gouvernance d'un flag :
+  * phase d'introduction/validation initiale : le flag PEUT être `code-backed` uniquement
+  * phase de rollout élargi : le flag PEUT être migré en `DB-backed` (ou backend mutable équivalent)
+  * un flag `code-backed` DOIT rester visible dans `GET /app/policy`, mais NE DOIT PAS être mutable via `POST /app/policy`
 * Quand un flag est `false`, l’endpoint reste stable et la feature est refusée de façon explicite (`403 FORBIDDEN_SCOPE` ou `409 STATE_CONFLICT` selon le cas).
 * L’activation d’un flag ne DOIT pas modifier le comportement des fonctionnalités `v1`.
 * Le cycle de vie complet (introduction -> rollout -> assimilation -> retrait) est défini dans [`FEATURE-FLAG-LIFECYCLE.md`](../change-management/FEATURE-FLAG-LIFECYCLE.md).
@@ -140,7 +144,8 @@ Gouvernance des `feature_flags` runtime (opposable) :
 * lecture (`GET /app/policy`) : `USER_INTERACTIVE` et `TECHNICAL_ACTORS`
 * modification (`POST /app/policy`) : admin uniquement (`UserBearerAuth` + policy admin)
 * portée : flags runtime globaux pilotés par Core
-* précondition d'écriture : applicable quand les `feature_flags` sont stockés en DB ou via un backend mutable équivalent
+* précondition d'écriture : applicable uniquement aux flags stockés en DB ou via un backend mutable équivalent
+* un flag encore `code-backed` DOIT être refusé en écriture avec `409 STATE_CONFLICT`
 * effet runtime obligatoire : un changement accepté DOIT être observable par les clients au prochain polling de `GET /app/policy`
 
 Catalogue de dépendances et escalade (opposable) :
@@ -439,10 +444,12 @@ Normalisation des timestamps (normatif) :
 * prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
 * body requis: `{ feature_flags: { ... } }`
 * effet: met à jour les `feature_flags` runtime globaux quand ils sont persistés dans un backend mutable (DB ou équivalent)
+* contrainte: toute tentative de mutation d'un flag encore `code-backed` DOIT échouer avec `409 STATE_CONFLICT`
 * réponses:
   * `200` succès
   * `401 UNAUTHORIZED`
   * `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
+  * `409 STATE_CONFLICT`
   * `422 VALIDATION_FAILED`
 
 `POST /auth/lost-password/request`
