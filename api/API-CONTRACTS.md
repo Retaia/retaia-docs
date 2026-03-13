@@ -699,6 +699,7 @@ Règles :
 * Core PEUT maintenir un identifiant DB interne distinct, mais celui-ci DOIT rester interne et NE DOIT JAMAIS être exposé par l'API
 * une réinstallation explicite ou une rotation volontaire d'identité agent PEUT générer un nouveau `agent_id`
 * `agent_id` NE DOIT PAS être dérivé du hostname, d'une MAC address, d'un serial disque, d'un `machine-id` OS ni d'une caractéristique matérielle/réseau
+* si deux agents actifs se présentent avec le même `agent_id`, Core DOIT autoriser la connexion/register, journaliser un conflit d'identité et exposer ce conflit dans les diagnostics ops; Core NE DOIT PAS invalider automatiquement l'une des deux sessions en v1
 
 Response :
 
@@ -1154,6 +1155,7 @@ Response :
   * `os_version?`
   * `arch?`
   * `status` (`online_idle|online_busy|stale`)
+  * `identity_conflict` (`boolean`)
   * `last_seen_at`
   * `last_register_at`
   * `last_heartbeat_at?`
@@ -1192,6 +1194,7 @@ Règles :
 * `status=online_idle` si l'agent est vu comme actif sans job claimé
 * `status=stale` si l'agent n'est plus vu actif au-delà de la fenêtre runtime serveur
 * `last_successful_job` représente le dernier job soumis avec succès et accepté par Core
+* `identity_conflict=true` si plusieurs agents actifs partagent le même `agent_id`
 * tri par défaut recommandé : `last_seen_at DESC`
 * l'authentification HTTP utilise `UserBearerAuth`, puis l'autorisation DOIT vérifier le statut admin de l'utilisateur
 

@@ -69,6 +69,7 @@ Règle d'identité d'instance :
 * `agent_id` sert au suivi d'une instance réelle d'agent, indépendamment du `client_id`
 * un éventuel identifiant interne de persistance côté Core est hors contrat agent et ne DOIT pas être exposé
 * l'agent NE DOIT PAS dériver `agent_id` de l'environnement machine (hostname, MAC, serial, `machine-id`, etc.)
+* si deux agents actifs partagent le même `agent_id`, Core autorise le register mais DOIT signaler un conflit d'identité en diagnostics ops
 
 ### 3.2 Profils d’exécution (normatif)
 
