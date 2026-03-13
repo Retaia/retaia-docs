@@ -47,6 +47,8 @@ Interdit :
 * les écrans de review, décision et apply decision doivent être entièrement localisables
 * les formats date/heure/nombre utilisent la locale utilisateur
 * les termes critiques (KEEP / REJECT) doivent conserver un mapping explicite vers leurs constantes métier
+* les libellés de navigation visibles DOIVENT suivre le vocabulaire UI canonique défini dans `ui/UI-GLOBAL-SPEC.md`
+* les routes HTTP/UI restent techniques, stables et non localisées
 
 ## 7) Qualité et tests
 

@@ -26,6 +26,8 @@ The following consumer repositories must align with these specs:
 
 - Product vision: [`vision/PROJECT-BRIEF.md`](vision/PROJECT-BRIEF.md)
 - Product roadmap: [`vision/ROADMAP.md`](vision/ROADMAP.md)
+- UI recommendations: [`ui/README.md`](ui/README.md)
+- UI global spec: [`ui/UI-GLOBAL-SPEC.md`](ui/UI-GLOBAL-SPEC.md)
 - Deployment topology (NAS + workstations): [`architecture/DEPLOYMENT-TOPOLOGY.md`](architecture/DEPLOYMENT-TOPOLOGY.md)
 - API contract: [`api/API-CONTRACTS.md`](api/API-CONTRACTS.md)
 - OpenAPI sources:
@@ -50,6 +52,7 @@ The following consumer repositories must align with these specs:
 - Capabilities: [`definitions/CAPABILITIES.md`](definitions/CAPABILITIES.md)
 - Security baseline: [`policies/SECURITY-BASELINE.md`](policies/SECURITY-BASELINE.md)
 - RGPD: [`policies/RGPD-DATA-PROTECTION.md`](policies/RGPD-DATA-PROTECTION.md)
+- UI docs: [`ui/README.md`](ui/README.md)
 
 ## Spec-first workflow
 
