@@ -190,6 +190,26 @@ Tests obligatoires :
   * bearer absent/invalide => `401 UNAUTHORIZED`
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
   * `client_id` invalide => `422 VALIDATION_FAILED`
+* `POST /auth/mcp/register`:
+  * bearer utilisateur valide + clé publique valide => `200` + `client_id` MCP
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+  * acteur/scope interdit => `403 FORBIDDEN_ACTOR|FORBIDDEN_SCOPE`
+  * conflit d'enrôlement => `409 STATE_CONFLICT`
+  * body invalide => `422 VALIDATION_FAILED`
+* `POST /auth/mcp/challenge`:
+  * `client_id` MCP + fingerprint valides => `200` + challenge court
+  * body invalide => `422 VALIDATION_FAILED`
+  * rate limit => `429 TOO_MANY_ATTEMPTS`
+* `POST /auth/mcp/token`:
+  * challenge valide + signature valide => `200` + bearer token client `MCP`
+  * signature/challenge invalides => `401 UNAUTHORIZED`
+  * body invalide => `422 VALIDATION_FAILED`
+  * rate limit => `429 TOO_MANY_ATTEMPTS`
+* `POST /auth/mcp/{client_id}/rotate-key`:
+  * bearer admin valide + clé publique valide => `200` + fingerprint rotaté
+  * acteur/scope interdit => `403 FORBIDDEN_ACTOR|FORBIDDEN_SCOPE`
+  * conflit de rotation => `409 STATE_CONFLICT`
+  * body invalide => `422 VALIDATION_FAILED`
 * `POST /agents/register`:
   * `agent_id` requis
   * `agent_id` conforme UUIDv4
@@ -241,11 +261,12 @@ Tests obligatoires :
 * aucune action user-scoped initiée depuis `AGENT_UI` n'est exécutée par `AGENT_TECHNICAL` sans contrat de délégation explicite
 * client `AGENT` validé dans les deux modes d’auth: interactif (`/auth/login`) et technique (`/auth/clients/token`)
 * client `MCP` validé en mode technique asymétrique standard, sans login interactif ni device flow (gate `v1.1` global)
+* client `MCP` obtient son bearer technique via `POST /auth/mcp/challenge` + `POST /auth/mcp/token`
 * client `MCP` peut piloter/orchestrer l'agent sans exécuter de processing (gate `v1.1` global)
 * client `MCP` ne peut pas `claim/heartbeat/submit` de job (`/jobs/*` => `403 FORBIDDEN_ACTOR`) (gate `v1.1` global)
 * mode service non-interactif redémarre sans login humain sur Linux/macOS/Windows
 * stockage secret conforme OS (Keychain macOS, Credential Manager/DPAPI Windows, secret store Linux)
-* rotation de secret `AGENT` ou rotation/révocation du credential `MCP` n’exige pas de réinstallation client
+* rotation de secret `AGENT` ou rotation/révocation de clé `MCP` n’exige pas de réinstallation client
 * cible Linux headless Raspberry Pi (Kodi/Plex) validée en non-régression
 * capacités IA (providers/modèles/transcription/suggestions) couvertes par le plan de tests v1.1 (hors conformité v1)
 * runtime status-driven validé: la vérité d'état est synchronisée par polling, même si un canal push existe (WebSocket, SSE, webhook, autres push)
@@ -263,6 +284,7 @@ Tests obligatoires :
   * `POST /auth/clients/device/poll` piloté uniquement via `200` + `status`
   * `POST /auth/clients/device/poll` -> `400 INVALID_DEVICE_CODE` pour code invalide
   * `POST /auth/clients/token` -> `403 FORBIDDEN_ACTOR` pour `client_kind in {UI_WEB, MCP}`
+* `POST /auth/mcp/token` est le seul flow de mint technique autorisé pour `client_kind=MCP`
 * Compat client UI/Agent/MCP:
   * AGENT compatible avec le flux status-driven device (`PENDING|APPROVED|DENIED|EXPIRED`)
   * UI_WEB, AGENT et MCP gèrent `429` (`SLOW_DOWN`/`TOO_MANY_ATTEMPTS`) avec retry/backoff déterministe sur leurs endpoints auth/runtime respectifs

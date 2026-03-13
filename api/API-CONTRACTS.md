@@ -219,7 +219,7 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 
 * `USER_INTERACTIVE` : utilisateur humain connecté via client `UI_WEB` (web app) ou via `AGENT_UI` (`client_kind=AGENT`, surfaces CLI ou GUI) pour bootstrap, administration ou diagnostic
 * `AGENT_TECHNICAL` : agent daemon non-interactif (service) authentifié via bearer technique obtenu par `client_id + secret_key`
-* `MCP_TECHNICAL` : client MCP non-humain authentifié via identité asymétrique standard enrôlée depuis l'UI par un utilisateur autorisé
+* `MCP_TECHNICAL` : client MCP non-humain authentifié via challenge/réponse asymétrique standard, après enrôlement de sa clé publique depuis l'UI par un utilisateur autorisé
 * `TECHNICAL_ACTORS` : alias générique couvrant `AGENT_TECHNICAL | MCP_TECHNICAL`
 * `client_kind` interactif est borné à `UI_WEB` ou `AGENT`; le mode technique autorise `AGENT` et `MCP`
 * rollout projet global actif : `UI_WEB`, `AGENT_UI` et `MCP` sont intégrés à partir de la v1.1 globale
@@ -293,7 +293,7 @@ Règle de cardinalité des tokens (obligatoire) :
 
 * `USER_INTERACTIVE` : un même utilisateur PEUT avoir plusieurs tokens actifs simultanément sur des clients différents, avec contrainte stricte **1 token actif par `(user_id, client_id)`**
 * `AGENT_TECHNICAL` : contrainte stricte **1 token actif par `client_id`**
-* `MCP_TECHNICAL` : le credential technique et la clé publique enregistrée DOIVENT être révocables/rotatables; Core DOIT tracer quel utilisateur a autorisé l’enregistrement du client
+* `MCP_TECHNICAL` : le credential technique, la clé publique enregistrée et le bearer technique minté DOIVENT être révocables/rotatables; Core DOIT tracer quel utilisateur a autorisé l’enregistrement du client
 * émission d'un nouveau token pour la même clé de cardinalité => révocation immédiate du token précédent
 * les refresh tokens interactifs DOIVENT être rotatables et révocables par device/browser
 
@@ -661,11 +661,13 @@ Séquence normative bootstrap `MCP_TECHNICAL` (obligatoire) :
 
 1. un utilisateur autorisé ouvre l'UI Core
 2. le client MCP génère localement sa paire de clés asymétriques standard
-3. l'utilisateur enregistre la clé publique du client MCP via l'UI
+3. l'utilisateur enregistre la clé publique du client MCP via `POST /auth/mcp/register`
 4. si 2FA est activée sur le compte, validation OTP obligatoire
 5. Core lie la clé publique MCP au compte/tenant autorisé et au client déclaré
-6. le client MCP signe ensuite ses écritures sensibles avec sa clé privée locale
-7. le client MCP NE DOIT PAS initier `POST /auth/login` ni `POST /auth/clients/device/*`
+6. le client MCP demande un challenge via `POST /auth/mcp/challenge`
+7. le client MCP signe le challenge puis échange la preuve via `POST /auth/mcp/token`
+8. le client MCP signe ensuite ses écritures sensibles avec sa clé privée locale
+9. le client MCP NE DOIT PAS initier `POST /auth/login` ni `POST /auth/clients/device/*`
 
 Matrice de migration v1 runtime (gelée) :
 
@@ -679,7 +681,55 @@ Matrice de migration v1 runtime (gelée) :
 Règle de sécurité :
 
 * création de `secret_key` `AGENT_TECHNICAL` sans validation UI utilisateur est interdite
-* enregistrement d’une clé publique `MCP_TECHNICAL` hors validation UI utilisateur est interdit
+* enregistrement ou rotation de clé publique `MCP_TECHNICAL` hors validation UI utilisateur est interdit
+
+`POST /auth/mcp/register`
+
+* security: `UserBearerAuth`
+* body requis: `{ openpgp_public_key, openpgp_fingerprint }`
+* body optionnel: `client_label`
+* effet: enregistre un client `MCP_TECHNICAL` et sa clé publique asymétrique standard
+* réponses:
+  * `200` (`client_id`, `client_kind=MCP`, `openpgp_fingerprint`, `registered_at`)
+  * `401 UNAUTHORIZED`
+  * `403 FORBIDDEN_ACTOR|FORBIDDEN_SCOPE`
+  * `409 STATE_CONFLICT`
+  * `422 VALIDATION_FAILED`
+
+`POST /auth/mcp/challenge`
+
+* security: aucune (`security: []`)
+* body requis: `{ client_id, openpgp_fingerprint }`
+* effet: retourne un challenge court pour authentification technique `MCP_TECHNICAL`
+* réponses:
+  * `200` (`challenge_id`, `challenge`, `expires_in`)
+  * `401 UNAUTHORIZED`
+  * `422 VALIDATION_FAILED`
+  * `429 TOO_MANY_ATTEMPTS`
+
+`POST /auth/mcp/token`
+
+* security: aucune (`security: []`)
+* body requis: `{ client_id, openpgp_fingerprint, challenge_id, signature }`
+* effet: vérifie la signature asymétrique du challenge puis émet un bearer token technique pour `MCP_TECHNICAL`
+* réponses:
+  * `200` token client (`access_token`, `token_type=Bearer`, `expires_in?`, `client_id`, `client_kind=MCP`)
+  * `401 UNAUTHORIZED`
+  * `403 FORBIDDEN_ACTOR|FORBIDDEN_SCOPE`
+  * `422 VALIDATION_FAILED`
+  * `429 TOO_MANY_ATTEMPTS`
+
+`POST /auth/mcp/{client_id}/rotate-key`
+
+* security: `UserBearerAuth`
+* body requis: `{ openpgp_public_key, openpgp_fingerprint }`
+* effet: remplace la clé publique active du client `MCP_TECHNICAL` et invalide les bearers techniques actifs associés
+* réponses:
+  * `200` (`client_id`, `client_kind=MCP`, `openpgp_fingerprint`, `rotated_at`)
+  * `401 UNAUTHORIZED`
+  * `403 FORBIDDEN_ACTOR|FORBIDDEN_SCOPE`
+  * `409 STATE_CONFLICT`
+  * `422 VALIDATION_FAILED`
 
 `POST /auth/clients/{client_id}/rotate-secret`
 

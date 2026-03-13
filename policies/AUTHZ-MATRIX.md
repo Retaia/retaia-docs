@@ -83,11 +83,21 @@ Acteurs normatifs :
 * acteur: `ADMIN_INTERACTIVE`
 * scope: policy admin (sinon `403 FORBIDDEN_ACTOR` / `FORBIDDEN_SCOPE`)
 
-`POST /auth/clients/{client_id}/revoke-token`, `POST /auth/clients/{client_id}/rotate-secret`
+`POST /auth/clients/{client_id}/revoke-token`, `POST /auth/clients/{client_id}/rotate-secret`, `POST /auth/mcp/{client_id}/rotate-key`
 
 * acteur: `ADMIN_INTERACTIVE`
 * scope: policy admin
 * contrainte: `client_kind=UI_WEB` => révocation refusée (`403`)
+
+`POST /auth/mcp/register`
+
+* acteur: `USER_INTERACTIVE`
+* scope: session utilisateur valide (`UserBearerAuth`) + droit d'enrôlement technique
+
+`POST /auth/mcp/challenge`, `POST /auth/mcp/token`
+
+* acteur: `MCP_TECHNICAL`
+* scope: aucun (challenge/réponse asymétrique)
 
 `POST /auth/clients/token`
 
