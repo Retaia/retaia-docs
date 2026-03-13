@@ -1,6 +1,6 @@
 # Agent Desktop Shell
 
-Ce document decrit le shell desktop du client agent.
+Ce document decrit la surface GUI de `AGENT_UI`.
 
 Statut:
 

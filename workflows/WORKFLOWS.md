@@ -1,6 +1,6 @@
-# WORKFLOWS — Retaia Core + Retaia Agent
+# WORKFLOWS — Retaia
 
-Ce document décrit les **workflows canoniques** du système Retaia Core + Retaia Agent.
+Ce document décrit les **workflows canoniques** du système Retaia.
 
 Ils sont **normatifs** : toute implémentation ou évolution future doit les respecter.
 
@@ -13,7 +13,7 @@ Découvrir les fichiers médias présents sur le NAS sans jamais traiter des fic
 
 ### Acteur
 
-Retaia Core Server (NAS)
+Retaia Core Server
 
 ### Étapes
 

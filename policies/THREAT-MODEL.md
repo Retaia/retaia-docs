@@ -15,8 +15,8 @@ Objectif: prioriser les risques qui peuvent provoquer une fuite ou une prise de 
 
 ## 2) Frontieres de confiance
 
-* client `UI_RUST` (interactif humain)
-* client `AGENT` (interactif et technique)
+* client `UI_WEB` (interactif humain)
+* client `AGENT_UI` / `AGENT` (interactif et technique selon le mode)
 * client `MCP` (technique)
 * API Core et services internes
 * stockage (DB, objet, backups)
@@ -45,7 +45,7 @@ Toute traversee de frontiere DOIT etre authentifiee, autorisee et auditee.
 ## 5) Hypotheses et exclusions
 
 * la 2FA est optionnelle au niveau compte utilisateur
-* `UI_RUST` applique la 2FA quand active
+* `UI_WEB` et `AGENT_UI` appliquent la 2FA quand active
 * `AGENT`/`MCP` technique n'utilisent pas 2FA runtime
 * la creation/rotation de credential technique exige validation UI utilisateur (2FA si active)
 

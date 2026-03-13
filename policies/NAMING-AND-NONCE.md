@@ -1,4 +1,4 @@
-# Naming And Nonce — Retaia Core + Retaia Agent
+# Naming And Nonce — Retaia multi-apps
 
 Ce document définit la stratégie de nommage déterministe et le format `short_nonce`.
 

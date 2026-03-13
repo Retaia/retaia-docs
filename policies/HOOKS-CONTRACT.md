@@ -1,4 +1,4 @@
-# Hooks Contract — Retaia Core + Retaia Agent
+# Hooks Contract — Retaia multi-apps
 
 Ce document définit le contrat normatif des hooks/plugins côté serveur.
 

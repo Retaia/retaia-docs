@@ -1,14 +1,17 @@
-# PROJECT BRIEF — Retaia Core + Retaia Agent
+# PROJECT BRIEF — Retaia
 
 ## Résumé du projet
 
-Retaia Core + Retaia Agent est un système **local-first** de gestion de médiathèque de production (vidéo, photo, audio), conçu pour fonctionner autour d’un **Core comme source de vérité métier** et d’un **NAS comme support de stockage**, avec du **processing distribué via des agents**.
+Retaia est un système **multi-apps local-first** de gestion de médiathèque de production (vidéo, photo, audio), conçu autour d’un **Core comme source de vérité métier** et d’un **NAS comme support de stockage**, avec du **processing distribué via des agents**.
 
-Le projet sépare strictement :
+Le découpage produit suit une logique de **multi-apps à responsabilités séparées**, proche d’une architecture micro-services simplifiée : chaque application a un rôle clair, mais le contrat métier reste centralisé dans Core.
+
+Le projet sépare strictement plusieurs applications spécialisées :
 
 * la **gestion, l’inventaire, les décisions et les déplacements** (orchestrés par Retaia Core, appliqués sur le NAS)
-* le **processing lourd** (réalisé en arrière-plan par des agents Retaia Agent sur desktop/laptop/raspberry‑pi)
+* le **processing lourd** (réalisé en arrière-plan par les agents)
 * la **review humaine**, effectuée via une UI web fluide reposant sur des **proxies/dérivés**
+* l’**orchestration outillée**, via un client MCP distinct quand ce mode est activé
 
 L’objectif est de construire un système **fiable, durable et compréhensible dans le temps**, qui respecte la décision humaine et la souveraineté des données.
 
@@ -39,7 +42,7 @@ Il manque un outil qui respecte :
 
 ## Objectifs principaux
 
-* Centraliser l’inventaire média sur le NAS
+* Centraliser l’inventaire média dans Core, sur un stockage NAS piloté
 * Garantir qu’aucun fichier incomplet n’est jamais traité
 * Automatiser le processing **sans action manuelle** via des agents en arrière‑plan
 * Permettre une **review fluide via proxies** après processing
@@ -65,9 +68,9 @@ Il manque un outil qui respecte :
 
 ## Composants
 
-### Retaia Core Server (NAS)
+### Retaia Core Server
 
-Rôle : cerveau logistique et décisionnel.
+Rôle : cerveau logistique et décisionnel, source de vérité métier.
 
 Responsabilités :
 
@@ -96,9 +99,9 @@ Interdictions :
 * aucune décision automatique
 
 
-### Retaia Agent (clients)
+### Retaia Agent
 
-Rôle : moteur de processing en arrière‑plan.
+Rôle : moteur de processing en arrière‑plan, avec surfaces `AGENT_UI` en CLI et GUI.
 
 Responsabilités :
 

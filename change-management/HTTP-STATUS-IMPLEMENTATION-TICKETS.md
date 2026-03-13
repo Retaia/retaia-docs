@@ -15,7 +15,7 @@ Scope:
   * ne plus emettre `401 AUTHORIZATION_PENDING`
   * ne plus emettre `403 ACCESS_DENIED`
 * `POST /auth/clients/token`:
-  * `client_kind=UI_RUST` retourne `403 FORBIDDEN_ACTOR` uniquement
+  * `client_kind in {UI_WEB, MCP}` retourne `403 FORBIDDEN_ACTOR` uniquement
 
 Definition of Done:
 
@@ -29,13 +29,13 @@ Tests minimum:
   * `poll` pending/denied/expired -> `200` + `status`
   * `poll` invalid device_code -> `400 INVALID_DEVICE_CODE`
 * integration auth/client token:
-  * `client_kind=UI_RUST` -> `403 FORBIDDEN_ACTOR`
+  * `client_kind in {UI_WEB, MCP}` -> `403 FORBIDDEN_ACTOR`
 
-## TICKET-UI-RUST-HTTP-002
+## TICKET-AGENT-UI-HTTP-002
 
 Objectif:
 
-* adapter UI_RUST au pilotage device flow par `status` en `200`
+* adapter `AGENT_UI` au pilotage device flow par `status` en `200`
 
 Scope:
 
@@ -47,7 +47,7 @@ Scope:
 
 Definition of Done:
 
-* UX device flow stable desktop (Rust/Tauri)
+* UX device flow stable sur `AGENT_UI`
 * aucun fallback vers interpretation legacy `401/403`
 * erreurs HTTP restantes (`400`, `429`) gerees proprement
 

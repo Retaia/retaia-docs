@@ -1,4 +1,4 @@
-# Sidecar Rules — Retaia Core + Retaia Agent
+# Sidecar Rules — Retaia multi-apps
 
 Ce document définit les règles déterministes d'association sidecar <-> MediaAsset.
 
