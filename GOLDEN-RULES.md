@@ -20,8 +20,8 @@ Ces règles sont la couche constitutionnelle du projet. Elles priment sur les ch
 6. **L'API doit rester stateless et sessionless**  
    L’API ne doit dépendre d’aucune session serveur implicite. `SessionCookieAuth`, les cookies de session et toute dépendance à un état web caché sont interdits.
 
-7. **La cryptographie doit être standard, jamais maison**  
-   Aucune primitive, protocole ou implémentation cryptographique locale ne doit être inventé. Seuls des standards reconnus et des bibliothèques maintenues sont autorisés.
+7. **Tout concept reconnu doit être implémenté avec une bibliothèque reconnue**  
+   Lorsqu’un standard, un protocole ou un concept largement reconnu existe, son implémentation doit reposer sur une bibliothèque reconnue par consensus et maintenue. Les implémentations maison sont interdites. Exemple: pas de PGP maison, mais une bibliothèque OpenPGP reconnue.
 
 8. **Les identités humaines et techniques doivent rester séparées**  
    Un utilisateur humain, une UI interactive, un daemon technique ou un client MCP ne sont pas le même acteur. Leurs identités, leurs droits et leurs modes d’authentification doivent rester distincts.
