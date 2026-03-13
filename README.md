@@ -2,6 +2,30 @@
 
 Source of truth for Retaia specifications.
 
+## Golden Rules
+
+These rules are the first reading frame of the project. If a local implementation, a secondary document, or a convenience shortcut conflicts with them, the golden rules win.
+
+1. Leak by design
+2. Privacy by design
+3. `retaia-docs` as the Single Source of Truth for the whole project
+4. Core as the Single Source of Truth for business logic
+5. NAS as storage only
+6. Bearer-only API
+7. No homemade crypto
+8. Standard crypto only
+9. Human and technical identity separation
+10. Polling as runtime truth
+11. Push never as source of truth
+12. Feature flags govern runtime
+13. Safe by default
+14. Explicit auth, authz and audit
+15. UI bulk, Core unitary
+16. Asymmetric technical identity
+17. A leak must not teach anything useful to an attacker
+
+Canonical reference: [`GOLDEN-RULES.md`](GOLDEN-RULES.md)
+
 ## Overview
 
 `retaia-docs` defines the normative contracts and policies for the Retaia platform:
@@ -25,6 +49,7 @@ The following consumer repositories must align with these specs:
 ## Quick links
 
 - Product vision: [`vision/PROJECT-BRIEF.md`](vision/PROJECT-BRIEF.md)
+- Golden rules: [`GOLDEN-RULES.md`](GOLDEN-RULES.md)
 - Product roadmap: [`vision/ROADMAP.md`](vision/ROADMAP.md)
 - UI recommendations: [`ui/README.md`](ui/README.md)
 - Agent client docs: [`agent/README.md`](agent/README.md)
