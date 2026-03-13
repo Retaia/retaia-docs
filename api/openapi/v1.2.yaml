@@ -2932,6 +2932,7 @@ components:
             type: string
         claimed_by:
           type: string
+          format: uuid
           nullable: true
         lock_token:
           type: string
