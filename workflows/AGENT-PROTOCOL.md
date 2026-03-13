@@ -66,7 +66,6 @@ Règle d'identité d'instance :
 * ce fingerprint DOIT être persisté localement puis réutilisé à chaque register
 * `client_id` identifie le client technique autorisé; plusieurs instances d'agent peuvent le partager
 * le fingerprint sert au suivi d'une instance réelle d'agent, indépendamment du `client_id`
-* `agent_id` reste une référence interne attribuée par Core
 
 ### 3.2 Profils d’exécution (normatif)
 
@@ -173,7 +172,7 @@ L’agent claim un job de manière atomique via `POST /jobs/{job_id}/claim`.
 
 Le claim crée une **lease** (verrou temporaire) :
 
-* `claimed_by = agent_id`
+* `claimed_by = agent_fingerprint`
 * `claimed_at`
 * `lease_expires_at`
 

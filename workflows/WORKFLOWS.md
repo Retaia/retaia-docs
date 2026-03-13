@@ -54,7 +54,7 @@ Retaia Agent, Retaia Core Server
 
 ### Étapes
 
-1. L’agent se déclare auprès du serveur (`agent_name`, `agent_version`, `platform`).
+1. L’agent se déclare auprès du serveur (`agent_fingerprint`, `agent_name`, `agent_version`, `os_name`, `os_version`, `arch`).
 2. L’agent annonce ses capabilities déclaratives (ex: `media.proxies.video@1`, `speech.transcription@1`).
 3. Le serveur enregistre l’agent et lui attribue des paramètres (quota, priorités).
 

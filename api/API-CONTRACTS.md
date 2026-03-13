@@ -673,7 +673,7 @@ Effet :
 
 ### POST `/agents/register`
 
-Enregistre un agent (optionnel mais recommandé).
+Enregistre un agent (obligatoire avant claim de jobs).
 
 Body :
 
@@ -694,12 +694,10 @@ Règles :
 * l'agent DOIT le réutiliser à chaque register/reconnexion
 * `client_id` identifie le client technique autorisé, généralement lié à l'utilisateur qui a connecté l'agent; plusieurs agents sur plusieurs machines PEUVENT partager le même `client_id`
 * `agent_fingerprint` identifie l'instance réelle d'agent; deux machines distinctes ne DOIVENT PAS partager le même fingerprint
-* `agent_id` est une référence interne Core pour l'enregistrement agent
 * une réinstallation explicite ou une rotation volontaire d'identité agent PEUT générer un nouveau `agent_fingerprint`
 
 Response :
 
-* `agent_id`
 * `agent_fingerprint`
 * `effective_capabilities: string[]` (capabilities retenues après policy Core)
 * `capability_warnings[]` (raisons d’invalidation capability, ex: provider/modèle indisponible ou non autorisé)
@@ -1144,7 +1142,6 @@ Query params :
 Response :
 
 * `items[]` :
-  * `agent_id`
   * `agent_fingerprint`
   * `client_id`
   * `agent_name`
@@ -1192,6 +1189,7 @@ Règles :
 * `status=stale` si l'agent n'est plus vu actif au-delà de la fenêtre runtime serveur
 * `last_successful_job` représente le dernier job soumis avec succès et accepté par Core
 * tri par défaut recommandé : `last_seen_at DESC`
+* l'authentification HTTP utilise `UserBearerAuth`, puis l'autorisation DOIT vérifier le statut admin de l'utilisateur
 
 ## 8.7) Ingest unmatched listing (ops)
 

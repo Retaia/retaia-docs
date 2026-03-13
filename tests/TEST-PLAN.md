@@ -395,12 +395,13 @@ Tests obligatoires :
 * endpoint `GET /ops/agents` présent et conforme :
   * filtres `status`, pagination `limit`, `offset`
   * payload `items[]` + `total`
-  * `items[]` expose `agent_id`, `agent_fingerprint`, `client_id`, `agent_name`, `agent_version`, `os_name`, `os_version`, `arch`, `status`, `last_seen_at`, `effective_capabilities[]`
+  * `items[]` expose `agent_fingerprint`, `client_id`, `agent_name`, `agent_version`, `os_name`, `os_version`, `arch`, `status`, `last_seen_at`, `effective_capabilities[]`
   * `current_job?` expose `job_id`, `job_type`, `asset_uuid`, `claimed_at`, `locked_until`
   * `last_successful_job?` expose `job_id`, `job_type`, `asset_uuid`, `completed_at`
   * `last_failed_job?` expose `job_id`, `job_type`, `asset_uuid`, `failed_at`, `error_code`
   * `debug.max_parallel_jobs` présent, aucun secret/token/path absolu exposé
   * mapping `status` conforme : lease active => `online_busy`; agent actif sans lease => `online_idle`; agent expiré côté runtime => `stale`
+  * `UserBearerAuth` seul n'est pas suffisant : l'utilisateur doit aussi avoir le statut admin
 * endpoint `GET /ops/ingest/unmatched` présent et conforme :
   * filtres `reason`, `since`, `limit`
   * `reason`/`since` invalides renvoient `400 VALIDATION_FAILED`

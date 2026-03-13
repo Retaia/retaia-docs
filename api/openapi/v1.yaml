@@ -1030,8 +1030,6 @@ paths:
               schema:
                 type: object
                 properties:
-                  agent_id:
-                    type: string
                   agent_fingerprint:
                     type: string
                   effective_capabilities:
@@ -1811,6 +1809,8 @@ paths:
     get:
       tags: [Ops]
       summary: List known agents with runtime status and debug information
+      description: |
+        Requires `UserBearerAuth` and an authenticated admin actor, per AUTHZ matrix.
       security:
         - UserBearerAuth: []
       parameters:
@@ -1851,10 +1851,8 @@ paths:
                       type: object
                       additionalProperties: false
                       required:
-                        [agent_id, agent_fingerprint, client_id, agent_name, agent_version, status, last_seen_at, last_register_at, effective_capabilities, capability_warnings, debug]
+                        [agent_fingerprint, client_id, agent_name, agent_version, status, last_seen_at, last_register_at, effective_capabilities, capability_warnings, debug]
                       properties:
-                        agent_id:
-                          type: string
                         agent_fingerprint:
                           type: string
                         client_id:
