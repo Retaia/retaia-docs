@@ -677,7 +677,7 @@ Enregistre un agent (obligatoire avant claim de jobs).
 
 Body :
 
-* `agent_fingerprint`
+* `agent_id`
 * `agent_name`
 * `agent_version`
 * `os_name` (`linux|macos|windows`)
@@ -689,16 +689,16 @@ Body :
 
 Règles :
 
-* `agent_fingerprint` identifie de manière stable une instance/install d'agent
+* `agent_id` identifie de manière stable une instance/install d'agent
 * l'agent DOIT le générer une fois puis le persister localement
 * l'agent DOIT le réutiliser à chaque register/reconnexion
 * `client_id` identifie le client technique autorisé, généralement lié à l'utilisateur qui a connecté l'agent; plusieurs agents sur plusieurs machines PEUVENT partager le même `client_id`
-* `agent_fingerprint` identifie l'instance réelle d'agent; deux machines distinctes ne DOIVENT PAS partager le même fingerprint
-* une réinstallation explicite ou une rotation volontaire d'identité agent PEUT générer un nouveau `agent_fingerprint`
+* `agent_id` identifie l'instance réelle d'agent; deux machines distinctes ne DOIVENT PAS partager le même identifiant
+* une réinstallation explicite ou une rotation volontaire d'identité agent PEUT générer un nouveau `agent_id`
 
 Response :
 
-* `agent_fingerprint`
+* `agent_id`
 * `effective_capabilities: string[]` (capabilities retenues après policy Core)
 * `capability_warnings[]` (raisons d’invalidation capability, ex: provider/modèle indisponible ou non autorisé)
 * `server_policy` (quotas et règles serveur), incluant au minimum :
@@ -1142,7 +1142,7 @@ Query params :
 Response :
 
 * `items[]` :
-  * `agent_fingerprint`
+  * `agent_id`
   * `client_id`
   * `agent_name`
   * `agent_version`

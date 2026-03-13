@@ -167,10 +167,10 @@ Tests obligatoires :
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
   * `client_id` invalide => `422 VALIDATION_FAILED`
 * `POST /agents/register`:
-  * `agent_fingerprint` requis
+  * `agent_id` requis
   * `os_name`, `os_version`, `arch` requis
-  * reconnexion avec le même `agent_fingerprint` => même instance corrélable côté Core
-  * `agent_fingerprint` absent/vide => `422 VALIDATION_FAILED`
+  * reconnexion avec le même `agent_id` => même instance corrélable côté Core
+  * `agent_id` absent/vide => `422 VALIDATION_FAILED`
 
 Matrice de migration v1 runtime (gelée) :
 
@@ -395,7 +395,7 @@ Tests obligatoires :
 * endpoint `GET /ops/agents` présent et conforme :
   * filtres `status`, pagination `limit`, `offset`
   * payload `items[]` + `total`
-  * `items[]` expose `agent_fingerprint`, `client_id`, `agent_name`, `agent_version`, `os_name`, `os_version`, `arch`, `status`, `last_seen_at`, `effective_capabilities[]`
+  * `items[]` expose `agent_id`, `client_id`, `agent_name`, `agent_version`, `os_name`, `os_version`, `arch`, `status`, `last_seen_at`, `effective_capabilities[]`
   * `current_job?` expose `job_id`, `job_type`, `asset_uuid`, `claimed_at`, `locked_until`
   * `last_successful_job?` expose `job_id`, `job_type`, `asset_uuid`, `completed_at`
   * `last_failed_job?` expose `job_id`, `job_type`, `asset_uuid`, `failed_at`, `error_code`
