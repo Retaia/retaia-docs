@@ -690,6 +690,7 @@ Body :
 Règles :
 
 * `agent_id` identifie de manière stable une instance/install d'agent
+* `agent_id` DOIT être un `UUIDv4` généré aléatoirement lors de la première initialisation de l'agent
 * l'agent DOIT le générer une fois puis le persister localement
 * l'agent DOIT le réutiliser à chaque register/reconnexion
 * `client_id` identifie le client technique autorisé, généralement lié à l'utilisateur qui a connecté l'agent; plusieurs agents sur plusieurs machines PEUVENT partager le même `client_id`
@@ -697,6 +698,7 @@ Règles :
 * `agent_id` est l'identifiant public d'agent exposé par l'API
 * Core PEUT maintenir un identifiant DB interne distinct, mais celui-ci DOIT rester interne et NE DOIT JAMAIS être exposé par l'API
 * une réinstallation explicite ou une rotation volontaire d'identité agent PEUT générer un nouveau `agent_id`
+* `agent_id` NE DOIT PAS être dérivé du hostname, d'une MAC address, d'un serial disque, d'un `machine-id` OS ni d'une caractéristique matérielle/réseau
 
 Response :
 

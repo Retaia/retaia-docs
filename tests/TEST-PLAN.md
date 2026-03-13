@@ -168,6 +168,7 @@ Tests obligatoires :
   * `client_id` invalide => `422 VALIDATION_FAILED`
 * `POST /agents/register`:
   * `agent_id` requis
+  * `agent_id` conforme UUIDv4
   * `os_name`, `os_version`, `arch` requis
   * reconnexion avec le même `agent_id` => même instance corrélable côté Core
   * `agent_id` absent/vide => `422 VALIDATION_FAILED`

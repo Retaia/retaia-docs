@@ -63,10 +63,12 @@ Le serveur peut refuser l’enregistrement si la déclaration est invalide.
 Règle d'identité d'instance :
 
 * l'agent DOIT générer un `agent_id` stable lors de sa première initialisation
+* cet `agent_id` DOIT être un `UUIDv4` aléatoire
 * cet identifiant DOIT être persisté localement puis réutilisé à chaque register
 * `client_id` identifie le client technique autorisé; plusieurs instances d'agent peuvent le partager
 * `agent_id` sert au suivi d'une instance réelle d'agent, indépendamment du `client_id`
 * un éventuel identifiant interne de persistance côté Core est hors contrat agent et ne DOIT pas être exposé
+* l'agent NE DOIT PAS dériver `agent_id` de l'environnement machine (hostname, MAC, serial, `machine-id`, etc.)
 
 ### 3.2 Profils d’exécution (normatif)
 
