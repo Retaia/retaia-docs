@@ -4,22 +4,22 @@ Source of truth for Retaia specifications.
 
 ## Golden Rules
 
-These rules are the first reading frame of the project. If a local implementation, a secondary document, or a convenience shortcut conflicts with them, the golden rules win.
+These rules are the constitutional layer of the project. If a local implementation, a secondary document, or a convenience shortcut conflicts with them, the golden rules win.
 
 1. Leak by design
 2. Privacy by design
-3. `retaia-docs` as the Single Source of Truth for the whole project
-4. Core as the Single Source of Truth for business logic
-5. NAS as storage only
-6. Bearer-only API
-7. Standard crypto only, never homemade
-8. Human and technical identity separation
-9. Polling as runtime truth, never push
+3. `retaia-docs` is the single source of truth for the whole project
+4. Core is the single source of truth for business logic
+5. NAS is storage only
+6. The API is bearer-only
+7. Crypto must be standard, never homemade
+8. Human and technical identities must stay separate
+9. Polling carries runtime truth; push carries signal only
 10. Feature flags govern runtime
-11. Safe by default
-12. Explicit auth, authz and audit
-13. UI bulk, Core unitary
-14. Asymmetric technical identity
+11. The system must be safe by default
+12. Sensitive actions must be authenticated, authorized and audited
+13. Bulk belongs to the UI; Core stays unitary
+14. Sensitive technical identity must be asymmetric
 
 Canonical reference: [`GOLDEN-RULES.md`](GOLDEN-RULES.md)
 

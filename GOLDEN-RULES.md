@@ -1,45 +1,45 @@
 # Golden Rules
 
-Ces règles sont le cadre supérieur du projet. Elles priment sur les choix locaux d'implémentation et servent de grille de lecture pour toutes les specs.
+Ces règles sont la couche constitutionnelle du projet. Elles priment sur les choix locaux d'implémentation et servent de cadre d'arbitrage pour toutes les specs.
 
 1. **Leak by design**  
-   Le système doit être conçu en partant du principe qu’une fuite arrivera un jour. Base de données, logs, backups, métadonnées ou artefacts partiels peuvent être exposés. L’architecture doit rester sûre même dans ce scénario, et une fuite ne doit rien apprendre d’utile à l’attaquant sur les contenus protégés, les secrets longue durée ou l’architecture de sécurité.
+   Le système doit être conçu en partant du principe qu’une fuite arrivera. Cette hypothèse n’est pas exceptionnelle; elle fait partie du modèle normal de sécurité.
 
 2. **Privacy by design**  
-   La protection de la vie privée n’est pas une couche ajoutée après coup. Les données sensibles doivent être minimisées, cloisonnées, chiffrées et non exposées en clair, dès la conception.
+   La protection de la vie privée doit être intégrée dès la conception. Les données sensibles doivent être minimisées, cloisonnées, chiffrées et non exposées en clair.
 
-3. **`retaia-docs` comme source de vérité unique pour tout le projet**  
-   Le repo `retaia-docs` porte la norme cross-project. Les contrats, règles métier, modèles de sécurité, workflows et conventions qui y sont définis priment sur les implémentations locales des autres repos.
+3. **`retaia-docs` est la source de vérité unique du projet**  
+   Le repo `retaia-docs` porte la norme cross-project. Les contrats, règles métier, modèles de sécurité, workflows et conventions qui y sont définis priment sur les implémentations locales.
 
-4. **Core comme source de vérité unique métier**  
-   Toutes les décisions métier, états, transitions, policies, flags et règles vivent dans `Core`. Aucun autre composant ne doit devenir une source de vérité concurrente sur le plan fonctionnel.
+4. **Core est la source de vérité unique métier**  
+   Toutes les décisions métier, états, transitions, policies, flags et règles vivent dans `Core`. Aucun autre composant ne peut devenir une source de vérité concurrente sur le plan fonctionnel.
 
-5. **NAS comme stockage uniquement**  
-   Le `NAS` ne décide rien. Il sert à stocker et à déplacer les fichiers sous le contrôle de `Core`. Il n’a pas d’autorité métier propre.
+5. **Le NAS n'est qu'un stockage**  
+   Le `NAS` ne décide rien. Il stocke et déplace les fichiers sous le contrôle de `Core`.
 
-6. **API en mode bearer uniquement**  
-   L’API doit rester `bearer-only`. Pas de session serveur classique, pas de `SessionCookieAuth`, pas de dépendance implicite à un état serveur de type session web.
+6. **L'API est bearer-only**  
+   L’API doit rester `bearer-only`. Les sessions serveur implicites, `SessionCookieAuth` et toute dépendance à un état web caché sont interdites.
 
-7. **Cryptographie standard uniquement, jamais maison**  
-   Aucune primitive, protocole ou implémentation cryptographique ne doit être inventé localement. Les mécanismes cryptographiques doivent s’appuyer sur des standards reconnus et sur des bibliothèques maintenues. Par exemple `WebAuthn` pour le web et `OpenPGP` pour les identités techniques signées.
+7. **La cryptographie doit être standard, jamais maison**  
+   Aucune primitive, protocole ou implémentation cryptographique locale ne doit être inventé. Seuls des standards reconnus et des bibliothèques maintenues sont autorisés.
 
-8. **Séparation stricte des identités humaines et techniques**  
+8. **Les identités humaines et techniques doivent rester séparées**  
    Un utilisateur humain, une UI interactive, un daemon technique ou un client MCP ne sont pas le même acteur. Leurs identités, leurs droits et leurs modes d’authentification doivent rester distincts.
 
-9. **Le polling comme vérité runtime, jamais le push**  
-    La vérité runtime se lit en pollant `Core`. États, policies, feature flags et disponibilité fonctionnelle doivent être synchronisés par les endpoints contractuels. WebSocket, SSE, webhook ou autres push peuvent servir à réveiller, notifier ou améliorer l’UX, mais ils ne doivent jamais être traités comme l’état métier canonique.
+9. **Le polling porte la vérité runtime; le push ne porte que le signal**  
+   Les états, policies, feature flags et disponibilités fonctionnelles doivent être lus depuis `Core` via les endpoints contractuels. Les mécanismes push ne servent qu’à notifier, réveiller ou améliorer l’UX.
 
 10. **Les feature flags gouvernent le runtime**  
-    Toute évolution progressive ou non encore nominale doit être gouvernée par des feature flags pilotés par `Core`. Les clients ne doivent rien hardcoder.
+   Toute évolution progressive, incomplète ou non nominale doit être pilotée par des feature flags contrôlés par `Core`. Les clients ne doivent rien hardcoder.
 
-11. **Safe by default**  
-    Sans preuve explicite qu’une action est autorisée, elle doit être refusée. Une feature absente vaut `false`. Un doute sur l’état ou l’autorisation doit conduire à un comportement conservateur.
+11. **Le système doit être safe by default**  
+   Sans preuve explicite qu’une action est autorisée, elle doit être refusée. Une feature absente vaut `false`. En cas de doute, le comportement conservateur l’emporte.
 
-12. **Authentification, autorisation et audit explicites**  
-    Toute action sensible doit être authentifiée, autorisée et tracée. Rien d’important ne doit dépendre d’un implicite, d’un effet de bord ou d’un privilège hérité tacitement.
+12. **Toute action sensible doit être authentifiée, autorisée et auditée**  
+   Rien d’important ne doit dépendre d’un implicite, d’un effet de bord ou d’un privilège hérité tacitement.
 
-13. **Bulk dans l’UI, unitaire dans le Core**  
-    Le traitement par lot est un concept d’interface. Côté `Core`, les mutations restent unitaires, asset par asset, avec des transitions et des règles explicites.
+13. **Le bulk appartient à l'UI; le Core reste unitaire**  
+   Le traitement par lot est un concept d’interface. Côté `Core`, les mutations restent unitaires, asset par asset, avec des transitions et des règles explicites.
 
-14. **Identité technique asymétrique**  
-    Les clients techniques doivent reposer à terme sur des identités asymétriques: clé publique enregistrée côté `Core`, clé privée locale côté client, signatures obligatoires sur les écritures sensibles.
+14. **Toute identité technique sensible doit être asymétrique**  
+   Les clients techniques doivent reposer sur des identités asymétriques: clé publique enregistrée côté `Core`, clé privée locale côté client, signatures obligatoires sur les écritures sensibles.
