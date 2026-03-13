@@ -29,7 +29,7 @@ Ce document definit le runbook normatif de reponse aux incidents securite.
 ## 4) Scenarios minimaux et actions
 
 * fuite token utilisateur: revoke `jti` et invalider sessions associees
-* fuite credential technique (`secret_key` AGENT ou API key MCP): rotation/révocation + invalidation des accès techniques associés
+* fuite credential technique (`secret_key` AGENT ou credential asymétrique MCP): rotation/révocation + invalidation des accès techniques associés
 * fuite cle JWT: emergency rotation + invalidation par `kid`/`jti`
 * fuite DB: enclencher plan d'investigation, rotation secrets dependants, verification integrite
 

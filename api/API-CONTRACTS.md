@@ -266,7 +266,7 @@ Modèle multi-device (obligatoire) :
 * une éventuelle délégation future de droits user-scoped vers `AGENT_TECHNICAL` DOIT être explicite, bornée dans le temps, liée à un `agent_id` et documentée comme un contrat séparé
 * `MCP` PEUT piloter/orchestrer l'agent (configuration, déclenchement, supervision) mais NE DOIT JAMAIS exécuter de traitement média
 * `MCP` est interdit sur les endpoints de processing `/jobs/*` (`claim`, `heartbeat`, `submit`) avec refus `403 FORBIDDEN_ACTOR`
-* le durcissement futur `MCP_TECHNICAL` DOIT suivre les mêmes principes que l'agent :
+* `MCP_TECHNICAL` DOIT suivre les mêmes principes que l'agent :
   * pas d'implémentation crypto maison
   * standard existant
   * clé publique enregistrée côté Core
@@ -1031,8 +1031,9 @@ Principe v1 :
 
 * les dérivés sont **uploadés via HTTP** par les agents
 * l’UI y accède via HTTP (URLs stables), pas via SMB
-* pour l’audio waveform, l’UI DOIT supporter un rendu local simple type YouTube en JS pur si `waveform_url` est absent
-* le rendu local waveform est côté client (pas de traitement serveur supplémentaire requis)
+* pour tout asset avec piste audio exploitable, `waveform_url` DOIT être présent pour tout état métier au-delà de `READY`
+* un asset audio NE DOIT PAS dépasser `READY` si la waveform dérivée obligatoire n’est pas disponible
+* un rendu local waveform côté client PEUT exister comme dégradation UX de lecture, mais NE REMPLACE PAS l’obligation de dérivé serveur/agent
 * toutes les écritures agent -> Core sur `/assets/{uuid}/derived/upload/*` DOIVENT porter les headers de signature agent
 
 ### POST `/assets/{uuid}/derived/upload/init`

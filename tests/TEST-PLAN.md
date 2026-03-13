@@ -299,8 +299,9 @@ Tests obligatoires :
 Tests obligatoires :
 
 * si `derived.waveform_url` est présent, le client peut l’utiliser
-* si `derived.waveform_url` est absent, le client UI rend une waveform locale simple (JS pur, style YouTube)
-* absence de waveform dérivée ne bloque pas lecture audio ni navigation timeline côté UI, mais reste une non-conformité processing si le profil l’exige
+* pour tout asset avec piste audio exploitable, `derived.waveform_url` est obligatoire dès qu'on dépasse `READY`
+* absence de waveform dérivée bloque la progression métier au-delà de `READY` pour un asset audio
+* un fallback UI local PEUT exister pour la lecture, mais NE REND PAS le processing conforme
 
 ## 3.2) Derived format compliance (obligatoire)
 

@@ -2447,7 +2447,7 @@ components:
       description: |
         Technical bearer credential for non-human clients.
         `AGENT_TECHNICAL` uses a bearer token minted from `(client_id, secret_key)`.
-        `MCP_TECHNICAL` uses a bearer API key created from the UI by an authorized user.
+        `MCP_TECHNICAL` uses an asymmetric technical credential enrolled from the UI by an authorized user.
 
   parameters:
     UuidPath:
@@ -3222,8 +3222,8 @@ components:
           type: string
           nullable: true
           description: |
-            Optional server-generated waveform file URL.
-            If absent, UI clients must render a simple local waveform from audio (pure JS).
+            Required for assets with an exploitable audio track once state progresses beyond READY.
+            UI local fallback may exist for degraded playback UX but never replaces the required server/agent-derived waveform.
         thumbs:
           type: array
           items:

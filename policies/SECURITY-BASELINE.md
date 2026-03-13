@@ -6,6 +6,8 @@ Objectif: en cas d'exfiltration partielle (DB, logs, token, backup), les donnée
 
 ## 1) Principes
 
+* leak by design: l'architecture DOIT supposer qu'un attaquant finira par voir des extraits de DB, logs, backups, tokens ou metadata
+* golden rule: une fuite NE DOIT RIEN apprendre d'utile à l'attaquant sur les donnees protegees ou les secrets longue duree
 * assume breach: le design DOIT considérer qu'une fuite finira par arriver
 * deny by default
 * least privilege (scope minimal, durée minimale)

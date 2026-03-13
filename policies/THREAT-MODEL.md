@@ -8,7 +8,7 @@ Objectif: prioriser les risques qui peuvent provoquer une fuite ou une prise de 
 
 * identites utilisateur et comptes admin
 * bearer tokens utilisateur et techniques
-* `secret_key` agent et API keys MCP
+* `secret_key` agent et credentials asymétriques MCP
 * donnees assets, metadonnees et contenus derives
 * traces d'audit et journaux securite
 * cles de signature/chiffrement (JWT, KMS)
@@ -31,13 +31,13 @@ Toute traversee de frontiere DOIT etre authentifiee, autorisee et auditee.
 * P0: elevation de privilege par scope/acteur mal controles
 * P0: usurpation client technique (replay secret, token reuse)
 * P0: usurpation d'instance agent par soumission non signee ou rejeu de signature
-* P1: abus brute force sur login, reset password, device flow agent, création d'API key
+* P1: abus brute force sur login, reset password, device flow agent, enrôlement de clé technique
 * P1: compromission partielle d'une cle de signature/chiffrement
 
 ## 4) Controles obligatoires par menace
 
 * exfiltration token/secret -> redaction logs + stockage secret OS + rotation/revocation immediate
-* vol DB -> hash Argon2id mots de passe + `secret_key`/API key hashée + chiffrement au repos
+* vol DB -> hash Argon2id mots de passe + protection des credentials techniques + chiffrement au repos
 * elevation privilege -> deny-by-default + matrice authz endpoint/scope/acteur + tests de non-regression
 * usurpation technique -> cardinalite 1 token actif/client + `jti` unique + `exp` court + rotation secrets
 * usurpation instance agent -> signature `OpenPGP` par requete mutatrice + nonce anti-rejeu + verification fraicheur timestamp

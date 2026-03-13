@@ -62,6 +62,7 @@ Mode avance (optionnel):
 
 Chaque application DOIT utiliser une librairie OpenPGP reconnue et maintenue:
 
+* PHP (`CORE`, services PHP): `php-privacy/openpgp`
 * Rust (`AGENT_UI`, `AGENT`, composants Rust): `sequoia-openpgp`
 * Node/TypeScript (si applicable): `openpgp` (OpenPGP.js)
 * Go (si applicable): `ProtonMail/gopenpgp` ou equivalent maintenu et auditable
