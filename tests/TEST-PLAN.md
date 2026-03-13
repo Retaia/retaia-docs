@@ -171,6 +171,7 @@ Tests obligatoires :
   * `os_name`, `os_version`, `arch` requis
   * reconnexion avec le même `agent_id` => même instance corrélable côté Core
   * `agent_id` absent/vide => `422 VALIDATION_FAILED`
+  * aucun identifiant DB interne Core distinct n'est exposé dans le payload API
 
 Matrice de migration v1 runtime (gelée) :
 
@@ -396,6 +397,7 @@ Tests obligatoires :
   * filtres `status`, pagination `limit`, `offset`
   * payload `items[]` + `total`
   * `items[]` expose `agent_id`, `client_id`, `agent_name`, `agent_version`, `os_name`, `os_version`, `arch`, `status`, `last_seen_at`, `effective_capabilities[]`
+  * `agent_id` exposé correspond à l'identifiant public persistant d'instance, pas à une clé interne DB
   * `current_job?` expose `job_id`, `job_type`, `asset_uuid`, `claimed_at`, `locked_until`
   * `last_successful_job?` expose `job_id`, `job_type`, `asset_uuid`, `completed_at`
   * `last_failed_job?` expose `job_id`, `job_type`, `asset_uuid`, `failed_at`, `error_code`

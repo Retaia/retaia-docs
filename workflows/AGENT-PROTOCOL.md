@@ -66,6 +66,7 @@ Règle d'identité d'instance :
 * cet identifiant DOIT être persisté localement puis réutilisé à chaque register
 * `client_id` identifie le client technique autorisé; plusieurs instances d'agent peuvent le partager
 * `agent_id` sert au suivi d'une instance réelle d'agent, indépendamment du `client_id`
+* un éventuel identifiant interne de persistance côté Core est hors contrat agent et ne DOIT pas être exposé
 
 ### 3.2 Profils d’exécution (normatif)
 

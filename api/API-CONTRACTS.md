@@ -694,6 +694,8 @@ Règles :
 * l'agent DOIT le réutiliser à chaque register/reconnexion
 * `client_id` identifie le client technique autorisé, généralement lié à l'utilisateur qui a connecté l'agent; plusieurs agents sur plusieurs machines PEUVENT partager le même `client_id`
 * `agent_id` identifie l'instance réelle d'agent; deux machines distinctes ne DOIVENT PAS partager le même identifiant
+* `agent_id` est l'identifiant public d'agent exposé par l'API
+* Core PEUT maintenir un identifiant DB interne distinct, mais celui-ci DOIT rester interne et NE DOIT JAMAIS être exposé par l'API
 * une réinstallation explicite ou une rotation volontaire d'identité agent PEUT générer un nouveau `agent_id`
 
 Response :
