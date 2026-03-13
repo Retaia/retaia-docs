@@ -26,7 +26,7 @@ Ces règles sont la couche constitutionnelle du projet. Elles priment sur les ch
 8. **Les identités humaines et techniques doivent rester séparées**  
    Un utilisateur humain, une UI interactive, un daemon technique ou un client MCP ne sont pas le même acteur. Leurs identités, leurs droits et leurs modes d’authentification doivent rester distincts.
 
-9. **Le polling porte la vérité runtime; le push ne porte que le signal**  
+9. **La vérité runtime doit toujours être relue dans `Core`; le push ne sert qu’à signaler un changement**  
    Les états, policies, feature flags et disponibilités fonctionnelles doivent être lus depuis `Core` via les endpoints contractuels. Les mécanismes push ne servent qu’à notifier, réveiller ou améliorer l’UX.
 
 10. **Les feature flags gouvernent le runtime**  

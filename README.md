@@ -14,7 +14,7 @@ These rules are the constitutional layer of the project. If a local implementati
 6. The API must stay stateless and sessionless
 7. Recognized concepts must use recognized libraries
 8. Human and technical identities must stay separate
-9. Polling carries runtime truth; push carries signal only
+9. Runtime truth must always be re-read from Core; push only signals change
 10. Feature flags govern runtime
 11. The system must be safe by default
 12. Sensitive actions must be authenticated, authorized and audited
