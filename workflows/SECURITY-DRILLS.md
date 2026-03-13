@@ -11,7 +11,7 @@ Ce document definit les exercices securite periodiques obligatoires.
 ## 2) Scenarios minimaux
 
 * fuite token utilisateur
-* compromission credential technique (`secret_key` AGENT ou API key MCP)
+* compromission credential technique (`secret_key` AGENT ou credential asymétrique MCP)
 * compromission cle de signature JWT/release
 * exfiltration backup
 * tentative brute force auth massive

@@ -21,7 +21,9 @@ Portée d'exécution :
 * rollout projet global: le client applicatif `MCP_CLIENT` (mappé `client_kind=MCP`) est intégré à partir de la v1.1 globale
 * gate applicatif: `app_feature_enabled.features.ai=false` désactive le client `MCP` (bootstrap/token/runtime refusés)
 * un client `AGENT`/`MCP` DOIT appliquer `effective_feature_enabled` (pas de logique locale alternative)
-* `AGENT_UI` est la surface interactive de l'agent, opérée par un humain pour le bootstrap, le diagnostic ou l'administration, pas pour le processing média
+* `AGENT_UI` est la surface interactive de l'agent, opérée par un humain pour le bootstrap, le diagnostic, l'administration et les usages applicatifs humains
+* `AGENT_UI` PEUT, à terme, converger fonctionnellement avec `UI_WEB` pour les parcours humains, tout en restant un client distinct qui pilote aussi le daemon local
+* même si `AGENT_UI` devient une surface riche comparable à `UI_WEB`, le daemon `AGENT_TECHNICAL` reste un acteur technique séparé, sans identité humaine implicite
 
 
 ## 2. Principes fondamentaux
@@ -70,6 +72,46 @@ Règle d'identité d'instance :
 * un éventuel identifiant interne de persistance côté Core est hors contrat agent et ne DOIT pas être exposé
 * l'agent NE DOIT PAS dériver `agent_id` de l'environnement machine (hostname, MAC, serial, `machine-id`, etc.)
 * si deux agents actifs partagent le même `agent_id`, Core autorise le register mais DOIT signaler un conflit d'identité en diagnostics ops
+* l'agent DOIT générer une identité de clé `OpenPGP` lors de sa première initialisation
+* la clé privée DOIT être persistée localement dans le secret store ou le stockage applicatif protégé de l'agent
+* la clé privée NE DOIT JAMAIS quitter l'agent
+* la rotation de clé DOIT être explicite
+
+Preuve cryptographique d'instance :
+
+* `agent_id` reste l'identifiant public stable et lisible pour les usages ops
+* la clé `OpenPGP` fournit la preuve cryptographique que la requête émane bien de cette instance d'agent
+* `POST /agents/register` DOIT déclarer la clé publique OpenPGP active (`openpgp_public_key`) et son `openpgp_fingerprint`
+* `POST /agents/register` DOIT aussi être signé avec la clé privée correspondante pour prouver la possession de la clé
+* toutes les écritures agent -> Core DOIVENT ensuite être signées avec cette même clé active jusqu'à rotation explicite
+
+Headers de signature agent (obligatoires sur les écritures agent -> Core) :
+
+* `X-Retaia-Agent-Id`
+* `X-Retaia-OpenPGP-Fingerprint`
+* `X-Retaia-Signature`
+* `X-Retaia-Signature-Timestamp`
+* `X-Retaia-Signature-Nonce`
+
+Chaîne canonique à signer :
+
+* méthode HTTP
+* path HTTP exact
+* `agent_id`
+* timestamp de signature
+* nonce
+* SHA-256 hexadécimal du body HTTP brut
+
+Règles de vérification côté Core :
+
+* la signature DOIT être une signature **OpenPGP détachée** conforme au standard [`GPG-OPENPGP-STANDARD.md`](../policies/GPG-OPENPGP-STANDARD.md)
+* `X-Retaia-Agent-Id` DOIT correspondre au `agent_id` du bearer technique
+* `X-Retaia-OpenPGP-Fingerprint` DOIT correspondre à la clé publique active enregistrée pour cet agent
+* Core DOIT vérifier la fraîcheur de `X-Retaia-Signature-Timestamp` dans une fenêtre bornée
+* Core DOIT empêcher le rejeu via `X-Retaia-Signature-Nonce`
+* Core DOIT rejeter toute requête si la signature est absente, invalide, expirée, rejouée ou si la clé est révoquée/inconnue
+* Core DOIT journaliser les échecs de vérification de signature comme événements sécurité
+* agent et Core DOIVENT utiliser des librairies OpenPGP standard maintenues; aucune implémentation crypto maison n'est autorisée
 
 ### 3.2 Profils d’exécution (normatif)
 
@@ -78,6 +120,8 @@ Règle d'identité d'instance :
 * la `GUI` DOIT offrir les mêmes fonctionnalités opérateur que la `CLI`
 * la `CLI` DOIT réciproquement offrir les mêmes fonctionnalités opérateur que la `GUI`
 * les deux surfaces DOIVENT déléguer le processing au même moteur (mêmes capacités, mêmes règles)
+* les deux surfaces PEUVENT couvrir à terme les mêmes parcours humains que `UI_WEB`, en plus du pilotage local du daemon
+* le pilotage du daemon (start/stop/status/configuration locale) fait partie du périmètre propre de `AGENT_UI`
 
 Support plateforme minimal attendu :
 
@@ -100,8 +144,18 @@ Pour éviter le code local à maintenir, cette règle s'applique à toute implé
 ### 3.3 Modes d’auth agent (normatif)
 
 * mode non-interactif (service/daemon): `client_id + secret_key -> POST /auth/clients/token`
-* mode interactif opéré via `AGENT_UI` (CLI/GUI): login utilisateur via `POST /auth/login` (+ 2FA si active)
+* mode interactif opéré via `AGENT_UI` (CLI/GUI): login utilisateur via `POST /auth/login` (+ 2FA si active) dans un premier temps
+* `AGENT_UI` PEUT utiliser `WebAuthn` quand la surface le permet, sans changer le modèle de compte humain ni le contrat bearer interactif
 * un agent non-interactif NE DOIT PAS dépendre d’un login UI pour redémarrer
+* le bearer utilisateur obtenu via `AGENT_UI` appartient à l'acteur humain `USER_INTERACTIVE`; il NE DOIT PAS être réutilisé par le daemon `AGENT_TECHNICAL`
+* le daemon `AGENT_TECHNICAL` agit toujours sous sa propre identité technique (`agent_id` + clé OpenPGP + auth technique), jamais au nom implicite de l'utilisateur connecté dans `AGENT_UI`
+* `AGENT_TECHNICAL` N'UTILISE JAMAIS `WebAuthn` au runtime
+
+Extension future user-scoped (réservée) :
+
+* si `AGENT_UI` doit déclencher via le daemon une action user-scoped (préférences, profil, review, autres mutations humaines), cette délégation DOIT être explicite
+* une telle délégation DOIT être approuvée par un utilisateur authentifié, bornée dans le temps, liée à un `agent_id` précis et limitée à des scopes nommément listés
+* en l'absence d'un tel contrat de délégation, les actions user-scoped restent portées directement par `AGENT_UI` comme `USER_INTERACTIVE`
 
 Feature flags runtime :
 
@@ -216,6 +270,7 @@ Le heartbeat :
 
 * confirme que l’agent est vivant
 * prolonge la lease
+* DOIT être signé avec la clé privée active de l'agent
 
 Si aucun heartbeat n’est reçu avant `lease_expires_at`, le job redevient claimable.
 
@@ -230,6 +285,7 @@ Le résultat DOIT inclure :
 * `job_type`
 * `result` (patch par domaine, selon le `job_type`)
 * `warnings[]` / `metrics` (optionnels)
+* une signature **OpenPGP détachée** valide sur la requête HTTP
 
 Règle waveform audio (v1) :
 
@@ -250,6 +306,7 @@ Les endpoints de completion DOIVENT être idempotents.
 
 * un retry de `complete` ne doit pas créer de doublons
 * un job déjà `completed` doit renvoyer un succès stable
+* un retry avec un nonce de signature déjà utilisé DOIT être rejeté comme rejeu, même si la signature est cryptographiquement valide
 
 
 ## 6. Retry policy
@@ -273,6 +330,7 @@ L’agent ne décide jamais de la stratégie globale de retry.
 * Les agents n’ont accès qu’aux endpoints nécessaires.
 * Les actions destructives (purge, move) ne sont jamais exposées aux agents.
 * le mode `GUI` ne DOIT PAS exposer ni exporter les tokens en clair.
+* le bearer technique ne constitue pas à lui seul une preuve d'instance suffisante; les écritures agent -> Core DOIVENT être protégées par signature OpenPGP standard
 
 
 ## 9. Observabilité

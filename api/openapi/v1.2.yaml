@@ -29,7 +29,7 @@ paths:
     post:
       tags: [Auth]
       summary: User login with email and password
-      description: Interactive login endpoint for supported human-operated clients (`UI_WEB` and `AGENT`). Supports optional TOTP 2FA code when enabled.
+      description: Interactive bootstrap/recovery login endpoint for supported human-operated clients (`UI_WEB` and `AGENT`). Supports optional TOTP 2FA code when enabled.
       security: []
       requestBody:
         required: true
@@ -52,6 +52,181 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "403":
           description: Email not verified (`EMAIL_NOT_VERIFIED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many attempts (`TOO_MANY_ATTEMPTS`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh interactive user bearer token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthRefreshRequest"
+      responses:
+        "200":
+          description: Refresh success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthLoginSuccess"
+        "401":
+          description: Invalid or revoked refresh token (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many attempts (`TOO_MANY_ATTEMPTS`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/webauthn/register/options:
+    post:
+      tags: [Auth]
+      summary: Start WebAuthn device registration
+      security:
+        - UserBearerAuth: []
+      responses:
+        "200":
+          description: WebAuthn registration options
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebAuthnPublicKeyOptionsResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Registration conflict (`STATE_CONFLICT`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/webauthn/register/verify:
+    post:
+      tags: [Auth]
+      summary: Verify WebAuthn device registration
+      security:
+        - UserBearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebAuthnRegisterVerifyRequest"
+      responses:
+        "200":
+          description: WebAuthn device registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebAuthnDeviceResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Registration conflict (`STATE_CONFLICT`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/webauthn/authenticate/options:
+    post:
+      tags: [Auth]
+      summary: Start WebAuthn authentication
+      security: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebAuthnAuthenticateOptionsRequest"
+      responses:
+        "200":
+          description: WebAuthn authentication options
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebAuthnPublicKeyOptionsResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many attempts (`TOO_MANY_ATTEMPTS`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/webauthn/authenticate/verify:
+    post:
+      tags: [Auth]
+      summary: Verify WebAuthn authentication
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebAuthnAuthenticateVerifyRequest"
+      responses:
+        "200":
+          description: WebAuthn authentication success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthLoginSuccess"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
           content:
             application/json:
               schema:
@@ -810,6 +985,176 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /auth/mcp/register:
+    post:
+      tags: [Auth]
+      summary: Register MCP technical client public key
+      security:
+        - UserBearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthMcpRegisterRequest"
+      responses:
+        "200":
+          description: MCP client registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthMcpRegisterResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Registration conflict (`STATE_CONFLICT`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/mcp/challenge:
+    post:
+      tags: [Auth]
+      summary: Create MCP technical auth challenge
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthMcpChallengeRequest"
+      responses:
+        "200":
+          description: MCP challenge created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthMcpChallengeResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many attempts (`TOO_MANY_ATTEMPTS`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/mcp/token:
+    post:
+      tags: [Auth]
+      summary: Mint MCP bearer token from signed challenge
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthMcpTokenRequest"
+      responses:
+        "200":
+          description: MCP token minted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthClientTokenSuccess"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many attempts (`TOO_MANY_ATTEMPTS`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/mcp/{client_id}/rotate-key:
+    post:
+      tags: [Auth]
+      summary: Rotate MCP public key
+      security:
+        - UserBearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ClientIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthMcpRegisterRequest"
+      responses:
+        "200":
+          description: MCP key rotated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthMcpRegisterResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Rotation conflict (`STATE_CONFLICT`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /auth/clients/{client_id}/rotate-secret:
     post:
       tags: [Auth]
@@ -989,6 +1334,11 @@ paths:
         - UserBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
+        - $ref: "#/components/parameters/AgentSignatureAgentId"
+        - $ref: "#/components/parameters/AgentSignatureOpenPgpFingerprint"
+        - $ref: "#/components/parameters/AgentSignatureValue"
+        - $ref: "#/components/parameters/AgentSignatureTimestamp"
+        - $ref: "#/components/parameters/AgentSignatureNonce"
       requestBody:
         required: true
         content:
@@ -1026,13 +1376,19 @@ paths:
       summary: Register a processing agent
       security:
         - TechnicalBearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/AgentSignatureAgentId"
+        - $ref: "#/components/parameters/AgentSignatureOpenPgpFingerprint"
+        - $ref: "#/components/parameters/AgentSignatureValue"
+        - $ref: "#/components/parameters/AgentSignatureTimestamp"
+        - $ref: "#/components/parameters/AgentSignatureNonce"
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [agent_id, agent_name, agent_version, os_name, os_version, arch, capabilities]
+              required: [agent_id, agent_name, agent_version, openpgp_public_key, openpgp_fingerprint, os_name, os_version, arch, capabilities]
               properties:
                 agent_id:
                   type: string
@@ -1042,6 +1398,12 @@ paths:
                   type: string
                 agent_version:
                   type: string
+                openpgp_public_key:
+                  type: string
+                  description: Agent OpenPGP public key in ASCII-armored format.
+                openpgp_fingerprint:
+                  type: string
+                  description: Canonical OpenPGP fingerprint of the active agent signing key.
                 os_name:
                   type: string
                   enum: [linux, macos, windows]
@@ -1176,6 +1538,11 @@ paths:
           required: true
           schema:
             type: string
+        - $ref: "#/components/parameters/AgentSignatureAgentId"
+        - $ref: "#/components/parameters/AgentSignatureOpenPgpFingerprint"
+        - $ref: "#/components/parameters/AgentSignatureValue"
+        - $ref: "#/components/parameters/AgentSignatureTimestamp"
+        - $ref: "#/components/parameters/AgentSignatureNonce"
       responses:
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
@@ -1204,6 +1571,11 @@ paths:
           required: true
           schema:
             type: string
+        - $ref: "#/components/parameters/AgentSignatureAgentId"
+        - $ref: "#/components/parameters/AgentSignatureOpenPgpFingerprint"
+        - $ref: "#/components/parameters/AgentSignatureValue"
+        - $ref: "#/components/parameters/AgentSignatureTimestamp"
+        - $ref: "#/components/parameters/AgentSignatureNonce"
       requestBody:
         required: true
         content:
@@ -1247,6 +1619,11 @@ paths:
           schema:
             type: string
         - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/AgentSignatureAgentId"
+        - $ref: "#/components/parameters/AgentSignatureOpenPgpFingerprint"
+        - $ref: "#/components/parameters/AgentSignatureValue"
+        - $ref: "#/components/parameters/AgentSignatureTimestamp"
+        - $ref: "#/components/parameters/AgentSignatureNonce"
       requestBody:
         required: true
         content:
@@ -1288,6 +1665,11 @@ paths:
           schema:
             type: string
         - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/AgentSignatureAgentId"
+        - $ref: "#/components/parameters/AgentSignatureOpenPgpFingerprint"
+        - $ref: "#/components/parameters/AgentSignatureValue"
+        - $ref: "#/components/parameters/AgentSignatureTimestamp"
+        - $ref: "#/components/parameters/AgentSignatureNonce"
       requestBody:
         required: true
         content:
@@ -1336,6 +1718,11 @@ paths:
       parameters:
         - $ref: "#/components/parameters/UuidPath"
         - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/AgentSignatureAgentId"
+        - $ref: "#/components/parameters/AgentSignatureOpenPgpFingerprint"
+        - $ref: "#/components/parameters/AgentSignatureValue"
+        - $ref: "#/components/parameters/AgentSignatureTimestamp"
+        - $ref: "#/components/parameters/AgentSignatureNonce"
       requestBody:
         required: true
         content:
@@ -1373,6 +1760,11 @@ paths:
         - TechnicalBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
+        - $ref: "#/components/parameters/AgentSignatureAgentId"
+        - $ref: "#/components/parameters/AgentSignatureOpenPgpFingerprint"
+        - $ref: "#/components/parameters/AgentSignatureValue"
+        - $ref: "#/components/parameters/AgentSignatureTimestamp"
+        - $ref: "#/components/parameters/AgentSignatureNonce"
       requestBody:
         required: true
         content:
@@ -1404,6 +1796,11 @@ paths:
       parameters:
         - $ref: "#/components/parameters/UuidPath"
         - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/AgentSignatureAgentId"
+        - $ref: "#/components/parameters/AgentSignatureOpenPgpFingerprint"
+        - $ref: "#/components/parameters/AgentSignatureValue"
+        - $ref: "#/components/parameters/AgentSignatureTimestamp"
+        - $ref: "#/components/parameters/AgentSignatureNonce"
       requestBody:
         required: true
         content:
@@ -2219,7 +2616,7 @@ components:
       description: |
         Technical bearer credential for non-human clients.
         `AGENT_TECHNICAL` uses a bearer token minted from `(client_id, secret_key)`.
-        `MCP_TECHNICAL` uses a bearer API key created from the UI by an authorized user.
+        `MCP_TECHNICAL` uses a bearer token minted from an OpenPGP-backed challenge/response flow after UI key enrollment.
 
   parameters:
     UuidPath:
@@ -2237,6 +2634,38 @@ components:
     ClientIdPath:
       name: client_id
       in: path
+      required: true
+      schema:
+        type: string
+    AgentSignatureAgentId:
+      name: X-Retaia-Agent-Id
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+    AgentSignatureOpenPgpFingerprint:
+      name: X-Retaia-OpenPGP-Fingerprint
+      in: header
+      required: true
+      schema:
+        type: string
+    AgentSignatureValue:
+      name: X-Retaia-Signature
+      in: header
+      required: true
+      schema:
+        type: string
+    AgentSignatureTimestamp:
+      name: X-Retaia-Signature-Timestamp
+      in: header
+      required: true
+      schema:
+        type: string
+        format: date-time
+    AgentSignatureNonce:
+      name: X-Retaia-Signature-Nonce
+      in: header
       required: true
       schema:
         type: string
@@ -2284,6 +2713,81 @@ components:
           description: Effective client identifier bound to this token.
         client_kind:
           $ref: "#/components/schemas/ClientKind"
+
+    AuthRefreshRequest:
+      type: object
+      additionalProperties: false
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+        client_id:
+          type: string
+        client_kind:
+          $ref: "#/components/schemas/ClientKind"
+
+    WebAuthnAuthenticateOptionsRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        email:
+          type: string
+          format: email
+        client_id:
+          type: string
+        client_kind:
+          $ref: "#/components/schemas/ClientKind"
+
+    WebAuthnRegisterVerifyRequest:
+      type: object
+      additionalProperties: false
+      required: [credential]
+      properties:
+        credential:
+          type: object
+          additionalProperties: true
+        device_id:
+          type: string
+          format: uuid
+        device_label:
+          type: string
+
+    WebAuthnAuthenticateVerifyRequest:
+      type: object
+      additionalProperties: false
+      required: [credential]
+      properties:
+        credential:
+          type: object
+          additionalProperties: true
+        client_id:
+          type: string
+        client_kind:
+          $ref: "#/components/schemas/ClientKind"
+
+    WebAuthnPublicKeyOptionsResponse:
+      type: object
+      additionalProperties: false
+      required: [public_key]
+      properties:
+        request_id:
+          type: string
+        public_key:
+          type: object
+          additionalProperties: true
+
+    WebAuthnDeviceResponse:
+      type: object
+      additionalProperties: false
+      required: [device_id]
+      properties:
+        device_id:
+          type: string
+          format: uuid
+        device_label:
+          type: string
+        webauthn_fingerprint:
+          type: string
 
     AuthEmailRequest:
       type: object
@@ -2423,7 +2927,7 @@ components:
         client_id:
           type: string
         client_kind:
-          $ref: "#/components/schemas/NonUiClientKind"
+          $ref: "#/components/schemas/TechnicalClientKind"
         access_token:
           type: string
         token_type:
@@ -2443,6 +2947,11 @@ components:
       description: Allowed client kinds for AGENT technical secret-key token minting.
       enum: [AGENT]
 
+    TechnicalClientKind:
+      type: string
+      description: Allowed client kinds for technical bearer tokens.
+      enum: [AGENT, MCP]
+
     AuthRotateClientSecretResponse:
       type: object
       additionalProperties: false
@@ -2456,6 +2965,73 @@ components:
         rotated_at:
           type: string
           format: date-time
+
+    AuthMcpRegisterRequest:
+      type: object
+      additionalProperties: false
+      required: [openpgp_public_key, openpgp_fingerprint]
+      properties:
+        client_label:
+          type: string
+        openpgp_public_key:
+          type: string
+        openpgp_fingerprint:
+          type: string
+
+    AuthMcpRegisterResponse:
+      type: object
+      additionalProperties: false
+      required: [client_id, client_kind, openpgp_fingerprint]
+      properties:
+        client_id:
+          type: string
+        client_kind:
+          type: string
+          enum: [MCP]
+        openpgp_fingerprint:
+          type: string
+        registered_at:
+          type: string
+          format: date-time
+        rotated_at:
+          type: string
+          format: date-time
+
+    AuthMcpChallengeRequest:
+      type: object
+      additionalProperties: false
+      required: [client_id, openpgp_fingerprint]
+      properties:
+        client_id:
+          type: string
+        openpgp_fingerprint:
+          type: string
+
+    AuthMcpChallengeResponse:
+      type: object
+      additionalProperties: false
+      required: [challenge_id, challenge, expires_in]
+      properties:
+        challenge_id:
+          type: string
+        challenge:
+          type: string
+        expires_in:
+          type: integer
+
+    AuthMcpTokenRequest:
+      type: object
+      additionalProperties: false
+      required: [client_id, openpgp_fingerprint, challenge_id, signature]
+      properties:
+        client_id:
+          type: string
+        openpgp_fingerprint:
+          type: string
+        challenge_id:
+          type: string
+        signature:
+          type: string
 
     AuthDeviceStartRequest:
       type: object
@@ -2887,8 +3463,9 @@ components:
           type: string
           nullable: true
           description: |
-            Optional server-generated waveform file URL.
-            If absent, UI clients must render a simple local waveform from audio (pure JS).
+            Required for any asset with an exploitable audio track once state progresses beyond READY.
+            If `media_type=AUDIO` or facts reveal an exploitable audio track, this field MUST be present in all business states beyond READY.
+            UI local fallback may exist for degraded playback UX but never replaces the required server/agent-derived waveform.
         thumbs:
           type: array
           items:

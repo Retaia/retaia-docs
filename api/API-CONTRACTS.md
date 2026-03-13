@@ -128,7 +128,7 @@ Gouvernance des `app_feature_enabled` (opposable) :
 * modification (`PATCH /app/features`) : admin uniquement (`403 FORBIDDEN_ACTOR` / `FORBIDDEN_SCOPE` sinon)
 * portée : switches applicatifs globaux (pas des préférences locales client)
 * effet runtime obligatoire : un switch applicatif désactivé DOIT empêcher l’exécution des fonctionnalités associées pour le scope applicatif
-* règle MCP obligatoire : `app_feature_enabled.features.ai=false` DOIT désactiver le client `MCP` (bootstrap UI, authentification API key et appels authentifiés MCP refusés)
+* règle MCP obligatoire : `app_feature_enabled.features.ai=false` DOIT désactiver le client `MCP` (bootstrap UI, enrôlement de clé et appels authentifiés MCP refusés)
 
 Gouvernance des `user_feature_enabled` (opposable) :
 
@@ -219,30 +219,58 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 
 * `USER_INTERACTIVE` : utilisateur humain connecté via client `UI_WEB` (web app) ou via `AGENT_UI` (`client_kind=AGENT`, surfaces CLI ou GUI) pour bootstrap, administration ou diagnostic
 * `AGENT_TECHNICAL` : agent daemon non-interactif (service) authentifié via bearer technique obtenu par `client_id + secret_key`
-* `MCP_TECHNICAL` : client MCP non-humain authentifié via bearer API key créée depuis l'UI par un utilisateur autorisé
+* `MCP_TECHNICAL` : client MCP non-humain authentifié via challenge/réponse asymétrique standard, après enrôlement de sa clé publique depuis l'UI par un utilisateur autorisé
 * `TECHNICAL_ACTORS` : alias générique couvrant `AGENT_TECHNICAL | MCP_TECHNICAL`
 * `client_kind` interactif est borné à `UI_WEB` ou `AGENT`; le mode technique autorise `AGENT` et `MCP`
 * rollout projet global actif : `UI_WEB`, `AGENT_UI` et `MCP` sont intégrés à partir de la v1.1 globale
 
 ### UI (humain)
 
-* Bearer token utilisateur obtenu via login (`POST /auth/login`)
-* l'interface de login est normative pour permettre l'obtention du token utilisateur
+* `UI_WEB` DOIT utiliser `WebAuthn` comme mécanisme primaire d'authentification utilisateur
+* l'API reste bearer-only/stateless côté runtime :
+  * `WebAuthn` sert à obtenir ou renouveler des tokens
+  * les appels API métiers continuent via `Authorization: Bearer ...`
+  * aucun retour à `SessionCookieAuth` n'est autorisé
+* `refresh_token` est autorisé pour les clients interactifs humains (`UI_WEB`, `AGENT_UI`)
+* le mot de passe utilisateur reste un mécanisme de bootstrap, recovery et opérations sensibles, pas un mécanisme d'usage quotidien obligatoire sur chaque navigateur
 * `client_kind=UI_WEB` couvre uniquement l'UI web servie par Core
 * `AGENT_UI` relève du `client_kind=AGENT`, avec parité fonctionnelle obligatoire entre surfaces CLI et GUI
+* `AGENT_UI` PEUT, à terme, devenir une surface applicative comparable à `UI_WEB` pour les fonctionnalités humaines, tout en restant distincte du daemon `AGENT_TECHNICAL`
 * le token UI est non exportable dans l'interface (jamais affiché en clair)
 * un utilisateur ne peut pas invalider son token UI depuis l'UI (anti lock-out)
 * l'UI DOIT supporter l'enrôlement 2FA TOTP via app externe (Authy, Google Authenticator, etc.)
+* un même compte utilisateur PEUT enregistrer plusieurs navigateurs/appareils de confiance
+* l'enregistrement d'un nouveau browser ou d'une nouvelle machine NE DOIT PAS créer un nouveau compte utilisateur
+
+Modèle multi-device (obligatoire) :
+
+* le compte utilisateur reste unique
+* chaque device/browser interactif PEUT avoir :
+  * un `client_id`
+  * un `device_id`
+  * un credential `WebAuthn`
+* plusieurs devices PEUVENT être rattachés au même compte utilisateur
+* la révocation DOIT pouvoir se faire device par device, sans impacter les autres devices du même compte
 
 ### Agents / MCP
 
 * modes non interactifs : bearer technique (`TechnicalBearerAuth`)
-* mode `AGENT` interactif : shell/CLI opéré par un humain pour bootstrap, approval ou diagnostics, avec bearer utilisateur via `POST /auth/login`
+* mode `AGENT` interactif : `AGENT_UI` opéré par un humain (CLI ou GUI), avec bearer utilisateur via `POST /auth/login` aujourd'hui
+* `AGENT_UI` PEUT utiliser `WebAuthn` quand la surface le permet (GUI desktop, shell natif ou environnement capable), sans changer le modèle de compte utilisateur ni le contrat bearer
 * mode `AGENT_TECHNICAL` : `client_id + secret_key` pour obtenir un bearer token via `POST /auth/clients/token`
-* mode `MCP_TECHNICAL` : API key bearer créée depuis l'UI par un utilisateur autorisé, puis fournie lors de la configuration du client MCP
+* `AGENT_TECHNICAL` N'UTILISE JAMAIS `WebAuthn` au runtime
+* mode `MCP_TECHNICAL` : identité asymétrique standard avec clé publique enregistrée côté Core, clé privée locale côté client et signatures obligatoires sur les écritures sensibles
 * seul `AGENT_TECHNICAL` exécute les jobs de processing; un `AGENT` interactif ne claim pas de job et ne traite pas de média
+* `AGENT_UI` PEUT gérer des fonctionnalités humaines comparables à `UI_WEB` (review, préférences, profil utilisateur, pilotage daemon), mais ces mutations restent des actions `USER_INTERACTIVE`
+* toute action `USER_INTERACTIVE` depuis `AGENT_UI` DOIT rester portée par une identité humaine authentifiée; le daemon `AGENT_TECHNICAL` NE DOIT PAS hériter implicitement de cette identité
+* une éventuelle délégation future de droits user-scoped vers `AGENT_TECHNICAL` DOIT être explicite, bornée dans le temps, liée à un `agent_id` et documentée comme un contrat séparé
 * `MCP` PEUT piloter/orchestrer l'agent (configuration, déclenchement, supervision) mais NE DOIT JAMAIS exécuter de traitement média
 * `MCP` est interdit sur les endpoints de processing `/jobs/*` (`claim`, `heartbeat`, `submit`) avec refus `403 FORBIDDEN_ACTOR`
+* `MCP_TECHNICAL` DOIT suivre les mêmes principes que l'agent :
+  * pas d'implémentation crypto maison
+  * standard existant
+  * clé publique enregistrée côté Core
+  * clé privée uniquement côté client
 * les capacités IA (providers, modèles, transcription, suggestions) sont planifiées en v1.1+
 * l’agent reste propriétaire du runtime provider/model (découverte locale, disponibilité, installation) dans le paquet normatif v1.1
 * Core NE DOIT PAS exposer de catalogue runtime global de modèles
@@ -251,11 +279,13 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 Règles 2FA par client (obligatoire) :
 
 * la 2FA est optionnelle au niveau compte utilisateur
-* `UI_WEB` : login utilisateur (`/auth/login`) avec 2FA obligatoire uniquement si activée sur le compte
-* `AGENT_TECHNICAL` / `MCP_TECHNICAL` au runtime : pas de 2FA directe
+* `UI_WEB` : `WebAuthn` + bearer + refresh token comme mécanisme primaire; `POST /auth/login` reste un fallback de bootstrap/recovery
+* `AGENT_UI` PEUT utiliser `WebAuthn` quand la surface le permet; sinon `POST /auth/login` reste le fallback interactif
+* `AGENT_TECHNICAL` au runtime : jamais de `WebAuthn`, pas de 2FA directe
+* `MCP_TECHNICAL` au runtime : pas de 2FA directe
 * création d’un `secret_key` pour `AGENT_TECHNICAL` : DOIT passer par une validation utilisateur via UI
-* création d’une API key pour `MCP_TECHNICAL` : DOIT passer par l’UI et une action explicite d’un utilisateur autorisé
-* si 2FA est activée sur ce compte utilisateur, la validation UI de création `secret_key` ou d’API key DOIT exiger la 2FA
+* l’enregistrement initial de la clé publique `MCP_TECHNICAL` DOIT passer par l’UI et une action explicite d’un utilisateur autorisé
+* si 2FA est activée sur ce compte utilisateur, la validation UI de création `secret_key` `AGENT` ou d’enregistrement de clé `MCP` DOIT exiger la 2FA
 * flow cible `AGENT_TECHNICAL` : type GitHub device authorization (ouverture URL navigateur, auth UI, validation 2FA optionnelle, approval explicite)
 * `MCP_TECHNICAL` NE DOIT PAS pouvoir initier de login utilisateur ni de device flow en autonomie
 
@@ -263,8 +293,9 @@ Règle de cardinalité des tokens (obligatoire) :
 
 * `USER_INTERACTIVE` : un même utilisateur PEUT avoir plusieurs tokens actifs simultanément sur des clients différents, avec contrainte stricte **1 token actif par `(user_id, client_id)`**
 * `AGENT_TECHNICAL` : contrainte stricte **1 token actif par `client_id`**
-* `MCP_TECHNICAL` : l'API key est un bearer technique persistant, révocable et rotatable via UI; Core DOIT tracer quel utilisateur l'a créée
+* `MCP_TECHNICAL` : le credential technique, la clé publique enregistrée et le bearer technique minté DOIVENT être révocables/rotatables; Core DOIT tracer quel utilisateur a autorisé l’enregistrement du client
 * émission d'un nouveau token pour la même clé de cardinalité => révocation immédiate du token précédent
+* les refresh tokens interactifs DOIVENT être rotatables et révocables par device/browser
 
 #### Scopes (base)
 
@@ -320,10 +351,67 @@ Normalisation des timestamps (normatif) :
 * security: aucune (`security: []`)
 * body requis: `{ email, password }`
 * body optionnel: `client_id`, `client_kind`, `otp_code` (`otp_code` obligatoire si 2FA active)
+* effet: login utilisateur interactif de bootstrap/recovery
 * réponses:
   * `200` succès + bearer token (`access_token`, `token_type=Bearer`, `expires_in?`, `refresh_token?`, `client_id`, `client_kind`)
   * `401 UNAUTHORIZED` (credentials invalides), `MFA_REQUIRED` (2FA active sans OTP), `INVALID_2FA_CODE` (OTP invalide)
   * `403 EMAIL_NOT_VERIFIED`
+  * `422 VALIDATION_FAILED`
+  * `429 TOO_MANY_ATTEMPTS`
+
+`POST /auth/refresh`
+
+* security: aucune (`security: []`)
+* body requis: `{ refresh_token }`
+* body optionnel: `client_id`, `client_kind`
+* effet: renouvelle un bearer token interactif sans repasser par le mot de passe
+* réponses:
+  * `200` succès + bearer token (`access_token`, `token_type=Bearer`, `expires_in?`, `refresh_token?`, `client_id`, `client_kind`)
+  * `401 UNAUTHORIZED`
+  * `422 VALIDATION_FAILED`
+  * `429 TOO_MANY_ATTEMPTS`
+
+`POST /auth/webauthn/register/options`
+
+* security: `UserBearerAuth`
+* effet: retourne les options d'enregistrement `WebAuthn` pour attacher un nouveau browser/device au compte utilisateur courant
+* réponses:
+  * `200` options `WebAuthn`
+  * `401 UNAUTHORIZED`
+  * `409 STATE_CONFLICT`
+
+`POST /auth/webauthn/register/verify`
+
+* security: `UserBearerAuth`
+* body requis: attestation `WebAuthn`
+* body optionnel: `device_id`, `device_label`
+* effet: enregistre un credential `WebAuthn` pour le compte utilisateur courant
+* réponses:
+  * `200` credential enregistré
+  * `401 UNAUTHORIZED`
+  * `409 STATE_CONFLICT`
+  * `422 VALIDATION_FAILED`
+
+`POST /auth/webauthn/authenticate/options`
+
+* security: aucune (`security: []`)
+* body optionnel: `email`, `client_id`, `client_kind`
+* effet: retourne les options d'assertion `WebAuthn` pour un browser/device déjà enregistré
+* réponses:
+  * `200` options `WebAuthn`
+  * `401 UNAUTHORIZED`
+  * `422 VALIDATION_FAILED`
+  * `429 TOO_MANY_ATTEMPTS`
+
+`POST /auth/webauthn/authenticate/verify`
+
+* security: aucune (`security: []`)
+* body requis: assertion `WebAuthn`
+* body optionnel: `client_id`, `client_kind`
+* effet: vérifie l'assertion `WebAuthn` puis émet un bearer token interactif + `refresh_token`
+* réponses:
+  * `200` succès + bearer token (`access_token`, `token_type=Bearer`, `expires_in?`, `refresh_token?`, `client_id`, `client_kind`)
+  * `401 UNAUTHORIZED`
   * `422 VALIDATION_FAILED`
   * `429 TOO_MANY_ATTEMPTS`
 
@@ -572,12 +660,14 @@ Séquence normative bootstrap `AGENT_TECHNICAL` (obligatoire) :
 Séquence normative bootstrap `MCP_TECHNICAL` (obligatoire) :
 
 1. un utilisateur autorisé ouvre l'UI Core
-2. l'utilisateur crée une API key dédiée au client MCP
-3. si 2FA est activée sur le compte, validation OTP obligatoire
-4. l'API key est affichée une seule fois
-5. l'utilisateur la copie dans la configuration du client MCP
-6. le client MCP authentifie ensuite tous ses appels via `Authorization: Bearer <api_key>`
-7. le client MCP NE DOIT PAS initier `POST /auth/login` ni `POST /auth/clients/device/*`
+2. le client MCP génère localement sa paire de clés asymétriques standard
+3. l'utilisateur enregistre la clé publique du client MCP via `POST /auth/mcp/register`
+4. si 2FA est activée sur le compte, validation OTP obligatoire
+5. Core lie la clé publique MCP au compte/tenant autorisé et au client déclaré
+6. le client MCP demande un challenge via `POST /auth/mcp/challenge`
+7. le client MCP signe le challenge puis échange la preuve via `POST /auth/mcp/token`
+8. le client MCP signe ensuite ses écritures sensibles avec sa clé privée locale
+9. le client MCP NE DOIT PAS initier `POST /auth/login` ni `POST /auth/clients/device/*`
 
 Matrice de migration v1 runtime (gelée) :
 
@@ -591,7 +681,55 @@ Matrice de migration v1 runtime (gelée) :
 Règle de sécurité :
 
 * création de `secret_key` `AGENT_TECHNICAL` sans validation UI utilisateur est interdite
-* création d’une API key `MCP_TECHNICAL` hors UI utilisateur est interdite
+* enregistrement ou rotation de clé publique `MCP_TECHNICAL` hors validation UI utilisateur est interdit
+
+`POST /auth/mcp/register`
+
+* security: `UserBearerAuth`
+* body requis: `{ openpgp_public_key, openpgp_fingerprint }`
+* body optionnel: `client_label`
+* effet: enregistre un client `MCP_TECHNICAL` et sa clé publique asymétrique standard
+* réponses:
+  * `200` (`client_id`, `client_kind=MCP`, `openpgp_fingerprint`, `registered_at`)
+  * `401 UNAUTHORIZED`
+  * `403 FORBIDDEN_ACTOR|FORBIDDEN_SCOPE`
+  * `409 STATE_CONFLICT`
+  * `422 VALIDATION_FAILED`
+
+`POST /auth/mcp/challenge`
+
+* security: aucune (`security: []`)
+* body requis: `{ client_id, openpgp_fingerprint }`
+* effet: retourne un challenge court pour authentification technique `MCP_TECHNICAL`
+* réponses:
+  * `200` (`challenge_id`, `challenge`, `expires_in`)
+  * `401 UNAUTHORIZED`
+  * `422 VALIDATION_FAILED`
+  * `429 TOO_MANY_ATTEMPTS`
+
+`POST /auth/mcp/token`
+
+* security: aucune (`security: []`)
+* body requis: `{ client_id, openpgp_fingerprint, challenge_id, signature }`
+* effet: vérifie la signature asymétrique du challenge puis émet un bearer token technique pour `MCP_TECHNICAL`
+* réponses:
+  * `200` token client (`access_token`, `token_type=Bearer`, `expires_in?`, `client_id`, `client_kind=MCP`)
+  * `401 UNAUTHORIZED`
+  * `403 FORBIDDEN_ACTOR|FORBIDDEN_SCOPE`
+  * `422 VALIDATION_FAILED`
+  * `429 TOO_MANY_ATTEMPTS`
+
+`POST /auth/mcp/{client_id}/rotate-key`
+
+* security: `UserBearerAuth`
+* body requis: `{ openpgp_public_key, openpgp_fingerprint }`
+* effet: remplace la clé publique active du client `MCP_TECHNICAL` et invalide les bearers techniques actifs associés
+* réponses:
+  * `200` (`client_id`, `client_kind=MCP`, `openpgp_fingerprint`, `rotated_at`)
+  * `401 UNAUTHORIZED`
+  * `403 FORBIDDEN_ACTOR|FORBIDDEN_SCOPE`
+  * `409 STATE_CONFLICT`
+  * `422 VALIDATION_FAILED`
 
 `POST /auth/clients/{client_id}/rotate-secret`
 
@@ -610,7 +748,10 @@ Règle d'erreur (obligatoire) :
 
 Règle d’unification clients (obligatoire) :
 
-* le flux login utilisateur (`POST /auth/login`) et `UserBearerAuth` DOIVENT être communs pour les clients interactifs `UI_WEB` et `AGENT`
+* `UserBearerAuth` DOIT rester commun aux clients interactifs `UI_WEB` et `AGENT`
+* `UI_WEB` utilise `WebAuthn` comme auth primaire pour obtenir ce bearer
+* `AGENT_UI` utilise `POST /auth/login` dans un premier temps, puis PEUT adopter `WebAuthn` sans changer le contrat bearer
+* le fallback `POST /auth/login` reste disponible pour les parcours de bootstrap/recovery interactifs
   * `401 UNAUTHORIZED`
   * `403 FORBIDDEN_ACTOR|FORBIDDEN_SCOPE`
   * `422 VALIDATION_FAILED`
@@ -722,6 +863,8 @@ Body :
 * `agent_id`
 * `agent_name`
 * `agent_version`
+* `openpgp_public_key` (clé publique OpenPGP armurée ASCII)
+* `openpgp_fingerprint` (fingerprint OpenPGP canonique de la clé active)
 * `os_name` (`linux|macos|windows`)
 * `os_version`
 * `arch` (`x86_64|arm64|armv7|other`)
@@ -742,6 +885,45 @@ Règles :
 * une réinstallation explicite ou une rotation volontaire d'identité agent PEUT générer un nouveau `agent_id`
 * `agent_id` NE DOIT PAS être dérivé du hostname, d'une MAC address, d'un serial disque, d'un `machine-id` OS ni d'une caractéristique matérielle/réseau
 * si deux agents actifs se présentent avec le même `agent_id`, Core DOIT autoriser la connexion/register, journaliser un conflit d'identité et exposer ce conflit dans les diagnostics ops; Core NE DOIT PAS invalider automatiquement l'une des deux sessions en v1
+* l'agent DOIT générer une identité de clé `OpenPGP` lors de sa première initialisation et persister la clé privée localement
+* la clé privée agent NE DOIT JAMAIS quitter l'agent ni être exposée par l'API
+* `openpgp_public_key` et `openpgp_fingerprint` représentent la clé OpenPGP active enregistrée côté Core
+* la clé OpenPGP agent DOIT utiliser des algorithmes conformes à [`GPG-OPENPGP-STANDARD.md`](../policies/GPG-OPENPGP-STANDARD.md)
+* la rotation de clé DOIT être explicite; l'agent NE DOIT PAS régénérer silencieusement sa clé de signature
+* `POST /agents/register` DOIT prouver la possession de la clé privée correspondant à la clé publique OpenPGP déclarée
+
+Signature agent (normative) :
+
+* les écritures agent -> Core DOIVENT être signées avec une signature **OpenPGP détachée** produite par une librairie standard
+* endpoints concernés :
+  * `POST /agents/register`
+  * `POST /jobs/{job_id}/claim`
+  * `POST /jobs/{job_id}/heartbeat`
+  * `POST /jobs/{job_id}/submit`
+  * `POST /jobs/{job_id}/fail`
+  * `POST /assets/{uuid}/derived/upload/init`
+  * `POST /assets/{uuid}/derived/upload/part`
+  * `POST /assets/{uuid}/derived/upload/complete`
+* chaque requête signée DOIT porter :
+  * `X-Retaia-Agent-Id`
+  * `X-Retaia-OpenPGP-Fingerprint`
+  * `X-Retaia-Signature`
+  * `X-Retaia-Signature-Timestamp`
+  * `X-Retaia-Signature-Nonce`
+* `X-Retaia-Agent-Id` DOIT correspondre au `agent_id` du bearer technique
+* `X-Retaia-OpenPGP-Fingerprint` DOIT référencer la clé publique OpenPGP active enregistrée pour cet agent
+* `X-Retaia-Signature` DOIT être une signature **OpenPGP détachée** valide de la chaîne canonique suivante :
+  * méthode HTTP
+  * path HTTP exact
+  * `agent_id`
+  * timestamp de signature
+  * nonce unique
+  * SHA-256 hexadécimal du body HTTP brut
+* la chaîne canonique DOIT utiliser `\\n` comme séparateur de lignes et rester stable entre implémentations
+* Core DOIT vérifier la signature via une librairie OpenPGP standard maintenue; aucune implémentation crypto maison n'est autorisée
+* Core DOIT rejeter toute écriture signée si la signature est absente, invalide, expirée, rejouée ou si la clé active est révoquée/inconnue
+* Core DOIT contrôler une fenêtre de fraîcheur bornée pour `X-Retaia-Signature-Timestamp` et empêcher le rejeu via `X-Retaia-Signature-Nonce`
+* Core DOIT journaliser les échecs de vérification de signature comme événements sécurité
 
 Response :
 
@@ -797,6 +979,14 @@ Règles :
 
 Claim atomique d’un job.
 
+Headers obligatoires :
+
+* `X-Retaia-Agent-Id`
+* `X-Retaia-OpenPGP-Fingerprint`
+* `X-Retaia-Signature`
+* `X-Retaia-Signature-Timestamp`
+* `X-Retaia-Signature-Nonce`
+
 Response :
 
 * `200` + `Job` (avec `lock_token`, `locked_until`) si claim accepté
@@ -819,6 +1009,14 @@ Body :
 
 * `lock_token`
 
+Headers obligatoires :
+
+* `X-Retaia-Agent-Id`
+* `X-Retaia-OpenPGP-Fingerprint`
+* `X-Retaia-Signature`
+* `X-Retaia-Signature-Timestamp`
+* `X-Retaia-Signature-Nonce`
+
 Response :
 
 * `locked_until`
@@ -830,6 +1028,14 @@ Body :
 * `lock_token`
 * `job_type`
 * `result: ProcessingResultPatch`
+
+Headers obligatoires :
+
+* `X-Retaia-Agent-Id`
+* `X-Retaia-OpenPGP-Fingerprint`
+* `X-Retaia-Signature`
+* `X-Retaia-Signature-Timestamp`
+* `X-Retaia-Signature-Nonce`
 
 Effets :
 
@@ -860,6 +1066,14 @@ Body :
 * `message`
 * `retryable: boolean`
 
+Headers obligatoires :
+
+* `X-Retaia-Agent-Id`
+* `X-Retaia-OpenPGP-Fingerprint`
+* `X-Retaia-Signature`
+* `X-Retaia-Signature-Timestamp`
+* `X-Retaia-Signature-Nonce`
+
 
 ## 6) Derived (proxies/dérivés)
 
@@ -867,8 +1081,10 @@ Principe v1 :
 
 * les dérivés sont **uploadés via HTTP** par les agents
 * l’UI y accède via HTTP (URLs stables), pas via SMB
-* pour l’audio waveform, l’UI DOIT supporter un rendu local simple type YouTube en JS pur si `waveform_url` est absent
-* le rendu local waveform est côté client (pas de traitement serveur supplémentaire requis)
+* pour tout asset avec piste audio exploitable, `waveform_url` DOIT être présent pour tout état métier au-delà de `READY`
+* un asset audio NE DOIT PAS dépasser `READY` si la waveform dérivée obligatoire n’est pas disponible
+* un rendu local waveform côté client PEUT exister comme dégradation UX de lecture, mais NE REMPLACE PAS l’obligation de dérivé serveur/agent
+* toutes les écritures agent -> Core sur `/assets/{uuid}/derived/upload/*` DOIVENT porter les headers de signature agent
 
 ### POST `/assets/{uuid}/derived/upload/init`
 

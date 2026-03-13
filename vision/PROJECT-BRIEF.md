@@ -103,6 +103,17 @@ Interdictions :
 
 Rôle : moteur de processing en arrière‑plan, avec surfaces `AGENT_UI` en CLI et GUI.
 
+Règle d'architecture :
+
+* le daemon `AGENT_TECHNICAL` reste le moteur technique de processing
+* `AGENT_UI` reste la surface humaine de l'agent
+* `AGENT_UI` peut à terme devenir aussi riche que `UI_WEB` pour les parcours humains, tout en gardant le pilotage local du daemon
+* cette convergence fonctionnelle ne fusionne pas les identités : actions humaines via `USER_INTERACTIVE`, processing via `AGENT_TECHNICAL`
+* le compte utilisateur reste unique et multi-device :
+  * un nouveau browser ou une nouvelle machine ne crée pas un nouveau compte
+  * `UI_WEB` enregistre des devices de confiance via `WebAuthn`
+  * `AGENT_UI` partage le même modèle de compte humain, même si son mécanisme interactif évolue par phases
+
 Responsabilités :
 
 * tourner en continu sur desktop/laptop/rpi
