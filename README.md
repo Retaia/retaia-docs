@@ -27,6 +27,7 @@ The following consumer repositories must align with these specs:
 - Product vision: [`vision/PROJECT-BRIEF.md`](vision/PROJECT-BRIEF.md)
 - Product roadmap: [`vision/ROADMAP.md`](vision/ROADMAP.md)
 - UI recommendations: [`ui/README.md`](ui/README.md)
+- UI global spec: [`ui/UI-GLOBAL-SPEC.md`](ui/UI-GLOBAL-SPEC.md)
 - Deployment topology (NAS + workstations): [`architecture/DEPLOYMENT-TOPOLOGY.md`](architecture/DEPLOYMENT-TOPOLOGY.md)
 - API contract: [`api/API-CONTRACTS.md`](api/API-CONTRACTS.md)
 - OpenAPI sources:

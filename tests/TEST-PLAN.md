@@ -598,6 +598,13 @@ Minimum :
 
 * scénarios P0 ci-dessus à 100%
 * chemins critiques move/purge/lock couverts avant merge
+* routes UI canoniques conformes à `ui/UI-GLOBAL-SPEC.md`
+* shell UI desktop conforme (sidebar, barre de contexte, zone liste/detail, rail droit)
+* actions groupées UI couvertes avec le lifecycle `selection_active -> changes_pending -> confirmation_open -> executing -> result_ready`
+* aucun appel Core avant confirmation UI explicite
+* registre de raccourcis conforme à `ui/KEYBOARD-SHORTCUTS-REGISTRY.md`
+* blocage des raccourcis globaux en contexte de saisie, hors exceptions explicites
+* persistance du theme (`system|light|dark`), du mode de vue (`table|grid`) et de la densité par workspace
 
 ## 10) I18N / L10N (parcours critiques)
 
@@ -607,6 +614,8 @@ Tests obligatoires :
 * fallback `locale utilisateur -> en -> clé brute` conforme à la policy i18n
 * les clés manquantes `en` ou `fr` échouent le pipeline CI (gate bloquant)
 * les libellés d'actions destructives sont validés sans ambiguïté avant release
+* les libellés de navigation visibles suivent le vocabulaire UI canonique
+* les routes restent techniques et non localisées
 
 ## Références associées
 

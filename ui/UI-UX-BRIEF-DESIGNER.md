@@ -3,6 +3,7 @@
 ## 1) Objectif du document
 > Statut : recommandation UI/UX non normative.
 > Source de verite normative : `api/`, `policies/`, `workflows/`, `state-machine/`, `definitions/`.
+> Routes, shell et comportements UI globaux : `UI-GLOBAL-SPEC.md`.
 
 Ce document sert de brief fonctionnel pour le rebranding UI/UX.
 Le but est de décrire les fonctionnalités métier et les parcours utilisateur, sans imposer de direction visuelle.
@@ -41,15 +42,18 @@ Permettre l'exploitation de la bibliothèque d'assets déjà traités:
 - accès secondaires: `Auth`, `Settings`, changement langue
 - `Batch` et `Reports` sont à considérer comme des vues du mode de traitement batch (pas un pilier métier séparé)
 
-### 4.2 Routes actuelles
+### 4.2 Routes canoniques
 - `/` -> redirection `/review`
 - `/review`
-- `/review/detail/:assetId`
+- `/review/asset/:assetId`
 - `/activity`
 - `/library`
-- `/library/detail/:assetId`
+- `/library/asset/:assetId`
+- `/rejects`
+- `/rejects/asset/:assetId`
 - `/auth`
 - `/settings`
+- `/account`
 
 ## 5) Fonctionnalités par écran
 
@@ -118,7 +122,7 @@ Fonctions clés:
 - possibilité métier de `REJECT` un asset précédemment validé
 - actions single et batch selon les règles produit
 
-### 5.6 Détail standalone (`/review/detail/:assetId`, `/library/detail/:assetId`)
+### 5.6 Détail standalone (`/review/asset/:assetId`, `/library/asset/:assetId`, `/rejects/asset/:assetId`)
 Fonction: focus complet sur un asset.
 
 Fonctions clés:
