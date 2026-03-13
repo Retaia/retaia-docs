@@ -7,7 +7,7 @@ Ce document définit le minimum de tests opposables pour valider une implémenta
 Tests obligatoires :
 
 * `v1` projet global : Core + Agent + `capabilities` + `feature_flags`
-* `v1.1` projet global : clients `UI_WEB_APP` + `RUST_UI` (`client_kind=UI_WEB`) + client `MCP_CLIENT` (`client_kind=MCP`)
+* `v1.1` projet global : clients `UI_WEB_APP` + `AGENT_UI` (`client_kind=AGENT`) + client `MCP_CLIENT` (`client_kind=MCP`)
 * aucune suite `v1.2` active : la piste mobile/push est actuellement non planifiée
 * les suites UI/MCP sont classées en gates `v1.1` global
 
@@ -191,7 +191,7 @@ Matrice de migration v1 runtime (gelée) :
 * toutes réponses d’erreur 4xx/5xx auth conformes au schéma `ErrorResponse`
 * endpoints humains mutateurs exigent un bearer token (`UserBearerAuth`) conforme à la spec
 * même flux login/token validé sur clients interactifs: `UI_WEB` et `AGENT`
-* compatibilité UI validée: `UI_WEB_APP` et `RUST_UI` (même `client_kind=UI_WEB`) utilisent `POST /auth/login` + `Authorization: Bearer`
+* compatibilité UI validée: `UI_WEB_APP` et `AGENT_UI` utilisent `POST /auth/login` + `Authorization: Bearer` sur leurs `client_kind` interactifs respectifs
 * anti lock-out: l'UI n'expose jamais le token en clair et n'offre pas d'action d'auto-révocation du token UI actif (gate `v1.1` global)
 * régression interdite: aucun endpoint runtime n'accepte encore `SessionCookieAuth` (Bearer-only)
 * 2FA optionnelle: compte sans 2FA active ne requiert pas OTP
@@ -209,8 +209,9 @@ Matrice de migration v1 runtime (gelée) :
 
 Tests obligatoires :
 
-* `CLI` agent fonctionne en Linux headless (sans dépendance GUI)
-* `GUI` agent (quand présent) utilise le même moteur de processing que `CLI` (mêmes capabilities et mêmes résultats)
+* `AGENT_UI` en mode `CLI` fonctionne en Linux headless (sans dépendance GUI)
+* `AGENT_UI` en mode `GUI` (quand présent) utilise le même moteur de processing que `CLI` (mêmes capabilities et mêmes résultats)
+* `AGENT_UI` en mode `CLI` et `GUI` expose les mêmes fonctionnalités opérateur
 * client `AGENT` validé dans les deux modes d’auth: interactif (`/auth/login`) et technique (`/auth/clients/token`)
 * client `MCP` validé en mode technique via API key bearer, sans login interactif ni device flow (gate `v1.1` global)
 * client `MCP` peut piloter/orchestrer l'agent sans exécuter de processing (gate `v1.1` global)

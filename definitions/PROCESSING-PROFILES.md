@@ -1,4 +1,4 @@
-# Processing Profiles — Retaia Core + Retaia Agent
+# Processing Profiles — Retaia multi-apps
 
 Ce document définit les profils de processing normatifs par type de média.
 Il complète la machine à états et les job types.

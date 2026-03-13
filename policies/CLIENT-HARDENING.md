@@ -1,4 +1,4 @@
-# Client Hardening — UI_RUST / AGENT / MCP
+# Client Hardening — UI_WEB / AGENT_UI / MCP
 
 Ce document definit les exigences de durcissement des clients.
 
@@ -9,16 +9,17 @@ Ce document definit les exigences de durcissement des clients.
 * zero secret en logs
 * update client signee et verifiee
 
-## 2) UI_RUST
+## 2) UI_WEB
 
 * desactiver debug tooling en production
 * CSP stricte pour contenu web embarque (si applicable)
 * token non exportable/non affichable
 * isolation claire entre UI state et secret store
 
-## 3) AGENT (CLI/GUI)
+## 3) AGENT_UI (CLI/GUI)
 
 * mode headless Linux supporte sans composants GUI
+* parité fonctionnelle obligatoire entre surfaces CLI et GUI
 * permissions filesystem minimales
 * service account dedie recommande
 * crash dump sans secret

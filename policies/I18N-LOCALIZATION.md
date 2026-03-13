@@ -1,4 +1,4 @@
-# I18N & Localization Policy — Retaia Core + Retaia Agent
+# I18N & Localization Policy — Retaia multi-apps
 
 Ce document définit les règles normatives pour rendre les applications Retaia multilingues.
 

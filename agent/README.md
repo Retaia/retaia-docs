@@ -17,5 +17,5 @@ Contenu:
 
 Regle:
 
-* les comportements operateur, parcours GUI/CLI et attentes fonctionnelles vivent ici
+* les comportements operateur de `AGENT_UI`, les parcours GUI/CLI et les attentes fonctionnelles vivent ici
 * les choix Rust/Tauri/OpenAPI, stores locaux, fichiers, libs et scripts restent dans `retaia-agent`

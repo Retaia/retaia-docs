@@ -2,7 +2,7 @@
 
 Objectif:
 
-* deployer l'alignement HTTP sans casser les clients existants UI_RUST, AGENT, MCP
+* deployer l'alignement HTTP sans casser les clients existants UI_WEB, AGENT_UI, MCP
 
 ## 1) Politique pre-publication v1 (sans legacy)
 
@@ -19,7 +19,7 @@ Metriques minimales:
 * volume de `POST /auth/clients/device/poll` par `status` (`PENDING`, `APPROVED`, `DENIED`, `EXPIRED`)
 * taux `400 INVALID_DEVICE_CODE`
 * taux `429 SLOW_DOWN|TOO_MANY_ATTEMPTS`
-* volume de rejets `POST /auth/clients/token` avec `403 FORBIDDEN_ACTOR` pour `client_kind=UI_RUST`
+* volume de rejets `POST /auth/clients/token` avec `403 FORBIDDEN_ACTOR` pour `client_kind in {UI_WEB, MCP}`
 
 Logs/audit:
 
@@ -29,14 +29,14 @@ Logs/audit:
 
 Prerequis:
 
-* tickets core/ui_rust/agent_mcp livres
+* tickets core/ui_web+agent_ui/agent_mcp livres
 * gates de non-regression verts (OpenAPI, integration auth/device, compat client)
 
 Execution:
 
 1. activer instrumentation + dashboard rollout
 2. deployer Core directement en mode cible status-driven
-3. deployer UI_RUST, AGENT, MCP compatibles status-driven
+3. deployer UI_WEB, AGENT_UI, AGENT, MCP compatibles status-driven
 4. verifier stabilite des metriques et absence d'incident auth/device
 
 ## 4) Stabilisation post-cutover
@@ -52,5 +52,5 @@ Actions:
 
 ## 5) Rollback
 
-* rollback version Core/UI_RUST/AGENT/MCP possible si incident critique
+* rollback version Core/UI_WEB/AGENT_UI/AGENT/MCP possible si incident critique
 * toute activation de rollback DOIT etre auditee et post-analysee

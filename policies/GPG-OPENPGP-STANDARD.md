@@ -1,6 +1,6 @@
 # GPG/OpenPGP Standard — Cross-Client Security Baseline
 
-Ce document definit la standardisation GPG/OpenPGP pour Core, UI_RUST, AGENT et MCP.
+Ce document definit la standardisation GPG/OpenPGP pour Core, UI_WEB, AGENT_UI/AGENT et MCP.
 
 Objectif: en cas de fuite DB/logs/backups, les donnees sensibles restent inutilisables sans cles.
 
@@ -62,7 +62,7 @@ Mode avance (optionnel):
 
 Chaque application DOIT utiliser une librairie OpenPGP reconnue et maintenue:
 
-* Rust (`UI_RUST`, `AGENT`, composants Rust): `sequoia-openpgp`
+* Rust (`AGENT_UI`, `AGENT`, composants Rust): `sequoia-openpgp`
 * Node/TypeScript (si applicable): `openpgp` (OpenPGP.js)
 * Go (si applicable): `ProtonMail/gopenpgp` ou equivalent maintenu et auditable
 * Python (si applicable): `PGPy` ou bindings GnuPG maintenus
@@ -82,7 +82,7 @@ Conditions:
 
 ## 9) Tests de conformite (MUST)
 
-* test roundtrip encrypt/decrypt par client type (`UI_RUST`, `AGENT`, `MCP`)
+* test roundtrip encrypt/decrypt par client type (`UI_WEB`, `AGENT_UI/AGENT`, `MCP`)
 * test signature verify pour payload sensible signe
 * test rejet d'algorithmes interdits
 * test DB dump/backups: adresse, GPS, transcription non lisibles en clair

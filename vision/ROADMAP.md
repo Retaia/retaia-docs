@@ -23,22 +23,23 @@ Toute évolution future DOIT respecter :
 
 ## Prévu
 
-### 1. V1.1 — Extension UI desktop/web et MCP
+### 1. V1.1 — Extension UI web, AGENT_UI et MCP
 
 Objectif :
 
-* étendre le scope produit au client UI web principal, au client desktop Rust/Tauri et au client MCP
+* étendre le scope produit au client UI web principal, à `AGENT_UI` et au client MCP
 
 Contenu prévu :
 
 * `UI_WEB_APP`
-* `RUST_UI`
+* `AGENT_UI`
 * `MCP_CLIENT`
 * continuité du modèle runtime status-driven déjà cadré dans les specs
 
 Notes :
 
 * le MCP reste un client d’orchestration ; il ne traite pas les médias directement
+* `AGENT_UI` couvre les surfaces CLI et GUI de l’agent avec parité fonctionnelle
 * cette étape correspond à un élargissement du produit livré, pas à un changement de philosophie
 
 

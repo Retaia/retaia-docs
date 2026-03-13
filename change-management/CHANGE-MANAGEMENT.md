@@ -1,6 +1,6 @@
-# CHANGE MANAGEMENT — Retaia Core + Retaia Agent
+# CHANGE MANAGEMENT — Retaia
 
-Ce document définit les **règles de gestion du changement** du projet Retaia Core + Retaia Agent.
+Ce document définit les **règles de gestion du changement** du projet Retaia.
 
 Il vise à garantir la **stabilité à long terme**, la **prévisibilité du comportement**, et l’absence de surprises lors des évolutions.
 

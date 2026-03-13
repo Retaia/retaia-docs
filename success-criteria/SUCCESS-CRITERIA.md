@@ -1,6 +1,6 @@
-# SUCCESS CRITERIA — Retaia Core + Retaia Agent
+# SUCCESS CRITERIA — Retaia
 
-Ce document définit les **critères de succès mesurables** du projet Retaia Core + Retaia Agent.
+Ce document définit les **critères de succès mesurables** du projet Retaia, organisé en plusieurs applications spécialisées.
 
 Le succès n’est pas défini par la richesse fonctionnelle, mais par la **confiance d’usage**, la **robustesse dans le temps** et la **réduction des erreurs humaines**.
 
@@ -76,8 +76,9 @@ Le projet est considéré comme réussi si :
 
 ### 8) Séparation des responsabilités
 
-* NAS = inventaire, décisions, moves.
-* Clients = compute only.
+* Core = inventaire, décisions, moves.
+* NAS = support de stockage piloté par Core.
+* Clients techniques = compute, orchestration ou review selon leur rôle, jamais source de vérité métier.
 * UI = client API, aucun accès direct au filesystem.
 
 
@@ -85,7 +86,7 @@ Le projet est considéré comme réussi si :
 
 * L’API est versionnée.
 * Toute rupture introduit une nouvelle version.
-* UI, Retaia Agent et futurs clients consomment la même API.
+* UI web, `AGENT_UI`, agent daemon, MCP et futurs clients consomment la même API.
 
 
 ### 10) Performance maîtrisée

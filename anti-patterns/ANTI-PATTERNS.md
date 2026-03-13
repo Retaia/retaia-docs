@@ -1,6 +1,6 @@
-# ANTI-PATTERNS — Retaia Core + Retaia Agent
+# ANTI-PATTERNS — Retaia
 
-Ce document liste les **anti-patterns explicitement interdits** dans le projet Retaia Core + Retaia Agent.
+Ce document liste les **anti-patterns explicitement interdits** dans le projet Retaia.
 
 Toute proposition, implémentation ou évolution qui enfreint ces règles est **considérée invalide par design**, même si elle semble "pratique" à court terme.
 

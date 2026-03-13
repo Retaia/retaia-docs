@@ -1,6 +1,6 @@
-# DEFINITIONS — Retaia Core + Retaia Agent
+# DEFINITIONS — Retaia
 
-Ce document définit les **termes normatifs** utilisés dans le projet Retaia Core + Retaia Agent.
+Ce document définit les **termes normatifs** utilisés dans le projet Retaia.
 
 Ces définitions **priment sur tout usage courant** ou interprétation implicite.
 

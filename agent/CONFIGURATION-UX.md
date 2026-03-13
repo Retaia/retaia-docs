@@ -9,11 +9,11 @@ Statut:
 
 ## 1) Objectif
 
-Garantir une configuration coherente entre GUI et CLI, y compris en environnement headless.
+Garantir une configuration coherente de `AGENT_UI` entre GUI et CLI, y compris en environnement headless.
 
 ## 2) Invariants
 
-* GUI et CLI partagent le meme contrat de configuration
+* `AGENT_UI` en GUI et CLI partage le meme contrat de configuration
 * les memes champs doivent etre disponibles dans les deux surfaces
 * la validation doit etre identique entre GUI et CLI
 * une configuration invalide ne doit pas etre consideree comme appliquee

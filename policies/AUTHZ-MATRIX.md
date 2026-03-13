@@ -1,4 +1,4 @@
-# Authz Matrix — Retaia Core + Retaia Agent
+# Authz Matrix — Retaia
 
 Ce document définit la matrice d'autorisation normative par endpoint, scope et état.
 
@@ -11,13 +11,13 @@ Ce document définit la matrice d'autorisation normative par endpoint, scope et 
 
 Acteurs normatifs :
 
-* `USER_INTERACTIVE` (client `UI_WEB` web app ou desktop `RUST_UI`, ou shell/CLI `AGENT` opéré par un humain pour bootstrap/administration)
+* `USER_INTERACTIVE` (client `UI_WEB` web app, ou `AGENT_UI` pour l'agent en CLI ou GUI)
 * `AGENT_TECHNICAL` (daemon/service non-interactif de processing)
 * `MCP_TECHNICAL` (client technique non-interactif d'orchestration MCP)
 * `TECHNICAL_ACTORS` = `AGENT_TECHNICAL|MCP_TECHNICAL`
 * `ADMIN_INTERACTIVE` (sous-ensemble `USER_INTERACTIVE` avec droits admin)
 * `client_kind` interactif: `UI_WEB|AGENT`; `client_kind` technique: `AGENT|MCP`
-* rollout projet global actif: `UI_WEB` (clients `UI_WEB_APP` + `RUST_UI`) et `MCP` (`MCP_CLIENT`) en v1.1
+* rollout projet global actif: `UI_WEB` (`UI_WEB_APP`), `AGENT` (`AGENT_UI`) et `MCP` (`MCP_CLIENT`) en v1.1
 * gate applicatif: `app_feature_enabled.features.ai=false` => acteur `client_kind=MCP` refusé (`403 FORBIDDEN_SCOPE`) sur bootstrap UI, auth API key et runtime
 
 ## 2) Matrice v1 (résumé)

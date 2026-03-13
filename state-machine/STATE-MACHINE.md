@@ -1,6 +1,6 @@
 # STATE MACHINE — MediaAsset Lifecycle (v2, proxy-first)
 
-Ce document définit la **machine à états formelle** des MediaAssets dans le système Retaia Core + Retaia Agent, version **proxy-first** avec Retaia Agent en **agent background**.
+Ce document définit la **machine à états formelle** des MediaAssets dans le système Retaia, version **proxy-first** avec traitement en arrière-plan par les agents.
 
 Il est **normatif** : toute implémentation doit respecter strictement ces états, transitions et interdictions.
 

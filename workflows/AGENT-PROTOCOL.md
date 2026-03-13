@@ -21,7 +21,7 @@ Portée d'exécution :
 * rollout projet global: le client applicatif `MCP_CLIENT` (mappé `client_kind=MCP`) est intégré à partir de la v1.1 globale
 * gate applicatif: `app_feature_enabled.features.ai=false` désactive le client `MCP` (bootstrap/token/runtime refusés)
 * un client `AGENT`/`MCP` DOIT appliquer `effective_feature_enabled` (pas de logique locale alternative)
-* un `AGENT` interactif opéré par un humain sert au bootstrap, au diagnostic ou à l'administration, pas au processing média
+* `AGENT_UI` est la surface interactive de l'agent, opérée par un humain pour le bootstrap, le diagnostic ou l'administration, pas pour le processing média
 
 
 ## 2. Principes fondamentaux
@@ -73,9 +73,11 @@ Règle d'identité d'instance :
 
 ### 3.2 Profils d’exécution (normatif)
 
-* l’agent DOIT fournir un mode `CLI` (obligatoire)
-* l’agent PEUT fournir un mode `GUI` (optionnel)
-* le mode `GUI` DOIT déléguer le processing au même moteur que `CLI` (mêmes capacités, mêmes règles)
+* l’agent DOIT fournir `AGENT_UI` en mode `CLI` (obligatoire)
+* l’agent PEUT fournir `AGENT_UI` en mode `GUI` (optionnel)
+* la `GUI` DOIT offrir les mêmes fonctionnalités opérateur que la `CLI`
+* la `CLI` DOIT réciproquement offrir les mêmes fonctionnalités opérateur que la `GUI`
+* les deux surfaces DOIVENT déléguer le processing au même moteur (mêmes capacités, mêmes règles)
 
 Support plateforme minimal attendu :
 
@@ -98,7 +100,7 @@ Pour éviter le code local à maintenir, cette règle s'applique à toute implé
 ### 3.3 Modes d’auth agent (normatif)
 
 * mode non-interactif (service/daemon): `client_id + secret_key -> POST /auth/clients/token`
-* mode interactif opéré par un humain (CLI/GUI): login utilisateur via `POST /auth/login` (+ 2FA si active)
+* mode interactif opéré via `AGENT_UI` (CLI/GUI): login utilisateur via `POST /auth/login` (+ 2FA si active)
 * un agent non-interactif NE DOIT PAS dépendre d’un login UI pour redémarrer
 
 Feature flags runtime :

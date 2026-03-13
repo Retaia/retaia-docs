@@ -1,4 +1,4 @@
-# Lock Lifecycle — Retaia Core + Retaia Agent
+# Lock Lifecycle — Retaia multi-apps
 
 Ce document définit le cycle de vie normatif des verrous.
 

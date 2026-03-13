@@ -1,4 +1,4 @@
-# Locking Matrix — Retaia Core + Retaia Agent
+# Locking Matrix — Retaia multi-apps
 
 Ce document définit la matrice normative de concurrence entre actions.
 

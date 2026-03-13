@@ -17,7 +17,7 @@ Objectif : fournir une surface stable consommée par :
 
 * client Agent (`AGENT`) — livré en v1 projet global
 * client UI web principal (`UI_WEB_APP`, `client_kind=UI_WEB`) — livré en v1.1 projet global
-* client UI desktop Rust/Tauri (`RUST_UI`, `client_kind=UI_WEB`) — livré en v1.1 projet global
+* client agent UI (`AGENT_UI`, `client_kind=AGENT`) — livré en v1.1 projet global
 * client MCP (`MCP_CLIENT`, `client_kind=MCP`) — livré en v1.1 projet global
 
 
@@ -47,7 +47,7 @@ Objectif : fournir une surface stable consommée par :
   * système `feature_flags` v1
 * `v1.1` (projet global) :
   * client `UI_WEB_APP` (mappé sur `client_kind=UI_WEB`)
-  * client `RUST_UI` (mappé sur `client_kind=UI_WEB`)
+  * client `AGENT_UI` (mappé sur `client_kind=AGENT`)
   * client `MCP_CLIENT` (mappé sur `client_kind=MCP`)
 * `v1.2` : piste reservee, actuellement non planifiee au produit
 
@@ -217,18 +217,19 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 
 ### Typologie des acteurs (normatif)
 
-* `USER_INTERACTIVE` : utilisateur humain connecté via client `UI_WEB` (web app ou desktop `RUST_UI`) ou via un shell/CLI `AGENT` opéré manuellement pour bootstrap/administration
+* `USER_INTERACTIVE` : utilisateur humain connecté via client `UI_WEB` (web app) ou via `AGENT_UI` (`client_kind=AGENT`, surfaces CLI ou GUI) pour bootstrap, administration ou diagnostic
 * `AGENT_TECHNICAL` : agent daemon non-interactif (service) authentifié via bearer technique obtenu par `client_id + secret_key`
 * `MCP_TECHNICAL` : client MCP non-humain authentifié via bearer API key créée depuis l'UI par un utilisateur autorisé
 * `TECHNICAL_ACTORS` : alias générique couvrant `AGENT_TECHNICAL | MCP_TECHNICAL`
 * `client_kind` interactif est borné à `UI_WEB` ou `AGENT`; le mode technique autorise `AGENT` et `MCP`
-* rollout projet global actif : `UI_WEB` et `MCP` sont intégrés à partir de la v1.1 globale
+* rollout projet global actif : `UI_WEB`, `AGENT_UI` et `MCP` sont intégrés à partir de la v1.1 globale
 
 ### UI (humain)
 
 * Bearer token utilisateur obtenu via login (`POST /auth/login`)
 * l'interface de login est normative pour permettre l'obtention du token utilisateur
-* le `client_kind=UI_WEB` couvre l'UI web servie par Core et le client desktop Rust/Tauri (`RUST_UI`)
+* `client_kind=UI_WEB` couvre uniquement l'UI web servie par Core
+* `AGENT_UI` relève du `client_kind=AGENT`, avec parité fonctionnelle obligatoire entre surfaces CLI et GUI
 * le token UI est non exportable dans l'interface (jamais affiché en clair)
 * un utilisateur ne peut pas invalider son token UI depuis l'UI (anti lock-out)
 * l'UI DOIT supporter l'enrôlement 2FA TOTP via app externe (Authy, Google Authenticator, etc.)
@@ -761,9 +762,11 @@ Response :
 
 Normes d’exécution agent (obligatoires) :
 
-* un agent DOIT fournir un binaire `CLI` (mode headless Linux obligatoire)
-* un agent PEUT fournir une `GUI` pour usage desktop
-* si une `GUI` existe, elle DOIT déléguer au même moteur que la `CLI` (mêmes capabilities, mêmes contraintes protocole)
+* un agent DOIT fournir `AGENT_UI` en mode `CLI` (mode headless Linux obligatoire)
+* un agent PEUT aussi fournir `AGENT_UI` en mode `GUI` pour usage desktop
+* si une `GUI` existe, elle DOIT offrir les mêmes fonctionnalités opérateur que la `CLI`
+* la `CLI` DOIT réciproquement permettre les mêmes actions opérateur que la `GUI`
+* les surfaces `CLI` et `GUI` DOIVENT déléguer au même moteur (mêmes capabilities, mêmes contraintes protocole)
 * l’auth non-interactive agent DOIT fonctionner sans login humain (service/daemon)
 * support plateforme cible : Linux headless (Raspberry Pi Kodi/Plex), macOS laptop, Windows desktop
 

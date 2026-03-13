@@ -4,8 +4,8 @@ Ce document definit la signature obligatoire des artefacts de release.
 
 ## 1) Portee
 
-* binaire UI_RUST
-* binaire AGENT CLI/GUI
+* binaire UI_WEB si distribué hors navigateur
+* binaire AGENT_UI / AGENT CLI/GUI
 * packages et archives de distribution
 
 ## 2) Exigences MUST
