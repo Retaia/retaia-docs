@@ -13,11 +13,12 @@ Acteurs normatifs :
 
 * `USER_INTERACTIVE` (client `UI_WEB` web app ou desktop `RUST_UI`, ou shell/CLI `AGENT` opéré par un humain pour bootstrap/administration)
 * `AGENT_TECHNICAL` (daemon/service non-interactif de processing)
-* `CLIENT_TECHNICAL` (client technique non-interactif, incluant MCP)
+* `MCP_TECHNICAL` (client technique non-interactif d'orchestration MCP)
+* `TECHNICAL_ACTORS` = `AGENT_TECHNICAL|MCP_TECHNICAL`
 * `ADMIN_INTERACTIVE` (sous-ensemble `USER_INTERACTIVE` avec droits admin)
 * `client_kind` interactif: `UI_WEB|AGENT`; `client_kind` technique: `AGENT|MCP`
 * rollout projet global actif: `UI_WEB` (clients `UI_WEB_APP` + `RUST_UI`) et `MCP` (`MCP_CLIENT`) en v1.1
-* gate applicatif: `app_feature_enabled.features.ai=false` => acteur `client_kind=MCP` refusé (`403 FORBIDDEN_SCOPE`) sur bootstrap/token/runtime
+* gate applicatif: `app_feature_enabled.features.ai=false` => acteur `client_kind=MCP` refusé (`403 FORBIDDEN_SCOPE`) sur bootstrap UI, auth API key et runtime
 
 ## 2) Matrice v1 (résumé)
 
@@ -54,9 +55,15 @@ Acteurs normatifs :
 
 `GET /app/policy`
 
-* acteur: `USER_INTERACTIVE` ou `CLIENT_TECHNICAL`
-* scope: `UserBearerAuth` ou `OAuth2ClientCredentials`
+* acteur: `USER_INTERACTIVE|TECHNICAL_ACTORS`
+* scope: `UserBearerAuth` ou `TechnicalBearerAuth`
 * portée: retourne la policy runtime (`server_policy.feature_flags`)
+
+`POST /app/policy`
+
+* acteur: `ADMIN_INTERACTIVE`
+* scope: policy admin
+* portée: met à jour les `feature_flags` runtime quand ils sont DB-backed ou pilotés par un backend mutable équivalent
 
 `POST /auth/verify-email/admin-confirm`
 
@@ -71,15 +78,15 @@ Acteurs normatifs :
 
 `POST /auth/clients/token`
 
-* acteur: `CLIENT_TECHNICAL|AGENT_TECHNICAL`
+* acteur: `AGENT_TECHNICAL`
 * scope: aucun (auth par `client_id + secret_key`)
-* contrainte: `client_kind in {AGENT, MCP}` uniquement
+* contrainte: `client_kind=AGENT` uniquement
 
 `POST /auth/clients/device/start|poll|cancel`
 
-* acteur: `CLIENT_TECHNICAL|AGENT_TECHNICAL`
+* acteur: `AGENT_TECHNICAL`
 * scope: aucun
-* contrainte: `client_kind in {AGENT, MCP}` uniquement
+* contrainte: `client_kind=AGENT` uniquement
 
 Validation UI du device flow (`verification_uri*`)
 
@@ -90,7 +97,7 @@ Validation UI du device flow (`verification_uri*`)
 ### Assets / Derived
 
 * scopes: `assets:read`
-* acteurs: `USER_INTERACTIVE`, `AGENT_TECHNICAL`, `CLIENT_TECHNICAL`
+* acteurs: `USER_INTERACTIVE`, `AGENT_TECHNICAL`, `MCP_TECHNICAL`
 
 `PATCH /assets/{uuid}`
 

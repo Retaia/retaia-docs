@@ -124,7 +124,7 @@ Gouvernance des `app_feature_enabled` (opposable) :
 * modification (`PATCH /app/features`) : admin uniquement (`403 FORBIDDEN_ACTOR` / `FORBIDDEN_SCOPE` sinon)
 * portée : switches applicatifs globaux (pas des préférences locales client)
 * effet runtime obligatoire : un switch applicatif désactivé DOIT empêcher l’exécution des fonctionnalités associées pour le scope applicatif
-* règle MCP obligatoire : `app_feature_enabled.features.ai=false` DOIT désactiver le client `MCP` (bootstrap, token mint et appels authentifiés MCP refusés)
+* règle MCP obligatoire : `app_feature_enabled.features.ai=false` DOIT désactiver le client `MCP` (bootstrap UI, authentification API key et appels authentifiés MCP refusés)
 
 Gouvernance des `user_feature_enabled` (opposable) :
 
@@ -134,6 +134,14 @@ Gouvernance des `user_feature_enabled` (opposable) :
 * tentative de désactivation d’une feature `CORE_V1_GLOBAL` => `403 FORBIDDEN_SCOPE`
 * effet runtime obligatoire : `user_feature_enabled=false` DOIT désactiver la feature pour l’utilisateur et appliquer la cascade de dépendances
 * valeur par défaut (migration-safe) : absence de clé `user_feature_enabled.<feature>` DOIT être interprétée comme `true`
+
+Gouvernance des `feature_flags` runtime (opposable) :
+
+* lecture (`GET /app/policy`) : `USER_INTERACTIVE` et `TECHNICAL_ACTORS`
+* modification (`POST /app/policy`) : admin uniquement (`UserBearerAuth` + policy admin)
+* portée : flags runtime globaux pilotés par Core
+* précondition d'écriture : applicable quand les `feature_flags` sont stockés en DB ou via un backend mutable équivalent
+* effet runtime obligatoire : un changement accepté DOIT être observable par les clients au prochain polling de `GET /app/policy`
 
 Catalogue de dépendances et escalade (opposable) :
 
@@ -205,8 +213,9 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 ### Typologie des acteurs (normatif)
 
 * `USER_INTERACTIVE` : utilisateur humain connecté via client `UI_WEB` (web app ou desktop `RUST_UI`) ou via un shell/CLI `AGENT` opéré manuellement pour bootstrap/administration
-* `CLIENT_TECHNICAL` : client non-humain authentifié par `client_id + secret_key`
-* `AGENT_TECHNICAL` : agent daemon non-interactif (service) authentifié par `client_id + secret_key` ou client-credentials OAuth2
+* `AGENT_TECHNICAL` : agent daemon non-interactif (service) authentifié via bearer technique obtenu par `client_id + secret_key`
+* `MCP_TECHNICAL` : client MCP non-humain authentifié via bearer API key créée depuis l'UI par un utilisateur autorisé
+* `TECHNICAL_ACTORS` : alias générique couvrant `AGENT_TECHNICAL | MCP_TECHNICAL`
 * `client_kind` interactif est borné à `UI_WEB` ou `AGENT`; le mode technique autorise `AGENT` et `MCP`
 * rollout projet global actif : `UI_WEB` et `MCP` sont intégrés à partir de la v1.1 globale
 
@@ -221,9 +230,10 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 
 ### Agents / MCP
 
-* modes non interactifs : bearer technique (`OAuth2ClientCredentials`)
+* modes non interactifs : bearer technique (`TechnicalBearerAuth`)
 * mode `AGENT` interactif : shell/CLI opéré par un humain pour bootstrap, approval ou diagnostics, avec bearer utilisateur via `POST /auth/login`
-* mode client applicatif non-interactif (`AGENT`, `MCP`) : `client_id + secret_key` pour obtenir un bearer token via `POST /auth/clients/token`
+* mode `AGENT_TECHNICAL` : `client_id + secret_key` pour obtenir un bearer token via `POST /auth/clients/token`
+* mode `MCP_TECHNICAL` : API key bearer créée depuis l'UI par un utilisateur autorisé, puis fournie lors de la configuration du client MCP
 * seul `AGENT_TECHNICAL` exécute les jobs de processing; un `AGENT` interactif ne claim pas de job et ne traite pas de média
 * `MCP` PEUT piloter/orchestrer l'agent (configuration, déclenchement, supervision) mais NE DOIT JAMAIS exécuter de traitement média
 * `MCP` est interdit sur les endpoints de processing `/jobs/*` (`claim`, `heartbeat`, `submit`) avec refus `403 FORBIDDEN_ACTOR`
@@ -236,15 +246,18 @@ Règles 2FA par client (obligatoire) :
 
 * la 2FA est optionnelle au niveau compte utilisateur
 * `UI_WEB` : login utilisateur (`/auth/login`) avec 2FA obligatoire uniquement si activée sur le compte
-* `AGENT` / `MCP` en mode technique (`/auth/clients/token`) : pas de 2FA directe au runtime
-* création d’un `secret_key` pour `AGENT`/`MCP` : DOIT passer par une validation utilisateur via UI
-* si 2FA est activée sur ce compte utilisateur, la validation UI de création `secret_key` DOIT exiger la 2FA
-* flow cible pour `AGENT`/`MCP` : type GitHub device authorization (ouverture URL navigateur, auth UI, validation 2FA optionnelle, approval explicite)
+* `AGENT_TECHNICAL` / `MCP_TECHNICAL` au runtime : pas de 2FA directe
+* création d’un `secret_key` pour `AGENT_TECHNICAL` : DOIT passer par une validation utilisateur via UI
+* création d’une API key pour `MCP_TECHNICAL` : DOIT passer par l’UI et une action explicite d’un utilisateur autorisé
+* si 2FA est activée sur ce compte utilisateur, la validation UI de création `secret_key` ou d’API key DOIT exiger la 2FA
+* flow cible `AGENT_TECHNICAL` : type GitHub device authorization (ouverture URL navigateur, auth UI, validation 2FA optionnelle, approval explicite)
+* `MCP_TECHNICAL` NE DOIT PAS pouvoir initier de login utilisateur ni de device flow en autonomie
 
 Règle de cardinalité des tokens (obligatoire) :
 
 * `USER_INTERACTIVE` : un même utilisateur PEUT avoir plusieurs tokens actifs simultanément sur des clients différents, avec contrainte stricte **1 token actif par `(user_id, client_id)`**
-* `CLIENT_TECHNICAL` / `AGENT_TECHNICAL` : contrainte stricte **1 token actif par `client_id`**
+* `AGENT_TECHNICAL` : contrainte stricte **1 token actif par `client_id`**
+* `MCP_TECHNICAL` : l'API key est un bearer technique persistant, révocable et rotatable via UI; Core DOIT tracer quel utilisateur l'a créée
 * émission d'un nouveau token pour la même clé de cardinalité => révocation immédiate du token précédent
 
 #### Scopes (base)
@@ -259,7 +272,7 @@ Règle de cardinalité des tokens (obligatoire) :
 * `purge:execute` (**humain uniquement**)
 
 La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md).
-`openapi/v1.yaml` déclare explicitement les schémas de sécurité (`UserBearerAuth`, `OAuth2ClientCredentials`) et les scopes requis par endpoint.
+`openapi/v1.yaml` déclare explicitement les schémas de sécurité (`UserBearerAuth`, `TechnicalBearerAuth`) et les exigences de sécurité par endpoint.
 
 Migration obligatoire (anti dette technique) :
 
@@ -410,7 +423,7 @@ Normalisation des timestamps (normatif) :
 
 `GET /app/policy`
 
-* security: `UserBearerAuth` ou `OAuth2ClientCredentials`
+* security: `UserBearerAuth` ou `TechnicalBearerAuth`
 * paramètre optionnel: `client_feature_flags_contract_version`
 * effet: retourne `server_policy` (incluant `feature_flags`) pour clients interactifs et techniques
 * règle: `UI_WEB`, `AGENT` et `MCP` DOIVENT consommer cet endpoint pour la disponibilité runtime des features
@@ -419,6 +432,18 @@ Normalisation des timestamps (normatif) :
   * `200` succès
   * `401 UNAUTHORIZED`
   * `426 UNSUPPORTED_FEATURE_FLAGS_CONTRACT_VERSION`
+
+`POST /app/policy`
+
+* security: `UserBearerAuth`
+* prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
+* body requis: `{ feature_flags: { ... } }`
+* effet: met à jour les `feature_flags` runtime globaux quand ils sont persistés dans un backend mutable (DB ou équivalent)
+* réponses:
+  * `200` succès
+  * `401 UNAUTHORIZED`
+  * `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
+  * `422 VALIDATION_FAILED`
 
 `POST /auth/lost-password/request`
 
@@ -483,26 +508,24 @@ Normalisation des timestamps (normatif) :
 
 * security: aucune (`security: []`)
 * body requis: `{ client_id, client_kind, secret_key }`
-* `client_kind` autorisés: `AGENT | MCP` (`UI_WEB` exclu)
-* effet: émet un bearer token client
+* `client_kind` autorisé: `AGENT` (`UI_WEB` et `MCP` exclus)
+* effet: émet un bearer token technique pour `AGENT_TECHNICAL`
 * règle stricte: **1 token actif par client_id** (mint d’un nouveau token => révocation de l’ancien token pour ce client)
-* gate applicatif: si `app_feature_enabled.features.ai=false`, un `client_kind=MCP` DOIT être refusé (`403 FORBIDDEN_SCOPE`)
 * réponses:
   * `200` token client (`access_token`, `token_type=Bearer`, `expires_in?`, `client_id`, `client_kind`)
   * `401 UNAUTHORIZED` (credentials client invalides)
-  * `403 FORBIDDEN_ACTOR` (`client_kind` interactif refusé) ou `FORBIDDEN_SCOPE` (`MCP` désactivé par switch applicatif)
+  * `403 FORBIDDEN_ACTOR` (`client_kind` interactif ou `MCP` refusé)
   * `422 VALIDATION_FAILED`
   * `429 TOO_MANY_ATTEMPTS`
 
 `POST /auth/clients/device/start`
 
 * security: aucune (`security: []`)
-* body requis: `{ client_kind }` avec `client_kind in {AGENT, MCP}`
-* effet: démarre un flow d’autorisation device type GitHub
-* gate applicatif: si `app_feature_enabled.features.ai=false`, `client_kind=MCP` DOIT être refusé (`403 FORBIDDEN_SCOPE`)
+* body requis: `{ client_kind }` avec `client_kind=AGENT`
+* effet: démarre un flow d’autorisation device type GitHub pour bootstrap `AGENT_TECHNICAL`
 * réponses:
   * `200` (`device_code`, `user_code`, `verification_uri`, `verification_uri_complete`, `expires_in`, `interval`)
-  * `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
+  * `403 FORBIDDEN_ACTOR`
   * `422 VALIDATION_FAILED`
   * `429 TOO_MANY_ATTEMPTS`
 
@@ -513,7 +536,7 @@ Normalisation des timestamps (normatif) :
 * effet: récupère l’état du flow device
 * réponses:
   * `200` avec `status in {PENDING, APPROVED, DENIED, EXPIRED}`
-  * `APPROVED` retourne `client_id`, `client_kind`, `secret_key` (one-shot)
+  * `APPROVED` retourne `client_id`, `client_kind=AGENT`, `secret_key` (one-shot)
   * `400 INVALID_DEVICE_CODE`
   * `422 VALIDATION_FAILED`
   * `429 SLOW_DOWN` ou `TOO_MANY_ATTEMPTS` (poll trop fréquent)
@@ -528,7 +551,7 @@ Normalisation des timestamps (normatif) :
   * `400 INVALID_DEVICE_CODE` ou `EXPIRED_DEVICE_CODE`
   * `422 VALIDATION_FAILED`
 
-Séquence normative bootstrap `AGENT/MCP` (obligatoire) :
+Séquence normative bootstrap `AGENT_TECHNICAL` (obligatoire) :
 
 1. client technique lance `POST /auth/clients/device/start`
 2. client ouvre `verification_uri` (ou `verification_uri_complete`) dans le navigateur
@@ -538,18 +561,29 @@ Séquence normative bootstrap `AGENT/MCP` (obligatoire) :
 6. client technique poll `POST /auth/clients/device/poll` jusqu’à `APPROVED`/`DENIED`/`EXPIRED`
 7. en cas `APPROVED`, `secret_key` est retournée une seule fois, puis utilisée sur `POST /auth/clients/token`
 
+Séquence normative bootstrap `MCP_TECHNICAL` (obligatoire) :
+
+1. un utilisateur autorisé ouvre l'UI Core
+2. l'utilisateur crée une API key dédiée au client MCP
+3. si 2FA est activée sur le compte, validation OTP obligatoire
+4. l'API key est affichée une seule fois
+5. l'utilisateur la copie dans la configuration du client MCP
+6. le client MCP authentifie ensuite tous ses appels via `Authorization: Bearer <api_key>`
+7. le client MCP NE DOIT PAS initier `POST /auth/login` ni `POST /auth/clients/device/*`
+
 Matrice de migration v1 runtime (gelée) :
 
 * `POST /auth/clients/device/poll` :
   * les clients DOIVENT lire l’état depuis le payload `200` (`status`)
   * les clients NE DOIVENT PLUS interpréter `401`/`403` pour piloter le state machine device flow
 * `POST /auth/clients/token` :
-  * `client_kind=UI_WEB` DOIT retourner `403 FORBIDDEN_ACTOR`
+  * `client_kind in {UI_WEB, MCP}` DOIT retourner `403 FORBIDDEN_ACTOR`
   * `422` n’est plus autorisé pour ce cas de refus
 
 Règle de sécurité :
 
-* création de `secret_key` `AGENT/MCP` sans validation UI utilisateur est interdite
+* création de `secret_key` `AGENT_TECHNICAL` sans validation UI utilisateur est interdite
+* création d’une API key `MCP_TECHNICAL` hors UI utilisateur est interdite
 
 `POST /auth/clients/{client_id}/rotate-secret`
 
@@ -896,11 +930,22 @@ Objectif :
 * conteneur : `MP4` (`video/mp4`)
 * codec vidéo : `H.264/AVC` (`yuv420p`, progressif, non interlacé)
 * codec audio (si piste audio présente) : `AAC-LC` (`audio/mp4`, 44.1kHz ou 48kHz)
+* finalité : proxy de review navigateur, pas master intermédiaire
 * framerate : DOIT conserver le framerate source (tolérance max ±0.01 fps)
 * cadence : DOIT rester en `CFR` (constant frame rate) pour stabilité seek/timeline
-* dimensions : ratio d'aspect conservé, upscale interdit
+* dimensions :
+  * ratio d'aspect conservé, upscale interdit
+  * hauteur cible recommandée `720px`
+  * si la source est plus petite, conserver la hauteur source
+* bitrate vidéo :
+  * cible recommandée `2.5 Mbps`
+  * plage tolérée `1.5 Mbps` à `4 Mbps`
 * keyframe interval : maximum 2 secondes
 * fichier MP4 : `moov` atom placé en tête (fast start)
+* audio :
+  * stéréo maximum
+  * downmix multicanal autorisé pour compatibilité navigateur
+  * bitrate audio recommandé `128 kbps`
 
 `proxy_audio` (obligatoire pour audio) :
 
@@ -920,18 +965,32 @@ Objectif :
 
 * format : `JPEG` (`image/jpeg`) ou `WEBP` (`image/webp`)
 * espace couleur : `sRGB`
-* au moins une taille de preview web (ex: largeur 320px ou 480px) DOIT être fournie
+* taille preview par défaut : largeur `480px`
+* taille preview secondaire optionnelle : largeur `320px`
 * ratio d'aspect conservé, upscale interdit
+* qualité cible :
+  * `JPEG` qualité recommandée `80`
+  * `WEBP` qualité recommandée `75`
 * pour une vidéo, le thumb principal DOIT provenir d'une frame représentative déterminée par `thumbnail_profile`
   * vidéo courte = durée `< 120s` ; thumb principal à `max(1s, 10% de la durée)`
   * vidéo longue = durée `>= 120s` ; thumb principal à `5% de la durée`, avec fallback à `20s` si `5% > 20s`
 * si une heuristique légère détecte une frame noire ou de fondu au point cible, le moteur DOIT sélectionner une frame voisine plus représentative
 * un mode `storyboard` PEUT exiger `10` thumbs répartis régulièrement sur la durée utile, incluant le thumb principal
+* en mode `storyboard`, les thumbs DOIVENT être ordonnés chronologiquement
 
 `waveform` :
 
 * format : `JSON` (`application/json`) ou binaire léger documenté (`application/octet-stream`)
-* si JSON : amplitudes normalisées (0..1), séquence ordonnée, métadonnées min (`duration_ms`, `bucket_count`)
+* si JSON :
+  * amplitudes normalisées (0..1)
+  * séquence ordonnée
+  * métadonnées min (`duration_ms`, `bucket_count`)
+  * structure recommandée : `{"duration_ms": ..., "bucket_count": ..., "samples": [...] }`
+* génération :
+  * bucketisation régulière sur toute la durée
+  * `bucket_count` recommandé : `1000`
+  * `bucket_count` minimum : `100`
+  * chaque bucket DOIT être calculé avec une méthode stable pour toute l'implémentation (ex: pic absolu ou RMS)
 * absence de `waveform` NE DOIT PAS bloquer l'UI (fallback waveform locale déjà normative)
 
 Règle de cohérence source/dérivé (obligatoire) :

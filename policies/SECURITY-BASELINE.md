@@ -19,14 +19,15 @@ Objectif: en cas d'exfiltration partielle (DB, logs, token, backup), les donnée
 * toutes les erreurs 4xx/5xx exposées aux clients DOIVENT rester compatibles `ErrorResponse` (pas de stacktrace, pas de secret)
 * tous les tokens DOIVENT avoir `exp` borné et `jti` unique
 * tout endpoint mutateur DOIT appliquer authn + authz explicite (acteur + scope + contrainte d'état)
-* toute action de sécurité (login, logout, rotate-secret, revoke-token, 2FA enable/disable, approval device flow, `PATCH /app/features`) DOIT être auditée
+* toute action de sécurité (login, logout, rotate-secret, revoke-token, create/revoke API key, 2FA enable/disable, approval device flow, `PATCH /app/features`, `POST /app/policy`) DOIT être auditée
 
 ## 3) Gestion des secrets et credentials (MUST)
 
 * mot de passe utilisateur: hashé Argon2id (jamais stocké en clair)
-* `secret_key` client (`AGENT`/`MCP`): stockée hashée (jamais persistée en clair côté Core)
-* `secret_key` ne DOIT être affichée qu'une seule fois lors de l'émission/rotation
-* rotation de `secret_key` DOIT invalider immédiatement les tokens actifs du client ciblé
+* `secret_key` client `AGENT`: stockée hashée (jamais persistée en clair côté Core)
+* API key `MCP`: stockée hashée (jamais persistée en clair côté Core)
+* `secret_key` ou API key ne DOIT être affichée qu'une seule fois lors de l'émission/rotation
+* rotation de `secret_key` ou révocation/rotation d'API key DOIT invalider immédiatement les accès techniques associés
 * secrets de chiffrement serveur DOIVENT être gérés via KMS/HSM ou équivalent (pas en dur dans le code)
 
 ## 4) Tokens et sessions (MUST)
@@ -53,11 +54,12 @@ Objectif: en cas d'exfiltration partielle (DB, logs, token, backup), les donnée
 
 * `AGENT`:
   * mode interactif: login utilisateur (Bearer user)
-  * mode technique: `client_id + secret_key` ou client credentials OAuth2
-* `MCP`: mode technique uniquement (`client_id + secret_key` ou client credentials OAuth2)
-* création d'un `secret_key` technique DOIT passer par validation UI utilisateur (device flow)
-* si 2FA utilisateur est active, la validation UI de création `secret_key` DOIT exiger OTP
-* secret/token technique ne DOIT jamais être loggé
+  * mode technique: `client_id + secret_key -> POST /auth/clients/token`
+* `MCP`: mode technique uniquement via API key bearer créée depuis l'UI
+* création d'un `secret_key` `AGENT` DOIT passer par validation UI utilisateur (device flow)
+* création d'une API key `MCP` DOIT passer par l'UI utilisateur
+* si 2FA utilisateur est active, la validation UI de création `secret_key` ou d'API key DOIT exiger OTP
+* secret/token/API key technique ne DOIT jamais être loggé
 
 ## 7) Données et exfiltration (MUST)
 
@@ -71,7 +73,7 @@ Objectif: en cas d'exfiltration partielle (DB, logs, token, backup), les donnée
 
 ## 8) Contrôles anti-abus (MUST)
 
-* rate limiting sur login, reset password, verify email, device flow, token mint
+* rate limiting sur login, reset password, verify email, device flow agent, token mint agent et création d'API key UI
 * protection brute-force sur auth (backoff/temporisation et blocage progressif)
 * invalidation explicite en cas de credentials/tokens compromis
 * détection minimale d'anomalies (tentatives répétées, volumes anormaux, patterns d'échec)
@@ -90,7 +92,7 @@ Une livraison est non conforme si au moins un point ci-dessous échoue:
 * token/secrets observables en clair dans logs, UI ou telemetry
 * endpoint mutateur sans authz explicite
 * `SessionCookieAuth` réintroduit
-* `secret_key` persistée en clair
+* `secret_key` ou API key persistée en clair
 * rotation secret sans invalidation des tokens actifs
 * adresse/GPS/transcription lisible(s) en clair dans DB ou backup exfiltré
 

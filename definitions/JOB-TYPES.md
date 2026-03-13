@@ -129,6 +129,8 @@ Générer des vignettes à partir d’un média.
 * vidéo longue : frame de référence à `5% de la durée`, avec fallback à `20s` si `5% > 20s`
 * le moteur DOIT éviter les frames noires ou de fondu si une heuristique légère permet d'en sélectionner une voisine plus représentative
 * mode `storyboard` : produire `10` thumbs répartis de manière régulière sur la durée utile, incluant la frame représentative principale
+* les thumbs storyboard DOIVENT être triés chronologiquement
+* une légère marge de sécurité aux extrémités du média est autorisée pour éviter des frames d'ouverture/fermeture non représentatives
 * pour une image fixe, le thumb est dérivé directement de l'image source
 * pour un audio sans image, aucun thumb temporel n'est requis; seul le proxy/waveform couvre la review
 
@@ -141,6 +143,7 @@ Générer des vignettes à partir d’un média.
 * en mode vidéo par défaut : au moins un thumb `representative`
 * en mode `storyboard` : exactement `10` thumbs vidéo DOIVENT être produits
 * chaque thumb DOIT rester dérivable de manière déterministe à partir du `thumbnail_profile`
+* chaque thumb DOIT exposer un ordre stable dans le manifest dérivé
 
 **Invariants**
 
@@ -171,6 +174,15 @@ Extraire une waveform audio quand le `processing_profile` l'exige.
 **Expected outputs**
 
 * waveform_data
+
+`waveform_data` (minimum normatif) :
+
+* payload couvrant toute la durée audio
+* bucketisation temporelle régulière
+* `bucket_count` recommandé : `1000`
+* `bucket_count` minimum : `100`
+* amplitudes normalisées entre `0` et `1`
+* méthode d'agrégation stable dans une même implémentation
 
 **Invariants**
 

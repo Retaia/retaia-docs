@@ -97,7 +97,7 @@ Pour éviter le code local à maintenir, cette règle s'applique à toute implé
 
 ### 3.3 Modes d’auth agent (normatif)
 
-* mode non-interactif (service/daemon): `client_id + secret_key -> POST /auth/clients/token` ou OAuth2 client-credentials
+* mode non-interactif (service/daemon): `client_id + secret_key -> POST /auth/clients/token`
 * mode interactif opéré par un humain (CLI/GUI): login utilisateur via `POST /auth/login` (+ 2FA si active)
 * un agent non-interactif NE DOIT PAS dépendre d’un login UI pour redémarrer
 

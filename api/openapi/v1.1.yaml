@@ -389,7 +389,7 @@ paths:
         Clients may optionally send their supported feature-flags contract version for compatibility negotiation.
       security:
         - UserBearerAuth: []
-        - OAuth2ClientCredentials: []
+        - TechnicalBearerAuth: []
       parameters:
         - name: client_feature_flags_contract_version
           in: query
@@ -414,6 +414,45 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "426":
           description: Unsupported feature-flags contract version (`UNSUPPORTED_FEATURE_FLAGS_CONTRACT_VERSION`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      tags: [Auth]
+      summary: Update runtime app policy
+      description: |
+        Updates runtime `feature_flags` when they are persisted in a mutable backend controlled by Core.
+        Requires `UserBearerAuth` and an authenticated admin actor, per AUTHZ matrix.
+      security:
+        - UserBearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppPolicyUpdateRequest"
+      responses:
+        "200":
+          description: Updated runtime app policy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppPolicyResponse"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden actor or scope (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
           content:
             application/json:
               schema:
@@ -611,9 +650,8 @@ paths:
       summary: Mint client bearer token from secret key
       description: |
         Exchanges `(client_id, secret_key)` for a bearer token.
-        Normative rule: one active token per technical client_id; minting a new token revokes the previous one.
-        This endpoint is for technical non-interactive clients only.
-        Runtime gate: when `app_feature_enabled.features.ai=false`, `client_kind=MCP` MUST be rejected.
+        Normative rule: one active token per AGENT technical client_id; minting a new token revokes the previous one.
+        This endpoint is for `AGENT_TECHNICAL` only.
       security: []
       requestBody:
         required: true
@@ -635,7 +673,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "403":
-          description: Forbidden client kind or disabled app switch for this flow (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`)
+          description: Forbidden client kind for this flow (`FORBIDDEN_ACTOR`)
           content:
             application/json:
               schema:
@@ -658,9 +696,8 @@ paths:
       tags: [Auth]
       summary: Start device authorization flow for technical client bootstrap
       description: |
-        Starts a browser-assisted authorization flow (GitHub-style) for `AGENT`/`MCP`.
+        Starts a browser-assisted authorization flow (GitHub-style) for `AGENT_TECHNICAL`.
         User validation (and optional 2FA) happens via `verification_uri`.
-        Runtime gate: when `app_feature_enabled.features.ai=false`, `client_kind=MCP` MUST be rejected.
       security: []
       requestBody:
         required: true
@@ -676,7 +713,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/AuthDeviceStartResponse"
         "403":
-          description: Forbidden actor or disabled app switch (`FORBIDDEN_ACTOR` or `FORBIDDEN_SCOPE`)
+          description: Forbidden actor (`FORBIDDEN_ACTOR`)
           content:
             application/json:
               schema:
@@ -808,7 +845,7 @@ paths:
       summary: List assets
       security:
         - UserBearerAuth: []
-        - OAuth2ClientCredentials: ["assets:read"]
+        - TechnicalBearerAuth: []
       parameters:
         - name: state
           in: query
@@ -921,7 +958,7 @@ paths:
       summary: Get one asset detail
       security:
         - UserBearerAuth: []
-        - OAuth2ClientCredentials: ["assets:read"]
+        - TechnicalBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
       responses:
@@ -980,7 +1017,7 @@ paths:
       tags: [Agents]
       summary: Register a processing agent
       security:
-        - OAuth2ClientCredentials: ["jobs:claim"]
+        - TechnicalBearerAuth: []
       requestBody:
         required: true
         content:
@@ -1099,7 +1136,7 @@ paths:
       tags: [Jobs]
       summary: List claimable jobs for the authenticated agent
       security:
-        - OAuth2ClientCredentials: ["jobs:claim"]
+        - TechnicalBearerAuth: []
       description: |
         Returns jobs with status `pending`
         and compatible with the agent capabilities.
@@ -1124,7 +1161,7 @@ paths:
       tags: [Jobs]
       summary: Claim a job (atomic lease)
       security:
-        - OAuth2ClientCredentials: ["jobs:claim"]
+        - TechnicalBearerAuth: []
       parameters:
         - name: job_id
           in: path
@@ -1152,7 +1189,7 @@ paths:
       tags: [Jobs]
       summary: Extend job lease
       security:
-        - OAuth2ClientCredentials: ["jobs:heartbeat"]
+        - TechnicalBearerAuth: []
       parameters:
         - name: job_id
           in: path
@@ -1194,7 +1231,7 @@ paths:
       description: |
         Submits one job result patch.
       security:
-        - OAuth2ClientCredentials: ["jobs:submit"]
+        - TechnicalBearerAuth: []
       parameters:
         - name: job_id
           in: path
@@ -1235,7 +1272,7 @@ paths:
       tags: [Jobs]
       summary: Mark job as failed
       security:
-        - OAuth2ClientCredentials: ["jobs:submit"]
+        - TechnicalBearerAuth: []
       parameters:
         - name: job_id
           in: path
@@ -1287,7 +1324,7 @@ paths:
         - `proxy_photo` / `thumb`: `image/jpeg` or `image/webp`.
         - `waveform`: `application/json` (preferred) or `application/octet-stream`.
       security:
-        - OAuth2ClientCredentials: ["jobs:submit"]
+        - TechnicalBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -1325,7 +1362,7 @@ paths:
       tags: [Derived]
       summary: Upload one part
       security:
-        - OAuth2ClientCredentials: ["jobs:submit"]
+        - TechnicalBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
       requestBody:
@@ -1355,7 +1392,7 @@ paths:
       tags: [Derived]
       summary: Complete derived upload
       security:
-        - OAuth2ClientCredentials: ["jobs:submit"]
+        - TechnicalBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -1389,7 +1426,7 @@ paths:
       summary: List available derived files for one asset
       security:
         - UserBearerAuth: []
-        - OAuth2ClientCredentials: ["assets:read"]
+        - TechnicalBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
       responses:
@@ -1413,7 +1450,7 @@ paths:
       summary: Fetch one derived file by kind
       security:
         - UserBearerAuth: []
-        - OAuth2ClientCredentials: ["assets:read"]
+        - TechnicalBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
         - name: kind
@@ -2167,19 +2204,14 @@ components:
       scheme: bearer
       bearerFormat: JWT
       description: User bearer token used by human-operated interactive clients.
-    OAuth2ClientCredentials:
-      type: oauth2
-      flows:
-        clientCredentials:
-          tokenUrl: /api/v1/oauth/token
-          scopes:
-            assets:read: Read assets and derived metadata.
-            assets:write: Update human metadata and trigger reprocess.
-            decisions:write: Apply human decisions.
-            jobs:claim: Discover and claim jobs.
-            jobs:heartbeat: Extend job leases.
-            jobs:submit: Submit job completion/failure and derived uploads.
-            purge:execute: Preview and execute purge operations.
+    TechnicalBearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque
+      description: |
+        Technical bearer credential for non-human clients.
+        `AGENT_TECHNICAL` uses a bearer token minted from `(client_id, secret_key)`.
+        `MCP_TECHNICAL` uses a bearer API key created from the UI by an authorized user.
 
   parameters:
     UuidPath:
@@ -2400,8 +2432,8 @@ components:
 
     NonUiClientKind:
       type: string
-      description: Allowed client kinds for technical secret-key token minting.
-      enum: [AGENT, MCP]
+      description: Allowed client kinds for AGENT technical secret-key token minting.
+      enum: [AGENT]
 
     AuthRotateClientSecretResponse:
       type: object
@@ -2704,6 +2736,14 @@ components:
       properties:
         server_policy:
           $ref: "#/components/schemas/ServerPolicy"
+
+    AppPolicyUpdateRequest:
+      type: object
+      additionalProperties: false
+      required: [feature_flags]
+      properties:
+        feature_flags:
+          $ref: "#/components/schemas/FeatureFlags"
 
     AssetState:
       type: string
