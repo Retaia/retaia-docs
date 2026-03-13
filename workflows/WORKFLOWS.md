@@ -111,7 +111,7 @@ Retaia Agent
 5. Générer les dérivés en local temporaire côté agent :
 
    * VIDEO : proxy (obligatoire), thumbs
-   * AUDIO : proxy (obligatoire), waveform (recommandé)
+   * AUDIO : proxy (obligatoire), waveform (obligatoire)
    * PHOTO : proxy (obligatoire), thumbs
 6. Uploader les dérivés via l'API (`/assets/{uuid}/derived/upload/*`).
 7. Enregistrer les références de dérivés côté serveur.

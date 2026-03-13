@@ -103,7 +103,8 @@ Pour éviter le code local à maintenir, cette règle s'applique à toute implé
 
 Feature flags runtime :
 
-* l’agent DOIT consommer les `feature_flags` renvoyés par Core (au minimum via `POST /agents/register`)
+* l’agent DOIT consommer les `feature_flags` renvoyés par Core via `GET /app/policy` (canal runtime canonique)
+* `POST /agents/register` PEUT transporter un snapshot initial de compatibilité, mais NE DOIT PAS remplacer le refresh périodique via `GET /app/policy`
 * l’agent NE DOIT PAS hardcoder l’état des flags
 * un changement runtime de flag DOIT être appliqué sans rebuild agent
 * `feature_flags` ne remplacent pas les `capabilities` déclarées de l'agent

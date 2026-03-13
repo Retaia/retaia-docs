@@ -260,6 +260,7 @@ Tests obligatoires :
 * `audio_voice` exige `transcribe_audio`
 * changement de profil après claim exige reprocess
 * pour un profil audio qui exige `generate_audio_waveform`, son absence rend le flux processing non conforme
+* pour tout média avec piste audio exploitable, l'absence de `generate_audio_waveform` rend le flux processing non conforme
 
 ## 3.1) Audio waveform UX (client)
 
@@ -448,6 +449,8 @@ Tests obligatoires :
 
 * `q` (full-text) fonctionne en `v1`
 * `transcribe_audio`, `suggest_tags` et `suggested_tags*` sont hors périmètre v1 et planifiés en `v1.1+`
+* `transcribe_audio` devient obligatoire pour les profils qui l'exigent à partir de la phase `v1.1+` validée
+* avant cette phase validée, `transcribe_audio` PEUT être exercé en pré-release uniquement via `feature_flags`
 
 ## 8.3) Feature flags (général)
 

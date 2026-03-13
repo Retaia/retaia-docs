@@ -2,11 +2,11 @@
 
 ## Résumé du projet
 
-Retaia Core + Retaia Agent est un système **local-first** de gestion de médiathèque de production (vidéo, photo, audio), conçu pour fonctionner autour d’un **NAS comme centre de vérité**, avec du **processing distribué via des agents**.
+Retaia Core + Retaia Agent est un système **local-first** de gestion de médiathèque de production (vidéo, photo, audio), conçu pour fonctionner autour d’un **Core comme source de vérité métier** et d’un **NAS comme support de stockage**, avec du **processing distribué via des agents**.
 
 Le projet sépare strictement :
 
-* la **gestion, l’inventaire, les décisions et les déplacements** (centralisés sur le NAS via Retaia Core)
+* la **gestion, l’inventaire, les décisions et les déplacements** (orchestrés par Retaia Core, appliqués sur le NAS)
 * le **processing lourd** (réalisé en arrière-plan par des agents Retaia Agent sur desktop/laptop/raspberry‑pi)
 * la **review humaine**, effectuée via une UI web fluide reposant sur des **proxies/dérivés**
 
