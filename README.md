@@ -12,17 +12,14 @@ These rules are the first reading frame of the project. If a local implementatio
 4. Core as the Single Source of Truth for business logic
 5. NAS as storage only
 6. Bearer-only API
-7. No homemade crypto
-8. Standard crypto only
-9. Human and technical identity separation
-10. Polling as runtime truth
-11. Push never as source of truth
-12. Feature flags govern runtime
-13. Safe by default
-14. Explicit auth, authz and audit
-15. UI bulk, Core unitary
-16. Asymmetric technical identity
-17. A leak must not teach anything useful to an attacker
+7. Standard crypto only, never homemade
+8. Human and technical identity separation
+9. Polling as runtime truth, never push
+10. Feature flags govern runtime
+11. Safe by default
+12. Explicit auth, authz and audit
+13. UI bulk, Core unitary
+14. Asymmetric technical identity
 
 Canonical reference: [`GOLDEN-RULES.md`](GOLDEN-RULES.md)
 
