@@ -53,6 +53,11 @@ Exemples valides :
 * `llm.client.chatgpt@1` (**v1.1+ validated**, AI-powered; activable plus tôt sous `feature_flags`)
 * `llm.client.claude@1` (**v1.1+ validated**, AI-powered; activable plus tôt sous `feature_flags`)
 
+Règle de lecture :
+
+* `activable plus tôt sous feature_flags` = testable ou exploitable en pré-release
+* `v1.1+ validated` = fait partie de la baseline validée une fois la phase `v1.1+` officiellement ouverte
+
 La version suit une logique **major only** :
 
 * incrémentée uniquement en cas de rupture de contrat
@@ -63,7 +68,7 @@ La version suit une logique **major only** :
 Lors de son enregistrement, un agent **DOIT** déclarer explicitement :
 
 * son identifiant
-* sa plateforme (optionnel)
+* `os_name`, `os_version`, `arch` (optionnels mais fortement recommandés pour le debug)
 * la liste complète de ses capabilities
 
 Un agent ne peut **jamais** exécuter un job pour lequel il n’a pas déclaré la capability requise.

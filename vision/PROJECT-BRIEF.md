@@ -44,7 +44,7 @@ Il manque un outil qui respecte :
 
 * Centraliser l’inventaire média dans Core, sur un stockage NAS piloté
 * Garantir qu’aucun fichier incomplet n’est jamais traité
-* Automatiser le processing **sans action manuelle** via des agents en arrière‑plan
+* Automatiser le processing courant **sans action manuelle récurrente** via des agents en arrière‑plan, tout en gardant l’enrôlement, l’approval et les actions sensibles sous contrôle humain
 * Permettre une **review fluide via proxies** après processing
 * Séparer strictement **facts**, **suggestions** et **decisions**
 * Permettre un tri humain clair (KEEP / REJECT)
