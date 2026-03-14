@@ -46,10 +46,15 @@ Mode par defaut (obligatoire):
 
 Mode avance (optionnel):
 
-* l'utilisateur PEUT connecter un agent PGP externe (`gpg-agent`/equivalent)
-* l'utilisateur PEUT utiliser ses cles existantes et son flux mail OpenPGP (import/publication/verification)
+* l'utilisateur PEUT connecter un agent PGP externe (`gpg-agent`/equivalent) pour des usages documentaires ou d'artefacts quand le parcours applicatif le supporte explicitement
+* l'utilisateur PEUT utiliser ses cles existantes pour import/publication/verification de documents ou artefacts OpenPGP
 * ce mode NE DOIT PAS etre pre-requis pour les parcours standard
 * si necessaire, ce mode peut etre livre en phase ulterieure sans bloquer la securite by default
+
+Contrainte applicative :
+
+* les identites techniques runtime (`AGENT_TECHNICAL`, `MCP_TECHNICAL`) gardent leurs propres cles applicatives locales
+* une cle utilisateur personnelle ou un flux mail OpenPGP NE DOIT PAS devenir implicitement l'identite runtime d'un client technique
 
 ## 6) Regles d'usage par donnee (MUST)
 

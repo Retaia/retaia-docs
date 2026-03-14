@@ -139,6 +139,16 @@ Caractéristiques :
 * review via proxies/dérivés (lecture fluide)
 * aucune dépendance SMB côté navigateur
 
+### AGENT_UI
+
+Rôle : surface humaine locale de l'agent, en CLI et éventuellement en GUI.
+
+Caractéristiques :
+
+* partage le même modèle de compte humain que `UI_WEB`
+* pilote le daemon local sans lui transférer implicitement l'identité utilisateur
+* peut converger fonctionnellement avec `UI_WEB` pour les parcours humains, sans fusionner avec `AGENT_TECHNICAL`
+
 
 ## Types de médias supportés
 

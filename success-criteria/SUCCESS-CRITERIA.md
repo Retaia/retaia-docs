@@ -80,7 +80,7 @@ Le projet est considéré comme réussi si :
 
 * Core = inventaire, décisions, moves.
 * NAS = support de stockage piloté par Core.
-* Clients techniques = compute, orchestration ou review selon leur rôle, jamais source de vérité métier.
+* Clients techniques = processing ou orchestration selon leur rôle, jamais review humaine ni source de vérité métier.
 * UI = client API, aucun accès direct au filesystem.
 
 
