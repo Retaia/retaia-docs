@@ -517,7 +517,7 @@ Tests obligatoires :
 * toute nouvelle feature est introduite derrière un flag
 * toute feature `v1.1+` est désactivée par défaut
 * source de vérité des flags = payload runtime de Core (`server_policy.feature_flags`), jamais un hardcode client
-* canal runtime flags défini dans le contrat pour `AGENT`, `UI_WEB` et `MCP` via `GET /app/policy`; rollout client actif testé d’abord pour `AGENT` en v1, puis pour `UI_WEB` et `MCP` en v1.1
+* canal runtime flags défini dans le contrat pour `AGENT`, `UI_WEB` et `MCP` via `GET /app/policy`; le contrat existe dès v1 pour `AGENT_TECHNICAL`, puis le rollout produit global des clients `UI_WEB`, `AGENT_UI` et `MCP` est validé en v1.1
 * distinction opposable: `capabilities` (agent/client), `feature_flags` (Core), `app_feature_enabled` (application) et `user_feature_enabled` (utilisateur) sont testées séparément
 * règle AND validée: capability + flag requis pour exécuter une action feature
 * ordre d’arbitrage validé: `feature_flags` -> `app_feature_enabled` -> `user_feature_enabled` -> dépendances/escalade
@@ -529,7 +529,7 @@ Tests obligatoires :
 * `server_policy` expose l’état effectif des flags utiles aux agents
 * client feature OFF => UI/action API de la feature interdite
 * client feature ON => disponibilité immédiate sans redéploiement
-* `AGENT` applique les `feature_flags` runtime du Core dans le rollout v1 ; `UI_WEB` et `MCP` les appliquent dès leur rollout actif en v1.1
+* `AGENT_TECHNICAL` applique les `feature_flags` runtime du Core dès le contrat v1 ; `UI_WEB`, `AGENT_UI` et `MCP` les appliquent dans leur rollout produit global validé en v1.1
 
 Cas OFF/ON minimum :
 

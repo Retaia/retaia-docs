@@ -223,6 +223,7 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 * `TECHNICAL_ACTORS` : alias générique couvrant `AGENT_TECHNICAL | MCP_TECHNICAL`
 * `client_kind` interactif est borné à `UI_WEB` ou `AGENT`; le mode technique autorise `AGENT` et `MCP`
 * rollout projet global actif : `UI_WEB`, `AGENT_UI` et `MCP` sont intégrés à partir de la v1.1 globale
+* distinction de lecture obligatoire : l'existence du contrat runtime `feature_flags` dès v1 pour `AGENT_TECHNICAL` ne signifie pas que le rollout produit global de `UI_WEB`, `AGENT_UI` et `MCP` est déjà actif en v1
 
 ### UI (humain)
 

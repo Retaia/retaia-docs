@@ -11,7 +11,7 @@ Le projet sépare strictement plusieurs applications spécialisées :
 * la **gestion, l’inventaire, les décisions et les déplacements** (orchestrés par Retaia Core, appliqués sur le NAS)
 * le **processing lourd** (réalisé en arrière-plan par les agents)
 * la **review humaine**, effectuée via une UI web fluide reposant sur des **proxies/dérivés**
-* l’**orchestration outillée**, via un client MCP distinct quand ce mode est activé
+* l’**orchestration outillée**, via un client MCP distinct, dont les fonctions dépendantes de l’AI sont gouvernées par feature flags
 
 L’objectif est de construire un système **fiable, durable et compréhensible dans le temps**, qui respecte la décision humaine et la souveraineté des données.
 
