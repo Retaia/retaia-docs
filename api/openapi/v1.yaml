@@ -1346,7 +1346,12 @@ paths:
           application/json:
             schema:
               type: object
+              required: [based_on_updated_at]
               properties:
+                based_on_updated_at:
+                  type: string
+                  format: date-time
+                  description: Last `updated_at` value read by the client for optimistic concurrency control.
                 tags:
                   type: array
                   items:
@@ -1368,8 +1373,20 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Asset updated
+        "409":
+          description: State conflict (invalid transition or stale `based_on_updated_at`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "410":
           description: Asset is purged
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /agents/register:
     post:
@@ -1466,6 +1483,18 @@ paths:
       parameters:
         - $ref: "#/components/parameters/UuidPath"
         - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [based_on_updated_at]
+              properties:
+                based_on_updated_at:
+                  type: string
+                  format: date-time
+                  description: Last `updated_at` value read by the client for optimistic concurrency control.
       responses:
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
@@ -1476,7 +1505,13 @@ paths:
         "200":
           description: Reprocess accepted
         "409":
-          description: State conflict or idempotency conflict
+          description: State conflict or stale `based_on_updated_at`
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
           content:
             application/json:
               schema:
@@ -1490,6 +1525,18 @@ paths:
         - UserBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [based_on_updated_at]
+              properties:
+                based_on_updated_at:
+                  type: string
+                  format: date-time
+                  description: Last `updated_at` value read by the client for optimistic concurrency control.
       responses:
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
@@ -1500,7 +1547,17 @@ paths:
         "200":
           description: Asset reopened
         "409":
-          description: State conflict
+          description: State conflict or stale `based_on_updated_at`
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /jobs:
     get:
@@ -3346,7 +3403,7 @@ components:
 
     AssetSummary:
       type: object
-      required: [uuid, media_type, state, created_at]
+      required: [uuid, media_type, state, created_at, updated_at]
       additionalProperties: false
       properties:
         uuid:
@@ -3364,7 +3421,7 @@ components:
         updated_at:
           type: string
           format: date-time
-          nullable: true
+          description: Monotonic timestamp of the last accepted business mutation on this asset.
         captured_at:
           type: string
           format: date-time
@@ -3485,7 +3542,7 @@ components:
         updated_at:
           type: string
           format: date-time
-          nullable: true
+          description: Monotonic timestamp of the last accepted business mutation on this asset.
 
     AssetDecisions:
       type: object
@@ -3733,6 +3790,7 @@ components:
         details:
           type: object
           additionalProperties: true
+          description: May include endpoint-specific structured fields such as `current_updated_at` and `current_state` for asset state conflicts.
         retryable:
           type: boolean
         correlation_id:

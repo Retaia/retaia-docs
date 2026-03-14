@@ -794,6 +794,10 @@ Response :
 * `items: AssetSummary[]`
 * `next_cursor`
 
+Règle :
+
+* `AssetSummary.updated_at` est le timestamp canonique du dernier changement métier accepté sur l'asset
+
 ### GET `/assets/{uuid}`
 
 Fiche détaillée d’un asset.
@@ -806,6 +810,7 @@ Modifications humaines : tags/notes/custom fields + transitions d'état métier 
 
 Body (exemple) :
 
+* `based_on_updated_at: RFC3339 datetime` (précondition obligatoire de concurrence optimiste)
 * `tags: string[]`
 * `notes: string`
 * `fields: Record<string, any>`
@@ -814,6 +819,11 @@ Body (exemple) :
 Règles :
 
 * refuse si `state == PURGED`
+* `based_on_updated_at` DOIT reprendre exactement le `updated_at` lu précédemment par le client sur l'asset
+* la mutation exprime donc explicitement : "je me base sur cet état" (`based_on_updated_at`) et "je veux arriver à cet état" (`state` et/ou metadata)
+* si `based_on_updated_at` est absent, mal formé ou non parseable, Core DOIT refuser avec `422 VALIDATION_FAILED`
+* si `based_on_updated_at` ne correspond plus au `updated_at` courant de l'asset, Core DOIT refuser avec `409 STATE_CONFLICT`
+* la réponse d'erreur `409 STATE_CONFLICT` DOIT inclure au minimum `details.current_updated_at` et `details.current_state` pour permettre un rechargement propre côté client
 * la multi-sélection UI (ex: ajout d'un keyword) DOIT envoyer des appels unitaires `PATCH /assets/{uuid}` (un par asset)
 * transitions via `state` :
   * `DECISION_PENDING -> DECIDED_KEEP | DECIDED_REJECT`
@@ -821,15 +831,25 @@ Règles :
   * `DECIDED_REJECT -> DECISION_PENDING | DECIDED_KEEP | REJECTED`
 * toute transition non listée DOIT être refusée (`409 STATE_CONFLICT`)
 * mise à jour metadata (`tags/notes/fields`) et transition `state` peuvent être combinées dans un même `PATCH`
+* toute mutation validée DOIT mettre à jour `updated_at`
 * toute mutation validée DOIT être tracée dans l'historique de révisions de l'asset
 
 ### POST `/assets/{uuid}/reprocess` (humain)
 
 Déclenche un reprocess explicite.
 
+Body requis :
+
+* `based_on_updated_at: RFC3339 datetime` (précondition obligatoire de concurrence optimiste)
+
 Effet (normatif) :
 
 * autorisé uniquement si `state in {PROCESSED, ARCHIVED, REJECTED}`
+* `based_on_updated_at` DOIT reprendre exactement le `updated_at` lu précédemment par le client sur l'asset
+* si `based_on_updated_at` est absent, mal formé ou non parseable, Core DOIT refuser avec `422 VALIDATION_FAILED`
+* si `based_on_updated_at` est absent, mal formé ou non parseable, Core DOIT refuser avec `422 VALIDATION_FAILED`
+* si `based_on_updated_at` ne correspond plus au `updated_at` courant de l'asset, Core DOIT refuser avec `409 STATE_CONFLICT`
+* la réponse d'erreur `409 STATE_CONFLICT` DOIT inclure au minimum `details.current_updated_at` et `details.current_state`
 * invalide les données de processing (facts, dérivés, transcript, suggestions) via version bump
 * transition vers `READY`
 * force la revue : retour à `DECISION_PENDING` après nouveau `PROCESSED`
@@ -847,9 +867,17 @@ Règles (strictes) :
 
 ### POST `/assets/{uuid}/reopen`
 
+Body requis :
+
+* `based_on_updated_at: RFC3339 datetime` (précondition obligatoire de concurrence optimiste)
+
 Effet :
 
 * `ARCHIVED|REJECTED → DECISION_PENDING`
+* `based_on_updated_at` DOIT reprendre exactement le `updated_at` lu précédemment par le client sur l'asset
+* si `based_on_updated_at` est absent, mal formé ou non parseable, Core DOIT refuser avec `422 VALIDATION_FAILED`
+* si `based_on_updated_at` ne correspond plus au `updated_at` courant de l'asset, Core DOIT refuser avec `409 STATE_CONFLICT`
+* la réponse d'erreur `409 STATE_CONFLICT` DOIT inclure au minimum `details.current_updated_at` et `details.current_state`
 
 
 ## 4) Agents
