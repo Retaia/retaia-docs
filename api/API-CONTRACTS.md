@@ -227,7 +227,7 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 ### UI (humain)
 
 * `UI_WEB` DOIT utiliser `WebAuthn` comme mécanisme primaire d'authentification utilisateur
-* l'API reste bearer-only/stateless côté runtime :
+* l'API reste stateless/sessionless côté runtime :
   * `WebAuthn` sert à obtenir ou renouveler des tokens
   * les appels API métiers continuent via `Authorization: Bearer ...`
   * aucun retour à `SessionCookieAuth` n'est autorisé

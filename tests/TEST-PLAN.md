@@ -235,11 +235,11 @@ Matrice de migration v1 runtime (gelée) :
 * endpoints humains mutateurs exigent un bearer token (`UserBearerAuth`) conforme à la spec
 * même flux login/token validé sur clients interactifs: `UI_WEB` et `AGENT`
 * compatibilité UI validée:
-  * `UI_WEB_APP` utilise `WebAuthn` + bearer + refresh token comme auth primaire
+  * `UI_WEB` utilise `WebAuthn` + bearer + refresh token comme auth primaire
   * `AGENT_UI` utilise `POST /auth/login` + bearer dans un premier temps, puis peut adopter `WebAuthn` quand la surface le permet, sans changer le modèle de compte
   * `AGENT_TECHNICAL` n'utilise jamais `WebAuthn` au runtime
 * anti lock-out: l'UI n'expose jamais le token en clair et n'offre pas d'action d'auto-révocation du token UI actif (gate `v1.1` global)
-* régression interdite: aucun endpoint runtime n'accepte encore `SessionCookieAuth` (Bearer-only)
+* régression interdite: aucun endpoint runtime n'accepte encore `SessionCookieAuth` (API stateless/sessionless)
 * 2FA optionnelle: compte sans 2FA active ne requiert pas OTP
 * création de secret `AGENT` via UI (gate `v1.1` global):
   * sans 2FA active => approval UI sans OTP

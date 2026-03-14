@@ -34,7 +34,7 @@ Objectif: en cas d'exfiltration partielle (DB, logs, token, backup), les donnée
 
 ## 4) Tokens et sessions (MUST)
 
-* architecture bearer-only (pas de `SessionCookieAuth`)
+* architecture stateless/sessionless (pas de `SessionCookieAuth`)
 * token utilisateur: 1 token actif par `(user_id, client_id)`
 * token technique: 1 token actif par `client_id`
 * émission d'un nouveau token pour la même cardinalité => révocation immédiate de l'ancien
