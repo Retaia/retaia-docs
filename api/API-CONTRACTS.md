@@ -36,7 +36,7 @@ Objectif : fournir une surface stable consommée par :
 
 * `v1` = socle stable (ingestion, processing review, décision humaine, moves, purge, recherche full-text `q`).
 * `v1.1` = extensions compatibles.
-* Toute fonctionnalité AI-powered (ex: `transcribe_audio`, `suggest_tags`, filtres `suggested_tags*`) est hors périmètre de conformité v1 et planifiée en `v1.1+`.
+* Toute fonctionnalité dépendant de l'AI (ex: `transcribe_audio`, `suggest_tags`, filtres `suggested_tags*`) est hors périmètre de conformité v1 et planifiée en `v1.1+`.
 
 ### Versioning projet global (rollout)
 
@@ -217,7 +217,7 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 
 ### Typologie des acteurs (normatif)
 
-* `USER_INTERACTIVE` : utilisateur humain connecté via client `UI_WEB` (web app) ou via `AGENT_UI` (`client_kind=AGENT`, surfaces CLI ou GUI) pour bootstrap, administration ou diagnostic
+* `USER_INTERACTIVE` : utilisateur humain connecté via client `UI_WEB` (application web) ou via `AGENT_UI` (`client_kind=AGENT`, surfaces CLI ou GUI) pour bootstrap, administration ou diagnostic
 * `AGENT_TECHNICAL` : agent daemon non-interactif (service) authentifié via bearer technique obtenu par `client_id + secret_key`
 * `MCP_TECHNICAL` : client MCP non-humain authentifié via challenge/réponse asymétrique standard, après enrôlement de sa clé publique depuis l'UI par un utilisateur autorisé
 * `TECHNICAL_ACTORS` : alias générique couvrant `AGENT_TECHNICAL | MCP_TECHNICAL`
@@ -1693,7 +1693,7 @@ Le payload d’erreur normatif est défini dans [`ERROR-MODEL.md`](ERROR-MODEL.m
 
 ## 12) Décisions actées (v1.1)
 
-* Introduction des capacités AI-powered (`transcribe_audio`, `suggest_tags`, patch domains IA, enrichissements `AssetDetail`)
+* Introduction des capacités dépendant de l'AI (`transcribe_audio`, `suggest_tags`, patch domains IA, enrichissements `AssetDetail`)
 * Introduction de `suggested_tags=` et `suggested_tags_mode=`
 * Scope `suggestions:write` pour les flux AI dédiés
 * Multi-sélection UI : envoi d'appels unitaires `PATCH /assets/{uuid}`

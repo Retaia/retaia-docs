@@ -322,7 +322,7 @@ Il inclut :
 
 ## Transcription
 
-La **transcription** est un job AI-powered basé sur l'audio.
+La **transcription** est un job dépendant de l'AI basé sur l'audio.
 
 * basé sur l’audio
 * produit du texte

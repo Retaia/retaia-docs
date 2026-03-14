@@ -57,7 +57,7 @@ Il manque un outil qui respecte :
 * **Local-first** : aucune dépendance cloud
 * **Core = source de vérité métier et manager**
 * **NAS = support de stockage piloté par Core**
-* **Agent daemon = compute only**
+* **Agent daemon = calcul uniquement**
 * **Décisions humaines uniquement** pour KEEP / REJECT
 * **Review via proxies**, jamais via originaux SMB dans le navigateur
 * **Aucune action destructive implicite**

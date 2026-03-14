@@ -239,7 +239,7 @@ Produire une transcription (et éventuellement des timecodes) à partir de l’a
 
 ### 3.6 `suggest_tags`
 
-Disponibilité : **v1.1+** (AI-powered).
+Disponibilité : **v1.1+** (dépendant de l'AI).
 
 **Objectif**  
 Produire des suggestions de tags à partir des facts/transcript/metadata.

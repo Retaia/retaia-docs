@@ -11,7 +11,7 @@ Ce document définit la matrice d'autorisation normative par endpoint, scope et 
 
 Acteurs normatifs :
 
-* `USER_INTERACTIVE` (client `UI_WEB` web app, ou `AGENT_UI` pour l'agent en CLI ou GUI)
+* `USER_INTERACTIVE` (client `UI_WEB` application web, ou `AGENT_UI` pour l'agent en CLI ou GUI)
 * `AGENT_TECHNICAL` (daemon/service non-interactif de processing)
 * `MCP_TECHNICAL` (client technique non-interactif d'orchestration MCP)
 * `TECHNICAL_ACTORS` = `AGENT_TECHNICAL|MCP_TECHNICAL`

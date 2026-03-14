@@ -51,9 +51,9 @@ Jobs required :
 Jobs optional avant validation `v1.1+` :
 
 * `transcribe_audio`
-  (AI-powered, **v1.1+**, activable plus tôt uniquement sous `feature_flags`)
+  (dépendant de l'AI, **v1.1+**, activable plus tôt uniquement sous `feature_flags`)
 * `suggest_tags`
-  (AI-powered, **v1.1+**)
+  (dépendant de l'AI, **v1.1+**)
 
 Jobs required dès validation `v1.1+` :
 
@@ -74,9 +74,9 @@ Jobs required :
 Jobs optional avant validation `v1.1+` du profil :
 
 * `transcribe_audio`
-  (AI-powered, **v1.1+**, activable plus tôt uniquement sous `feature_flags`)
+  (dépendant de l'AI, **v1.1+**, activable plus tôt uniquement sous `feature_flags`)
 * `suggest_tags`
-  (AI-powered, **v1.1+**)
+  (dépendant de l'AI, **v1.1+**)
 
 Jobs required dès validation `v1.1+` du profil :
 
@@ -95,7 +95,7 @@ Jobs required :
 Jobs optional avant validation `v1.1+` :
 
 * `suggest_tags`
-  (AI-powered, **v1.1+**)
+  (dépendant de l'AI, **v1.1+**)
 
 Jobs forbidden :
 
