@@ -1998,17 +1998,6 @@ paths:
       parameters:
         - $ref: "#/components/parameters/UuidPath"
       responses:
-        "200":
-          description: Asset detail
-          headers:
-            ETag:
-              schema:
-                type: string
-              description: Canonical optimistic concurrency token for subsequent human mutations.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AssetDetail"
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
           content:
