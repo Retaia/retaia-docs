@@ -149,6 +149,7 @@ Pour éviter le code local à maintenir, cette règle s'applique à toute implé
 * un agent non-interactif NE DOIT PAS dépendre d’un login UI pour redémarrer
 * le bearer utilisateur obtenu via `AGENT_UI` appartient à l'acteur humain `USER_INTERACTIVE`; il NE DOIT PAS être réutilisé par le daemon `AGENT_TECHNICAL`
 * le daemon `AGENT_TECHNICAL` agit toujours sous sa propre identité technique (`agent_id` + clé OpenPGP + auth technique), jamais au nom implicite de l'utilisateur connecté dans `AGENT_UI`
+* `client_id + secret_key` autorise le client technique et permet de mint le bearer technique; une écriture mutatrice agent NE DOIT JAMAIS être acceptée sur cette seule base sans preuve `agent_id + OpenPGP + signature`
 * `AGENT_TECHNICAL` N'UTILISE JAMAIS `WebAuthn` au runtime
 
 Extension future user-scoped (réservée) :

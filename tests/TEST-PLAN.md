@@ -111,7 +111,7 @@ Tests obligatoires :
   * bearer absent/invalide => `401 UNAUTHORIZED`
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
   * body invalide => `422 VALIDATION_FAILED`
-  * `app_feature_enabled.features.ai=false` => `MCP` désactivé globalement
+  * `app_feature_enabled.features.ai=false` => seules les fonctionnalités MCP dépendantes de l’AI sont désactivées
 * `GET /auth/me/features`:
   * bearer valide => `200` + `user_feature_enabled` + `effective_feature_enabled` + `feature_governance`
   * payload stable obligatoire: `user_feature_enabled`, `effective_feature_enabled`, `feature_governance`, `core_v1_global_features`
@@ -310,8 +310,8 @@ Tests obligatoires :
 Tests obligatoires :
 
 * `PROCESSED` atteint uniquement quand jobs `required` du profil sont complets
-* `audio_music` n'exige pas `transcribe_audio`
-* `audio_voice` exige `transcribe_audio`
+* avant validation `v1.1+`, `transcribe_audio` peut être activé plus tôt sous `feature_flags`
+* dès validation `v1.1+`, tout média avec piste audio exploitable exige `transcribe_audio` pour atteindre `PROCESSED`
 * changement de profil après claim exige reprocess
 * pour un profil audio qui exige `generate_audio_waveform`, son absence rend le flux processing non conforme
 * pour tout média avec piste audio exploitable, l'absence de `generate_audio_waveform` rend le flux processing non conforme
@@ -507,7 +507,7 @@ Tests obligatoires :
 
 * `q` (full-text) fonctionne en `v1`
 * `transcribe_audio`, `suggest_tags` et `suggested_tags*` sont hors périmètre v1 et planifiés en `v1.1+`
-* `transcribe_audio` devient obligatoire pour les profils qui l'exigent à partir de la phase `v1.1+` validée
+* `transcribe_audio` devient obligatoire à partir de la phase `v1.1+` validée pour tout média avec piste audio exploitable
 * avant cette phase validée, `transcribe_audio` PEUT être exercé en pré-release uniquement via `feature_flags`
 
 ## 8.3) Feature flags (général)
@@ -537,10 +537,10 @@ Cas OFF/ON minimum :
 * flag ON + capability manquante côté agent => job non exécutable (`pending`/refus selon policy)
 * `UI_WEB` : OFF masque/neutralise la feature, ON l’active au prochain refresh flags
 * `AGENT` : OFF interdit job/patch liés à la feature, ON les autorise sans rebuild agent
-* `MCP` : OFF interdit les commandes/actions liées à la feature, ON les autorise sans redéploiement MCP
+* `MCP` : OFF interdit uniquement les commandes/actions MCP dépendantes de la feature, ON les autorise sans redéploiement MCP
 * `UI_WEB` se base uniquement sur `effective_feature_enabled` (pas de décision locale sur flags bruts)
-* `app_feature_enabled.features.ai=OFF` : client `MCP` entièrement désactivé (bootstrap/token/appels runtime refusés)
-* `app_feature_enabled.features.ai=ON` : client `MCP` autorisé selon matrice authz et capabilities
+* `app_feature_enabled.features.ai=OFF` : client `MCP` reste utilisable pour l’orchestration non-AI autorisée, mais les fonctions MCP dépendantes de l’AI sont refusées
+* `app_feature_enabled.features.ai=ON` : fonctions MCP dépendantes de l’AI autorisées selon matrice authz et capabilities
 * `user_feature_enabled.features.ai=OFF` : fonctionnalités AI désactivées pour l’utilisateur courant sans impact global
 * admin remet ON une feature globalement après opt-out user => l’utilisateur concerné reste OFF
 * tentative d’opt-out utilisateur sur une feature `CORE_V1_GLOBAL` => refus `403 FORBIDDEN_SCOPE`
@@ -710,3 +710,5 @@ Tests obligatoires :
 * [LOCK-LIFECYCLE.md](../policies/LOCK-LIFECYCLE.md)
 * [CODE-QUALITY.md](../change-management/CODE-QUALITY.md)
 * [I18N-LOCALIZATION.md](../policies/I18N-LOCALIZATION.md)
+
+* `MCP` ne peut jamais exécuter `DELETE`, `purge` ni aucune action destructive équivalente (`403 FORBIDDEN_ACTOR`)

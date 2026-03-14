@@ -58,7 +58,8 @@ Objectif: en cas d'exfiltration partielle (DB, logs, token, backup), les donnée
 
 * `AGENT`:
   * mode interactif: login utilisateur (Bearer user), puis `WebAuthn` quand la surface le permet
-  * mode technique: `client_id + secret_key -> POST /auth/clients/token`
+* mode technique: `client_id + secret_key -> POST /auth/clients/token`
+* pour `AGENT_TECHNICAL`, `client_id + secret_key` autorise le client et permet de mint le bearer technique; la preuve forte d'instance pour les écritures mutatrices reste `agent_id + OpenPGP + signature`
   * mode technique: n'utilise jamais `WebAuthn` au runtime
 * `MCP`: mode technique asymétrique standard, avec clé publique enregistrée côté Core, clé privée locale côté client et signatures obligatoires sur écritures sensibles
 * création d'un `secret_key` `AGENT` DOIT passer par validation UI utilisateur (device flow)

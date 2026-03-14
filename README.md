@@ -93,7 +93,7 @@ Changes must follow this order:
 
 ## Versioning and governance
 
-- v1 is contract-first and Bearer-only.
+- v1 is contract-first and API stateless/sessionless.
 - No legacy behavior before v1 publication.
 - Feature lifecycle and compatibility are governed by specs/policies.
 - Branch policy: rebase on `master`, linear history, PR-only integration.

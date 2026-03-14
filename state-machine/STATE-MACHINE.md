@@ -166,11 +166,13 @@ Ces flags existent dans la DB et sont mis à jour par les jobs.
 * `processing_profile` (string) — ex: `video_standard`, `audio_music`, `audio_voice`
 * `review_processing_version` (string/int)
 
-### Transcription (job secondaire)
+### Transcription
 
 * `transcript_status` = `NONE | RUNNING | DONE | FAILED`
 * `transcript_version`
 * `transcript_updated_at`
+* à partir de la phase `v1.1+` validée, la transcription devient un prérequis de `PROCESSED` pour tout média avec piste audio exploitable
+* avant cette phase validée, elle PEUT être activée plus tôt sous `feature_flags` sans modifier la conformité v1
 
 ### Suggestions (tags)
 
@@ -187,10 +189,9 @@ Règle : aucune suggestion ne modifie automatiquement les décisions ou tags val
 
 Après `PROCESSED`, le serveur peut rendre éligible :
 
-* `transcribe_audio` (si profil audio et activé)
 * `suggest_tags` (**v1.1+**, LLM, basé sur transcript + metadata)
 
-Ces jobs ne changent pas l’état principal.
+Règle : dès que la phase `v1.1+` validée rend `transcribe_audio` obligatoire pour un média avec piste audio exploitable, cette transcription n'est plus un job secondaire post-review mais un prérequis de `PROCESSED`.
 
 ## Hooks autour de DECISION_PENDING
 

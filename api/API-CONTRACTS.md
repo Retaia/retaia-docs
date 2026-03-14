@@ -128,7 +128,7 @@ Gouvernance des `app_feature_enabled` (opposable) :
 * modification (`PATCH /app/features`) : admin uniquement (`403 FORBIDDEN_ACTOR` / `FORBIDDEN_SCOPE` sinon)
 * portée : switches applicatifs globaux (pas des préférences locales client)
 * effet runtime obligatoire : un switch applicatif désactivé DOIT empêcher l’exécution des fonctionnalités associées pour le scope applicatif
-* règle MCP obligatoire : `app_feature_enabled.features.ai=false` DOIT désactiver le client `MCP` (bootstrap UI, enrôlement de clé et appels authentifiés MCP refusés)
+* règle MCP obligatoire : `app_feature_enabled.features.ai=false` DOIT désactiver les fonctionnalités MCP dépendantes de l’AI, sans désactiver le client MCP dans son ensemble
 
 Gouvernance des `user_feature_enabled` (opposable) :
 
@@ -267,6 +267,8 @@ Modèle multi-device (obligatoire) :
 * une éventuelle délégation future de droits user-scoped vers `AGENT_TECHNICAL` DOIT être explicite, bornée dans le temps, liée à un `agent_id` et documentée comme un contrat séparé
 * `MCP` PEUT piloter/orchestrer l'agent (configuration, déclenchement, supervision) mais NE DOIT JAMAIS exécuter de traitement média
 * `MCP` est interdit sur les endpoints de processing `/jobs/*` (`claim`, `heartbeat`, `submit`) avec refus `403 FORBIDDEN_ACTOR`
+* `MCP` NE DOIT JAMAIS pouvoir exécuter une action destructive ou de suppression
+* cela inclut explicitement les endpoints de type `DELETE`, la purge (`/assets/{uuid}/purge`) et toute future opération destructive équivalente
 * `MCP_TECHNICAL` DOIT suivre les mêmes principes que l'agent :
   * pas d'implémentation crypto maison
   * standard existant
@@ -307,7 +309,7 @@ Règle de cardinalité des tokens (obligatoire) :
 * `jobs:heartbeat` (**agents uniquement**)
 * `jobs:submit` (**agents uniquement**)
 * `suggestions:write` (**v1.1+**, agents/MCP)
-* `purge:execute` (**humain uniquement**)
+* `purge:execute` (**humain uniquement**, jamais `MCP`)
 
 La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md).
 `openapi/v1.yaml` déclare explicitement les schémas de sécurité (`UserBearerAuth`, `TechnicalBearerAuth`) et les exigences de sécurité par endpoint.
@@ -316,7 +318,7 @@ Migration obligatoire (anti dette technique) :
 
 * `SessionCookieAuth` est retiré du contrat et est interdit pour toute nouvelle implémentation.
 * Core DOIT supprimer le code runtime lié au cookie session auth (`SessionCookieAuth`).
-* UI, Agent et MCP DOIVENT migrer vers Bearer-only et supprimer toute dépendance cookie.
+* UI, Agent et MCP DOIVENT migrer vers une API stateless/sessionless et supprimer toute dépendance cookie.
 
 Baseline sécurité/fuite (normatif) :
 

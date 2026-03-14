@@ -490,7 +490,7 @@ paths:
         Returns global app switches (`app_feature_enabled`).
         Also returns dependency/escalation metadata for deterministic client behavior.
         Effective global availability requires Core `feature_flags` AND `app_feature_enabled`.
-        Normative gate: when `app_feature_enabled.features.ai=false`, `client_kind=MCP` is disabled at runtime.
+        Normative gate: when `app_feature_enabled.features.ai=false`, only MCP functions that depend on AI are disabled at runtime.
         Admin-only endpoint.
         Runtime payload contract is stable: `app_feature_enabled`, `feature_governance`, `core_v1_global_features`.
       security:
@@ -3270,7 +3270,7 @@ components:
       description: |
         Application-level feature switches.
         Effective feature availability requires Core `FeatureFlags` AND `AppFeatureEnabled`.
-        `features.ai` controls MCP global availability (false => MCP disabled).
+        `features.ai` controls MCP AI-dependent capabilities (false => MCP AI-dependent functions disabled).
       additionalProperties:
         type: boolean
 
