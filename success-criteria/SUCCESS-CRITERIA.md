@@ -49,8 +49,10 @@ Le projet est considéré comme réussi si :
 ### 5) Déplacements sûrs et prévisibles
 
 * Aucun fichier n’est déplacé sans apply explicite.
-* Le bulk UI correspond aux assets modifiés mais non encore appliqués, sans ressource Core dédiée.
-* Tout bulk change passe par une validation explicite utilisateur dans l’UI.
+* Le bulk UI est une sélection multiple sur laquelle l’UI prépare une même mutation, sans ressource Core dédiée.
+* Pour les décisions `KEEP/REJECT`, le bulk à appliquer correspond explicitement aux assets en `DECIDED_KEEP|DECIDED_REJECT` non encore passés en `ARCHIVED|REJECTED`.
+* Pour les mutations metadata déjà persistées (ex: keywords), il n’existe pas de bulk Core “en attente”; la mutation est appliquée immédiatement asset par asset.
+* Toute action bulk UI passe par une validation explicite utilisateur avant émission des appels unitaires Core.
 * L’asset conserve un historique de révisions où une version validée/publiée peut coexister avec une version suivante en attente de validation.
 * Les collisions de noms sont gérées de manière déterministe.
 * Un rapport d’exécution par asset est toujours disponible.

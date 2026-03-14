@@ -150,7 +150,7 @@ Pour les capabilities dépendantes d'un provider/modèle (`llm.*`, `speech.trans
 * l'agent DOIT publier son inventaire provider/modèle disponible au runtime
 * si le provider/modèle requis n'est pas disponible localement, la capability DOIT être invalidée
 * si le provider/modèle est disponible localement mais non autorisé par Core policy, la capability DOIT être invalidée
-* Core ne maintient pas de catalogue runtime de modèles; seul l'agent est source de vérité d'inventaire local
+* Core ne maintient pas de catalogue runtime de modèles; seul l'agent maintient la référence locale de son inventaire provider/modèle disponible au runtime
 * l'agent PEUT supporter l'installation de modèle quand le provider local le permet
 
 ## Références associées
