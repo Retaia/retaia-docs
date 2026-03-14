@@ -18,7 +18,7 @@ Portée d'exécution :
 
 * seul un `AGENT_TECHNICAL` exécute les jobs de processing
 * un client `MCP` peut piloter/orchestrer mais ne traite jamais les médias
-* rollout projet global: le client applicatif `MCP_CLIENT` (mappé `client_kind=MCP`) est intégré à partir de la v1.1 globale
+* rollout projet global: le client applicatif `MCP` (mappé `client_kind=MCP`) est intégré à partir de la v1.1 globale
 * gate applicatif: `app_feature_enabled.features.ai=false` désactive le client `MCP` (bootstrap/token/runtime refusés)
 * un client `AGENT`/`MCP` DOIT appliquer `effective_feature_enabled` (pas de logique locale alternative)
 * `AGENT_UI` est la surface interactive de l'agent, opérée par un humain pour le bootstrap, le diagnostic, l'administration et les usages applicatifs humains
@@ -330,7 +330,7 @@ L’agent ne décide jamais de la stratégie globale de retry.
 * Les agents n’ont accès qu’aux endpoints nécessaires.
 * Les actions destructives (purge, move) ne sont jamais exposées aux agents.
 * le mode `GUI` ne DOIT PAS exposer ni exporter les tokens en clair.
-* le bearer technique ne constitue pas à lui seul une preuve d'instance suffisante; les écritures agent -> Core DOIVENT être protégées par signature OpenPGP standard
+* le bearer technique autorise le client agent, mais ne constitue pas à lui seul une preuve d'instance suffisante; les écritures agent -> Core DOIVENT être protégées par signature OpenPGP standard
 
 
 ## 9. Observabilité

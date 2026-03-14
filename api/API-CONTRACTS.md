@@ -18,7 +18,7 @@ Objectif : fournir une surface stable consommée par :
 * client Agent (`AGENT`) — livré en v1 projet global
 * client UI web principal (`UI_WEB`, `client_kind=UI_WEB`) — livré en v1.1 projet global
 * client agent UI (`AGENT_UI`, `client_kind=AGENT`) — livré en v1.1 projet global
-* client MCP (`MCP_CLIENT`, `client_kind=MCP`) — livré en v1.1 projet global
+* client MCP (`MCP`, `client_kind=MCP`) — livré en v1.1 projet global
 
 
 ## 0) Conventions
@@ -114,7 +114,7 @@ Règles client (normatives, UI/agents/MCP) :
 
 * feature OFF => appel API de la feature interdit et UI correspondante masquée/désactivée
 * feature ON => feature disponible immédiatement, sans déploiement client supplémentaire
-* `UI_WEB`, `AGENT` et `MCP` DOIVENT tous consommer les `feature_flags` runtime pilotés par Core
+* `UI_WEB`, `AGENT` et `MCP` DOIVENT tous consommer les `feature_flags` runtime pilotés par Core quand leur client est dans le périmètre de rollout actif
 * aucun client ne DOIT hardcoder l’état d’un flag ni dépendre d’un flag local statique
 * toute décision de disponibilité fonctionnelle côté client DOIT être dérivée du dernier payload runtime reçu
 * un client DOIT accepter `feature_flags_compatibility_mode=COMPAT` sans échec fonctionnel
@@ -258,6 +258,7 @@ Modèle multi-device (obligatoire) :
 * mode `AGENT` interactif : `AGENT_UI` opéré par un humain (CLI ou GUI), avec bearer utilisateur via `POST /auth/login` aujourd'hui
 * `AGENT_UI` PEUT utiliser `WebAuthn` quand la surface le permet (GUI desktop, shell natif ou environnement capable), sans changer le modèle de compte utilisateur ni le contrat bearer
 * mode `AGENT_TECHNICAL` : `client_id + secret_key` pour obtenir un bearer token via `POST /auth/clients/token`
+* pour `AGENT_TECHNICAL`, le `secret_key` reste un credential technique de bootstrap et d'autorisation; la preuve forte d'instance est portée par `agent_id` + clé `OpenPGP` + signature mutatrice
 * `AGENT_TECHNICAL` N'UTILISE JAMAIS `WebAuthn` au runtime
 * mode `MCP_TECHNICAL` : identité asymétrique standard avec clé publique enregistrée côté Core, clé privée locale côté client et signatures obligatoires sur les écritures sensibles
 * seul `AGENT_TECHNICAL` exécute les jobs de processing; un `AGENT` interactif ne claim pas de job et ne traite pas de média
@@ -1252,7 +1253,7 @@ Objectif :
   * `bucket_count` recommandé : `1000`
   * `bucket_count` minimum : `100`
   * chaque bucket DOIT être calculé avec une méthode stable pour toute l'implémentation (ex: pic absolu ou RMS)
-* absence de `waveform` NE DOIT PAS bloquer l'UI (fallback waveform locale déjà normative)
+* absence de `waveform` dérivée PEUT être compensée localement pour la lecture seule en UI, mais NE REND JAMAIS l'asset conforme au-delà de `READY`
 
 Règle de cohérence source/dérivé (obligatoire) :
 
