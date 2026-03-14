@@ -6,6 +6,8 @@ Source of truth for Retaia specifications.
 
 These rules are the constitutional layer of the project. If a local implementation, a secondary document, or a convenience shortcut conflicts with them, the golden rules win.
 
+Some of them are naturally more technical than others. That is intentional: they must stay understandable by a broad audience, but also precise enough to constrain architecture, security and runtime behavior.
+
 1. Leak by design
 2. Privacy by design
 3. `retaia-docs` is the single source of truth for the whole project
