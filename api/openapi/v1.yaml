@@ -1324,6 +1324,11 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Asset detail
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: Strong asset revision tag matching `summary.revision_etag`.
           content:
             application/json:
               schema:
@@ -1335,6 +1340,7 @@ paths:
         - UserBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
+        - $ref: "#/components/parameters/IfMatchAssetRevision"
         - $ref: "#/components/parameters/AgentSignatureAgentId"
         - $ref: "#/components/parameters/AgentSignatureOpenPgpFingerprint"
         - $ref: "#/components/parameters/AgentSignatureValue"
@@ -1346,12 +1352,7 @@ paths:
           application/json:
             schema:
               type: object
-              required: [based_on_updated_at]
               properties:
-                based_on_updated_at:
-                  type: string
-                  format: date-time
-                  description: Last `updated_at` value read by the client for optimistic concurrency control.
                 tags:
                   type: array
                   items:
@@ -1373,16 +1374,33 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Asset updated
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: Strong asset revision tag after the accepted mutation.
         "409":
-          description: State conflict (invalid transition or stale `based_on_updated_at`)
+          description: State conflict (invalid transition)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "410":
           description: Asset is purged
+        "412":
+          description: Asset revision mismatch (`PRECONDITION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "422":
           description: Validation failed (`VALIDATION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "428":
+          description: Missing asset revision precondition (`PRECONDITION_REQUIRED`)
           content:
             application/json:
               schema:
@@ -1483,18 +1501,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/UuidPath"
         - $ref: "#/components/parameters/IdempotencyKey"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [based_on_updated_at]
-              properties:
-                based_on_updated_at:
-                  type: string
-                  format: date-time
-                  description: Last `updated_at` value read by the client for optimistic concurrency control.
+        - $ref: "#/components/parameters/IfMatchAssetRevision"
       responses:
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
@@ -1505,13 +1512,19 @@ paths:
         "200":
           description: Reprocess accepted
         "409":
-          description: State conflict or stale `based_on_updated_at`
+          description: State conflict
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-        "422":
-          description: Validation failed (`VALIDATION_FAILED`)
+        "412":
+          description: Asset revision mismatch (`PRECONDITION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "428":
+          description: Missing asset revision precondition (`PRECONDITION_REQUIRED`)
           content:
             application/json:
               schema:
@@ -1525,18 +1538,7 @@ paths:
         - UserBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [based_on_updated_at]
-              properties:
-                based_on_updated_at:
-                  type: string
-                  format: date-time
-                  description: Last `updated_at` value read by the client for optimistic concurrency control.
+        - $ref: "#/components/parameters/IfMatchAssetRevision"
       responses:
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
@@ -1546,14 +1548,25 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Asset reopened
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: Strong asset revision tag after the accepted mutation.
         "409":
-          description: State conflict or stale `based_on_updated_at`
+          description: State conflict
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-        "422":
-          description: Validation failed (`VALIDATION_FAILED`)
+        "412":
+          description: Asset revision mismatch (`PRECONDITION_FAILED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "428":
+          description: Missing asset revision precondition (`PRECONDITION_REQUIRED`)
           content:
             application/json:
               schema:
@@ -3403,7 +3416,7 @@ components:
 
     AssetSummary:
       type: object
-      required: [uuid, media_type, state, created_at, updated_at]
+      required: [uuid, media_type, state, created_at, updated_at, revision_etag]
       additionalProperties: false
       properties:
         uuid:
@@ -3421,7 +3434,10 @@ components:
         updated_at:
           type: string
           format: date-time
-          description: Monotonic timestamp of the last accepted business mutation on this asset.
+          description: Timestamp of the last accepted business mutation on this asset. Informational only; not a write precondition.
+        revision_etag:
+          type: string
+          description: Strong opaque asset revision tag to be reused in `If-Match` for the next mutation.
         captured_at:
           type: string
           format: date-time
@@ -3542,7 +3558,10 @@ components:
         updated_at:
           type: string
           format: date-time
-          description: Monotonic timestamp of the last accepted business mutation on this asset.
+          description: Timestamp of the last accepted business mutation on this asset. Informational only; not a write precondition.
+        revision_etag:
+          type: string
+          description: Strong opaque asset revision tag to be reused in `If-Match` for the next mutation.
 
     AssetDecisions:
       type: object
@@ -3785,12 +3804,14 @@ components:
             - SLOW_DOWN
             - RATE_LIMITED
             - TEMPORARY_UNAVAILABLE
+            - PRECONDITION_REQUIRED
+            - PRECONDITION_FAILED
         message:
           type: string
         details:
           type: object
           additionalProperties: true
-          description: May include endpoint-specific structured fields such as `current_updated_at` and `current_state` for asset state conflicts.
+          description: May include endpoint-specific structured fields such as `current_revision_etag` and `current_state` for asset state conflicts.
         retryable:
           type: boolean
         correlation_id:

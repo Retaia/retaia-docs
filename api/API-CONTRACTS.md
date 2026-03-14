@@ -796,7 +796,8 @@ Response :
 
 Règle :
 
-* `AssetSummary.updated_at` est le timestamp canonique du dernier changement métier accepté sur l'asset
+* `AssetSummary.revision_etag` est le jeton canonique de précondition d'écriture sur l'asset
+* `AssetSummary.updated_at` reste informatif pour l'affichage et l'audit
 
 ### GET `/assets/{uuid}`
 
@@ -804,13 +805,20 @@ Fiche détaillée d’un asset.
 
 Response : `AssetDetail`
 
+Header :
+
+* `ETag: <revision_etag>` (même valeur que `summary.revision_etag`)
+
 ### PATCH `/assets/{uuid}` (humain)
 
 Modifications humaines : tags/notes/custom fields + transitions d'état métier autorisées.
 
+Précondition HTTP obligatoire :
+
+* header `If-Match: <revision_etag>`
+
 Body (exemple) :
 
-* `based_on_updated_at: RFC3339 datetime` (précondition obligatoire de concurrence optimiste)
 * `tags: string[]`
 * `notes: string`
 * `fields: Record<string, any>`
@@ -819,11 +827,11 @@ Body (exemple) :
 Règles :
 
 * refuse si `state == PURGED`
-* `based_on_updated_at` DOIT reprendre exactement le `updated_at` lu précédemment par le client sur l'asset
-* la mutation exprime donc explicitement : "je me base sur cet état" (`based_on_updated_at`) et "je veux arriver à cet état" (`state` et/ou metadata)
-* si `based_on_updated_at` est absent, mal formé ou non parseable, Core DOIT refuser avec `422 VALIDATION_FAILED`
-* si `based_on_updated_at` ne correspond plus au `updated_at` courant de l'asset, Core DOIT refuser avec `409 STATE_CONFLICT`
-* la réponse d'erreur `409 STATE_CONFLICT` DOIT inclure au minimum `details.current_updated_at` et `details.current_state` pour permettre un rechargement propre côté client
+* `If-Match` DOIT reprendre exactement le `revision_etag` lu précédemment par le client sur l'asset
+* la mutation exprime donc explicitement : "je me base sur cette révision" (`If-Match`) et "je veux arriver à cet état" (`state` et/ou metadata)
+* si `If-Match` est absent, Core DOIT refuser avec `428 PRECONDITION_REQUIRED`
+* si `If-Match` ne correspond plus au `revision_etag` courant de l'asset, Core DOIT refuser avec `412 PRECONDITION_FAILED`
+* la réponse d'erreur `412 PRECONDITION_FAILED` DOIT inclure au minimum `details.current_revision_etag` et `details.current_state` pour permettre un rechargement propre côté client
 * la multi-sélection UI (ex: ajout d'un keyword) DOIT envoyer des appels unitaires `PATCH /assets/{uuid}` (un par asset)
 * transitions via `state` :
   * `DECISION_PENDING -> DECIDED_KEEP | DECIDED_REJECT`
@@ -831,25 +839,24 @@ Règles :
   * `DECIDED_REJECT -> DECISION_PENDING | DECIDED_KEEP | REJECTED`
 * toute transition non listée DOIT être refusée (`409 STATE_CONFLICT`)
 * mise à jour metadata (`tags/notes/fields`) et transition `state` peuvent être combinées dans un même `PATCH`
-* toute mutation validée DOIT mettre à jour `updated_at`
+* toute mutation validée DOIT mettre à jour `updated_at` et `revision_etag`
 * toute mutation validée DOIT être tracée dans l'historique de révisions de l'asset
 
 ### POST `/assets/{uuid}/reprocess` (humain)
 
 Déclenche un reprocess explicite.
 
-Body requis :
+Précondition HTTP obligatoire :
 
-* `based_on_updated_at: RFC3339 datetime` (précondition obligatoire de concurrence optimiste)
+* header `If-Match: <revision_etag>`
 
 Effet (normatif) :
 
 * autorisé uniquement si `state in {PROCESSED, ARCHIVED, REJECTED}`
-* `based_on_updated_at` DOIT reprendre exactement le `updated_at` lu précédemment par le client sur l'asset
-* si `based_on_updated_at` est absent, mal formé ou non parseable, Core DOIT refuser avec `422 VALIDATION_FAILED`
-* si `based_on_updated_at` est absent, mal formé ou non parseable, Core DOIT refuser avec `422 VALIDATION_FAILED`
-* si `based_on_updated_at` ne correspond plus au `updated_at` courant de l'asset, Core DOIT refuser avec `409 STATE_CONFLICT`
-* la réponse d'erreur `409 STATE_CONFLICT` DOIT inclure au minimum `details.current_updated_at` et `details.current_state`
+* `If-Match` DOIT reprendre exactement le `revision_etag` lu précédemment par le client sur l'asset
+* si `If-Match` est absent, Core DOIT refuser avec `428 PRECONDITION_REQUIRED`
+* si `If-Match` ne correspond plus au `revision_etag` courant de l'asset, Core DOIT refuser avec `412 PRECONDITION_FAILED`
+* la réponse d'erreur `412 PRECONDITION_FAILED` DOIT inclure au minimum `details.current_revision_etag` et `details.current_state`
 * invalide les données de processing (facts, dérivés, transcript, suggestions) via version bump
 * transition vers `READY`
 * force la revue : retour à `DECISION_PENDING` après nouveau `PROCESSED`
@@ -867,17 +874,17 @@ Règles (strictes) :
 
 ### POST `/assets/{uuid}/reopen`
 
-Body requis :
+Précondition HTTP obligatoire :
 
-* `based_on_updated_at: RFC3339 datetime` (précondition obligatoire de concurrence optimiste)
+* header `If-Match: <revision_etag>`
 
 Effet :
 
 * `ARCHIVED|REJECTED → DECISION_PENDING`
-* `based_on_updated_at` DOIT reprendre exactement le `updated_at` lu précédemment par le client sur l'asset
-* si `based_on_updated_at` est absent, mal formé ou non parseable, Core DOIT refuser avec `422 VALIDATION_FAILED`
-* si `based_on_updated_at` ne correspond plus au `updated_at` courant de l'asset, Core DOIT refuser avec `409 STATE_CONFLICT`
-* la réponse d'erreur `409 STATE_CONFLICT` DOIT inclure au minimum `details.current_updated_at` et `details.current_state`
+* `If-Match` DOIT reprendre exactement le `revision_etag` lu précédemment par le client sur l'asset
+* si `If-Match` est absent, Core DOIT refuser avec `428 PRECONDITION_REQUIRED`
+* si `If-Match` ne correspond plus au `revision_etag` courant de l'asset, Core DOIT refuser avec `412 PRECONDITION_FAILED`
+* la réponse d'erreur `412 PRECONDITION_FAILED` DOIT inclure au minimum `details.current_revision_etag` et `details.current_state`
 
 
 ## 4) Agents

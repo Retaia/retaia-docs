@@ -380,9 +380,9 @@ Tests obligatoires :
 * ajout manuel de keywords : après confirmation UI, aucune liste Core "non appliquée" spécifique n'est créée; la mutation est immédiatement persistée par asset
 * action groupée UI sans validation explicite (annulation de confirmation) : aucun appel unitaire Core émis
 * historique de révisions asset mis à jour après mutation validée (`revision_history[]` append + `is_current=true` sur la dernière)
-* mutation asset avec `based_on_updated_at` périmé => `409 STATE_CONFLICT`
-* `409 STATE_CONFLICT` asset expose `details.current_updated_at` et `details.current_state`
-* `PATCH /assets/{uuid}`, `POST /assets/{uuid}/reprocess` et `POST /assets/{uuid}/reopen` renvoient `422 VALIDATION_FAILED` si `based_on_updated_at` est absent ou mal formé
+* mutation asset avec `If-Match` périmé => `412 PRECONDITION_FAILED`
+* `412 PRECONDITION_FAILED` asset expose `details.current_revision_etag` et `details.current_state`
+* `PATCH /assets/{uuid}`, `POST /assets/{uuid}/reprocess` et `POST /assets/{uuid}/reopen` renvoient `428 PRECONDITION_REQUIRED` si `If-Match` est absent
 
 ## 5) Apply decision (move unitaire)
 
