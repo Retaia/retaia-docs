@@ -7,7 +7,7 @@ Ce document définit le minimum de tests opposables pour valider une implémenta
 Tests obligatoires :
 
 * `v1` projet global : Core + Agent + `capabilities` + `feature_flags`
-* `v1.1` projet global : clients `UI_WEB_APP` + `AGENT_UI` (`client_kind=AGENT`) + client `MCP_CLIENT` (`client_kind=MCP`)
+* `v1.1` projet global : clients `UI_WEB` + `AGENT_UI` (`client_kind=AGENT`) + client `MCP` (`client_kind=MCP`)
 * aucune suite `v1.2` active : la piste mobile/push est actuellement non planifiée
 * les suites UI/MCP sont classées en gates `v1.1` global
 

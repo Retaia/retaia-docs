@@ -28,7 +28,7 @@ Portée d'exécution :
 
 ## 2. Principes fondamentaux
 
-* Le serveur est la **source de vérité** (jobs, états, décisions) et orchestre les moves sur le NAS.
+* `Core` est la source de vérité métier (jobs, états, décisions) et orchestre les moves sur le NAS.
 * L’agent est un exécuteur : il ne prend **jamais** de décision métier.
 * Les jobs sont **idempotents**.
 * Tout claim est **atomique**.

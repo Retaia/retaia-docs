@@ -31,7 +31,7 @@ Objectif :
 
 Contenu prévu :
 
-* `UI_WEB_APP`
+* `UI_WEB`
 * `AGENT_UI`
 * `MCP_CLIENT`
 * continuité du modèle runtime status-driven déjà cadré dans les specs

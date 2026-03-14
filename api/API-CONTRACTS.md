@@ -16,7 +16,7 @@ Ce document doit rester strictement aligné avec `openapi/v1.yaml`.
 Objectif : fournir une surface stable consommée par :
 
 * client Agent (`AGENT`) — livré en v1 projet global
-* client UI web principal (`UI_WEB_APP`, `client_kind=UI_WEB`) — livré en v1.1 projet global
+* client UI web principal (`UI_WEB`, `client_kind=UI_WEB`) — livré en v1.1 projet global
 * client agent UI (`AGENT_UI`, `client_kind=AGENT`) — livré en v1.1 projet global
 * client MCP (`MCP_CLIENT`, `client_kind=MCP`) — livré en v1.1 projet global
 
@@ -46,7 +46,7 @@ Objectif : fournir une surface stable consommée par :
   * système `capabilities` v1
   * système `feature_flags` v1
 * `v1.1` (projet global) :
-  * client `UI_WEB_APP` (mappé sur `client_kind=UI_WEB`)
+  * client `UI_WEB` (mappé sur `client_kind=UI_WEB`)
   * client `AGENT_UI` (mappé sur `client_kind=AGENT`)
   * client `MCP_CLIENT` (mappé sur `client_kind=MCP`)
 * `v1.2` : piste reservee, actuellement non planifiee au produit
