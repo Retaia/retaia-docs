@@ -255,7 +255,7 @@ Modèle multi-device (obligatoire) :
 
 ### Agents / MCP
 
-* modes non interactifs : bearer technique (`TechnicalBearerAuth`)
+* les modes non interactifs utilisent `TechnicalBearerAuth`, mais ce bearer ne suffit jamais seul à établir une preuve forte d'instance
 * mode `AGENT` interactif : `AGENT_UI` opéré par un humain (CLI ou GUI), avec bearer utilisateur via `POST /auth/login` aujourd'hui
 * `AGENT_UI` PEUT utiliser `WebAuthn` quand la surface le permet (GUI desktop, shell natif ou environnement capable), sans changer le modèle de compte utilisateur ni le contrat bearer
 * mode `AGENT_TECHNICAL` : `client_id + secret_key` pour obtenir un bearer token via `POST /auth/clients/token`

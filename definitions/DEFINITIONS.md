@@ -326,7 +326,7 @@ La **transcription** est un job AI-powered basé sur l'audio.
 
 * basé sur l’audio
 * produit du texte
-* utilisé pour recherche et suggestions
+* utilisé pour recherche et suggestions, puis requis comme prérequis de conformité processing quand la phase `v1.1+` validée l'impose
 * avant validation `v1.1+`, elle PEUT être exercée plus tôt sous `feature_flags`
 * à partir de la phase `v1.1+` validée, elle devient requise pour tout média avec piste audio exploitable avant d'atteindre `PROCESSED`
 
