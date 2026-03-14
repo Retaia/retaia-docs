@@ -2714,6 +2714,13 @@ components:
       required: true
       schema:
         type: string
+    IfMatchAssetRevision:
+      name: If-Match
+      in: header
+      required: true
+      schema:
+        type: string
+      description: Strong opaque asset revision tag for optimistic concurrency on asset mutations.
     ClientIdPath:
       name: client_id
       in: path
