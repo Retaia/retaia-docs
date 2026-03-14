@@ -11,14 +11,14 @@ Ce document définit la matrice d'autorisation normative par endpoint, scope et 
 
 Acteurs normatifs :
 
-* `USER_INTERACTIVE` (client `UI_WEB` web app, ou `AGENT_UI` pour l'agent en CLI ou GUI)
+* `USER_INTERACTIVE` (client `UI_WEB` application web, ou `AGENT_UI` pour l'agent en CLI ou GUI)
 * `AGENT_TECHNICAL` (daemon/service non-interactif de processing)
 * `MCP_TECHNICAL` (client technique non-interactif d'orchestration MCP)
 * `TECHNICAL_ACTORS` = `AGENT_TECHNICAL|MCP_TECHNICAL`
 * `ADMIN_INTERACTIVE` (sous-ensemble `USER_INTERACTIVE` avec droits admin)
 * `client_kind` interactif: `UI_WEB|AGENT`; `client_kind` technique: `AGENT|MCP`
-* rollout projet global actif: `UI_WEB` (`UI_WEB_APP`), `AGENT` (`AGENT_UI`) et `MCP` (`MCP_CLIENT`) en v1.1
-* gate applicatif: `app_feature_enabled.features.ai=false` => acteur `client_kind=MCP` refusé (`403 FORBIDDEN_SCOPE`) sur bootstrap UI, enrôlement de clé et runtime
+* rollout projet global actif: `UI_WEB`, `AGENT_UI` et `MCP` en v1.1
+* gate applicatif: `app_feature_enabled.features.ai=false` => seules les fonctionnalités MCP dépendantes de l’AI sont refusées (`403 FORBIDDEN_SCOPE`), sans désactiver le client MCP dans son ensemble
 * `AGENT_UI` PEUT converger fonctionnellement avec `UI_WEB` pour les actions humaines, sans fusionner son identité avec le daemon `AGENT_TECHNICAL`
 * aucune action user-scoped ou admin-scoped ne DOIT être implicitement transférée de `AGENT_UI` vers `AGENT_TECHNICAL`
 
@@ -104,6 +104,7 @@ Acteurs normatifs :
 * acteur: `AGENT_TECHNICAL`
 * scope: aucun (auth par `client_id + secret_key`)
 * contrainte: `client_kind=AGENT` uniquement
+* règle forte: `client_id + secret_key` autorise le client technique et permet de mint un bearer technique; la preuve forte d'instance pour les écritures reste `agent_id + OpenPGP + signature`
 
 `POST /auth/clients/device/start|poll|cancel`
 
@@ -155,6 +156,7 @@ Validation UI du device flow (`verification_uri*`)
 
 * scope: `purge:execute`
 * acteur: `USER_INTERACTIVE`
+* acteur `MCP_TECHNICAL`: explicitement interdit (`403 FORBIDDEN_ACTOR`)
 * état: `REJECTED`
 
 ## 3) Codes d'erreur authz
@@ -178,3 +180,15 @@ Pour chaque refus authz :
 
 * [API-CONTRACTS.md](../api/API-CONTRACTS.md)
 * [ERROR-MODEL.md](../api/ERROR-MODEL.md)
+
+
+Règle destructive MCP (opposable) :
+
+* `MCP_TECHNICAL` NE DOIT JAMAIS pouvoir exécuter un endpoint destructif ou de suppression
+* cela inclut `DELETE`, `purge`, et toute future opération destructive équivalente
+
+Règle d'identité technique forte (opposable) :
+
+* `AGENT_TECHNICAL` : `client_id + secret_key` = bootstrap et autorisation technique
+* `AGENT_TECHNICAL` : `agent_id + clé OpenPGP + signature` = preuve forte d'instance
+* une écriture agent mutatrice ne DOIT JAMAIS être acceptée sur la seule base du bearer technique

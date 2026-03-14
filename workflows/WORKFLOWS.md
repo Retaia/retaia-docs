@@ -398,7 +398,7 @@ Gérer musique et prises son comme des assets de production.
 
 * Core = source de vérité métier et manager des moves
 * NAS = support de stockage piloté par Core
-* Laptop/clients = compute only
+* Laptop/clients = calcul uniquement
 * UUID = identité stable
 * Path = attribut mutable
 * Décisions humaines uniquement

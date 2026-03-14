@@ -46,12 +46,17 @@ Exemples valides :
 * `media.proxies.photo@1`
 * `media.thumbnails@1`
 * `audio.waveform@1`
-* `speech.transcription@1` (**planned v1.1+**, AI-powered)
-* `speech.transcription.local.whispercpp@1` (**planned v1.1+**, AI-powered)
-* `meta.tags.suggestions@1` (**planned v1.1+**, AI-powered)
-* `llm.client.ollama@1` (**planned v1.1+**, AI-powered)
-* `llm.client.chatgpt@1` (**planned v1.1+**, AI-powered)
-* `llm.client.claude@1` (**planned v1.1+**, AI-powered)
+* `speech.transcription@1` (**validé en v1.1+**, dépendant de l'AI; activable plus tôt sous `feature_flags`)
+* `speech.transcription.local.whispercpp@1` (**validé en v1.1+**, dépendant de l'AI; activable plus tôt sous `feature_flags`)
+* `meta.tags.suggestions@1` (**validé en v1.1+**, dépendant de l'AI; activable plus tôt sous `feature_flags`)
+* `llm.client.ollama@1` (**validé en v1.1+**, dépendant de l'AI; activable plus tôt sous `feature_flags`)
+* `llm.client.chatgpt@1` (**validé en v1.1+**, dépendant de l'AI; activable plus tôt sous `feature_flags`)
+* `llm.client.claude@1` (**validé en v1.1+**, dépendant de l'AI; activable plus tôt sous `feature_flags`)
+
+Règle de lecture :
+
+* `activable plus tôt sous feature_flags` = testable ou exploitable en pré-release
+* `validé en v1.1+` = fait partie de la baseline validée une fois la phase `v1.1+` officiellement ouverte
 
 La version suit une logique **major only** :
 
@@ -63,7 +68,7 @@ La version suit une logique **major only** :
 Lors de son enregistrement, un agent **DOIT** déclarer explicitement :
 
 * son identifiant
-* sa plateforme (optionnel)
+* `os_name`, `os_version`, `arch` (optionnels mais fortement recommandés pour le debug)
 * la liste complète de ses capabilities
 
 Un agent ne peut **jamais** exécuter un job pour lequel il n’a pas déclaré la capability requise.
@@ -126,7 +131,7 @@ Le système de capabilities vise à :
 
 Toute implémentation qui court‑circuite ces objectifs est invalide.
 
-## 9. Capabilities LLM minimales (planned v1.1+)
+## 9. Capabilities LLM minimales (`v1.1+` validated; activables plus tôt sous `feature_flags`)
 
 Pour tout agent qui déclare `meta.tags.suggestions@1` :
 
@@ -135,7 +140,7 @@ Pour tout agent qui déclare `meta.tags.suggestions@1` :
 * la sélection du client LLM DOIT rester explicite (configuration/feature flag/runtime policy)
 * un client LLM indisponible ne DOIT PAS casser le runtime agent global (fallback ou retry policy)
 
-## 10. Transcription local-first (planned v1.1+)
+## 10. Transcription local-first (`v1.1+` validated; activable plus tôt sous `feature_flags`)
 
 Pour tout agent qui déclare `speech.transcription@1` :
 
@@ -143,14 +148,14 @@ Pour tout agent qui déclare `speech.transcription@1` :
 * le support `speech.transcription.local.whispercpp@1` est obligatoire (minimum actuel)
 * un backend distant de transcription PEUT exister, mais uniquement en opt-in explicite utilisateur/policy
 
-## 11. Invalidation capability par inventaire modèle (planned v1.1+)
+## 11. Invalidation capability par inventaire modèle (`v1.1+` validated; activable plus tôt sous `feature_flags`)
 
 Pour les capabilities dépendantes d'un provider/modèle (`llm.*`, `speech.transcription.*`) :
 
 * l'agent DOIT publier son inventaire provider/modèle disponible au runtime
 * si le provider/modèle requis n'est pas disponible localement, la capability DOIT être invalidée
 * si le provider/modèle est disponible localement mais non autorisé par Core policy, la capability DOIT être invalidée
-* Core ne maintient pas de catalogue runtime de modèles; seul l'agent est source de vérité d'inventaire local
+* Core ne maintient pas de catalogue runtime de modèles; seul l'agent maintient la référence locale de son inventaire provider/modèle disponible au runtime
 * l'agent PEUT supporter l'installation de modèle quand le provider local le permet
 
 ## Références associées

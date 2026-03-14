@@ -45,7 +45,7 @@ Rules:
 
 - `APP_ENV` selects the environment file (`dev|test|prod`), then Core loads `.env.<APP_ENV>`.
 - Missing optional file (`.env.<APP_ENV>` or `.env.local`) MUST NOT fail boot by itself.
-- Runtime shell env remains the final source of truth and MUST override any `.env*` value.
+- Runtime shell env remains the final override layer and MUST take precedence over any `.env*` value.
 - Core startup MUST validate `APP_STORAGE_ID` consistency against the mounted marker `/.retaia.storage_id`.
 - If `/.retaia` is missing, Core MUST create it during boot/update migration before startup validation.
 - If marker creation fails, marker JSON is invalid, required marker schema update fails (based on the JSON field `version` in `/.retaia`), or `APP_STORAGE_ID` mismatches marker `storage_id`, Core MUST fail fast at boot with an explicit startup error.

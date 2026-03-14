@@ -18,8 +18,8 @@ Portée d'exécution :
 
 * seul un `AGENT_TECHNICAL` exécute les jobs de processing
 * un client `MCP` peut piloter/orchestrer mais ne traite jamais les médias
-* rollout projet global: le client applicatif `MCP_CLIENT` (mappé `client_kind=MCP`) est intégré à partir de la v1.1 globale
-* gate applicatif: `app_feature_enabled.features.ai=false` désactive le client `MCP` (bootstrap/token/runtime refusés)
+* rollout projet global: le client applicatif `MCP` (mappé `client_kind=MCP`) est intégré à partir de la v1.1 globale
+* gate applicatif: `app_feature_enabled.features.ai=false` désactive uniquement les fonctions `MCP` dépendantes de l'AI; le client `MCP` reste disponible pour ses fonctions non destructives non liées à l'AI
 * un client `AGENT`/`MCP` DOIT appliquer `effective_feature_enabled` (pas de logique locale alternative)
 * `AGENT_UI` est la surface interactive de l'agent, opérée par un humain pour le bootstrap, le diagnostic, l'administration et les usages applicatifs humains
 * `AGENT_UI` PEUT, à terme, converger fonctionnellement avec `UI_WEB` pour les parcours humains, tout en restant un client distinct qui pilote aussi le daemon local
@@ -28,7 +28,7 @@ Portée d'exécution :
 
 ## 2. Principes fondamentaux
 
-* Le serveur est la **source de vérité** (jobs, états, décisions) et orchestre les moves sur le NAS.
+* `Core` est la source de vérité métier (jobs, états, décisions) et orchestre les moves sur le NAS.
 * L’agent est un exécuteur : il ne prend **jamais** de décision métier.
 * Les jobs sont **idempotents**.
 * Tout claim est **atomique**.
@@ -149,6 +149,7 @@ Pour éviter le code local à maintenir, cette règle s'applique à toute implé
 * un agent non-interactif NE DOIT PAS dépendre d’un login UI pour redémarrer
 * le bearer utilisateur obtenu via `AGENT_UI` appartient à l'acteur humain `USER_INTERACTIVE`; il NE DOIT PAS être réutilisé par le daemon `AGENT_TECHNICAL`
 * le daemon `AGENT_TECHNICAL` agit toujours sous sa propre identité technique (`agent_id` + clé OpenPGP + auth technique), jamais au nom implicite de l'utilisateur connecté dans `AGENT_UI`
+* `client_id + secret_key` autorise le client technique et permet de mint le bearer technique; une écriture mutatrice agent NE DOIT JAMAIS être acceptée sur cette seule base sans preuve `agent_id + OpenPGP + signature`
 * `AGENT_TECHNICAL` N'UTILISE JAMAIS `WebAuthn` au runtime
 
 Extension future user-scoped (réservée) :
@@ -251,7 +252,7 @@ Configuration agent obligatoire:
 
 * l’agent DOIT exposer une configuration locale `storage_mounts` (map `storage_id -> absolute_local_mount_path`)
 * pour chaque mount `storage_mounts[*]`, l’agent DOIT lire et valider le marker `/.retaia`
-* le marker `/.retaia` DOIT être considéré source de vérité locale pour `paths.inbox`, `paths.archive`, `paths.rejects`
+* le marker `/.retaia` DOIT être considéré comme la référence locale canonique pour `paths.inbox`, `paths.archive`, `paths.rejects`
 * le marker `/.retaia` est créé et maintenu exclusivement par Retaia Core (au boot et lors des updates applicatifs); l’agent NE DOIT JAMAIS le créer, l’éditer ou le réparer
 * `source.storage_id` DOIT matcher strictement `/.retaia.storage_id`; sinon l’agent DOIT échouer explicitement
 * la résolution du fichier source DOIT se faire par concaténation contrôlée:
@@ -330,7 +331,7 @@ L’agent ne décide jamais de la stratégie globale de retry.
 * Les agents n’ont accès qu’aux endpoints nécessaires.
 * Les actions destructives (purge, move) ne sont jamais exposées aux agents.
 * le mode `GUI` ne DOIT PAS exposer ni exporter les tokens en clair.
-* le bearer technique ne constitue pas à lui seul une preuve d'instance suffisante; les écritures agent -> Core DOIVENT être protégées par signature OpenPGP standard
+* le bearer technique autorise le client agent, mais ne constitue pas à lui seul une preuve d'instance suffisante; les écritures agent -> Core DOIVENT être protégées par signature OpenPGP standard
 
 
 ## 9. Observabilité

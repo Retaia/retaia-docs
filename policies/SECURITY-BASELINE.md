@@ -34,7 +34,7 @@ Objectif: en cas d'exfiltration partielle (DB, logs, token, backup), les donnée
 
 ## 4) Tokens et sessions (MUST)
 
-* architecture bearer-only (pas de `SessionCookieAuth`)
+* architecture stateless/sessionless (pas de `SessionCookieAuth`)
 * token utilisateur: 1 token actif par `(user_id, client_id)`
 * token technique: 1 token actif par `client_id`
 * émission d'un nouveau token pour la même cardinalité => révocation immédiate de l'ancien
@@ -56,11 +56,15 @@ Objectif: en cas d'exfiltration partielle (DB, logs, token, backup), les donnée
 
 ## 6) Règles client Agent/MCP (MUST)
 
-* `AGENT`:
-  * mode interactif: login utilisateur (Bearer user), puis `WebAuthn` quand la surface le permet
-  * mode technique: `client_id + secret_key -> POST /auth/clients/token`
-  * mode technique: n'utilise jamais `WebAuthn` au runtime
-* `MCP`: mode technique asymétrique standard, avec clé publique enregistrée côté Core, clé privée locale côté client et signatures obligatoires sur écritures sensibles
+* `AGENT_UI` :
+  * mode interactif humain: login utilisateur (Bearer user), puis `WebAuthn` quand la surface le permet
+* `AGENT_TECHNICAL` :
+  * bootstrap/auth technique: `client_id + secret_key -> POST /auth/clients/token`
+  * `client_id + secret_key` autorise le client et permet de mint le bearer technique
+  * la preuve forte d'instance pour les écritures mutatrices reste `agent_id + OpenPGP + signature`
+  * `AGENT_TECHNICAL` n'utilise jamais `WebAuthn` au runtime
+* `MCP_TECHNICAL` :
+  * mode technique asymétrique standard, avec clé publique enregistrée côté Core, clé privée locale côté client et signatures obligatoires sur écritures sensibles
 * création d'un `secret_key` `AGENT` DOIT passer par validation UI utilisateur (device flow)
 * enregistrement d'une clé publique `MCP` DOIT passer par l'UI utilisateur
 * si 2FA utilisateur est active, la validation UI de création `secret_key` ou d'enregistrement de clé `MCP` DOIT exiger OTP
@@ -87,7 +91,7 @@ Objectif: en cas d'exfiltration partielle (DB, logs, token, backup), les donnée
 
 ## 9) Contrôles recommandés (SHOULD)
 
-* proof-of-possession (DPoP ou mTLS) pour tokens techniques
+* proof-of-possession (DPoP ou mTLS) pour tokens techniques, uniquement comme durcissement complémentaire et sans remplacer le modèle asymétrique standard déjà imposé pour `AGENT_TECHNICAL` et `MCP_TECHNICAL`
 * chiffrement de colonnes sensibles (field-level) en plus du chiffrement disque
 * rotation automatique périodique des secrets techniques
 * alerte sécurité temps réel sur `rotate-secret`, `revoke-token`, échecs auth massifs, activation/désactivation 2FA

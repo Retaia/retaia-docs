@@ -2,6 +2,29 @@
 
 Source of truth for Retaia specifications.
 
+## Golden Rules
+
+These rules are the constitutional layer of the project. If a local implementation, a secondary document, or a convenience shortcut conflicts with them, the golden rules win.
+
+Some of them are naturally more technical than others. That is intentional: they must stay understandable by a broad audience, but also precise enough to constrain architecture, security and runtime behavior.
+
+1. Leak by design
+2. Privacy by design
+3. `retaia-docs` is the single source of truth for the whole project
+4. Core is the single source of truth for business logic
+5. NAS is storage only
+6. The API must stay stateless and sessionless
+7. Recognized concepts must use recognized libraries
+8. Human and technical identities must stay separate
+9. Runtime truth must always be re-read from Core; push only signals change
+10. Feature flags govern runtime
+11. The system must be safe by default
+12. Sensitive actions must be authenticated, authorized and audited
+13. Bulk belongs to the UI; Core stays unitary
+14. Sensitive technical identity must be asymmetric
+
+Canonical reference: [`GOLDEN-RULES.md`](GOLDEN-RULES.md)
+
 ## Overview
 
 `retaia-docs` defines the normative contracts and policies for the Retaia platform:
@@ -19,12 +42,13 @@ The following consumer repositories must align with these specs:
 
 - `retaia-core` (backend/API runtime)
 - `retaia-ui` (user interface client)
-- `retaia-agent` (CLI-first processing client)
+- `retaia-agent` (processing client with `AGENT_UI` in CLI and GUI, plus technical daemon)
 - `retaia-mcp` (MCP orchestration client, no media processing)
 
 ## Quick links
 
 - Product vision: [`vision/PROJECT-BRIEF.md`](vision/PROJECT-BRIEF.md)
+- Golden rules: [`GOLDEN-RULES.md`](GOLDEN-RULES.md)
 - Product roadmap: [`vision/ROADMAP.md`](vision/ROADMAP.md)
 - UI recommendations: [`ui/README.md`](ui/README.md)
 - Agent client docs: [`agent/README.md`](agent/README.md)
@@ -34,7 +58,7 @@ The following consumer repositories must align with these specs:
 - API contract: [`api/API-CONTRACTS.md`](api/API-CONTRACTS.md)
 - OpenAPI sources:
   - [`api/openapi/v1.yaml`](api/openapi/v1.yaml) (runtime contract gate)
-  - [`api/openapi/v1.1.yaml`](api/openapi/v1.1.yaml) (planned)
+  - [`api/openapi/v1.1.yaml`](api/openapi/v1.1.yaml) (`v1.1+` track: features validated in this phase, some testable earlier behind feature flags)
   - [`api/openapi/v1.2.yaml`](api/openapi/v1.2.yaml) (reserved, currently non-planned)
 - Authz matrix: [`policies/AUTHZ-MATRIX.md`](policies/AUTHZ-MATRIX.md)
 - Agent protocol: [`workflows/AGENT-PROTOCOL.md`](workflows/AGENT-PROTOCOL.md)
@@ -69,7 +93,7 @@ Changes must follow this order:
 
 ## Versioning and governance
 
-- v1 is contract-first and Bearer-only.
+- v1 is contract-first and API stateless/sessionless.
 - No legacy behavior before v1 publication.
 - Feature lifecycle and compatibility are governed by specs/policies.
 - Branch policy: rebase on `master`, linear history, PR-only integration.

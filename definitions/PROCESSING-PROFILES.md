@@ -13,6 +13,7 @@ Règles :
 * le profil est fixé à la découverte (auto) et peut être modifié manuellement avant le premier claim
 * après le premier claim de job review, tout changement de profil exige un reprocess explicite
 * `PROCESSED` est atteint uniquement quand tous les jobs `required` du profil sont `completed`
+* à partir de la phase `v1.1+` validée, `transcribe_audio` devient requis pour tout média avec piste audio exploitable; avant cette phase validée, il PEUT être exercé plus tôt sous `feature_flags`
 
 ## 2) Profils canoniques v1
 
@@ -27,14 +28,18 @@ Jobs required :
 * `generate_thumbnails`
 * `generate_audio_waveform` (si piste audio exploitable)
 
-Jobs optional :
+Jobs optional avant validation `v1.1+` :
 
-* `transcribe_audio` (si activé, **v1.1+**)
+* `transcribe_audio` (si activé, **v1.1+**, activable plus tôt sous `feature_flags` si piste audio exploitable)
 * `suggest_tags` (si activé, **v1.1+**)
+
+Jobs required dès validation `v1.1+` :
+
+* `transcribe_audio` (si piste audio exploitable)
 
 ### `audio_music`
 
-Usage : musique / ambiances sans besoin de transcript.
+Usage : musique / ambiances. Le transcript n'est pas un besoin produit de v1, mais devient un prérequis technique de conformité à partir de la phase `v1.1+` validée dès qu'une piste audio exploitable existe.
 
 Jobs required :
 
@@ -43,14 +48,17 @@ Jobs required :
 * `generate_thumbnails`
 * `generate_audio_waveform`
 
-Jobs optional :
-
-* `suggest_tags`
-  (AI-powered, **v1.1+**)
-
-Jobs forbidden :
+Jobs optional avant validation `v1.1+` :
 
 * `transcribe_audio`
+  (dépendant de l'AI, **v1.1+**, activable plus tôt uniquement sous `feature_flags`)
+* `suggest_tags`
+  (dépendant de l'AI, **v1.1+**)
+
+Jobs required dès validation `v1.1+` :
+
+* `transcribe_audio`
+
 
 ### `audio_voice`
 
@@ -63,12 +71,16 @@ Jobs required :
 * `generate_thumbnails`
 * `generate_audio_waveform`
 
-Jobs optional :
+Jobs optional avant validation `v1.1+` du profil :
 
 * `transcribe_audio`
-  (AI-powered, **v1.1+**, obligatoire en phase `v1.1+` validée pour ce profil, activable plus tôt uniquement sous `feature_flags`)
+  (dépendant de l'AI, **v1.1+**, activable plus tôt uniquement sous `feature_flags`)
 * `suggest_tags`
-  (AI-powered, **v1.1+**)
+  (dépendant de l'AI, **v1.1+**)
+
+Jobs required dès validation `v1.1+` du profil :
+
+* `transcribe_audio`
 
 ### `photo_standard`
 
@@ -80,10 +92,10 @@ Jobs required :
 * `generate_proxy`
 * `generate_thumbnails`
 
-Jobs optional :
+Jobs optional avant validation `v1.1+` :
 
 * `suggest_tags`
-  (AI-powered, **v1.1+**)
+  (dépendant de l'AI, **v1.1+**)
 
 Jobs forbidden :
 

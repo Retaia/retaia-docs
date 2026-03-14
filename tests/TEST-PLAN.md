@@ -7,7 +7,7 @@ Ce document définit le minimum de tests opposables pour valider une implémenta
 Tests obligatoires :
 
 * `v1` projet global : Core + Agent + `capabilities` + `feature_flags`
-* `v1.1` projet global : clients `UI_WEB_APP` + `AGENT_UI` (`client_kind=AGENT`) + client `MCP_CLIENT` (`client_kind=MCP`)
+* `v1.1` projet global : clients `UI_WEB` + `AGENT_UI` (`client_kind=AGENT`) + client `MCP` (`client_kind=MCP`)
 * aucune suite `v1.2` active : la piste mobile/push est actuellement non planifiée
 * les suites UI/MCP sont classées en gates `v1.1` global
 
@@ -111,7 +111,7 @@ Tests obligatoires :
   * bearer absent/invalide => `401 UNAUTHORIZED`
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
   * body invalide => `422 VALIDATION_FAILED`
-  * `app_feature_enabled.features.ai=false` => `MCP` désactivé globalement
+  * `app_feature_enabled.features.ai=false` => seules les fonctionnalités MCP dépendantes de l’AI sont désactivées
 * `GET /auth/me/features`:
   * bearer valide => `200` + `user_feature_enabled` + `effective_feature_enabled` + `feature_governance`
   * payload stable obligatoire: `user_feature_enabled`, `effective_feature_enabled`, `feature_governance`, `core_v1_global_features`
@@ -198,10 +198,13 @@ Tests obligatoires :
   * body invalide => `422 VALIDATION_FAILED`
 * `POST /auth/mcp/challenge`:
   * `client_id` MCP + fingerprint valides => `200` + challenge court
+  * challenge one-shot avec TTL <= 5 minutes
+  * challenge expiré ou rejoué => refusé
   * body invalide => `422 VALIDATION_FAILED`
   * rate limit => `429 TOO_MANY_ATTEMPTS`
 * `POST /auth/mcp/token`:
   * challenge valide + signature valide => `200` + bearer token client `MCP`
+  * challenge expiré, consommé ou rejoué => `401 UNAUTHORIZED`
   * signature/challenge invalides => `401 UNAUTHORIZED`
   * body invalide => `422 VALIDATION_FAILED`
   * rate limit => `429 TOO_MANY_ATTEMPTS`
@@ -210,6 +213,19 @@ Tests obligatoires :
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR|FORBIDDEN_SCOPE`
   * conflit de rotation => `409 STATE_CONFLICT`
   * body invalide => `422 VALIDATION_FAILED`
+* `POST /auth/webauthn/register/options` et `POST /auth/webauthn/authenticate/options`:
+  * options/challenge one-shot avec TTL <= 5 minutes
+  * rejeu ou double soumission après succès => refusés
+* `POST /auth/webauthn/register/verify` et `POST /auth/webauthn/authenticate/verify`:
+  * challenge expiré, consommé ou rejoué => refusé
+* `GET /assets/{uuid}`:
+  * retourne `summary.revision_etag` et le header `ETag`
+* `PATCH /assets/{uuid}`, `POST /assets/{uuid}/reprocess`, `POST /assets/{uuid}/reopen`:
+  * `If-Match` obligatoire
+  * précondition absente => `428 PRECONDITION_REQUIRED`
+  * révision périmée => `412 PRECONDITION_FAILED`
+  * `revision_etag` change sur toute mutation métier visible en UI
+  * `revision_etag` ne change pas pour du bruit purement technique sans impact visible
 * `POST /agents/register`:
   * `agent_id` requis
   * `agent_id` conforme UUIDv4
@@ -235,11 +251,11 @@ Matrice de migration v1 runtime (gelée) :
 * endpoints humains mutateurs exigent un bearer token (`UserBearerAuth`) conforme à la spec
 * même flux login/token validé sur clients interactifs: `UI_WEB` et `AGENT`
 * compatibilité UI validée:
-  * `UI_WEB_APP` utilise `WebAuthn` + bearer + refresh token comme auth primaire
+  * `UI_WEB` utilise `WebAuthn` + bearer + refresh token comme auth primaire
   * `AGENT_UI` utilise `POST /auth/login` + bearer dans un premier temps, puis peut adopter `WebAuthn` quand la surface le permet, sans changer le modèle de compte
   * `AGENT_TECHNICAL` n'utilise jamais `WebAuthn` au runtime
 * anti lock-out: l'UI n'expose jamais le token en clair et n'offre pas d'action d'auto-révocation du token UI actif (gate `v1.1` global)
-* régression interdite: aucun endpoint runtime n'accepte encore `SessionCookieAuth` (Bearer-only)
+* régression interdite: aucun endpoint runtime n'accepte encore `SessionCookieAuth` (API stateless/sessionless)
 * 2FA optionnelle: compte sans 2FA active ne requiert pas OTP
 * création de secret `AGENT` via UI (gate `v1.1` global):
   * sans 2FA active => approval UI sans OTP
@@ -310,8 +326,8 @@ Tests obligatoires :
 Tests obligatoires :
 
 * `PROCESSED` atteint uniquement quand jobs `required` du profil sont complets
-* `audio_music` n'exige pas `transcribe_audio`
-* `audio_voice` exige `transcribe_audio`
+* avant validation `v1.1+`, `transcribe_audio` peut être activé plus tôt sous `feature_flags`
+* dès validation `v1.1+`, tout média avec piste audio exploitable exige `transcribe_audio` pour atteindre `PROCESSED`
 * changement de profil après claim exige reprocess
 * pour un profil audio qui exige `generate_audio_waveform`, son absence rend le flux processing non conforme
 * pour tout média avec piste audio exploitable, l'absence de `generate_audio_waveform` rend le flux processing non conforme
@@ -363,7 +379,7 @@ Tests obligatoires :
   * si présent en JSON: amplitudes normalisées + métadonnées minimales (`duration_ms`, `bucket_count`)
   * `bucket_count` recommandé `1000`, minimum `100`
   * bucketisation régulière sur toute la durée
-  * si absent: fallback local UI validé (non bloquant)
+  * si absent alors que le média a une piste audio exploitable et a dépassé `READY`: non-conformité bloquante
 * cohérence globale :
   * `duration`/`fps`/dimensions exposés cohérents avec le fichier dérivé livré
   * aucun dérivé ne modifie implicitement le sens temporel du média
@@ -380,6 +396,9 @@ Tests obligatoires :
 * ajout manuel de keywords : après confirmation UI, aucune liste Core "non appliquée" spécifique n'est créée; la mutation est immédiatement persistée par asset
 * action groupée UI sans validation explicite (annulation de confirmation) : aucun appel unitaire Core émis
 * historique de révisions asset mis à jour après mutation validée (`revision_history[]` append + `is_current=true` sur la dernière)
+* mutation asset avec `If-Match` périmé => `412 PRECONDITION_FAILED`
+* `412 PRECONDITION_FAILED` asset expose `details.current_revision_etag` et `details.current_state`
+* `PATCH /assets/{uuid}`, `POST /assets/{uuid}/reprocess` et `POST /assets/{uuid}/reopen` renvoient `428 PRECONDITION_REQUIRED` si `If-Match` est absent
 
 ## 5) Apply decision (move unitaire)
 
@@ -504,7 +523,7 @@ Tests obligatoires :
 
 * `q` (full-text) fonctionne en `v1`
 * `transcribe_audio`, `suggest_tags` et `suggested_tags*` sont hors périmètre v1 et planifiés en `v1.1+`
-* `transcribe_audio` devient obligatoire pour les profils qui l'exigent à partir de la phase `v1.1+` validée
+* `transcribe_audio` devient obligatoire à partir de la phase `v1.1+` validée pour tout média avec piste audio exploitable
 * avant cette phase validée, `transcribe_audio` PEUT être exercé en pré-release uniquement via `feature_flags`
 
 ## 8.3) Feature flags (général)
@@ -514,7 +533,7 @@ Tests obligatoires :
 * toute nouvelle feature est introduite derrière un flag
 * toute feature `v1.1+` est désactivée par défaut
 * source de vérité des flags = payload runtime de Core (`server_policy.feature_flags`), jamais un hardcode client
-* canal runtime flags défini et testé pour `AGENT` en v1, puis `UI_WEB` et `MCP` en v1.1 via `GET /app/policy` (pas seulement `POST /agents/register`)
+* canal runtime flags défini dans le contrat pour `AGENT`, `UI_WEB` et `MCP` via `GET /app/policy`; le contrat existe dès v1 pour `AGENT_TECHNICAL`, puis le rollout produit global des clients `UI_WEB`, `AGENT_UI` et `MCP` est validé en v1.1
 * distinction opposable: `capabilities` (agent/client), `feature_flags` (Core), `app_feature_enabled` (application) et `user_feature_enabled` (utilisateur) sont testées séparément
 * règle AND validée: capability + flag requis pour exécuter une action feature
 * ordre d’arbitrage validé: `feature_flags` -> `app_feature_enabled` -> `user_feature_enabled` -> dépendances/escalade
@@ -526,7 +545,7 @@ Tests obligatoires :
 * `server_policy` expose l’état effectif des flags utiles aux agents
 * client feature OFF => UI/action API de la feature interdite
 * client feature ON => disponibilité immédiate sans redéploiement
-* `AGENT` applique les `feature_flags` runtime du Core en v1 ; `UI_WEB` et `MCP` les appliquent en v1.1
+* `AGENT_TECHNICAL` applique les `feature_flags` runtime du Core dès le contrat v1 ; `UI_WEB`, `AGENT_UI` et `MCP` les appliquent dans leur rollout produit global validé en v1.1
 
 Cas OFF/ON minimum :
 
@@ -534,10 +553,10 @@ Cas OFF/ON minimum :
 * flag ON + capability manquante côté agent => job non exécutable (`pending`/refus selon policy)
 * `UI_WEB` : OFF masque/neutralise la feature, ON l’active au prochain refresh flags
 * `AGENT` : OFF interdit job/patch liés à la feature, ON les autorise sans rebuild agent
-* `MCP` : OFF interdit les commandes/actions liées à la feature, ON les autorise sans redéploiement MCP
+* `MCP` : OFF interdit uniquement les commandes/actions MCP dépendantes de la feature, ON les autorise sans redéploiement MCP
 * `UI_WEB` se base uniquement sur `effective_feature_enabled` (pas de décision locale sur flags bruts)
-* `app_feature_enabled.features.ai=OFF` : client `MCP` entièrement désactivé (bootstrap/token/appels runtime refusés)
-* `app_feature_enabled.features.ai=ON` : client `MCP` autorisé selon matrice authz et capabilities
+* `app_feature_enabled.features.ai=OFF` : client `MCP` reste utilisable pour l’orchestration non-AI autorisée, mais les fonctions MCP dépendantes de l’AI sont refusées
+* `app_feature_enabled.features.ai=ON` : fonctions MCP dépendantes de l’AI autorisées selon matrice authz et capabilities
 * `user_feature_enabled.features.ai=OFF` : fonctionnalités AI désactivées pour l’utilisateur courant sans impact global
 * admin remet ON une feature globalement après opt-out user => l’utilisateur concerné reste OFF
 * tentative d’opt-out utilisateur sur une feature `CORE_V1_GLOBAL` => refus `403 FORBIDDEN_SCOPE`
@@ -707,3 +726,5 @@ Tests obligatoires :
 * [LOCK-LIFECYCLE.md](../policies/LOCK-LIFECYCLE.md)
 * [CODE-QUALITY.md](../change-management/CODE-QUALITY.md)
 * [I18N-LOCALIZATION.md](../policies/I18N-LOCALIZATION.md)
+
+* `MCP` ne peut jamais exécuter `DELETE`, `purge` ni aucune action destructive équivalente (`403 FORBIDDEN_ACTOR`)

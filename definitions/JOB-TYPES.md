@@ -196,12 +196,12 @@ Extraire une waveform audio quand le `processing_profile` l'exige.
 
 ### 3.5 `transcribe_audio`
 
-Disponibilité : **v1+**.
+Disponibilité : **v1.1+** (activable plus tôt sous `feature_flags` pendant le développement et la pré-release).
 
 Ce job peut rester indéfiniment en statut pending tant qu’aucun agent ne déclare la capability requise.
 
 **Objectif**  
-Produire une transcription (et éventuellement des timecodes) à partir de l’audio d’un média, uniquement pour les profils qui l'exigent.
+Produire une transcription (et éventuellement des timecodes) à partir de l’audio d’un média. À partir de la phase `v1.1+` validée, ce job devient requis pour tout média avec piste audio exploitable afin d'atteindre `PROCESSED`.
 
 **Required capabilities**
 
@@ -239,7 +239,7 @@ Produire une transcription (et éventuellement des timecodes) à partir de l’a
 
 ### 3.6 `suggest_tags`
 
-Disponibilité : **v1.1+** (AI-powered).
+Disponibilité : **v1.1+** (dépendant de l'AI).
 
 **Objectif**  
 Produire des suggestions de tags à partir des facts/transcript/metadata.

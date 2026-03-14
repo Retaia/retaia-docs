@@ -11,7 +11,7 @@ Le projet sépare strictement plusieurs applications spécialisées :
 * la **gestion, l’inventaire, les décisions et les déplacements** (orchestrés par Retaia Core, appliqués sur le NAS)
 * le **processing lourd** (réalisé en arrière-plan par les agents)
 * la **review humaine**, effectuée via une UI web fluide reposant sur des **proxies/dérivés**
-* l’**orchestration outillée**, via un client MCP distinct quand ce mode est activé
+* l’**orchestration outillée**, via un client MCP distinct, dont les fonctions dépendantes de l’AI sont gouvernées par feature flags
 
 L’objectif est de construire un système **fiable, durable et compréhensible dans le temps**, qui respecte la décision humaine et la souveraineté des données.
 
@@ -44,7 +44,7 @@ Il manque un outil qui respecte :
 
 * Centraliser l’inventaire média dans Core, sur un stockage NAS piloté
 * Garantir qu’aucun fichier incomplet n’est jamais traité
-* Automatiser le processing **sans action manuelle** via des agents en arrière‑plan
+* Automatiser le processing courant **sans action manuelle récurrente** via des agents en arrière‑plan, tout en gardant l’enrôlement, l’approval et les actions sensibles sous contrôle humain
 * Permettre une **review fluide via proxies** après processing
 * Séparer strictement **facts**, **suggestions** et **decisions**
 * Permettre un tri humain clair (KEEP / REJECT)
@@ -57,7 +57,7 @@ Il manque un outil qui respecte :
 * **Local-first** : aucune dépendance cloud
 * **Core = source de vérité métier et manager**
 * **NAS = support de stockage piloté par Core**
-* **Agent daemon = compute only**
+* **Agent daemon = calcul uniquement**
 * **Décisions humaines uniquement** pour KEEP / REJECT
 * **Review via proxies**, jamais via originaux SMB dans le navigateur
 * **Aucune action destructive implicite**
@@ -138,6 +138,16 @@ Caractéristiques :
 * consomme l’API `/api/v1`
 * review via proxies/dérivés (lecture fluide)
 * aucune dépendance SMB côté navigateur
+
+### AGENT_UI
+
+Rôle : surface humaine locale de l'agent, en CLI et éventuellement en GUI.
+
+Caractéristiques :
+
+* partage le même modèle de compte humain que `UI_WEB`
+* pilote le daemon local sans lui transférer implicitement l'identité utilisateur
+* peut converger fonctionnellement avec `UI_WEB` pour les parcours humains, sans fusionner avec `AGENT_TECHNICAL`
 
 
 ## Types de médias supportés

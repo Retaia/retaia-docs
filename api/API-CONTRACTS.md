@@ -16,9 +16,9 @@ Ce document doit rester strictement aligné avec `openapi/v1.yaml`.
 Objectif : fournir une surface stable consommée par :
 
 * client Agent (`AGENT`) — livré en v1 projet global
-* client UI web principal (`UI_WEB_APP`, `client_kind=UI_WEB`) — livré en v1.1 projet global
+* client UI web principal (`UI_WEB`, `client_kind=UI_WEB`) — livré en v1.1 projet global
 * client agent UI (`AGENT_UI`, `client_kind=AGENT`) — livré en v1.1 projet global
-* client MCP (`MCP_CLIENT`, `client_kind=MCP`) — livré en v1.1 projet global
+* client MCP (`MCP`, `client_kind=MCP`) — livré en v1.1 projet global
 
 
 ## 0) Conventions
@@ -36,7 +36,7 @@ Objectif : fournir une surface stable consommée par :
 
 * `v1` = socle stable (ingestion, processing review, décision humaine, moves, purge, recherche full-text `q`).
 * `v1.1` = extensions compatibles.
-* Toute fonctionnalité AI-powered (ex: `transcribe_audio`, `suggest_tags`, filtres `suggested_tags*`) est hors périmètre de conformité v1 et planifiée en `v1.1+`.
+* Toute fonctionnalité dépendant de l'AI (ex: `transcribe_audio`, `suggest_tags`, filtres `suggested_tags*`) est hors périmètre de conformité v1 et planifiée en `v1.1+`.
 
 ### Versioning projet global (rollout)
 
@@ -46,9 +46,9 @@ Objectif : fournir une surface stable consommée par :
   * système `capabilities` v1
   * système `feature_flags` v1
 * `v1.1` (projet global) :
-  * client `UI_WEB_APP` (mappé sur `client_kind=UI_WEB`)
+  * client `UI_WEB` (mappé sur `client_kind=UI_WEB`)
   * client `AGENT_UI` (mappé sur `client_kind=AGENT`)
-  * client `MCP_CLIENT` (mappé sur `client_kind=MCP`)
+  * client `MCP` (mappé sur `client_kind=MCP`)
 * `v1.2` : piste reservee, actuellement non planifiee au produit
 
 ### Feature flags (normatif)
@@ -114,7 +114,7 @@ Règles client (normatives, UI/agents/MCP) :
 
 * feature OFF => appel API de la feature interdit et UI correspondante masquée/désactivée
 * feature ON => feature disponible immédiatement, sans déploiement client supplémentaire
-* `UI_WEB`, `AGENT` et `MCP` DOIVENT tous consommer les `feature_flags` runtime pilotés par Core
+* `UI_WEB`, `AGENT` et `MCP` DOIVENT tous consommer les `feature_flags` runtime pilotés par Core quand leur client est dans le périmètre de rollout actif
 * aucun client ne DOIT hardcoder l’état d’un flag ni dépendre d’un flag local statique
 * toute décision de disponibilité fonctionnelle côté client DOIT être dérivée du dernier payload runtime reçu
 * un client DOIT accepter `feature_flags_compatibility_mode=COMPAT` sans échec fonctionnel
@@ -128,7 +128,7 @@ Gouvernance des `app_feature_enabled` (opposable) :
 * modification (`PATCH /app/features`) : admin uniquement (`403 FORBIDDEN_ACTOR` / `FORBIDDEN_SCOPE` sinon)
 * portée : switches applicatifs globaux (pas des préférences locales client)
 * effet runtime obligatoire : un switch applicatif désactivé DOIT empêcher l’exécution des fonctionnalités associées pour le scope applicatif
-* règle MCP obligatoire : `app_feature_enabled.features.ai=false` DOIT désactiver le client `MCP` (bootstrap UI, enrôlement de clé et appels authentifiés MCP refusés)
+* règle MCP obligatoire : `app_feature_enabled.features.ai=false` DOIT désactiver les fonctionnalités MCP dépendantes de l’AI, sans désactiver le client MCP dans son ensemble
 
 Gouvernance des `user_feature_enabled` (opposable) :
 
@@ -217,17 +217,18 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 
 ### Typologie des acteurs (normatif)
 
-* `USER_INTERACTIVE` : utilisateur humain connecté via client `UI_WEB` (web app) ou via `AGENT_UI` (`client_kind=AGENT`, surfaces CLI ou GUI) pour bootstrap, administration ou diagnostic
+* `USER_INTERACTIVE` : utilisateur humain connecté via client `UI_WEB` (application web) ou via `AGENT_UI` (`client_kind=AGENT`, surfaces CLI ou GUI) pour bootstrap, administration ou diagnostic
 * `AGENT_TECHNICAL` : agent daemon non-interactif (service) authentifié via bearer technique obtenu par `client_id + secret_key`
 * `MCP_TECHNICAL` : client MCP non-humain authentifié via challenge/réponse asymétrique standard, après enrôlement de sa clé publique depuis l'UI par un utilisateur autorisé
 * `TECHNICAL_ACTORS` : alias générique couvrant `AGENT_TECHNICAL | MCP_TECHNICAL`
 * `client_kind` interactif est borné à `UI_WEB` ou `AGENT`; le mode technique autorise `AGENT` et `MCP`
 * rollout projet global actif : `UI_WEB`, `AGENT_UI` et `MCP` sont intégrés à partir de la v1.1 globale
+* distinction de lecture obligatoire : l'existence du contrat runtime `feature_flags` dès v1 pour `AGENT_TECHNICAL` ne signifie pas que le rollout produit global de `UI_WEB`, `AGENT_UI` et `MCP` est déjà actif en v1
 
 ### UI (humain)
 
 * `UI_WEB` DOIT utiliser `WebAuthn` comme mécanisme primaire d'authentification utilisateur
-* l'API reste bearer-only/stateless côté runtime :
+* l'API reste stateless/sessionless côté runtime :
   * `WebAuthn` sert à obtenir ou renouveler des tokens
   * les appels API métiers continuent via `Authorization: Bearer ...`
   * aucun retour à `SessionCookieAuth` n'est autorisé
@@ -254,18 +255,24 @@ Modèle multi-device (obligatoire) :
 
 ### Agents / MCP
 
-* modes non interactifs : bearer technique (`TechnicalBearerAuth`)
+* les modes non interactifs utilisent une API technique stateless/sessionless avec `TechnicalBearerAuth`, mais ce bearer ne suffit jamais seul à établir une preuve forte d'instance
 * mode `AGENT` interactif : `AGENT_UI` opéré par un humain (CLI ou GUI), avec bearer utilisateur via `POST /auth/login` aujourd'hui
 * `AGENT_UI` PEUT utiliser `WebAuthn` quand la surface le permet (GUI desktop, shell natif ou environnement capable), sans changer le modèle de compte utilisateur ni le contrat bearer
 * mode `AGENT_TECHNICAL` : `client_id + secret_key` pour obtenir un bearer token via `POST /auth/clients/token`
+* pour `AGENT_TECHNICAL`, le `secret_key` reste un credential technique de bootstrap et d'autorisation; la preuve forte d'instance est portée par `agent_id` + clé `OpenPGP` + signature mutatrice
 * `AGENT_TECHNICAL` N'UTILISE JAMAIS `WebAuthn` au runtime
+* `client_id + secret_key` servent au bootstrap et à l'autorisation technique de `AGENT_TECHNICAL`; ils NE SUFFISENT JAMAIS à eux seuls à prouver l'instance pour une écriture mutatrice
+* toute écriture mutatrice `AGENT_TECHNICAL` DOIT présenter à la fois un bearer technique valide et une preuve d'instance valide (`agent_id` + signature `OpenPGP`)
 * mode `MCP_TECHNICAL` : identité asymétrique standard avec clé publique enregistrée côté Core, clé privée locale côté client et signatures obligatoires sur les écritures sensibles
+* toute lecture runtime technique PEUT utiliser le bearer technique seul quand le contrat endpoint l'autorise; toute écriture mutatrice technique DOIT exiger la preuve asymétrique d'instance associée
 * seul `AGENT_TECHNICAL` exécute les jobs de processing; un `AGENT` interactif ne claim pas de job et ne traite pas de média
 * `AGENT_UI` PEUT gérer des fonctionnalités humaines comparables à `UI_WEB` (review, préférences, profil utilisateur, pilotage daemon), mais ces mutations restent des actions `USER_INTERACTIVE`
 * toute action `USER_INTERACTIVE` depuis `AGENT_UI` DOIT rester portée par une identité humaine authentifiée; le daemon `AGENT_TECHNICAL` NE DOIT PAS hériter implicitement de cette identité
 * une éventuelle délégation future de droits user-scoped vers `AGENT_TECHNICAL` DOIT être explicite, bornée dans le temps, liée à un `agent_id` et documentée comme un contrat séparé
 * `MCP` PEUT piloter/orchestrer l'agent (configuration, déclenchement, supervision) mais NE DOIT JAMAIS exécuter de traitement média
 * `MCP` est interdit sur les endpoints de processing `/jobs/*` (`claim`, `heartbeat`, `submit`) avec refus `403 FORBIDDEN_ACTOR`
+* `MCP` NE DOIT JAMAIS pouvoir exécuter une action destructive ou de suppression
+* cela inclut explicitement les endpoints de type `DELETE`, la purge (`/assets/{uuid}/purge`) et toute future opération destructive équivalente
 * `MCP_TECHNICAL` DOIT suivre les mêmes principes que l'agent :
   * pas d'implémentation crypto maison
   * standard existant
@@ -306,7 +313,7 @@ Règle de cardinalité des tokens (obligatoire) :
 * `jobs:heartbeat` (**agents uniquement**)
 * `jobs:submit` (**agents uniquement**)
 * `suggestions:write` (**v1.1+**, agents/MCP)
-* `purge:execute` (**humain uniquement**)
+* `purge:execute` (**humain uniquement**, jamais `MCP`)
 
 La matrice normative endpoint x scope x état est définie dans [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md).
 `openapi/v1.yaml` déclare explicitement les schémas de sécurité (`UserBearerAuth`, `TechnicalBearerAuth`) et les exigences de sécurité par endpoint.
@@ -315,7 +322,7 @@ Migration obligatoire (anti dette technique) :
 
 * `SessionCookieAuth` est retiré du contrat et est interdit pour toute nouvelle implémentation.
 * Core DOIT supprimer le code runtime lié au cookie session auth (`SessionCookieAuth`).
-* UI, Agent et MCP DOIVENT migrer vers Bearer-only et supprimer toute dépendance cookie.
+* UI, Agent et MCP DOIVENT migrer vers une API stateless/sessionless et supprimer toute dépendance cookie.
 
 Baseline sécurité/fuite (normatif) :
 
@@ -375,6 +382,7 @@ Normalisation des timestamps (normatif) :
 
 * security: `UserBearerAuth`
 * effet: retourne les options d'enregistrement `WebAuthn` pour attacher un nouveau browser/device au compte utilisateur courant
+* règles: challenge/options à durée courte (TTL max 5 minutes), usage unique, toute tentative de rejeu ou double soumission DOIT être refusée
 * réponses:
   * `200` options `WebAuthn`
   * `401 UNAUTHORIZED`
@@ -386,6 +394,7 @@ Normalisation des timestamps (normatif) :
 * body requis: attestation `WebAuthn`
 * body optionnel: `device_id`, `device_label`
 * effet: enregistre un credential `WebAuthn` pour le compte utilisateur courant
+* règles: l'attestation DOIT correspondre à des options encore valides, non expirées et non déjà consommées; une vérification réussie consomme définitivement le challenge/options
 * réponses:
   * `200` credential enregistré
   * `401 UNAUTHORIZED`
@@ -397,6 +406,7 @@ Normalisation des timestamps (normatif) :
 * security: aucune (`security: []`)
 * body optionnel: `email`, `client_id`, `client_kind`
 * effet: retourne les options d'assertion `WebAuthn` pour un browser/device déjà enregistré
+* règles: challenge/options à durée courte (TTL max 5 minutes), usage unique, toute tentative de rejeu ou double soumission DOIT être refusée
 * réponses:
   * `200` options `WebAuthn`
   * `401 UNAUTHORIZED`
@@ -409,6 +419,7 @@ Normalisation des timestamps (normatif) :
 * body requis: assertion `WebAuthn`
 * body optionnel: `client_id`, `client_kind`
 * effet: vérifie l'assertion `WebAuthn` puis émet un bearer token interactif + `refresh_token`
+* règles: l'assertion DOIT correspondre à des options encore valides, non expirées et non déjà consommées; une vérification réussie consomme définitivement le challenge/options
 * réponses:
   * `200` succès + bearer token (`access_token`, `token_type=Bearer`, `expires_in?`, `refresh_token?`, `client_id`, `client_kind`)
   * `401 UNAUTHORIZED`
@@ -701,6 +712,7 @@ Règle de sécurité :
 * security: aucune (`security: []`)
 * body requis: `{ client_id, openpgp_fingerprint }`
 * effet: retourne un challenge court pour authentification technique `MCP_TECHNICAL`
+* règles: challenge à usage unique, TTL max 5 minutes, rejeu interdit; un challenge expiré, déjà consommé ou réémis DOIT être refusé
 * réponses:
   * `200` (`challenge_id`, `challenge`, `expires_in`)
   * `401 UNAUTHORIZED`
@@ -712,6 +724,7 @@ Règle de sécurité :
 * security: aucune (`security: []`)
 * body requis: `{ client_id, openpgp_fingerprint, challenge_id, signature }`
 * effet: vérifie la signature asymétrique du challenge puis émet un bearer token technique pour `MCP_TECHNICAL`
+* règles: la vérification DOIT échouer si le challenge est expiré, déjà consommé, rejoué ou signé par une clé non active pour le `client_id` concerné
 * réponses:
   * `200` token client (`access_token`, `token_type=Bearer`, `expires_in?`, `client_id`, `client_kind=MCP`)
   * `401 UNAUTHORIZED`
@@ -794,15 +807,34 @@ Response :
 * `items: AssetSummary[]`
 * `next_cursor`
 
+Règle :
+
+* `AssetSummary.revision_etag` est le jeton canonique de précondition d'écriture sur l'asset
+* `AssetSummary.updated_at` reste informatif pour l'affichage et l'audit
+
 ### GET `/assets/{uuid}`
 
 Fiche détaillée d’un asset.
 
 Response : `AssetDetail`
 
+Concurrence optimiste (obligatoire) :
+
+* `GET /assets/{uuid}` DOIT exposer la révision canonique courante dans `summary.revision_etag` et dans le header HTTP `ETag`
+* toute mutation humaine sur l'asset DOIT envoyer `If-Match: <revision_etag>`
+* absence de `If-Match` => `428 PRECONDITION_REQUIRED`
+* révision périmée => `412 PRECONDITION_FAILED`
+* `revision_etag` DOIT changer sur toute mutation métier acceptée visible côté review/opérateur
+* `revision_etag` NE DOIT PAS changer pour un bruit purement technique sans impact visible côté review/opérateur
+* `updated_at` reste informatif et NE DOIT PAS être utilisé comme jeton de concurrence optimiste
+
 ### PATCH `/assets/{uuid}` (humain)
 
 Modifications humaines : tags/notes/custom fields + transitions d'état métier autorisées.
+
+Précondition HTTP obligatoire :
+
+* header `If-Match: <revision_etag>`
 
 Body (exemple) :
 
@@ -814,6 +846,11 @@ Body (exemple) :
 Règles :
 
 * refuse si `state == PURGED`
+* `If-Match` DOIT reprendre exactement le `revision_etag` lu précédemment par le client sur l'asset
+* la mutation exprime donc explicitement : "je me base sur cette révision" (`If-Match`) et "je veux arriver à cet état" (`state` et/ou metadata)
+* si `If-Match` est absent, Core DOIT refuser avec `428 PRECONDITION_REQUIRED`
+* si `If-Match` ne correspond plus au `revision_etag` courant de l'asset, Core DOIT refuser avec `412 PRECONDITION_FAILED`
+* la réponse d'erreur `412 PRECONDITION_FAILED` DOIT inclure au minimum `details.current_revision_etag` et `details.current_state` pour permettre un rechargement propre côté client
 * la multi-sélection UI (ex: ajout d'un keyword) DOIT envoyer des appels unitaires `PATCH /assets/{uuid}` (un par asset)
 * transitions via `state` :
   * `DECISION_PENDING -> DECIDED_KEEP | DECIDED_REJECT`
@@ -821,15 +858,25 @@ Règles :
   * `DECIDED_REJECT -> DECISION_PENDING | DECIDED_KEEP | REJECTED`
 * toute transition non listée DOIT être refusée (`409 STATE_CONFLICT`)
 * mise à jour metadata (`tags/notes/fields`) et transition `state` peuvent être combinées dans un même `PATCH`
+* `If-Match` est obligatoire
+* toute mutation validée DOIT mettre à jour `updated_at` et `revision_etag`
 * toute mutation validée DOIT être tracée dans l'historique de révisions de l'asset
 
 ### POST `/assets/{uuid}/reprocess` (humain)
 
 Déclenche un reprocess explicite.
 
+Précondition HTTP obligatoire :
+
+* header `If-Match: <revision_etag>`
+
 Effet (normatif) :
 
 * autorisé uniquement si `state in {PROCESSED, ARCHIVED, REJECTED}`
+* `If-Match` DOIT reprendre exactement le `revision_etag` lu précédemment par le client sur l'asset
+* si `If-Match` est absent, Core DOIT refuser avec `428 PRECONDITION_REQUIRED`
+* si `If-Match` ne correspond plus au `revision_etag` courant de l'asset, Core DOIT refuser avec `412 PRECONDITION_FAILED`
+* la réponse d'erreur `412 PRECONDITION_FAILED` DOIT inclure au minimum `details.current_revision_etag` et `details.current_state`
 * invalide les données de processing (facts, dérivés, transcript, suggestions) via version bump
 * transition vers `READY`
 * force la revue : retour à `DECISION_PENDING` après nouveau `PROCESSED`
@@ -847,9 +894,17 @@ Règles (strictes) :
 
 ### POST `/assets/{uuid}/reopen`
 
+Précondition HTTP obligatoire :
+
+* header `If-Match: <revision_etag>`
+
 Effet :
 
 * `ARCHIVED|REJECTED → DECISION_PENDING`
+* `If-Match` DOIT reprendre exactement le `revision_etag` lu précédemment par le client sur l'asset
+* si `If-Match` est absent, Core DOIT refuser avec `428 PRECONDITION_REQUIRED`
+* si `If-Match` ne correspond plus au `revision_etag` courant de l'asset, Core DOIT refuser avec `412 PRECONDITION_FAILED`
+* la réponse d'erreur `412 PRECONDITION_FAILED` DOIT inclure au minimum `details.current_revision_etag` et `details.current_state`
 
 
 ## 4) Agents
@@ -1217,7 +1272,7 @@ Objectif :
   * `bucket_count` recommandé : `1000`
   * `bucket_count` minimum : `100`
   * chaque bucket DOIT être calculé avec une méthode stable pour toute l'implémentation (ex: pic absolu ou RMS)
-* absence de `waveform` NE DOIT PAS bloquer l'UI (fallback waveform locale déjà normative)
+* absence de `waveform` dérivée PEUT être compensée localement pour la lecture seule en UI, mais NE REND JAMAIS l'asset conforme au-delà de `READY`
 
 Règle de cohérence source/dérivé (obligatoire) :
 
@@ -1654,7 +1709,7 @@ Le payload d’erreur normatif est défini dans [`ERROR-MODEL.md`](ERROR-MODEL.m
 
 ## 12) Décisions actées (v1.1)
 
-* Introduction des capacités AI-powered (`transcribe_audio`, `suggest_tags`, patch domains IA, enrichissements `AssetDetail`)
+* Introduction des capacités dépendant de l'AI (`transcribe_audio`, `suggest_tags`, patch domains IA, enrichissements `AssetDetail`)
 * Introduction de `suggested_tags=` et `suggested_tags_mode=`
 * Scope `suggestions:write` pour les flux AI dédiés
 * Multi-sélection UI : envoi d'appels unitaires `PATCH /assets/{uuid}`
