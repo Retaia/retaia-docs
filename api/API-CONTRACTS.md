@@ -48,7 +48,7 @@ Objectif : fournir une surface stable consommée par :
 * `v1.1` (projet global) :
   * client `UI_WEB` (mappé sur `client_kind=UI_WEB`)
   * client `AGENT_UI` (mappé sur `client_kind=AGENT`)
-  * client `MCP_CLIENT` (mappé sur `client_kind=MCP`)
+  * client `MCP` (mappé sur `client_kind=MCP`)
 * `v1.2` : piste reservee, actuellement non planifiee au produit
 
 ### Feature flags (normatif)

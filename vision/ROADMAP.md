@@ -33,7 +33,7 @@ Contenu prévu :
 
 * `UI_WEB`
 * `AGENT_UI`
-* `MCP_CLIENT`
+* `MCP`
 * continuité du modèle runtime status-driven déjà cadré dans les specs
 
 Notes :

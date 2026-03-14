@@ -162,7 +162,7 @@ Ces flags existent dans la DB et sont mis à jour par les jobs.
 * `facts_done` (bool)
 * `thumbs_done` (bool)
 * `proxy_done` (bool) — requis
-* `waveform_done` (bool) — requis si `processing_profile` l'exige
+* `waveform_done` (bool) — requis pour tout média avec piste audio exploitable
 * `processing_profile` (string) — ex: `video_standard`, `audio_music`, `audio_voice`
 * `review_processing_version` (string/int)
 

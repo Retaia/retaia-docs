@@ -63,12 +63,16 @@ Jobs required :
 * `generate_thumbnails`
 * `generate_audio_waveform`
 
-Jobs optional :
+Jobs optional avant validation `v1.1+` du profil :
 
 * `transcribe_audio`
-  (AI-powered, **v1.1+**, obligatoire en phase `v1.1+` validée pour ce profil, activable plus tôt uniquement sous `feature_flags`)
+  (AI-powered, **v1.1+**, activable plus tôt uniquement sous `feature_flags`)
 * `suggest_tags`
   (AI-powered, **v1.1+**)
+
+Jobs required dès validation `v1.1+` du profil :
+
+* `transcribe_audio`
 
 ### `photo_standard`
 
