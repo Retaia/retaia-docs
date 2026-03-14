@@ -111,6 +111,9 @@ paths:
     post:
       tags: [Auth]
       summary: Start WebAuthn device registration
+      description: |
+        Returns one-shot WebAuthn registration options for the authenticated user.
+        The returned challenge/options must expire within 5 minutes and must be rejected after first successful use or replay.
       security:
         - UserBearerAuth: []
       responses:
@@ -137,6 +140,9 @@ paths:
     post:
       tags: [Auth]
       summary: Verify WebAuthn device registration
+      description: |
+        Verifies a WebAuthn attestation against a still-valid one-shot registration challenge.
+        Successful verification consumes the challenge permanently.
       security:
         - UserBearerAuth: []
       requestBody:
@@ -175,6 +181,9 @@ paths:
     post:
       tags: [Auth]
       summary: Start WebAuthn authentication
+      description: |
+        Returns one-shot WebAuthn authentication options for a previously enrolled device/browser.
+        The returned challenge/options must expire within 5 minutes and must be rejected after first successful use or replay.
       security: []
       requestBody:
         required: false
@@ -212,6 +221,9 @@ paths:
     post:
       tags: [Auth]
       summary: Verify WebAuthn authentication
+      description: |
+        Verifies a WebAuthn assertion against a still-valid one-shot authentication challenge.
+        Successful verification consumes the challenge permanently.
       security: []
       requestBody:
         required: true
@@ -1034,6 +1046,9 @@ paths:
     post:
       tags: [Auth]
       summary: Create MCP technical auth challenge
+      description: |
+        Creates a one-shot challenge for `MCP_TECHNICAL`.
+        The challenge must expire within 5 minutes and must be rejected after first successful use or replay.
       security: []
       requestBody:
         required: true
@@ -1071,6 +1086,9 @@ paths:
     post:
       tags: [Auth]
       summary: Mint MCP bearer token from signed challenge
+      description: |
+        Mints a technical bearer token for `MCP_TECHNICAL` from a valid signature over a still-valid one-shot challenge.
+        Expired, replayed or already-consumed challenges must be rejected.
       security: []
       requestBody:
         required: true
@@ -1316,23 +1334,23 @@ paths:
       parameters:
         - $ref: "#/components/parameters/UuidPath"
       responses:
-        "401":
-          description: Unauthorized (`UNAUTHORIZED`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Asset detail
           headers:
             ETag:
               schema:
                 type: string
-              description: Strong asset revision tag matching `summary.revision_etag`.
+              description: Canonical optimistic concurrency token for subsequent human mutations.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/AssetDetail"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     patch:
       tags: [Assets]
       summary: Update one asset (metadata and lifecycle transitions)
@@ -1341,11 +1359,6 @@ paths:
       parameters:
         - $ref: "#/components/parameters/UuidPath"
         - $ref: "#/components/parameters/IfMatchAssetRevision"
-        - $ref: "#/components/parameters/AgentSignatureAgentId"
-        - $ref: "#/components/parameters/AgentSignatureOpenPgpFingerprint"
-        - $ref: "#/components/parameters/AgentSignatureValue"
-        - $ref: "#/components/parameters/AgentSignatureTimestamp"
-        - $ref: "#/components/parameters/AgentSignatureNonce"
       requestBody:
         required: true
         content:
@@ -1385,22 +1398,22 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-        "410":
-          description: Asset is purged
         "412":
-          description: Asset revision mismatch (`PRECONDITION_FAILED`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "422":
-          description: Validation failed (`VALIDATION_FAILED`)
+          description: Stale asset revision (`PRECONDITION_FAILED`)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "428":
-          description: Missing asset revision precondition (`PRECONDITION_REQUIRED`)
+          description: Missing optimistic concurrency precondition (`PRECONDITION_REQUIRED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "410":
+          description: Asset is purged
+        "422":
+          description: Validation failed (`VALIDATION_FAILED`)
           content:
             application/json:
               schema:
@@ -1500,6 +1513,7 @@ paths:
         - UserBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
+        - $ref: "#/components/parameters/IfMatch"
         - $ref: "#/components/parameters/IdempotencyKey"
         - $ref: "#/components/parameters/IfMatchAssetRevision"
       responses:
@@ -1511,20 +1525,20 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Reprocess accepted
-        "409":
-          description: State conflict
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
         "412":
-          description: Asset revision mismatch (`PRECONDITION_FAILED`)
+          description: Stale asset revision (`PRECONDITION_FAILED`)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "428":
-          description: Missing asset revision precondition (`PRECONDITION_REQUIRED`)
+          description: Missing optimistic concurrency precondition (`PRECONDITION_REQUIRED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: State conflict
           content:
             application/json:
               schema:
@@ -1540,12 +1554,6 @@ paths:
         - $ref: "#/components/parameters/UuidPath"
         - $ref: "#/components/parameters/IfMatchAssetRevision"
       responses:
-        "401":
-          description: Unauthorized (`UNAUTHORIZED`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Asset reopened
           headers:
@@ -1553,20 +1561,26 @@ paths:
               schema:
                 type: string
               description: Strong asset revision tag after the accepted mutation.
-        "409":
-          description: State conflict
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "412":
-          description: Asset revision mismatch (`PRECONDITION_FAILED`)
+          description: Stale asset revision (`PRECONDITION_FAILED`)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "428":
-          description: Missing asset revision precondition (`PRECONDITION_REQUIRED`)
+          description: Missing optimistic concurrency precondition (`PRECONDITION_REQUIRED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: State conflict
           content:
             application/json:
               schema:
@@ -1788,6 +1802,7 @@ paths:
         - TechnicalBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
+        - $ref: "#/components/parameters/IfMatch"
         - $ref: "#/components/parameters/IdempotencyKey"
         - $ref: "#/components/parameters/AgentSignatureAgentId"
         - $ref: "#/components/parameters/AgentSignatureOpenPgpFingerprint"
@@ -1831,6 +1846,7 @@ paths:
         - TechnicalBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
+        - $ref: "#/components/parameters/IfMatch"
         - $ref: "#/components/parameters/AgentSignatureAgentId"
         - $ref: "#/components/parameters/AgentSignatureOpenPgpFingerprint"
         - $ref: "#/components/parameters/AgentSignatureValue"
@@ -1866,6 +1882,7 @@ paths:
         - TechnicalBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
+        - $ref: "#/components/parameters/IfMatch"
         - $ref: "#/components/parameters/IdempotencyKey"
         - $ref: "#/components/parameters/AgentSignatureAgentId"
         - $ref: "#/components/parameters/AgentSignatureOpenPgpFingerprint"
@@ -1906,6 +1923,17 @@ paths:
       parameters:
         - $ref: "#/components/parameters/UuidPath"
       responses:
+        "200":
+          description: Asset detail
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: Canonical optimistic concurrency token for subsequent human mutations.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetDetail"
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
           content:
@@ -1955,6 +1983,7 @@ paths:
         - UserBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
+        - $ref: "#/components/parameters/IfMatch"
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
@@ -1992,6 +2021,17 @@ paths:
       parameters:
         - $ref: "#/components/parameters/UuidPath"
       responses:
+        "200":
+          description: Asset detail
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: Canonical optimistic concurrency token for subsequent human mutations.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetDetail"
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
           content:
@@ -2698,6 +2738,12 @@ components:
         type: string
     IdempotencyKey:
       name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+    IfMatch:
+      name: If-Match
       in: header
       required: true
       schema:
@@ -3434,10 +3480,12 @@ components:
         updated_at:
           type: string
           format: date-time
+          nullable: true
           description: Timestamp of the last accepted business mutation on this asset. Informational only; not a write precondition.
         revision_etag:
           type: string
-          description: Strong opaque asset revision tag to be reused in `If-Match` for the next mutation.
+          nullable: true
+          description: Strong opaque asset revision tag to be reused in `If-Match` for the next mutation. Changes on any accepted human-visible business mutation and stays stable for purely technical noise with no review/operator impact.
         captured_at:
           type: string
           format: date-time

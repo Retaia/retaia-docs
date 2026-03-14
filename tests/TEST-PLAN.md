@@ -198,10 +198,13 @@ Tests obligatoires :
   * body invalide => `422 VALIDATION_FAILED`
 * `POST /auth/mcp/challenge`:
   * `client_id` MCP + fingerprint valides => `200` + challenge court
+  * challenge one-shot avec TTL <= 5 minutes
+  * challenge expiré ou rejoué => refusé
   * body invalide => `422 VALIDATION_FAILED`
   * rate limit => `429 TOO_MANY_ATTEMPTS`
 * `POST /auth/mcp/token`:
   * challenge valide + signature valide => `200` + bearer token client `MCP`
+  * challenge expiré, consommé ou rejoué => `401 UNAUTHORIZED`
   * signature/challenge invalides => `401 UNAUTHORIZED`
   * body invalide => `422 VALIDATION_FAILED`
   * rate limit => `429 TOO_MANY_ATTEMPTS`
@@ -210,6 +213,19 @@ Tests obligatoires :
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR|FORBIDDEN_SCOPE`
   * conflit de rotation => `409 STATE_CONFLICT`
   * body invalide => `422 VALIDATION_FAILED`
+* `POST /auth/webauthn/register/options` et `POST /auth/webauthn/authenticate/options`:
+  * options/challenge one-shot avec TTL <= 5 minutes
+  * rejeu ou double soumission après succès => refusés
+* `POST /auth/webauthn/register/verify` et `POST /auth/webauthn/authenticate/verify`:
+  * challenge expiré, consommé ou rejoué => refusé
+* `GET /assets/{uuid}`:
+  * retourne `summary.revision_etag` et le header `ETag`
+* `PATCH /assets/{uuid}`, `POST /assets/{uuid}/reprocess`, `POST /assets/{uuid}/reopen`:
+  * `If-Match` obligatoire
+  * précondition absente => `428 PRECONDITION_REQUIRED`
+  * révision périmée => `412 PRECONDITION_FAILED`
+  * `revision_etag` change sur toute mutation métier visible en UI
+  * `revision_etag` ne change pas pour du bruit purement technique sans impact visible
 * `POST /agents/register`:
   * `agent_id` requis
   * `agent_id` conforme UUIDv4

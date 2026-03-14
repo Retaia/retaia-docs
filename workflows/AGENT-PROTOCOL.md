@@ -19,7 +19,7 @@ Portée d'exécution :
 * seul un `AGENT_TECHNICAL` exécute les jobs de processing
 * un client `MCP` peut piloter/orchestrer mais ne traite jamais les médias
 * rollout projet global: le client applicatif `MCP` (mappé `client_kind=MCP`) est intégré à partir de la v1.1 globale
-* gate applicatif: `app_feature_enabled.features.ai=false` désactive uniquement les fonctions `MCP` dépendantes de l'AI; le client `MCP` reste utilisable pour l'orchestration non-AI autorisée
+* gate applicatif: `app_feature_enabled.features.ai=false` désactive uniquement les fonctions `MCP` dépendantes de l'AI; le client `MCP` reste disponible pour ses fonctions non destructives non liées à l'AI
 * un client `AGENT`/`MCP` DOIT appliquer `effective_feature_enabled` (pas de logique locale alternative)
 * `AGENT_UI` est la surface interactive de l'agent, opérée par un humain pour le bootstrap, le diagnostic, l'administration et les usages applicatifs humains
 * `AGENT_UI` PEUT, à terme, converger fonctionnellement avec `UI_WEB` pour les parcours humains, tout en restant un client distinct qui pilote aussi le daemon local

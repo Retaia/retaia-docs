@@ -255,13 +255,16 @@ Modèle multi-device (obligatoire) :
 
 ### Agents / MCP
 
-* les modes non interactifs utilisent `TechnicalBearerAuth`, mais ce bearer ne suffit jamais seul à établir une preuve forte d'instance
+* les modes non interactifs utilisent une API technique stateless/sessionless avec `TechnicalBearerAuth`, mais ce bearer ne suffit jamais seul à établir une preuve forte d'instance
 * mode `AGENT` interactif : `AGENT_UI` opéré par un humain (CLI ou GUI), avec bearer utilisateur via `POST /auth/login` aujourd'hui
 * `AGENT_UI` PEUT utiliser `WebAuthn` quand la surface le permet (GUI desktop, shell natif ou environnement capable), sans changer le modèle de compte utilisateur ni le contrat bearer
 * mode `AGENT_TECHNICAL` : `client_id + secret_key` pour obtenir un bearer token via `POST /auth/clients/token`
 * pour `AGENT_TECHNICAL`, le `secret_key` reste un credential technique de bootstrap et d'autorisation; la preuve forte d'instance est portée par `agent_id` + clé `OpenPGP` + signature mutatrice
 * `AGENT_TECHNICAL` N'UTILISE JAMAIS `WebAuthn` au runtime
+* `client_id + secret_key` servent au bootstrap et à l'autorisation technique de `AGENT_TECHNICAL`; ils NE SUFFISENT JAMAIS à eux seuls à prouver l'instance pour une écriture mutatrice
+* toute écriture mutatrice `AGENT_TECHNICAL` DOIT présenter à la fois un bearer technique valide et une preuve d'instance valide (`agent_id` + signature `OpenPGP`)
 * mode `MCP_TECHNICAL` : identité asymétrique standard avec clé publique enregistrée côté Core, clé privée locale côté client et signatures obligatoires sur les écritures sensibles
+* toute lecture runtime technique PEUT utiliser le bearer technique seul quand le contrat endpoint l'autorise; toute écriture mutatrice technique DOIT exiger la preuve asymétrique d'instance associée
 * seul `AGENT_TECHNICAL` exécute les jobs de processing; un `AGENT` interactif ne claim pas de job et ne traite pas de média
 * `AGENT_UI` PEUT gérer des fonctionnalités humaines comparables à `UI_WEB` (review, préférences, profil utilisateur, pilotage daemon), mais ces mutations restent des actions `USER_INTERACTIVE`
 * toute action `USER_INTERACTIVE` depuis `AGENT_UI` DOIT rester portée par une identité humaine authentifiée; le daemon `AGENT_TECHNICAL` NE DOIT PAS hériter implicitement de cette identité
@@ -379,6 +382,7 @@ Normalisation des timestamps (normatif) :
 
 * security: `UserBearerAuth`
 * effet: retourne les options d'enregistrement `WebAuthn` pour attacher un nouveau browser/device au compte utilisateur courant
+* règles: challenge/options à durée courte (TTL max 5 minutes), usage unique, toute tentative de rejeu ou double soumission DOIT être refusée
 * réponses:
   * `200` options `WebAuthn`
   * `401 UNAUTHORIZED`
@@ -390,6 +394,7 @@ Normalisation des timestamps (normatif) :
 * body requis: attestation `WebAuthn`
 * body optionnel: `device_id`, `device_label`
 * effet: enregistre un credential `WebAuthn` pour le compte utilisateur courant
+* règles: l'attestation DOIT correspondre à des options encore valides, non expirées et non déjà consommées; une vérification réussie consomme définitivement le challenge/options
 * réponses:
   * `200` credential enregistré
   * `401 UNAUTHORIZED`
@@ -401,6 +406,7 @@ Normalisation des timestamps (normatif) :
 * security: aucune (`security: []`)
 * body optionnel: `email`, `client_id`, `client_kind`
 * effet: retourne les options d'assertion `WebAuthn` pour un browser/device déjà enregistré
+* règles: challenge/options à durée courte (TTL max 5 minutes), usage unique, toute tentative de rejeu ou double soumission DOIT être refusée
 * réponses:
   * `200` options `WebAuthn`
   * `401 UNAUTHORIZED`
@@ -413,6 +419,7 @@ Normalisation des timestamps (normatif) :
 * body requis: assertion `WebAuthn`
 * body optionnel: `client_id`, `client_kind`
 * effet: vérifie l'assertion `WebAuthn` puis émet un bearer token interactif + `refresh_token`
+* règles: l'assertion DOIT correspondre à des options encore valides, non expirées et non déjà consommées; une vérification réussie consomme définitivement le challenge/options
 * réponses:
   * `200` succès + bearer token (`access_token`, `token_type=Bearer`, `expires_in?`, `refresh_token?`, `client_id`, `client_kind`)
   * `401 UNAUTHORIZED`
@@ -705,6 +712,7 @@ Règle de sécurité :
 * security: aucune (`security: []`)
 * body requis: `{ client_id, openpgp_fingerprint }`
 * effet: retourne un challenge court pour authentification technique `MCP_TECHNICAL`
+* règles: challenge à usage unique, TTL max 5 minutes, rejeu interdit; un challenge expiré, déjà consommé ou réémis DOIT être refusé
 * réponses:
   * `200` (`challenge_id`, `challenge`, `expires_in`)
   * `401 UNAUTHORIZED`
@@ -716,6 +724,7 @@ Règle de sécurité :
 * security: aucune (`security: []`)
 * body requis: `{ client_id, openpgp_fingerprint, challenge_id, signature }`
 * effet: vérifie la signature asymétrique du challenge puis émet un bearer token technique pour `MCP_TECHNICAL`
+* règles: la vérification DOIT échouer si le challenge est expiré, déjà consommé, rejoué ou signé par une clé non active pour le `client_id` concerné
 * réponses:
   * `200` token client (`access_token`, `token_type=Bearer`, `expires_in?`, `client_id`, `client_kind=MCP`)
   * `401 UNAUTHORIZED`
@@ -809,9 +818,15 @@ Fiche détaillée d’un asset.
 
 Response : `AssetDetail`
 
-Header :
+Concurrence optimiste (obligatoire) :
 
-* `ETag: <revision_etag>` (même valeur que `summary.revision_etag`)
+* `GET /assets/{uuid}` DOIT exposer la révision canonique courante dans `summary.revision_etag` et dans le header HTTP `ETag`
+* toute mutation humaine sur l'asset DOIT envoyer `If-Match: <revision_etag>`
+* absence de `If-Match` => `428 PRECONDITION_REQUIRED`
+* révision périmée => `412 PRECONDITION_FAILED`
+* `revision_etag` DOIT changer sur toute mutation métier acceptée visible côté review/opérateur
+* `revision_etag` NE DOIT PAS changer pour un bruit purement technique sans impact visible côté review/opérateur
+* `updated_at` reste informatif et NE DOIT PAS être utilisé comme jeton de concurrence optimiste
 
 ### PATCH `/assets/{uuid}` (humain)
 
@@ -843,6 +858,7 @@ Règles :
   * `DECIDED_REJECT -> DECISION_PENDING | DECIDED_KEEP | REJECTED`
 * toute transition non listée DOIT être refusée (`409 STATE_CONFLICT`)
 * mise à jour metadata (`tags/notes/fields`) et transition `state` peuvent être combinées dans un même `PATCH`
+* `If-Match` est obligatoire
 * toute mutation validée DOIT mettre à jour `updated_at` et `revision_etag`
 * toute mutation validée DOIT être tracée dans l'historique de révisions de l'asset
 
