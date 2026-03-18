@@ -190,25 +190,25 @@ Tests obligatoires :
   * bearer absent/invalide => `401 UNAUTHORIZED`
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
   * `client_id` invalide => `422 VALIDATION_FAILED`
-* `POST /auth/mcp/register`:
+* `POST /auth/mcp/register` (`v1.1+`):
   * bearer utilisateur valide + clé publique valide => `200` + `client_id` MCP
   * bearer absent/invalide => `401 UNAUTHORIZED`
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR|FORBIDDEN_SCOPE`
   * conflit d'enrôlement => `409 STATE_CONFLICT`
   * body invalide => `422 VALIDATION_FAILED`
-* `POST /auth/mcp/challenge`:
+* `POST /auth/mcp/challenge` (`v1.1+`):
   * `client_id` MCP + fingerprint valides => `200` + challenge court
   * challenge one-shot avec TTL <= 5 minutes
   * challenge expiré ou rejoué => refusé
   * body invalide => `422 VALIDATION_FAILED`
   * rate limit => `429 TOO_MANY_ATTEMPTS`
-* `POST /auth/mcp/token`:
+* `POST /auth/mcp/token` (`v1.1+`):
   * challenge valide + signature valide => `200` + bearer token client `MCP`
   * challenge expiré, consommé ou rejoué => `401 UNAUTHORIZED`
   * signature/challenge invalides => `401 UNAUTHORIZED`
   * body invalide => `422 VALIDATION_FAILED`
   * rate limit => `429 TOO_MANY_ATTEMPTS`
-* `POST /auth/mcp/{client_id}/rotate-key`:
+* `POST /auth/mcp/{client_id}/rotate-key` (`v1.1+`):
   * bearer admin valide + clé publique valide => `200` + fingerprint rotaté
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR|FORBIDDEN_SCOPE`
   * conflit de rotation => `409 STATE_CONFLICT`
