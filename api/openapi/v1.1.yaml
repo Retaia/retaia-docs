@@ -1346,7 +1346,7 @@ paths:
         - UserBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
-        - $ref: "#/components/parameters/IfMatchAssetRevision"
+        - $ref: "#/components/parameters/IfMatch"
       requestBody:
         required: true
         content:
@@ -1503,7 +1503,7 @@ paths:
         - $ref: "#/components/parameters/UuidPath"
         - $ref: "#/components/parameters/IfMatch"
         - $ref: "#/components/parameters/IdempotencyKey"
-        - $ref: "#/components/parameters/IfMatchAssetRevision"
+        - $ref: "#/components/parameters/IfMatch"
       responses:
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
@@ -1540,7 +1540,7 @@ paths:
         - UserBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
-        - $ref: "#/components/parameters/IfMatchAssetRevision"
+        - $ref: "#/components/parameters/IfMatch"
       responses:
         "200":
           description: Asset reopened
@@ -2714,13 +2714,6 @@ components:
       required: true
       schema:
         type: string
-    IfMatchAssetRevision:
-      name: If-Match
-      in: header
-      required: true
-      schema:
-        type: string
-      description: Strong opaque asset revision tag for optimistic concurrency on asset mutations.
     ClientIdPath:
       name: client_id
       in: path
