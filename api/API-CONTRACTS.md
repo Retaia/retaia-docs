@@ -7,7 +7,7 @@ Cette spécification est **normative**. Toute implémentation serveur, agent ou 
 Les fichiers OpenAPI versionnés sont :
 
 * `openapi/v1.yaml` (gate runtime actuelle, opposable)
-* `openapi/v1.1.yaml` (prévision version mineure)
+* `openapi/v1.1.yaml` (track v1.1+ validée)
 * `openapi/v1.2.yaml` (piste reservee, actuellement non planifiee)
 
 `openapi/v1.yaml` reste la description contractuelle exécutable de référence tant que les gates CI pointent v1.
@@ -668,15 +668,15 @@ Séquence normative bootstrap `AGENT_TECHNICAL` (obligatoire) :
 6. client technique poll `POST /auth/clients/device/poll` jusqu’à `APPROVED`/`DENIED`/`EXPIRED`
 7. en cas `APPROVED`, `secret_key` est retournée une seule fois, puis utilisée sur `POST /auth/clients/token`
 
-Séquence normative bootstrap `MCP_TECHNICAL` (obligatoire) :
+Séquence normative bootstrap `MCP_TECHNICAL` (`v1.1+`, obligatoire) :
 
 1. un utilisateur autorisé ouvre l'UI Core
 2. le client MCP génère localement sa paire de clés asymétriques standard
-3. l'utilisateur enregistre la clé publique du client MCP via `POST /auth/mcp/register`
+3. l'utilisateur enregistre la clé publique du client MCP via `POST /auth/mcp/register` (`v1.1+`)
 4. si 2FA est activée sur le compte, validation OTP obligatoire
 5. Core lie la clé publique MCP au compte/tenant autorisé et au client déclaré
-6. le client MCP demande un challenge via `POST /auth/mcp/challenge`
-7. le client MCP signe le challenge puis échange la preuve via `POST /auth/mcp/token`
+6. le client MCP demande un challenge via `POST /auth/mcp/challenge` (`v1.1+`)
+7. le client MCP signe le challenge puis échange la preuve via `POST /auth/mcp/token` (`v1.1+`)
 8. le client MCP signe ensuite ses écritures sensibles avec sa clé privée locale
 9. le client MCP NE DOIT PAS initier `POST /auth/login` ni `POST /auth/clients/device/*`
 
@@ -694,7 +694,7 @@ Règle de sécurité :
 * création de `secret_key` `AGENT_TECHNICAL` sans validation UI utilisateur est interdite
 * enregistrement ou rotation de clé publique `MCP_TECHNICAL` hors validation UI utilisateur est interdit
 
-`POST /auth/mcp/register`
+`POST /auth/mcp/register` (`v1.1+`)
 
 * security: `UserBearerAuth`
 * body requis: `{ openpgp_public_key, openpgp_fingerprint }`
@@ -707,7 +707,7 @@ Règle de sécurité :
   * `409 STATE_CONFLICT`
   * `422 VALIDATION_FAILED`
 
-`POST /auth/mcp/challenge`
+`POST /auth/mcp/challenge` (`v1.1+`)
 
 * security: aucune (`security: []`)
 * body requis: `{ client_id, openpgp_fingerprint }`
@@ -719,7 +719,7 @@ Règle de sécurité :
   * `422 VALIDATION_FAILED`
   * `429 TOO_MANY_ATTEMPTS`
 
-`POST /auth/mcp/token`
+`POST /auth/mcp/token` (`v1.1+`)
 
 * security: aucune (`security: []`)
 * body requis: `{ client_id, openpgp_fingerprint, challenge_id, signature }`
@@ -732,7 +732,7 @@ Règle de sécurité :
   * `422 VALIDATION_FAILED`
   * `429 TOO_MANY_ATTEMPTS`
 
-`POST /auth/mcp/{client_id}/rotate-key`
+`POST /auth/mcp/{client_id}/rotate-key` (`v1.1+`)
 
 * security: `UserBearerAuth`
 * body requis: `{ openpgp_public_key, openpgp_fingerprint }`
