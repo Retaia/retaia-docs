@@ -58,7 +58,7 @@ The following consumer repositories must align with these specs:
 - API contract: [`api/API-CONTRACTS.md`](api/API-CONTRACTS.md)
 - OpenAPI sources:
   - [`api/openapi/v1.yaml`](api/openapi/v1.yaml) (runtime contract gate)
-  - [`api/openapi/v1.1.yaml`](api/openapi/v1.1.yaml) (`v1.1+` track: AGENT_UI, MCP and features validated in this phase, some testable earlier behind feature flags)
+  - [`api/openapi/v1.1.yaml`](api/openapi/v1.1.yaml) (`v1.1+` track: MCP and AI-related features validated in this phase, some testable earlier behind feature flags)
   - [`api/openapi/v1.2.yaml`](api/openapi/v1.2.yaml) (reserved, currently non-planned)
 - Authz matrix: [`policies/AUTHZ-MATRIX.md`](policies/AUTHZ-MATRIX.md)
 - Agent protocol: [`workflows/AGENT-PROTOCOL.md`](workflows/AGENT-PROTOCOL.md)

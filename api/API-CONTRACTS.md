@@ -17,7 +17,7 @@ Objectif : fournir une surface stable consommée par :
 
 * client Agent (`AGENT`) — livré en v1 projet global
 * client UI web principal (`UI_WEB`, `client_kind=UI_WEB`) — livré en v1 projet global
-* client agent UI (`AGENT_UI`, `client_kind=AGENT`) — livré en v1.1 projet global
+* client agent UI (`AGENT_UI`, `client_kind=AGENT`) — livré en v1 projet global
 * client MCP (`MCP`, `client_kind=MCP`) — livré en v1.1 projet global
 
 
@@ -35,19 +35,22 @@ Objectif : fournir une surface stable consommée par :
 ### Versioning mineur (v1 / v1.1)
 
 * `v1` = socle stable (ingestion, processing review, décision humaine, moves, purge, recherche full-text `q`).
-* `v1.1` = extensions compatibles.
+* `v1.1` = extensions compatibles, incluant les fonctionnalités dépendantes de l'AI et le client MCP.
 * Toute fonctionnalité dépendant de l'AI (ex: `transcribe_audio`, `suggest_tags`, filtres `suggested_tags*`) est hors périmètre de conformité v1 et planifiée en `v1.1+`.
 
 ### Versioning projet global (rollout)
 
 * `v1` (projet global) :
   * Core v1
+  * API v1
+  * `UI_WEB`
   * Agent v1
+  * client `AGENT_UI` (mappé sur `client_kind=AGENT`)
   * système `capabilities` v1
   * système `feature_flags` v1
 * `v1.1` (projet global) :
-  * client `AGENT_UI` (mappé sur `client_kind=AGENT`)
   * client `MCP` (mappé sur `client_kind=MCP`)
+  * fonctionnalités dépendantes de l'AI validées dans cette phase
 * `v1.2` : piste reservee, actuellement non planifiee au produit
 
 ### Feature flags (normatif)
@@ -221,8 +224,8 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 * `MCP_TECHNICAL` : client MCP non-humain authentifié via challenge/réponse asymétrique standard, après enrôlement de sa clé publique depuis l'UI par un utilisateur autorisé
 * `TECHNICAL_ACTORS` : alias générique couvrant `AGENT_TECHNICAL | MCP_TECHNICAL`
 * `client_kind` interactif est borné à `UI_WEB` ou `AGENT`; le mode technique autorise `AGENT` et `MCP`
-* rollout projet global actif : `UI_WEB` est intégré dès la v1 globale; `AGENT_UI` et `MCP` sont intégrés à partir de la v1.1 globale
-* distinction de lecture obligatoire : l'existence du contrat runtime `feature_flags` dès v1 pour `AGENT_TECHNICAL` ne signifie pas que le rollout produit global de `AGENT_UI` et `MCP` est déjà actif en v1; `UI_WEB` fait partie du scope v1
+* rollout projet global actif : `UI_WEB` et `AGENT_UI` sont intégrés dès la v1 globale; `MCP` et les fonctionnalités dépendantes de l'AI sont intégrés à partir de la v1.1 globale
+* distinction de lecture obligatoire : l'existence du contrat runtime `feature_flags` dès v1 pour `AGENT_TECHNICAL`, `UI_WEB` et `AGENT_UI` ne signifie pas que le rollout produit global de `MCP` et des fonctions dépendantes de l'AI est déjà actif en v1
 
 ### UI (humain)
 

@@ -23,17 +23,18 @@ Toute évolution future DOIT respecter :
 
 ## Prévu
 
-### 1. V1.1 — Extension AGENT_UI et MCP
+### 1. V1.1 — Extension MCP et fonctions AI
 
 Objectif :
 
-* étendre le scope produit à `AGENT_UI` et au client MCP
+* étendre le scope produit au client MCP et aux fonctionnalités dépendantes de l'AI
 
 Contenu prévu :
 
-* `UI_WEB`
-* `AGENT_UI`
 * `MCP`
+* transcription audio
+* suggestions de tags
+* inventaire runtime providers/modèles
 * continuité du modèle runtime status-driven déjà cadré dans les specs
 
 Notes :
@@ -43,25 +44,25 @@ Notes :
 * cette étape correspond à un élargissement du produit livré, pas à un changement de philosophie
 
 
-### 2. V1.1 — Fonctions AI locales et assistées
+### 2. V1 — Release initiale
 
 Objectif :
 
-* ajouter des enrichissements non bloquants utiles à la review sans automatiser la décision humaine
+* livrer le socle produit exploitable sans dépendance aux fonctionnalités AI
 
 Contenu prévu :
 
-* transcription audio
-* suggestions de tags
-* support local-first de transcription
-* support LLM minimal avec `ollama` en base, autres providers activables plus tard si validés
-* inventaire runtime provider/modèle côté agent pour valider les capabilities réellement disponibles
+* `Core`
+* API v1
+* `UI_WEB`
+* `Agent`, incluant `AGENT_UI` en CLI et GUI
+* processing review non-AI, décisions humaines, moves, purge, recherche full-text v1
 
 Contraintes produit :
 
 * aucune IA ne prend de décision KEEP / REJECT
-* les suggestions restent des propositions validées par un humain
-* le mode local-first reste la baseline par défaut
+* les enrichissements dépendants de l'AI restent hors conformité v1
+* `AGENT_UI` fait partie de la release initiale et n'est pas un scope différé
 
 
 ## Exploratoire

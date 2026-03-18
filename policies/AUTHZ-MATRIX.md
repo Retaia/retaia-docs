@@ -17,7 +17,7 @@ Acteurs normatifs :
 * `TECHNICAL_ACTORS` = `AGENT_TECHNICAL|MCP_TECHNICAL`
 * `ADMIN_INTERACTIVE` (sous-ensemble `USER_INTERACTIVE` avec droits admin)
 * `client_kind` interactif: `UI_WEB|AGENT`; `client_kind` technique: `AGENT|MCP`
-* rollout projet global actif: `UI_WEB` en v1; `AGENT_UI` et `MCP` en v1.1
+* rollout projet global actif: `UI_WEB` et `AGENT_UI` en v1; `MCP` et les fonctionnalités dépendantes de l'AI en v1.1
 * gate applicatif: `app_feature_enabled.features.ai=false` => seules les fonctionnalités MCP dépendantes de l’AI sont refusées (`403 FORBIDDEN_SCOPE`), sans désactiver le client MCP dans son ensemble
 * `AGENT_UI` PEUT converger fonctionnellement avec `UI_WEB` pour les actions humaines, sans fusionner son identité avec le daemon `AGENT_TECHNICAL`
 * aucune action user-scoped ou admin-scoped ne DOIT être implicitement transférée de `AGENT_UI` vers `AGENT_TECHNICAL`

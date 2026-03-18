@@ -6,10 +6,10 @@ Ce document définit le minimum de tests opposables pour valider une implémenta
 
 Tests obligatoires :
 
-* `v1` projet global : Core + Agent + `UI_WEB` + `capabilities` + `feature_flags`
-* `v1.1` projet global : client `AGENT_UI` (`client_kind=AGENT`) + client `MCP` (`client_kind=MCP`)
+* `v1` projet global : Core + API + `UI_WEB` + Agent + `AGENT_UI` + `capabilities` + `feature_flags`
+* `v1.1` projet global : client `MCP` (`client_kind=MCP`) + fonctionnalités dépendantes de l'AI
 * aucune suite `v1.2` active : la piste mobile/push est actuellement non planifiée
-* les suites `AGENT_UI`/`MCP` sont classées en gates `v1.1` global
+* les suites `MCP` et toutes les suites dépendantes de l'AI sont classées en gates `v1.1` global
 
 ## 0.1) Configuration Core (.env layering + marker)
 
@@ -254,10 +254,10 @@ Matrice de migration v1 runtime (gelée) :
   * `UI_WEB` utilise `WebAuthn` + bearer + refresh token comme auth primaire
   * `AGENT_UI` utilise `POST /auth/login` + bearer dans un premier temps, puis peut adopter `WebAuthn` quand la surface le permet, sans changer le modèle de compte
   * `AGENT_TECHNICAL` n'utilise jamais `WebAuthn` au runtime
-* anti lock-out: l'UI n'expose jamais le token en clair et n'offre pas d'action d'auto-révocation du token UI actif (gate `v1.1` global)
+* anti lock-out: l'UI n'expose jamais le token en clair et n'offre pas d'action d'auto-révocation du token UI actif
 * régression interdite: aucun endpoint runtime n'accepte encore `SessionCookieAuth` (API stateless/sessionless)
 * 2FA optionnelle: compte sans 2FA active ne requiert pas OTP
-* création de secret `AGENT` via UI (gate `v1.1` global):
+* création de secret `AGENT` via UI :
   * sans 2FA active => approval UI sans OTP
   * avec 2FA active => OTP obligatoire à l’étape d’approval
   * sans validation UI => aucun `secret_key` ne peut être émise
@@ -533,7 +533,7 @@ Tests obligatoires :
 * toute nouvelle feature est introduite derrière un flag
 * toute feature `v1.1+` est désactivée par défaut
 * source de vérité des flags = payload runtime de Core (`server_policy.feature_flags`), jamais un hardcode client
-* canal runtime flags défini dans le contrat pour `AGENT`, `UI_WEB` et `MCP` via `GET /app/policy`; le contrat existe dès v1 pour `AGENT_TECHNICAL`, puis le rollout produit global de `AGENT_UI` et `MCP` est validé en v1.1; `UI_WEB` appartient déjà au scope v1
+* canal runtime flags défini dans le contrat pour `AGENT`, `UI_WEB` et `MCP` via `GET /app/policy`; le contrat existe dès v1 pour `AGENT_TECHNICAL`, `AGENT_UI` et `UI_WEB`; le rollout produit global de `MCP` et des fonctions dépendantes de l'AI est validé en v1.1
 * distinction opposable: `capabilities` (agent/client), `feature_flags` (Core), `app_feature_enabled` (application) et `user_feature_enabled` (utilisateur) sont testées séparément
 * règle AND validée: capability + flag requis pour exécuter une action feature
 * ordre d’arbitrage validé: `feature_flags` -> `app_feature_enabled` -> `user_feature_enabled` -> dépendances/escalade
@@ -545,7 +545,7 @@ Tests obligatoires :
 * `server_policy` expose l’état effectif des flags utiles aux agents
 * client feature OFF => UI/action API de la feature interdite
 * client feature ON => disponibilité immédiate sans redéploiement
-* `AGENT_TECHNICAL` applique les `feature_flags` runtime du Core dès le contrat v1 ; `UI_WEB` les applique dans le scope produit v1 ; `AGENT_UI` et `MCP` les appliquent dans leur rollout produit global validé en v1.1
+* `AGENT_TECHNICAL`, `UI_WEB` et `AGENT_UI` appliquent les `feature_flags` runtime du Core dès le scope produit v1 ; `MCP` les applique dans son rollout produit global validé en v1.1
 
 Cas OFF/ON minimum :
 
