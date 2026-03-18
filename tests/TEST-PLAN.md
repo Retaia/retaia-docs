@@ -6,10 +6,10 @@ Ce document définit le minimum de tests opposables pour valider une implémenta
 
 Tests obligatoires :
 
-* `v1` projet global : Core + Agent + `capabilities` + `feature_flags`
-* `v1.1` projet global : clients `UI_WEB` + `AGENT_UI` (`client_kind=AGENT`) + client `MCP` (`client_kind=MCP`)
+* `v1` projet global : Core + Agent + `UI_WEB` + `capabilities` + `feature_flags`
+* `v1.1` projet global : client `AGENT_UI` (`client_kind=AGENT`) + client `MCP` (`client_kind=MCP`)
 * aucune suite `v1.2` active : la piste mobile/push est actuellement non planifiée
-* les suites UI/MCP sont classées en gates `v1.1` global
+* les suites `AGENT_UI`/`MCP` sont classées en gates `v1.1` global
 
 ## 0.1) Configuration Core (.env layering + marker)
 
@@ -533,7 +533,7 @@ Tests obligatoires :
 * toute nouvelle feature est introduite derrière un flag
 * toute feature `v1.1+` est désactivée par défaut
 * source de vérité des flags = payload runtime de Core (`server_policy.feature_flags`), jamais un hardcode client
-* canal runtime flags défini dans le contrat pour `AGENT`, `UI_WEB` et `MCP` via `GET /app/policy`; le contrat existe dès v1 pour `AGENT_TECHNICAL`, puis le rollout produit global des clients `UI_WEB`, `AGENT_UI` et `MCP` est validé en v1.1
+* canal runtime flags défini dans le contrat pour `AGENT`, `UI_WEB` et `MCP` via `GET /app/policy`; le contrat existe dès v1 pour `AGENT_TECHNICAL`, puis le rollout produit global de `AGENT_UI` et `MCP` est validé en v1.1; `UI_WEB` appartient déjà au scope v1
 * distinction opposable: `capabilities` (agent/client), `feature_flags` (Core), `app_feature_enabled` (application) et `user_feature_enabled` (utilisateur) sont testées séparément
 * règle AND validée: capability + flag requis pour exécuter une action feature
 * ordre d’arbitrage validé: `feature_flags` -> `app_feature_enabled` -> `user_feature_enabled` -> dépendances/escalade
@@ -545,7 +545,7 @@ Tests obligatoires :
 * `server_policy` expose l’état effectif des flags utiles aux agents
 * client feature OFF => UI/action API de la feature interdite
 * client feature ON => disponibilité immédiate sans redéploiement
-* `AGENT_TECHNICAL` applique les `feature_flags` runtime du Core dès le contrat v1 ; `UI_WEB`, `AGENT_UI` et `MCP` les appliquent dans leur rollout produit global validé en v1.1
+* `AGENT_TECHNICAL` applique les `feature_flags` runtime du Core dès le contrat v1 ; `UI_WEB` les applique dans le scope produit v1 ; `AGENT_UI` et `MCP` les appliquent dans leur rollout produit global validé en v1.1
 
 Cas OFF/ON minimum :
 

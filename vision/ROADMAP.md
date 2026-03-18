@@ -23,11 +23,11 @@ Toute évolution future DOIT respecter :
 
 ## Prévu
 
-### 1. V1.1 — Extension UI web, AGENT_UI et MCP
+### 1. V1.1 — Extension AGENT_UI et MCP
 
 Objectif :
 
-* étendre le scope produit au client UI web principal, à `AGENT_UI` et au client MCP
+* étendre le scope produit à `AGENT_UI` et au client MCP
 
 Contenu prévu :
 
