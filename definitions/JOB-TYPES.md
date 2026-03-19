@@ -42,8 +42,8 @@ Un job qui ne respecte pas cette structure est invalide.
 | --- | --- | --- | --- | --- |
 | `extract_facts` | `v1` | `media.facts@1` | `facts` | `AssetDetail.fields` et complétude Core |
 | `generate_preview` | `v1` | `media.previews.video@1` ou `media.previews.audio@1` ou `media.previews.photo@1` | `preview_video` ou `preview_audio` ou `preview_photo` | `AssetDetail.derived` |
-| `generate_thumbnails` | `v1` | `media.thumbnails@1` | `thumbnails[]` | `AssetDetail.derived.thumbnails[]` |
-| `generate_audio_waveform` | `v1` | `audio.waveform@1` | `waveform_data` | `AssetDetail.derived.waveform` |
+| `generate_thumbnails` | `v1` | `media.thumbnails@1` | `thumbs[]` | `AssetDetail.derived.thumbs[]` |
+| `generate_audio_waveform` | `v1` | `audio.waveform@1` | `waveform_data` | `AssetDetail.derived.waveform_url` |
 | `transcribe_audio` | `v1.1+` (activable plus tôt sous `feature_flags`) | `speech.transcription@1` | `transcript_text` | `AssetDetail.transcript` |
 | `suggest_tags` | `v1.1+` (activable plus tôt sous `feature_flags`) | `meta.tags.suggestions@1`, `llm.client.ollama@1` | `suggested_tags[]` | surface AI future, hors conformité `v1` |
 
@@ -224,9 +224,9 @@ Règles temporelles associées à `video_representative_v1` et `video_storyboard
 
 **Expected outputs**
 
-* thumbnails[]
+* thumbs[]
 
-`thumbnails[]` (minimum normatif) :
+`thumbs[]` (minimum normatif) :
 
 * avec `video_representative_v1` : au moins un thumb `representative`
 * avec `video_storyboard_v1` : exactement `10` thumbs vidéo DOIVENT être produits
@@ -274,8 +274,8 @@ Extraire une waveform audio quand le `processing_profile` l'exige.
 
 Projection runtime partagée :
 
-* `waveform_data` DOIT être projeté dans `AssetDetail.derived.waveform`
-* `bucket_count` et la série normalisée DOIVENT rester cohérents avec le payload exposé par l'API partagée
+* `waveform_data` DOIT être rendu disponible via la ressource canonique pointée par `AssetDetail.derived.waveform_url`
+* le payload servi via `waveform_url` DOIT rester cohérent avec `bucket_count` et la série normalisée produits par le job
 
 **Invariants**
 

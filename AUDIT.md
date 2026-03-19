@@ -58,19 +58,19 @@ Le corpus est déjà riche et couvre bien les domaines critiques partagés :
 * lock lifecycle et idempotence
 * contrats UI et protocole agent
 
-Le repo est désormais suffisamment fermé pour une release `v1.0.0` sur le plan des contrats partagés identifiés dans cette passe.
+Le repo est largement plus fermé qu'au début de la remédiation, mais une nouvelle passe depuis zéro révèle encore quelques écarts de contrat partagé avant `v1.0.0`.
 
 Principaux constats :
 
-* les règles normatives critiques identifiées sont désormais enforceables par l'outillage versionné du repo et la configuration GitHub
-* les domaines partagés principaux sont suffisamment fermés pour éviter des divergences majeures entre implémentations `Core`, `UI_WEB` et `Agent`
-* les contradictions documentaires critiques relevées pendant l'audit ont été fermées
+* les règles normatives critiques identifiées plus tôt sont désormais enforceables par l'outillage versionné du repo et la configuration GitHub
+* plusieurs contrats partagés sont bien fermés, mais quelques écarts nouveaux subsistent entre prose, tests et OpenAPI
+* certaines docs normatives portent encore des règles d'implémentation interne qui devraient rester dans les repos enfants
 * le statut normatif des documents est désormais indexé et contrôlé
 * seul `v1` reste publié comme contrat OpenAPI actif
 
 ## 4. Findings critiques
 
-À date de cet audit, aucun finding critique bloquant supplémentaire n'est resté ouvert dans le repo ou dans la configuration GitHub du dépôt.
+À date de cette nouvelle passe, le dépôt ne présente plus de trou critique de gouvernance GitHub, mais il reste plusieurs incohérences de contrat partagé à fermer avant `v1.0.0`.
 
 ### 4.1 Secure SDLC désormais matérialisé et prouvé
 
@@ -106,7 +106,52 @@ Risque :
 
 Statut avant `v1.0.0` :
 
-* aucun point critique supplémentaire identifié à ce stade
+* la gouvernance repo/CI est fermée
+* des écarts contractuels et de périmètre documentaire restent encore à corriger
+
+### 4.2 Portée normative UI encore ambiguë
+
+Références :
+
+* [ui/UI-GLOBAL-SPEC.md](ui/UI-GLOBAL-SPEC.md)
+* [DOCUMENT-INDEX.md](DOCUMENT-INDEX.md)
+
+Constat :
+
+* [ui/UI-GLOBAL-SPEC.md](ui/UI-GLOBAL-SPEC.md) s'annonce comme un document partageant des règles UI "par tous les clients Retaia"
+* [DOCUMENT-INDEX.md](DOCUMENT-INDEX.md) classe pourtant ce document comme contrat `UI_WEB` uniquement
+
+Risque :
+
+* `AGENT_UI` ou d'autres clients peuvent se croire contraints par des règles de navigation/shell qui ne leur sont pas destinées
+* inversement, un lecteur de l'index peut sous-estimer la portée revendiquée dans le document lui-même
+
+À normer / fermer avant `v1.0.0` :
+
+* borner explicitement `UI-GLOBAL-SPEC.md` à `UI_WEB`
+* ou élargir formellement ses consommateurs dans l'index si cette portée plus large est réellement voulue
+
+### 4.3 Règles d'implémentation interne encore portées par des docs normatives partagées
+
+Références :
+
+* [workflows/AGENT-PROTOCOL.md](workflows/AGENT-PROTOCOL.md)
+* [ui/KEYBOARD-SHORTCUTS-REGISTRY.md](ui/KEYBOARD-SHORTCUTS-REGISTRY.md)
+
+Constat :
+
+* [workflows/AGENT-PROTOCOL.md](workflows/AGENT-PROTOCOL.md) impose encore que "la stack agent DOIT être implémentée en Rust" et cite une baseline librairies
+* [ui/KEYBOARD-SHORTCUTS-REGISTRY.md](ui/KEYBOARD-SHORTCUTS-REGISTRY.md) référence directement des fichiers `src/...` d'implémentation `retaia-ui`
+
+Risque :
+
+* `retaia-docs` dépasse le contrat partagé et impose des choix internes qui devraient rester dans les repos enfants
+* cela mélange "ce qui doit être identique entre clients" et "comment un client donné choisit de s'implémenter"
+
+À normer / fermer avant `v1.0.0` :
+
+* retirer des docs normatives partagées les choix d'implémentation interne non nécessaires à l'interopérabilité
+* déplacer ces contraintes vers les repos concernés, ou les requalifier explicitement comme recommandations non normatives
 
 ## 5. Domaines partagés désormais suffisamment fermés pour `v1.0.0`
 
@@ -418,26 +463,31 @@ Les points suivants sont globalement solides et réutilisables tels quels comme 
 
 ## 10. Conclusion
 
-Le repo est désormais proche d'un état `v1.0.0` fermable sur le plan documentaire partagé.
+Le repo est proche d'un état `v1.0.0` fermable, mais cette nouvelle passe montre qu'il reste encore quelques écarts à refermer.
 
-Les reliquats principaux ne sont plus des écarts critiques de contrat partagé identifiés dans cet audit.
+Les reliquats principaux portent désormais sur :
+
+* la portée exacte des docs UI normatives
+* la séparation entre contrat partagé et règles d'implémentation interne
 
 Le point central à retenir avant `v1.0.0` est désormais simple :
 
 * le comportement partagé est documenté ici
 * le repo outille désormais une partie significative de sa propre cohérence
-* la configuration GitHub critique a été fermée et vérifiée pendant cette passe
+* mais il reste encore à purifier les derniers écarts entre contrat partagé, tests et implémentation attendue
 
 ## 11. Findings additionnels verbatim
 
 ### Findings
 
-* `P0` Aucun finding critique bloquant supplémentaire n'est resté ouvert après fermeture des derniers écarts repo et GitHub pendant cette passe d'audit.
+* `P2` [ui/UI-GLOBAL-SPEC.md](ui/UI-GLOBAL-SPEC.md) revendique une portée "tous les clients Retaia" alors que [DOCUMENT-INDEX.md](DOCUMENT-INDEX.md) le borne à `UI_WEB`.
+* `P2` Des docs normatives partagées portent encore des règles d'implémentation interne enfant : contrainte `Rust` et librairies dans [workflows/AGENT-PROTOCOL.md](workflows/AGENT-PROTOCOL.md), chemins `src/...` dans [ui/KEYBOARD-SHORTCUTS-REGISTRY.md](ui/KEYBOARD-SHORTCUTS-REGISTRY.md).
 
 
 ### Ce qui reste à normer avant `v1.0.0`
 
-* Aucun manque critique supplémentaire n'a été identifié pendant cette passe. Maintenir les checks et la branch protection au niveau GitHub fait partie du baseline à conserver.
+* Clarifier la portée exacte des docs UI normatives pour éviter toute contrainte implicite sur `AGENT_UI` ou d'autres clients.
+* Retirer des docs normatives partagées les règles d'implémentation interne qui n'appartiennent pas au contrat inter-repos.
 
 ### Vérifications faites
 

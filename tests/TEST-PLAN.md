@@ -665,8 +665,8 @@ Tests obligatoires :
 * `suggest_tags` accepte l'absence de `transcript_ref`
 * provider indisponible pour `suggest_tags` => `failed` retryable, sans fallback implicite de provider
 * `generate_preview` projette exactement un dérivé canonique `preview_video|preview_audio|preview_photo`
-* `generate_thumbnails` projette `thumbnails[]` dans `AssetDetail.derived.thumbnails[]`
-* `generate_audio_waveform` projette `waveform_data` dans `AssetDetail.derived.waveform`
+* `generate_thumbnails` projette `thumbs[]` dans `AssetDetail.derived.thumbs[]`
+* `generate_audio_waveform` projette `waveform_data` via `AssetDetail.derived.waveform_url`
 * `extract_facts` produit les champs minimaux applicables au `media_type`
 * si `transcript_ref` est présent, il est utilisé comme enrichissement sémantique préféré
 * les tags/champs/notes humains existants sont traités comme contexte faisant autorité pour éviter doublons et contradictions, jamais comme cible à réécrire automatiquement
