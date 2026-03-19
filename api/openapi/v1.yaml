@@ -1151,6 +1151,11 @@ paths:
                 type: string
                 pattern: '^"[^"]+"$'
               description: Strong quoted HTTP entity-tag for the current asset revision.
+            Cache-Control:
+              schema:
+                type: string
+                enum: ["private, no-store"]
+              description: Canonical cache policy for authenticated asset detail responses.
           content:
             application/json:
               schema:
@@ -1786,11 +1791,16 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Derived list
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                enum: ["private, no-store"]
+              description: Canonical cache policy for authenticated derived listing responses.
           content:
             application/json:
               schema:
-                type: object
-                additionalProperties: true
+                $ref: "#/components/schemas/AssetDerived"
 
   /assets/{uuid}/derived/{kind}:
     parameters:
@@ -1798,6 +1808,7 @@ paths:
     get:
       tags: [Derived]
       summary: Fetch one derived file by kind
+      description: Direct Core byte delivery for the current derived file. No redirect response is part of the v1 contract.
       security:
         - UserBearerAuth: []
         - TechnicalBearerAuth: []
@@ -1824,11 +1835,21 @@ paths:
               schema:
                 type: string
               description: Media type of the returned derived content.
+            Cache-Control:
+              schema:
+                type: string
+                enum: ["private, no-store"]
+              description: Canonical cache policy for authenticated derived delivery responses.
             Accept-Ranges:
               schema:
                 type: string
                 enum: [bytes]
               description: Present for range-capable derived resources.
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: binary
         "206":
           description: Partial derived content
           headers:
@@ -1836,6 +1857,11 @@ paths:
               schema:
                 type: string
               description: Media type of the returned derived content.
+            Cache-Control:
+              schema:
+                type: string
+                enum: ["private, no-store"]
+              description: Canonical cache policy for authenticated derived delivery responses.
             Accept-Ranges:
               schema:
                 type: string
@@ -1844,6 +1870,11 @@ paths:
               schema:
                 type: string
               description: Byte range actually returned when serving a partial response.
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: binary
         "404":
           description: Not found
         "416":
@@ -3493,22 +3524,30 @@ components:
       properties:
         preview_video_url:
           type: string
+          format: uri-reference
           nullable: true
+          description: Stable Core URL for the current video preview. Served directly by Core in v1.
         preview_audio_url:
           type: string
+          format: uri-reference
           nullable: true
+          description: Stable Core URL for the current audio preview. Served directly by Core in v1.
         preview_photo_url:
           type: string
+          format: uri-reference
           nullable: true
+          description: Stable Core URL for the current photo preview. Served directly by Core in v1.
         waveform_url:
           type: string
+          format: uri-reference
           nullable: true
-          description: Required when the effective processing profile requires waveform data beyond READY.
+          description: Stable Core URL for the current waveform payload. Required when the effective processing profile requires waveform data beyond READY.
         thumbs:
           type: array
           description: Video-only thumbnails.
           items:
             type: string
+            format: uri-reference
 
     AssetTranscript:
       type: object

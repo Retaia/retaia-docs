@@ -414,37 +414,6 @@ Impact :
 * validation exacte de `geo_bbox`
 * relation normative entre pagination et stabilité d'ordre
 
-### 6.8.c Delivery des dérivés encore trop peu contractuel
-
-Couverture existante :
-
-* [api/API-CONTRACTS.md](api/API-CONTRACTS.md)
-* [api/openapi/v1.yaml](api/openapi/v1.yaml)
-* [tests/TEST-PLAN.md](tests/TEST-PLAN.md)
-
-Constats :
-
-* le contrat prose dit que `GET /assets/{uuid}/derived` retourne les dérivés disponibles et leurs URLs
-* OpenAPI déclare pour cette route un objet à `additionalProperties: true`, sans schéma stable
-* `GET /assets/{uuid}/derived/{kind}` est normé en prose avec support Range requests pour audio/vidéo
-* OpenAPI ne ferme pas :
-  * les headers de réponse
-  * le `content-type`
-  * le comportement Range/206
-  * les métadonnées de cache éventuelles
-
-Impact :
-
-* le contrat de delivery visible par `UI_WEB` reste partiellement laissé à l'implémentation
-* les intégrations navigateur risquent de dépendre de comportements non spécifiés
-
-À normer avant `v1.0.0` :
-
-* schéma stable de `GET /assets/{uuid}/derived`
-* headers de réponse minimaux par type de dérivé
-* contrat Range pour preview audio/vidéo
-* politique de `404` / `410` / `401` sur dérivés absents, purgés ou non autorisés
-
 ### 6.8.d Contrats visibles UI encore décrits en prose, mais pas toujours reflétés dans OpenAPI
 
 Constats :
@@ -650,25 +619,17 @@ Constats :
 * la prose pose plusieurs règles HTTP partagées fortes
 * OpenAPI n'en ferme qu'une partie
 * écarts avérés :
-  * aucune règle OpenAPI n'indique si les URLs de dérivés peuvent être redirigées, signées, éphémères ou si la route Core doit toujours servir le contenu directement
-  * les politiques de cache HTTP ne sont pas fermées sur les ressources dérivées ou l'asset detail
+  * les politiques de cache HTTP ne sont pas fermées sur les listes assets
 
 Impact :
 
 * la prose décrit un contrat plus strict que le contrat machine réellement versionné
-* un client peut implémenter `ETag`, `Range` ou localisation selon la prose, puis échouer face à une implémentation Core pourtant "conforme" à OpenAPI
+* un client peut implémenter cache navigateur et rechargement selon la prose, puis échouer face à une implémentation Core pourtant "conforme" à OpenAPI
 * le risque de divergence est particulièrement fort sur navigateur, cache, streaming et rechargement optimiste
 
 À normer avant `v1.0.0` :
 
- * déclarer ou fermer complètement les headers cross-project encore partiellement ouverts :
-  * `If-Match`
-  * `ETag`
-* fermer la politique de cache et de redirection des dérivés
-* décider si les URLs de dérivés sont :
-  * des URLs Core stables
-  * des URLs signées temporaires
-  * ou un autre modèle unique
+* fermer la politique de cache des listes assets
 
 ### 6.8 Error model partagé
 
@@ -851,11 +812,10 @@ Action :
 * Fermer le registre canonique des feature keys `v1.0.0`.
 * Fermer le registre canonique des événements observabilité cross-app.
 * Fermer l'encodage, la pagination et le tri de `GET /assets`.
-* Fermer le schéma et le transport de delivery des dérivés.
 * Fermer le contrat observable de `revision_history` et son lien avec `revision_etag`.
 * Rendre stricts les endpoints ops partagés : tri, validation, contraintes de payload.
 * Fermer les règles de visibilité ou de redaction des sous-sections sensibles de `AssetDetail`.
-* Corriger le contrat OpenAPI de `GET /assets/{uuid}` et fermer tous les headers HTTP réellement normatifs.
+* Fermer la politique de cache des listes assets.
 * Fermer la lecture partagée de `notes` / `fields` et le registre typé des champs métier partagés.
 * Fermer la table canonique `HTTP status -> ErrorResponse.code -> endpoint/scénario`.
 

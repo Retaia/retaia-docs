@@ -227,6 +227,7 @@ Tests obligatoires :
 * `GET /assets/{uuid}`:
   * retourne `summary.revision_etag` et le header `ETag`
   * `summary.revision_etag` et `ETag` utilisent le même strong validator HTTP quoté
+  * retourne `Cache-Control: private, no-store`
 * `PATCH /assets/{uuid}`, `POST /assets/{uuid}/reprocess`, `POST /assets/{uuid}/reopen`:
   * `If-Match` obligatoire
   * `If-Match` reprend exactement le strong validator HTTP quoté lu dans `ETag` / `summary.revision_etag`
@@ -444,6 +445,13 @@ Tests obligatoires :
   * `derived/upload/complete` seul ne publie jamais un dérivé courant
   * seul un `submit` valide publiant le `derived_patch` rend le dérivé courant visible
   * pour un même `asset_uuid`, une même révision et un même `kind`, la dernière référence acceptée remplace atomiquement la précédente
+* delivery HTTP :
+  * `GET /assets/{uuid}/derived` retourne un payload `AssetDerived` stable
+  * les URLs de dérivés exposées sont des URLs Core stables, non signées, non éphémères
+  * `GET /assets/{uuid}/derived/{kind}` ne redirige jamais en `3xx`
+  * `GET /assets/{uuid}/derived` et `GET /assets/{uuid}/derived/{kind}` retournent `Cache-Control: private, no-store`
+  * `GET /assets/{uuid}/derived/{kind}` retourne `200` ou `206` avec `Content-Type`
+  * `Accept-Ranges: bytes` n'est présent que pour `preview_video` et `preview_audio`
 
 ## 3.3) Facts contract (obligatoire)
 

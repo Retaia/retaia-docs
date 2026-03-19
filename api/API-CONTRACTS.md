@@ -880,6 +880,7 @@ Response : `AssetDetail`
 Concurrence optimiste (obligatoire) :
 
 * `GET /assets/{uuid}` DOIT exposer la révision canonique courante dans `summary.revision_etag` et dans le header HTTP `ETag`
+* `GET /assets/{uuid}` DOIT aussi renvoyer `Cache-Control: private, no-store`
 * le format canonique de `revision_etag`, `ETag` et `If-Match` est le strong validator HTTP quoté, par exemple `"asset-rev-42"`
 * toute mutation humaine sur l'asset DOIT envoyer `If-Match: <revision_etag>`
 * absence de `If-Match` => `428 PRECONDITION_REQUIRED`
@@ -1262,11 +1263,13 @@ Erreurs de lock/idempotence (normatif) :
 Principe v1 :
 
 * les dérivés sont **uploadés via HTTP** par les agents
-* l’UI y accède via HTTP (URLs stables), pas via SMB
+* l’UI y accède via HTTP (URLs Core stables), pas via SMB
 * pour tout asset avec piste audio exploitable, `waveform_url` DOIT être présent pour tout état métier au-delà de `READY`
 * un asset audio NE DOIT PAS dépasser `READY` si la waveform dérivée obligatoire n’est pas disponible
 * un rendu local waveform côté client PEUT exister comme dégradation UX de lecture, mais NE REMPLACE PAS l’obligation de dérivé serveur/agent
 * toutes les écritures agent -> Core sur `/assets/{uuid}/derived/upload/*` DOIVENT porter les headers de signature agent
+* en `v1`, les URLs de dérivés exposées par Core DOIVENT rester des URLs Core stables servies directement par Core; les redirections `3xx`, URLs signées temporaires et URLs éphémères hors Core ne font pas partie du contrat canonique
+* `GET /assets/{uuid}/derived` et `GET /assets/{uuid}/derived/{kind}` DOIVENT renvoyer `Cache-Control: private, no-store`
 
 ### POST `/assets/{uuid}/derived/upload/init`
 
@@ -1325,6 +1328,12 @@ Politique normative de remplacement des dérivés :
 
 Retourne les dérivés disponibles et leurs URLs.
 
+Règles :
+
+* la réponse `200` DOIT suivre le schéma `AssetDerived`
+* chaque URL exposée DOIT être une URL Core stable correspondant au dérivé courant visible
+* l'absence d'un dérivé courant DOIT être représentée par l'absence de l'URL correspondante
+
 ### GET `/assets/{uuid}/derived/{kind}`
 
 `kind = preview_video | preview_audio | preview_photo | thumb | waveform`
@@ -1332,6 +1341,8 @@ Retourne les dérivés disponibles et leurs URLs.
 Règles :
 
 * support Range requests pour previews audio/vidéo
+* la route DOIT servir directement le contenu binaire courant; aucune redirection `3xx` n'est autorisée en `v1`
+* `200` et `206` DOIVENT exposer `Content-Type` et `Cache-Control: private, no-store`
 * 404 si `state == PURGED`
 * `thumb` est réservé aux dérivés vidéo; une image fixe utilise `preview_photo` comme dérivé principal de consultation
 
