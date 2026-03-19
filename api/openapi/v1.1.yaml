@@ -12,6 +12,10 @@ info:
     Product maturity labels such as beta or release candidate are independent from this API major version.
     AI-powered features validated in v1.1+ extend the v1 baseline.
 
+externalDocs:
+  description: Normative API contracts and related specifications
+  url: https://github.com/Retaia/retaia-docs/blob/master/api/API-CONTRACTS.md
+
 servers:
   - url: /api/v1
 

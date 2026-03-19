@@ -12,6 +12,10 @@ info:
     Product maturity labels such as beta or release candidate are independent from this API major version.
     MCP and AI-related behavior shown here extends the v1 baseline when this track is activated later.
 
+externalDocs:
+  description: Normative API contracts and related specifications
+  url: https://github.com/Retaia/retaia-docs/blob/master/api/API-CONTRACTS.md
+
 servers:
   - url: /api/v1
 
