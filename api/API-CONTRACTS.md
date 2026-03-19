@@ -850,6 +850,7 @@ Body (exemple) :
 * `tags: string[]`
 * `notes: string`
 * `fields: Record<string, any>`
+* `processing_profile: video_standard | audio_undefined | audio_music | audio_voice | photo_standard`
 * `state: DECISION_PENDING | DECIDED_KEEP | DECIDED_REJECT | ARCHIVED | REJECTED` (transition explicite)
 
 Règles :
@@ -861,11 +862,21 @@ Règles :
 * si `If-Match` ne correspond plus au `revision_etag` courant de l'asset, Core DOIT refuser avec `412 PRECONDITION_FAILED`
 * la réponse d'erreur `412 PRECONDITION_FAILED` DOIT inclure au minimum `details.current_revision_etag` et `details.current_state` pour permettre un rechargement propre côté client
 * la multi-sélection UI (ex: ajout d'un keyword) DOIT envoyer des appels unitaires `PATCH /assets/{uuid}` (un par asset)
+* mutation `processing_profile` :
+  * autorisée uniquement pour un acteur humain via `UI_WEB`
+  * autorisée uniquement si `state in {READY, PROCESSING_REVIEW, PROCESSED, DECISION_PENDING, DECIDED_KEEP, DECIDED_REJECT}`
+  * si l'asset a déjà été claim, tout changement de profil DOIT invalider le processing courant via reprocess explicite ou équivalent piloté par Core
+  * `processing_profile=audio_undefined` est autorisé comme état transitoire bloquant, mais NE DOIT JAMAIS permettre de conclure le processing
+  * si la mutation fixe un profil qui exige `transcribe_audio` dans la phase active, Core DOIT créer automatiquement le job `transcribe_audio`
 * transitions via `state` :
   * `DECISION_PENDING -> DECIDED_KEEP | DECIDED_REJECT`
   * `DECIDED_KEEP -> DECISION_PENDING | DECIDED_REJECT | ARCHIVED`
   * `DECIDED_REJECT -> DECISION_PENDING | DECIDED_KEEP | REJECTED`
 * toute transition non listée DOIT être refusée (`409 STATE_CONFLICT`)
+* refus obligatoire de décision `KEEP` incompatible :
+  * si le `processing_profile` effectif après patch exige `transcribe_audio` dans la phase active
+  * et si `transcript.status != DONE`
+  * alors toute demande qui fait aboutir l'asset en `DECIDED_KEEP` ou `ARCHIVED` DOIT être refusée avec `409 STATE_CONFLICT`
 * mise à jour metadata (`tags/notes/fields`) et transition `state` peuvent être combinées dans un même `PATCH`
 * `If-Match` est obligatoire
 * toute mutation validée DOIT mettre à jour `updated_at` et `revision_etag`
