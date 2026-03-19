@@ -3309,6 +3309,26 @@ components:
       additionalProperties:
         type: boolean
 
+    FeatureExplanation:
+      type: object
+      additionalProperties: false
+      required: [effective_value]
+      properties:
+        effective_value:
+          type: boolean
+        reason_code:
+          type: string
+          enum: [FEATURE_FLAG_OFF, ADMIN_DISABLED, USER_OPT_OUT, DEPENDENCY_OFF, DISABLE_ESCALATION, CORE_PROTECTED, UNSUPPORTED_CONTRACT_VERSION]
+        dependency_key:
+          type: string
+        parent_feature_key:
+          type: string
+
+    FeatureExplanations:
+      type: object
+      additionalProperties:
+        $ref: "#/components/schemas/FeatureExplanation"
+
     FeatureGovernanceRule:
       type: object
       additionalProperties: false
@@ -3338,11 +3358,14 @@ components:
       additionalProperties: false
       required:
         - app_feature_enabled
+        - app_feature_explanations
         - feature_governance
         - core_v1_global_features
       properties:
         app_feature_enabled:
           $ref: "#/components/schemas/AppFeatureEnabled"
+        app_feature_explanations:
+          $ref: "#/components/schemas/FeatureExplanations"
         core_v1_global_features:
           $ref: "#/components/schemas/CoreV1GlobalFeatures"
         feature_governance:
@@ -3361,12 +3384,14 @@ components:
     UserFeaturesResponse:
       type: object
       additionalProperties: false
-      required: [user_feature_enabled, effective_feature_enabled, feature_governance, core_v1_global_features]
+      required: [user_feature_enabled, effective_feature_enabled, effective_feature_explanations, feature_governance, core_v1_global_features]
       properties:
         user_feature_enabled:
           $ref: "#/components/schemas/UserFeatureEnabled"
         effective_feature_enabled:
           $ref: "#/components/schemas/EffectiveFeatureEnabled"
+        effective_feature_explanations:
+          $ref: "#/components/schemas/FeatureExplanations"
         feature_governance:
           type: array
           items:

@@ -177,6 +177,15 @@ Catalogue de dépendances et escalade (opposable) :
 * registre explicite obligatoire : Core DOIT exposer `core_v1_global_features[]` (liste canonique des clés non désactivables)
 * toute entrée `feature_governance` dont `key` appartient à `core_v1_global_features[]` DOIT avoir `tier=CORE_V1_GLOBAL` et `user_can_disable=false`
 * `core_v1_global_features[]` DOIT correspondre exactement aux clés `Tier = CORE_V1_GLOBAL` du registre [`FEATURE-FLAG-REGISTRY.md`](../change-management/FEATURE-FLAG-REGISTRY.md)
+* Core DOIT exposer un payload canonique d'explication :
+  * `app_feature_explanations.<feature_key>` dans `GET /app/features`
+  * `effective_feature_explanations.<feature_key>` dans `GET /auth/me/features`
+* chaque explication DOIT inclure au minimum :
+  * `effective_value`
+  * `reason_code?`
+  * `dependency_key?`
+  * `parent_feature_key?`
+* `reason_code`, `dependency_key` et `parent_feature_key` suivent exactement la taxonomie publiée dans [`FEATURE-GOVERNANCE-OBSERVABILITY.md`](../policies/FEATURE-GOVERNANCE-OBSERVABILITY.md)
 
 Arbitrage admin/user (opposable) :
 
@@ -509,6 +518,7 @@ Fenêtres temporelles partagées (normatif) :
 * prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
 * contrat payload stable obligatoire:
   * `app_feature_enabled`
+  * `app_feature_explanations`
   * `feature_governance`
   * `core_v1_global_features`
 * réponses:
@@ -533,10 +543,11 @@ Fenêtres temporelles partagées (normatif) :
 
 * security: `UserBearerAuth`
 * effet: retourne les préférences feature de l’utilisateur (`user_feature_enabled`) et l’état effectif (`effective_feature_enabled`)
-* inclut `feature_governance` et `core_v1_global_features` pour appliquer localement dépendances, escalade et règles de protection
+* inclut `feature_governance`, `core_v1_global_features` et `effective_feature_explanations` pour appliquer localement dépendances, escalade, règles de protection et explication canonique d'un `OFF`
 * contrat payload stable obligatoire:
   * `user_feature_enabled`
   * `effective_feature_enabled`
+  * `effective_feature_explanations`
   * `feature_governance`
   * `core_v1_global_features`
 * réponses:
@@ -928,6 +939,9 @@ Concurrence optimiste (obligatoire) :
 * `GET /assets/{uuid}` DOIT aussi renvoyer `Cache-Control: private, no-store`
 * le format canonique de `revision_etag`, `ETag` et `If-Match` est le strong validator HTTP quoté, par exemple `"asset-rev-42"`
 * toute mutation humaine sur l'asset DOIT envoyer `If-Match: <revision_etag>`
+* `AssetSummary.revision_etag` dans `GET /assets` et `summary.revision_etag` dans `GET /assets/{uuid}` DOIVENT toujours être identiques pour une même révision métier
+* un client PEUT préremplir `If-Match` depuis `AssetSummary.revision_etag`, mais DOIT recharger `GET /assets/{uuid}` avant mutation s'il ne détient plus la révision détail courante
+* aucune stratégie de cache liste ne DOIT primer sur le détail : le détail et son `ETag` restent la source canonique de précondition d'écriture
 * absence de `If-Match` => `428 PRECONDITION_REQUIRED`
 * révision périmée => `412 PRECONDITION_FAILED`
 * `revision_etag` DOIT changer sur toute mutation métier acceptée visible côté review/opérateur
@@ -1950,6 +1964,8 @@ Règle :
 * l'entrée `is_current=true` DOIT porter le numéro de révision actuellement représenté par `summary.revision_etag`
 * `published_at` PEUT être nul uniquement tant que la révision n'est pas publiée
 * une révision peut être `VALIDATED` et publiée alors qu'une révision suivante est `PENDING_VALIDATION`
+* `revision_history[]` est l'historique métier partagé et exposé
+* les traces techniques internes (ORM, migrations, retries, journal FS, événements de recovery) restent hors contrat partagé tant qu'elles ne sont pas projetées explicitement dans `AssetDetail`
 
 ### Job
 

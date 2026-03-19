@@ -112,9 +112,10 @@ Tests obligatoires :
 * `GET /app/features`:
   * bearer admin valide => `200` + payload `app_feature_enabled`
   * bearer user non-admin => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
-  * payload stable obligatoire: `app_feature_enabled`, `feature_governance`, `core_v1_global_features`
+  * payload stable obligatoire: `app_feature_enabled`, `app_feature_explanations`, `feature_governance`, `core_v1_global_features`
   * réponse inclut `feature_governance[]` (`key`, `tier`, `user_can_disable`, `dependencies[]`, `disable_escalation[]`)
   * réponse inclut `core_v1_global_features[]` (registre canonique des features non désactivables)
+  * réponse inclut `app_feature_explanations.<feature_key>` avec `effective_value`, `reason_code?`, `dependency_key?`, `parent_feature_key?`
   * bearer absent/invalide => `401 UNAUTHORIZED`
 * `PATCH /app/features`:
   * bearer admin valide + body valide => `200` + payload `app_feature_enabled` mis à jour
@@ -124,8 +125,9 @@ Tests obligatoires :
   * `app_feature_enabled.features.ai=false` => seules les fonctionnalités MCP dépendantes de l’AI sont désactivées
 * `GET /auth/me/features`:
   * bearer valide => `200` + `user_feature_enabled` + `effective_feature_enabled` + `feature_governance`
-  * payload stable obligatoire: `user_feature_enabled`, `effective_feature_enabled`, `feature_governance`, `core_v1_global_features`
+  * payload stable obligatoire: `user_feature_enabled`, `effective_feature_enabled`, `effective_feature_explanations`, `feature_governance`, `core_v1_global_features`
   * réponse inclut `core_v1_global_features[]`
+  * réponse inclut `effective_feature_explanations.<feature_key>` avec `effective_value`, `reason_code?`, `dependency_key?`, `parent_feature_key?`
   * bearer absent/invalide => `401 UNAUTHORIZED`
 * `PATCH /auth/me/features`:
   * bearer valide + body valide => `200` + préférences utilisateur mises à jour
@@ -249,6 +251,8 @@ Tests obligatoires :
 * `PATCH /assets/{uuid}`, `POST /assets/{uuid}/reprocess`, `POST /assets/{uuid}/reopen`:
   * `If-Match` obligatoire
   * `If-Match` reprend exactement le strong validator HTTP quoté lu dans `ETag` / `summary.revision_etag`
+  * `AssetSummary.revision_etag` et `GET /assets/{uuid}` exposent la même révision métier
+  * le détail et son `ETag` restent la source canonique avant écriture si le client a un doute sur la fraîcheur de sa liste
   * précondition absente => `428 PRECONDITION_REQUIRED`
   * révision périmée => `412 PRECONDITION_FAILED`
   * `revision_etag` change sur toute mutation métier visible en UI
@@ -363,6 +367,7 @@ Tests obligatoires :
 * claim atomique concurrent (un gagnant)
 * lease expiry rend le job reclaimable
 * heartbeat prolonge `locked_until`
+* recovery crash suit la matrice normative FS/DB de `LOCK-LIFECYCLE.md`
 * job `pending` sans agent compatible reste `pending` sans erreur
 * `claim`, `heartbeat`, `submit`, `fail`, `derived/upload/*` refusés si la signature agent est absente/invalide
 * rejeu d'un `X-Retaia-Signature-Nonce` déjà vu => refus explicite
@@ -814,12 +819,14 @@ Tests obligatoires :
   * `asset.purge.*` = `WARN`
   * `feature.contract_version.unsupported` = `WARN`
 * calcul de `effective_feature_enabled` produit `feature_effective.resolved` traçable par `request_id`/`trace_id`
+* payloads `app_feature_explanations` et `effective_feature_explanations` reprennent sans dérive locale la même taxonomie `reason_code`
 * métriques `feature_toggle_admin_total`, `feature_toggle_user_total`, `feature_denied_total`, `feature_effective_off_total` exposées
 * histogramme `feature_resolution_duration_ms` exposé
 * tout `app_feature_enabled.updated` accepté produit un audit event et incrémente `feature_toggle_admin_total`
 * tout `user_feature_enabled.updated` accepté produit un audit event et incrémente `feature_toggle_user_total`
 * tout `feature_access.denied` produit un audit event et incrémente `feature_denied_total`
 * tout `feature_effective.resolved` avec `effective_value=false` produit un audit event, incrémente `feature_effective_off_total` et observe `feature_resolution_duration_ms`
+* toute UI ops qui expose les événements conserve au minimum `event_name`, `severity`, `timestamp_utc`, `outcome`, `error_code?`
 * `actor_id` brut reste présent dans les journaux d'audit protégés
 * toute exportation hors frontière de confiance utilise `actor_id_pseudonymized=psd_<16 octets hex HMAC>`
 * seuils canoniques d'alerte conformes :

@@ -140,10 +140,10 @@ Points forts :
 * `GET /assets/{uuid}` doit renvoyer `ETag`
 * `PATCH /assets/{uuid}`, `POST /assets/{uuid}/reprocess`, `POST /assets/{uuid}/reopen` exigent `If-Match`
 
-Reste à normer :
+Points forts :
 
-* normalisation exacte du transport côté UI/Agent
-* stratégie claire pour les clients qui mettent en cache des listes vs détail asset
+* transport `ETag` / `If-Match` désormais fermé côté liste et détail
+* primauté du détail pour les préconditions d'écriture explicitement normée
 
 ### 6.3 Feature flags et résolution d'effectivité
 
@@ -160,14 +160,9 @@ Points forts :
 * contrat de version du feature flags payload déjà posé
 * registre canonique des clés partagées `v1.0.0` désormais publié
 
-Reste à normer :
+Points forts :
 
-* payload d'audit expliquant pourquoi une feature est `OFF`
-
-Sans cela :
-
-* `Core` peut calculer correctement l'effectif
-* `UI_WEB` et `Agent` peuvent encore diverger sur l'explication utilisateur d'un `OFF`, mais plus sur le registre canonique des clés partagées
+* payload canonique d'explication d'un `OFF` désormais exposé via `app_feature_explanations` / `effective_feature_explanations`
 
 ### 6.4 Auth technique et signature OpenPGP
 
@@ -246,22 +241,10 @@ Points forts :
 * `fencing_token` documenté
 * transport `job_lease` désormais explicite avec `lock_token` + `fencing_token`
 
-Reste à normer :
+Points forts :
 
-* règles de recovery détaillées après crash entre FS et DB
-
-Sans cela :
-
-* la policy de verrouillage est définie côté transport `job_lease`, mais le recovery inter-sous-systèmes reste encore partiellement implicite
-
-Constat additionnel :
-
-* `LOCK-LIFECYCLE.md` rend `fencing_token` obligatoire
-* le transport `job_lease` est désormais fermé, mais pas encore les scénarios détaillés de reprise après crash
-
-Conclusion :
-
-* le trou principal résiduel n'est plus l'échange du `fencing_token`, mais la reprise normative après crash entre DB, locks et filesystem
+* matrice de recovery crash FS/DB désormais définie
+* invariants de reprise idempotente désormais fermés
 
 ### 6.7 Jobs, capabilities et processing profiles
 
@@ -343,11 +326,9 @@ Impact :
 
 * la persistance interne reste libre, mais la vue runtime partagée ne devrait plus diverger sur les invariants principaux
 
-À normer avant `v1.0.0` :
+Points forts :
 
-* distinguer explicitement :
-  * historique métier partagé et normatif
-  * traces techniques internes non exposées
+* distinction entre historique métier exposé et traces techniques internes désormais explicite
 
 ### 6.8.f Endpoints ops/admin encore partiellement ouverts alors qu'ils sont partagés
 
@@ -390,13 +371,10 @@ Points forts :
 * bon schéma minimal d'événement sécurité
 * taxonomie minimale des événements opératoires cross-app désormais publiée
 
-Reste à normer :
+Points forts :
 
-* articulation explicite avec les écrans ops/UI si certains événements deviennent des surfaces utilisateur obligatoires
-
-Sans cela :
-
-* Core, UI et Agent partagent désormais le vocabulaire runtime minimal, mais pas encore forcément sa présentation UX finale
+* présentation UI/Ops classée non normative en `v1`
+* surface minimale obligatoire des événements affichés désormais fermée
 
 ### 6.9.b Observabilité de gouvernance de feature encore partiellement implicite
 

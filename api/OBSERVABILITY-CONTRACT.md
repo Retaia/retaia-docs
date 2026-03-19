@@ -125,6 +125,17 @@ Severite minimale canonique :
 * test mapping erreurs: `error_code` appartient au modele normatif
 * test taxonomie: chaque event cross-app obligatoire est emissionable avec les champs minimaux attendus
 
+## 8) Presentation UI/Ops
+
+* la presentation visuelle des evenements dans une UI ops ou admin n'est pas normative en `v1`
+* si une surface UI expose ces evenements, elle DOIT au minimum preserver sans reinterpretation locale :
+  * `event_name`
+  * `severity`
+  * `timestamp_utc`
+  * `outcome`
+  * `error_code?`
+* aucun ecran ne DOIT inventer une taxonomie alternative aux `event_name` canoniques
+
 ## References associees
 
 * [ERROR-MODEL.md](ERROR-MODEL.md)
