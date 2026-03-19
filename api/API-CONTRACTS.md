@@ -865,6 +865,9 @@ Règles :
 * mutation `processing_profile` :
   * autorisée uniquement pour un acteur humain via `UI_WEB`
   * autorisée uniquement si `state in {READY, PROCESSING_REVIEW, REVIEW_PENDING_PROFILE}`
+  * la liste canonique des profils reste `video_standard | audio_undefined | audio_music | audio_voice | photo_standard`
+  * `video_standard`, `audio_music`, `audio_voice`, `photo_standard` sont des profils effectifs de processing
+  * `audio_undefined` est un profil transitoire de qualification, jamais un profil final de processing complet
   * `processing_profile=audio_undefined` est autorisé comme état transitoire de qualification audio, mais NE DOIT JAMAIS permettre de conclure le processing complet
   * si la mutation fixe un profil qui exige `transcribe_audio` dans la phase active, Core DOIT créer automatiquement le job `transcribe_audio` puis faire repasser l'asset en `READY`
   * si la mutation fixe un profil déjà complet avec les jobs disponibles, Core PEUT faire passer l'asset à `PROCESSED`

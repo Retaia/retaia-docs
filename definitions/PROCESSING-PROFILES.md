@@ -7,6 +7,13 @@ Il complète la machine à états et les job types.
 
 Un `processing_profile` détermine les jobs requis pour atteindre `PROCESSED`.
 
+Le modèle courant distingue implicitement deux niveaux :
+
+* une **baseline technique** pilotée par le `media_type`
+* une **qualification métier** seulement quand elle change réellement les jobs requis
+
+En `v1`, cette distinction reste portée par un seul champ `processing_profile`. Le champ NE DOIT donc PAS être lu comme une taxonomie métier exhaustive de tous les contenus; il exprime seulement les variantes qui changent le processing requis.
+
 Règles :
 
 * un asset DOIT avoir exactement un `processing_profile`
@@ -17,7 +24,40 @@ Règles :
 * pour un asset `AUDIO`, le profil auto par défaut est `audio_undefined` tant qu'un humain n'a pas qualifié explicitement le média
 * `audio_undefined` mène à `REVIEW_PENDING_PROFILE` dès que les dérivés minimaux sont prêts et force un choix explicite via `UI_WEB`
 
-## 2) Profils canoniques v1
+## 2) Baselines techniques par type média
+
+### `PHOTO`
+
+Baseline technique requise :
+
+* `extract_facts`
+* `generate_preview`
+
+### `AUDIO`
+
+Baseline technique requise :
+
+* `extract_facts`
+* `generate_preview`
+* `generate_audio_waveform`
+
+### `VIDEO`
+
+Baseline technique requise :
+
+* `extract_facts`
+* `generate_preview`
+* `generate_thumbnails`
+* `generate_audio_waveform` (si piste audio exploitable)
+
+## 3) Profils canoniques v1
+
+Les profils ci-dessous sont les seuls profils normatifs exposés en `v1`.
+
+Catégories :
+
+* `video_standard`, `audio_music`, `audio_voice`, `photo_standard` = profils de processing effectifs
+* `audio_undefined` = profil transitoire de qualification, jamais profil final de processing complet
 
 ### `video_standard`
 
@@ -31,10 +71,7 @@ Règle d'évolution :
 
 Jobs required :
 
-* `extract_facts`
-* `generate_preview`
-* `generate_thumbnails`
-* `generate_audio_waveform` (si piste audio exploitable)
+* baseline `VIDEO`
 
 Jobs optional avant validation `v1.1+` :
 
@@ -51,9 +88,7 @@ Usage : musique / ambiances. La transcription n'est pas requise.
 
 Jobs required :
 
-* `extract_facts`
-* `generate_preview`
-* `generate_audio_waveform`
+* baseline `AUDIO`
 
 Jobs optional avant validation `v1.1+` :
 
@@ -67,9 +102,7 @@ Usage : prises de son voix/interview.
 
 Jobs required :
 
-* `extract_facts`
-* `generate_preview`
-* `generate_audio_waveform`
+* baseline `AUDIO`
 
 Jobs optional avant validation `v1.1+` du profil :
 
@@ -86,11 +119,14 @@ Jobs required dès validation `v1.1+` du profil :
 
 Usage : audio découvert automatiquement mais non encore qualifié par un humain entre `audio_music` et `audio_voice`.
 
+Nature :
+
+* profil transitoire de qualification
+* jamais profil final de processing complet
+
 Jobs required :
 
-* `extract_facts`
-* `generate_preview`
-* `generate_audio_waveform`
+* baseline `AUDIO`
 
 Jobs forbidden tant que le profil n'a pas été choisi explicitement :
 
@@ -111,8 +147,7 @@ Usage : photo fixe.
 
 Jobs required :
 
-* `extract_facts`
-* `generate_preview`
+* baseline `PHOTO`
 
 Jobs optional avant validation `v1.1+` :
 
@@ -124,7 +159,7 @@ Jobs forbidden :
 * `generate_audio_waveform`
 * `transcribe_audio`
 
-## 3) Résolution auto du profil (normative)
+## 4) Résolution auto du profil (normative)
 
 Détection par défaut (override humain autorisé) :
 
@@ -139,7 +174,7 @@ Règles explicites :
 * seules les métadonnées techniques et le choix humain explicite sont autorisés
 * pour `AUDIO`, seul un choix humain explicite dans `UI_WEB` PEUT fixer `audio_music` ou `audio_voice`
 
-## 3.1) Mutation de profil
+## 4.1) Mutation de profil
 
 Avant premier claim de job review :
 
@@ -151,15 +186,18 @@ Après premier claim :
 * mutation interdite sans reprocess
 * workflow obligatoire : `POST /assets/{uuid}/reprocess` puis mutation de profil puis reprise processing
 
-## 4) Invariants
+## 5) Invariants
 
+* les baselines techniques sont pilotées par le `media_type`
+* les qualifications métier ne DOIVENT introduire une variante de profil que si elles changent réellement les jobs requis
 * `extract_facts` et `generate_preview` sont requis pour tout profil v1
 * `generate_thumbnails` n'est requis que pour les profils vidéo
 * `generate_audio_waveform` est requis pour les profils audio et pour les profils vidéo avec piste audio exploitable
+* `audio_undefined` ne DOIT JAMAIS être traité comme un profil final équivalent à `audio_music` ou `audio_voice`
 * les profils ne prennent jamais de décision KEEP/REJECT
 * les profils n'autorisent aucune écriture directe agent sur NAS dérivés
 
-## 5) Évolution
+## 6) Évolution
 
 * ajout d'un profil: changement compatible
 * suppression ou changement des jobs `required` d'un profil existant: changement structurel
