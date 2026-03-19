@@ -497,30 +497,6 @@ Impact :
   * stable ou éphémère
   * servie directement ou via route Core
 
-### 6.8 Error model partagé
-
-Couverture existante :
-
-* [api/ERROR-MODEL.md](api/ERROR-MODEL.md)
-* [api/API-CONTRACTS.md](api/API-CONTRACTS.md)
-* [api/openapi/v1.yaml](api/openapi/v1.yaml)
-
-Points forts :
-
-* shape d'erreur commun bien cadré
-* distinction `400` vs `422` déjà écrite
-
-Reste à normer ou corriger :
-
-* `RATE_LIMITED` apparaît dans le modèle d'erreur, mais le reste du corpus repose surtout sur `TOO_MANY_ATTEMPTS` et `SLOW_DOWN`
-* plusieurs réponses OpenAPI restent encore génériques hors des cas de lock/idempotence déjà fermés
-* `RATE_LIMITED` apparaît dans le modèle d'erreur, mais le reste du corpus repose surtout sur `TOO_MANY_ATTEMPTS` et `SLOW_DOWN`
-
-Décision à prendre avant `v1.0.0` :
-
-* soit fermer une table canonique de tous les `ErrorResponse.code`
-* soit assumer un niveau de flexibilité, mais alors il faut l'annoncer clairement
-
 ### 6.9 Observabilité partagée
 
 Couverture existante :
@@ -673,14 +649,12 @@ Action :
   * nonce anti-rejeu
   * polling
   * backoff
-* Fermer la table canonique des `ErrorResponse.code`.
 * Fermer le registre canonique des feature keys `v1.0.0`.
 * Fermer le registre canonique des événements observabilité cross-app.
 * Fermer le contrat observable de `revision_history` et son lien avec `revision_etag`.
 * Rendre stricts les endpoints ops partagés : tri, validation, contraintes de payload.
 * Fermer les règles de visibilité ou de redaction des sous-sections sensibles de `AssetDetail`.
 * Fermer la lecture partagée de `notes` / `fields` et le registre typé des champs métier partagés.
-* Fermer la table canonique `HTTP status -> ErrorResponse.code -> endpoint/scénario`.
 
 ### Priorité P2
 

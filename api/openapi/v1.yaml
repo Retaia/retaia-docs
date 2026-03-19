@@ -3867,7 +3867,6 @@ components:
             - EXPIRED_DEVICE_CODE
             - UNSUPPORTED_FEATURE_FLAGS_CONTRACT_VERSION
             - SLOW_DOWN
-            - RATE_LIMITED
             - TEMPORARY_UNAVAILABLE
             - PRECONDITION_REQUIRED
             - PRECONDITION_FAILED
