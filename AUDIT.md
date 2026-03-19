@@ -616,21 +616,6 @@ Références :
 
 Constats :
 
-* la prose pose plusieurs règles HTTP partagées fortes
-* OpenAPI n'en ferme qu'une partie
-* écarts avérés :
-  * les politiques de cache HTTP ne sont pas fermées sur les listes assets
-
-Impact :
-
-* la prose décrit un contrat plus strict que le contrat machine réellement versionné
-* un client peut implémenter cache navigateur et rechargement selon la prose, puis échouer face à une implémentation Core pourtant "conforme" à OpenAPI
-* le risque de divergence est particulièrement fort sur navigateur, cache, streaming et rechargement optimiste
-
-À normer avant `v1.0.0` :
-
-* fermer la politique de cache des listes assets
-
 ### 6.8 Error model partagé
 
 Couverture existante :
@@ -815,7 +800,6 @@ Action :
 * Fermer le contrat observable de `revision_history` et son lien avec `revision_etag`.
 * Rendre stricts les endpoints ops partagés : tri, validation, contraintes de payload.
 * Fermer les règles de visibilité ou de redaction des sous-sections sensibles de `AssetDetail`.
-* Fermer la politique de cache des listes assets.
 * Fermer la lecture partagée de `notes` / `fields` et le registre typé des champs métier partagés.
 * Fermer la table canonique `HTTP status -> ErrorResponse.code -> endpoint/scénario`.
 

@@ -870,6 +870,7 @@ Règle :
 
 * `AssetSummary.revision_etag` est le jeton canonique de précondition d'écriture sur l'asset
 * `AssetSummary.updated_at` reste informatif pour l'affichage et l'audit
+* `GET /assets` DOIT renvoyer `Cache-Control: private, no-store`
 
 ### GET `/assets/{uuid}`
 

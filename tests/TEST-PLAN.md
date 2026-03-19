@@ -228,6 +228,8 @@ Tests obligatoires :
   * retourne `summary.revision_etag` et le header `ETag`
   * `summary.revision_etag` et `ETag` utilisent le même strong validator HTTP quoté
   * retourne `Cache-Control: private, no-store`
+* `GET /assets`:
+  * retourne `Cache-Control: private, no-store`
 * `PATCH /assets/{uuid}`, `POST /assets/{uuid}/reprocess`, `POST /assets/{uuid}/reopen`:
   * `If-Match` obligatoire
   * `If-Match` reprend exactement le strong validator HTTP quoté lu dans `ETag` / `summary.revision_etag`

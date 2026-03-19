@@ -1118,6 +1118,12 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Asset list
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                enum: ["private, no-store"]
+              description: Canonical cache policy for authenticated asset list responses.
           content:
             application/json:
               schema:
