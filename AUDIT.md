@@ -120,11 +120,11 @@ Points forts :
 * `audio_undefined` est bien cadré comme profil transitoire
 * les transitions interdites principales sont explicites
 
-Reste à normer :
+Points forts :
 
-* tableau canonique unique "transition x endpoint x code d'erreur x préconditions"
-* règle explicite sur qui déclenche `PROCESSED -> DECISION_PENDING` si des hooks existent
-* règle explicite sur la visibilité UI minimale par état, pour éviter une UI qui masque un état que Core expose
+* matrice canonique `transition -> endpoint -> préconditions -> refus` désormais publiée
+* `PROCESSED -> DECISION_PENDING` est explicitement réservé à Core
+* visibilité UI minimale par état désormais fermée
 
 ### 6.2 Contrat de précondition optimiste (`ETag` / `If-Match`)
 
@@ -278,18 +278,11 @@ Points forts :
 * `audio_undefined` très bien cadré
 * AI bien repoussée en `v1.1+`
 
-Reste à normer :
+Points forts :
 
-* registre canonique machine-readable `job_type -> required_capabilities -> outputs`
-* statut de version de chaque output structurant
-* contrat exact de complétude utilisé par Core pour déclarer un asset "PROCESSED"
-* payload minimal des `facts`, `waveform`, `thumbnails`, `transcript` dans OpenAPI de façon totalement isomorphe aux docs prose
-
-Sans cela :
-
-* `Core` peut déclarer un asset complet
-* `UI_WEB` peut attendre plus
-* `Agent` peut produire moins
+* registre canonique `job_type -> required_capabilities -> outputs` désormais publié
+* outputs structurants rattachés explicitement à leur job canonique
+* projections runtime `facts`, `thumbnails`, `waveform`, `transcript` explicitées
 
 ### 6.7.c Contrat des hooks trop ouvert pour rester cross-project sûr
 

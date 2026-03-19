@@ -36,6 +36,23 @@ Chaque job est défini par :
 
 Un job qui ne respecte pas cette structure est invalide.
 
+## 2.1 Registre canonique — `job_type -> required_capabilities -> outputs`
+
+| `job_type` | Disponibilite | `required_capabilities[]` | Outputs structurants obligatoires | Surface partagee cible |
+| --- | --- | --- | --- | --- |
+| `extract_facts` | `v1` | `media.facts@1` | `facts` | `AssetDetail.fields` et complétude Core |
+| `generate_preview` | `v1` | `media.previews.video@1` ou `media.previews.audio@1` ou `media.previews.photo@1` | `preview_video` ou `preview_audio` ou `preview_photo` | `AssetDetail.derived` |
+| `generate_thumbnails` | `v1` | `media.thumbnails@1` | `thumbnails[]` | `AssetDetail.derived.thumbnails[]` |
+| `generate_audio_waveform` | `v1` | `audio.waveform@1` | `waveform_data` | `AssetDetail.derived.waveform` |
+| `transcribe_audio` | `v1.1+` (activable plus tôt sous `feature_flags`) | `speech.transcription@1` | `transcript_text` | `AssetDetail.transcript` |
+| `suggest_tags` | `v1.1+` (activable plus tôt sous `feature_flags`) | `meta.tags.suggestions@1`, `llm.client.ollama@1` | `suggested_tags[]` | surface AI future, hors conformité `v1` |
+
+Règles :
+
+* ce registre est la source unique de vérité pour l'association entre `job_type`, capabilities requises et outputs structurants
+* aucun job ne PEUT produire un output structurant partagé absent de ce registre
+* tout output structurant partagé DOIT être rattaché à exactement un `job_type` canonique
+
 
 ## 3. Job types définis
 
@@ -254,6 +271,11 @@ Extraire une waveform audio quand le `processing_profile` l'exige.
 * `bucket_count` minimum : `100`
 * amplitudes normalisées entre `0` et `1`
 * méthode d'agrégation stable dans une même implémentation
+
+Projection runtime partagée :
+
+* `waveform_data` DOIT être projeté dans `AssetDetail.derived.waveform`
+* `bucket_count` et la série normalisée DOIVENT rester cohérents avec le payload exposé par l'API partagée
 
 **Invariants**
 

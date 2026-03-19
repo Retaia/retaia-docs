@@ -51,6 +51,8 @@ Tests obligatoires :
 * toutes transitions autorisées passent
 * transitions interdites renvoient `409 STATE_CONFLICT`
 * `PURGED` est terminal
+* la matrice canonique `transition -> endpoint -> préconditions -> refus` définie dans `STATE-MACHINE.md` est respectée sans exception locale
+* `PROCESSED -> DECISION_PENDING` est toujours déclenchée par Core, jamais par un endpoint client dédié
 
 ## 1.1) Auth applicative
 
@@ -386,6 +388,7 @@ Tests obligatoires :
 * `AUDIO` découvert sans qualification humaine démarre en `audio_undefined`
 * `audio_undefined` mène à `REVIEW_PENDING_PROFILE` quand les dérivés minimaux sont prêts
 * `REVIEW_PENDING_PROFILE` est visible dans la même surface UI de review mais n'autorise aucune décision KEEP/REJECT
+* aucun état Core exposé par l'API n'est entièrement masqué par `UI_WEB`
 * si le choix humain fixe un profil qui exige `transcribe_audio` dans la phase active, Core crée automatiquement ce job puis repasse l'asset en `READY`
 * si le choix humain fixe un profil déjà complet, l'asset passe à `PROCESSED`
 * `PATCH /assets/{uuid}` avec `processing_profile` est refusé hors `READY|PROCESSING_REVIEW|REVIEW_PENDING_PROFILE`
@@ -650,11 +653,16 @@ Tests obligatoires :
 
 * `q` (full-text) fonctionne en `v1`
 * `transcribe_audio`, `suggest_tags` et `suggested_tags*` sont hors périmètre v1 et planifiés en `v1.1+`
+* le registre canonique `job_type -> required_capabilities -> outputs` défini dans `JOB-TYPES.md` est respecté sans output structurant implicite
 * `transcribe_audio` devient obligatoire à partir de la phase `v1.1+` validée pour tout média dont le `processing_profile` l'exige
 * avant cette phase validée, `transcribe_audio` PEUT être exercé en pré-release uniquement via `feature_flags`
 * `suggest_tags` refuse de tourner si `facts_ref` est absent
 * `suggest_tags` accepte l'absence de `transcript_ref`
 * provider indisponible pour `suggest_tags` => `failed` retryable, sans fallback implicite de provider
+* `generate_preview` projette exactement un dérivé canonique `preview_video|preview_audio|preview_photo`
+* `generate_thumbnails` projette `thumbnails[]` dans `AssetDetail.derived.thumbnails[]`
+* `generate_audio_waveform` projette `waveform_data` dans `AssetDetail.derived.waveform`
+* `extract_facts` produit les champs minimaux applicables au `media_type`
 * si `transcript_ref` est présent, il est utilisé comme enrichissement sémantique préféré
 * les tags/champs/notes humains existants sont traités comme contexte faisant autorité pour éviter doublons et contradictions, jamais comme cible à réécrire automatiquement
 

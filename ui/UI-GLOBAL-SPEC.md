@@ -121,6 +121,30 @@ Regles :
 * le rail droit est un panneau contextuel unique, pas un sous-systeme de navigation
 * `A supprimer` est une entree de navigation de premier niveau
 
+## 5.1) Visibilite minimale des etats metier
+
+Regles :
+
+* aucun etat metier expose par Core ne DOIT etre masque integralement par `UI_WEB`
+* la liste et le detail DOIVENT toujours rendre visible l'etat courant de l'asset, soit via le libelle canonique brut, soit via un libelle utilisateur explicitement mappe
+* le mapping entre etat metier et libelle visible DOIT rester stable et teste
+
+Matrice minimale :
+
+| Etat Core | Visibilite UI minimale | Action humaine autorisee minimale |
+| --- | --- | --- |
+| `DISCOVERED` | visible en lecture seule si expose par Core | aucune |
+| `READY` | visible dans la surface de review ou de bibliotheque appropriee | aucune decision |
+| `PROCESSING_REVIEW` | visible avec statut de processing en cours | aucune decision |
+| `REVIEW_PENDING_PROFILE` | visible dans la meme surface de review | choix de `processing_profile`, aucune decision KEEP/REJECT |
+| `PROCESSED` | visible comme asset traite en attente de cloture Core | aucune decision directe tant que Core n'a pas bascule en `DECISION_PENDING` |
+| `DECISION_PENDING` | visible dans la surface de review | `KEEP` et `REJECT` |
+| `DECIDED_KEEP` | visible avec decision en attente d'application | annulation ou application KEEP |
+| `DECIDED_REJECT` | visible avec decision en attente d'application | annulation ou application REJECT |
+| `ARCHIVED` | visible dans `/library` | reopen, reprocess |
+| `REJECTED` | visible dans `/rejects` | reopen, reprocess, purge |
+| `PURGED` | non listable en navigation courante; si reference directe, surface informative uniquement | aucune |
+
 ## 6) Themes, densite et modes de vue
 
 Themes obligatoires :
