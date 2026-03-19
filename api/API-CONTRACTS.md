@@ -256,6 +256,7 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 * `client_id + secret_key` servent au bootstrap et à l'autorisation technique de `AGENT_TECHNICAL`; ils NE SUFFISENT JAMAIS à eux seuls à prouver l'instance pour une écriture mutatrice
 * toute écriture mutatrice `AGENT_TECHNICAL` DOIT présenter à la fois un bearer technique valide et une preuve d'instance valide (`agent_id` + signature `OpenPGP`)
 * mode `MCP_TECHNICAL` : identité asymétrique standard avec clé publique enregistrée côté Core, clé privée locale côté client et signatures obligatoires sur les écritures sensibles
+* pour `MCP_TECHNICAL`, le bearer technique minté via challenge/réponse autorise le client; la preuve forte d'instance pour les écritures mutatrices reste `client_id + OpenPGP + signature`
 * toute lecture runtime technique PEUT utiliser le bearer technique seul quand le contrat endpoint l'autorise; toute écriture mutatrice technique DOIT exiger la preuve asymétrique d'instance associée
 * seul `AGENT_TECHNICAL` exécute les jobs de processing; `AGENT_UI` ne claim pas de job et ne traite pas de média
 * `AGENT_UI` pilote localement le daemon (setup, status, start/stop, configuration, debug) sans porter d'identité humaine autonome
@@ -270,6 +271,7 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
   * standard existant
   * clé publique enregistrée côté Core
   * clé privée uniquement côté client
+  * mêmes garanties de signature détachée, timestamp borné et nonce anti-rejeu
 * les capacités IA (providers, modèles, transcription, suggestions) sont planifiées en v1.1+
 * l’agent reste propriétaire du runtime provider/model (découverte locale, disponibilité, installation) dans le paquet normatif v1.1
 * Core NE DOIT PAS exposer de catalogue runtime global de modèles
@@ -610,7 +612,12 @@ Séquence normative bootstrap `AGENT_TECHNICAL` (obligatoire) :
 4. si 2FA est activée sur le compte, validation OTP obligatoire
 5. utilisateur approuve explicitement la création de credential technique
 6. client technique poll `POST /auth/clients/device/poll` jusqu’à `APPROVED`/`DENIED`/`EXPIRED`
-7. en cas `APPROVED`, `secret_key` est retournée une seule fois, puis utilisée sur `POST /auth/clients/token`
+7. en cas `APPROVED`, `secret_key` est retournée une seule fois
+8. l'agent appelle ensuite `POST /agents/register` avec `agent_id`, `openpgp_public_key` et `openpgp_fingerprint`
+9. Core enregistre alors la clé publique OpenPGP active de l'agent et l'associe au `client_id` approuvé
+10. `POST /agents/register` DOIT prouver la possession de la clé privée correspondante
+11. le bearer technique est ensuite obtenu via `POST /auth/clients/token`
+12. aucune écriture mutatrice agent NE DOIT être acceptée tant que `POST /agents/register` n'a pas enregistré la clé publique active côté Core
 
 Séquence normative bootstrap `MCP_TECHNICAL` (`v1.1+`, obligatoire) :
 
@@ -623,6 +630,31 @@ Séquence normative bootstrap `MCP_TECHNICAL` (`v1.1+`, obligatoire) :
 7. le client MCP signe le challenge puis échange la preuve via `POST /auth/mcp/token` (`v1.1+`)
 8. le client MCP signe ensuite ses écritures sensibles avec sa clé privée locale
 9. le client MCP (v1.1+) NE DOIT PAS initier `POST /auth/login` ni `POST /auth/clients/device/*`
+
+Signature MCP (normative) :
+
+* les écritures MCP -> Core DOIVENT utiliser le même modèle de signature que l'agent, adapté à l'identifiant `client_id`
+* les écritures MCP -> Core DOIVENT être signées avec une signature **OpenPGP détachée** produite par une librairie standard
+* chaque requête MCP signée DOIT porter :
+  * `X-Retaia-Client-Id`
+  * `X-Retaia-OpenPGP-Fingerprint`
+  * `X-Retaia-Signature`
+  * `X-Retaia-Signature-Timestamp`
+  * `X-Retaia-Signature-Nonce`
+* `X-Retaia-Client-Id` DOIT correspondre au `client_id` du bearer technique MCP
+* `X-Retaia-OpenPGP-Fingerprint` DOIT référencer la clé publique OpenPGP active enregistrée pour ce client MCP
+* `X-Retaia-Signature` DOIT être une signature **OpenPGP détachée** valide de la chaîne canonique suivante :
+  * méthode HTTP
+  * path HTTP exact
+  * `client_id`
+  * timestamp de signature
+  * nonce unique
+  * SHA-256 hexadécimal du body HTTP brut
+* la chaîne canonique DOIT utiliser `\\n` comme séparateur de lignes et rester stable entre implémentations
+* Core DOIT vérifier la signature MCP via une librairie OpenPGP standard maintenue; aucune implémentation crypto maison n'est autorisée
+* Core DOIT rejeter toute écriture MCP signée si la signature est absente, invalide, expirée, rejouée ou si la clé active est révoquée/inconnue
+* Core DOIT contrôler une fenêtre de fraîcheur bornée pour `X-Retaia-Signature-Timestamp` et empêcher le rejeu via `X-Retaia-Signature-Nonce`
+* Core DOIT journaliser les échecs de vérification de signature MCP comme événements sécurité
 
 Matrice de migration v1 runtime (gelée) :
 
@@ -887,6 +919,7 @@ Règles :
 * l'agent DOIT générer une identité de clé `OpenPGP` lors de sa première initialisation et persister la clé privée localement
 * la clé privée agent NE DOIT JAMAIS quitter l'agent ni être exposée par l'API
 * `openpgp_public_key` et `openpgp_fingerprint` représentent la clé OpenPGP active enregistrée côté Core
+* Core reçoit cette clé publique active lors de `POST /agents/register`, après approval humain du device flow et avant toute écriture mutatrice agent
 * la clé OpenPGP agent DOIT utiliser des algorithmes conformes à [`GPG-OPENPGP-STANDARD.md`](../policies/GPG-OPENPGP-STANDARD.md)
 * la rotation de clé DOIT être explicite; l'agent NE DOIT PAS régénérer silencieusement sa clé de signature
 * `POST /agents/register` DOIT prouver la possession de la clé privée correspondant à la clé publique OpenPGP déclarée

@@ -300,6 +300,8 @@ Tests obligatoires :
   * `openpgp_public_key` requis
   * `openpgp_fingerprint` requis
   * register signé avec la clé privée correspondant à la clé OpenPGP déclarée
+  * la clé publique OpenPGP active est enregistrée côté Core à cette étape, après approval humain du device flow
+  * aucune écriture mutatrice agent n'est acceptée tant que ce register n'a pas associé la clé publique active au client approuvé
   * `os_name`, `os_version`, `arch` requis
   * reconnexion avec le même `agent_id` => même instance corrélable côté Core
   * deux agents actifs avec le même `agent_id` : register autorisé, conflit journalisé et visible en ops
@@ -346,6 +348,10 @@ Tests obligatoires :
 * client `AGENT_TECHNICAL` validé via `/auth/clients/token` après approval humain dans `UI_WEB`
 * client `MCP` validé en mode technique asymétrique standard, sans login interactif ni device flow (gate `v1.1` global)
 * client `MCP` obtient son bearer technique via `POST /auth/mcp/challenge` + `POST /auth/mcp/token`
+* toute écriture MCP sensible exige bearer technique + `client_id` + signature `OpenPGP` + fingerprint + timestamp + nonce
+* rejeu d'un `X-Retaia-Signature-Nonce` MCP déjà vu => refus explicite
+* skew temps hors fenêtre autorisée sur `X-Retaia-Signature-Timestamp` MCP => refus explicite
+* écriture MCP sensible refusée si `X-Retaia-Client-Id` ne correspond pas au `client_id` du bearer technique
 * client `MCP` peut piloter/orchestrer l'agent sans exécuter de processing (gate `v1.1` global)
 * client `MCP` ne peut pas `claim/heartbeat/submit` de job (`/jobs/*` => `403 FORBIDDEN_ACTOR`) (gate `v1.1` global)
 * mode service non-interactif redémarre sans login humain sur Linux/macOS/Windows

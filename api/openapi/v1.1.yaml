@@ -2548,6 +2548,7 @@ components:
         Technical bearer credential for non-human clients.
         `AGENT_TECHNICAL` uses a bearer token minted from `(client_id, secret_key)`.
         `MCP_TECHNICAL` uses a bearer token minted from an OpenPGP-backed challenge/response flow after UI key enrollment.
+        Sensitive MCP writes also require `client_id` + detached OpenPGP signature proof.
 
   parameters:
     UuidPath:
@@ -2571,6 +2572,12 @@ components:
     ClientIdPath:
       name: client_id
       in: path
+      required: true
+      schema:
+        type: string
+    MpcSignatureClientId:
+      name: X-Retaia-Client-Id
+      in: header
       required: true
       schema:
         type: string
