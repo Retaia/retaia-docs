@@ -85,6 +85,7 @@ Preuve cryptographique d'instance :
 * `Core` reçoit et enregistre la clé publique active de l'agent lors de `POST /agents/register`, après approval humain du device flow et avant toute écriture mutatrice
 * `POST /agents/register` DOIT déclarer la clé publique OpenPGP active (`openpgp_public_key`) et son `openpgp_fingerprint`
 * `POST /agents/register` DOIT aussi être signé avec la clé privée correspondante pour prouver la possession de la clé
+* cette preuve de possession signifie que l'agent signe la requête de register avec la clé privée correspondant à la clé publique déclarée, et que `Core` vérifie cette signature avant d'accepter l'enregistrement
 * toutes les écritures agent -> Core DOIVENT ensuite être signées avec cette même clé active jusqu'à rotation explicite
 
 Headers de signature agent (obligatoires sur les écritures agent -> Core) :

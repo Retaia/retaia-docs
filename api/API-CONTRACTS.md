@@ -366,6 +366,12 @@ Normalisation des timestamps (normatif) :
 * body requis: `{ refresh_token }`
 * body optionnel: `client_id`, `client_kind`
 * effet: renouvelle un bearer token interactif sans repasser par le mot de passe
+* règle normative:
+  * chaque succès DOIT émettre un nouveau `access_token` et un nouveau `refresh_token`
+  * le `refresh_token` utilisé DOIT être immédiatement invalidé après succès
+  * un `refresh_token` expiré, révoqué, déjà consommé ou rejoué DOIT être refusé avec `401 UNAUTHORIZED`
+  * un `refresh_token` interactif appartient exclusivement à `UI_WEB`
+  * aucun client technique NE DOIT utiliser de `refresh_token`
 * réponses:
   * `200` succès + bearer token (`access_token`, `token_type=Bearer`, `expires_in?`, `refresh_token?`, `client_id`, `client_kind`)
   * `401 UNAUTHORIZED`
@@ -615,7 +621,7 @@ Séquence normative bootstrap `AGENT_TECHNICAL` (obligatoire) :
 7. en cas `APPROVED`, `secret_key` est retournée une seule fois
 8. l'agent appelle ensuite `POST /agents/register` avec `agent_id`, `openpgp_public_key` et `openpgp_fingerprint`
 9. Core enregistre alors la clé publique OpenPGP active de l'agent et l'associe au `client_id` approuvé
-10. `POST /agents/register` DOIT prouver la possession de la clé privée correspondante
+10. `POST /agents/register` DOIT prouver la possession de la clé privée correspondante en signant la requête de register avec cette clé
 11. le bearer technique est ensuite obtenu via `POST /auth/clients/token`
 12. aucune écriture mutatrice agent NE DOIT être acceptée tant que `POST /agents/register` n'a pas enregistré la clé publique active côté Core
 
