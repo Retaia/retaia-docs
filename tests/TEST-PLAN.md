@@ -84,6 +84,21 @@ Tests obligatoires :
 * `GET /auth/me`:
   * bearer valide => `200` + payload utilisateur courant
   * bearer absent/invalide => `401 UNAUTHORIZED`
+* `GET /auth/me/sessions`:
+  * bearer valide => `200` + liste des sessions interactives
+  * payload minimal par session: `session_id`, `client_id`, `created_at`, `last_used_at`, `expires_at?`, `is_current`, `device_label?`, `browser?`, `os?`, `ip_address_last_seen?`
+  * une seule session courante a `is_current=true`
+  * aucun `access_token` ni `refresh_token` n'est exposé
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+* `POST /auth/me/sessions/{session_id}/revoke`:
+  * bearer valide + session tierce appartenant à l'utilisateur => `200`
+  * tentative de révoquer la session courante => `409 STATE_CONFLICT`
+  * session inconnue ou non possédée => `404`
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+* `POST /auth/me/sessions/revoke-others`:
+  * bearer valide => `200` + compteur `revoked`
+  * la session courante reste active
+  * bearer absent/invalide => `401 UNAUTHORIZED`
 * `GET /app/features`:
   * bearer admin valide => `200` + payload `app_feature_enabled`
   * bearer user non-admin => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
@@ -239,6 +254,7 @@ Matrice de migration v1 runtime (gelée) :
   * `UI_WEB` utilise `POST /auth/login` + bearer + refresh token
   * `AGENT_UI` n'effectue aucun login humain direct; il ouvre `UI_WEB` dans le browser pour l'approval du daemon
   * anti lock-out: l'UI n'expose jamais le token en clair et n'offre pas d'action d'auto-révocation du token UI actif
+  * la révocation ciblée device/browser passe par `GET /auth/me/sessions`, `POST /auth/me/sessions/{session_id}/revoke` et `POST /auth/me/sessions/revoke-others`
 * régression interdite: aucun endpoint runtime n'accepte encore `SessionCookieAuth` (API stateless/sessionless)
 * 2FA optionnelle: compte sans 2FA active ne requiert pas OTP
 * création de secret `AGENT` via UI :

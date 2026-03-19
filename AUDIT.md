@@ -129,34 +129,6 @@ Décision à prendre avant `v1.0.0` :
 * ajouter `Accept-Language` au contrat OpenAPI des endpoints concernés
 * ou retirer cette exigence du champ normatif v1 si elle n'est pas opposable
 
-### 5.10 Révocation interactive par device/browser exigée, mais non contractuellement exposée
-
-Références :
-
-* [api/API-CONTRACTS.md](api/API-CONTRACTS.md)
-* [policies/SECURITY-BASELINE.md](policies/SECURITY-BASELINE.md)
-* [api/openapi/v1.yaml](api/openapi/v1.yaml)
-
-Constat :
-
-* le contrat prose dit que la révocation des tokens interactifs DOIT pouvoir se faire device/browser par device/browser sans impacter les autres
-* la baseline sécurité dit que les refresh tokens interactifs doivent être tracés par device/browser
-* aucun endpoint normatif visible ne permet :
-  * de lister les sessions interactives
-  * d'identifier les devices/browsers connus
-  * de révoquer une session interactive autre que la session courante
-
-Impact :
-
-* une exigence partagée importante existe
-* mais aucune surface API opposable ne permet de l'implémenter de façon homogène
-
-Décision à prendre avant `v1.0.0` :
-
-* soit ajouter un contrat explicite de gestion des sessions interactives
-* soit réduire l'exigence normative actuelle
-* mais l'état actuel laisse un trou de spécification cross-project
-
 ## 6. Domaines partagés bien couverts, mais encore insuffisamment fermés
 
 ### 6.1 Machine à états et transitions
@@ -282,32 +254,6 @@ Reste à normer :
 Sans cela :
 
 * les règles de rotation et de vérification restent partiellement infra-spécifiées
-
-### 6.4.c Session interactive et identité device/browser encore insuffisamment normées
-
-Couverture existante :
-
-* [api/API-CONTRACTS.md](api/API-CONTRACTS.md)
-* [policies/SECURITY-BASELINE.md](policies/SECURITY-BASELINE.md)
-
-Reste à normer :
-
-* identité canonique d'un device/browser interactif
-* relation entre `client_id` UI et session réelle utilisateur
-* métadonnées minimales d'une session interactive :
-  * nom device
-  * user agent
-  * dernière activité
-  * créée le
-  * révocable ou non
-* endpoints normatifs :
-  * lister les sessions
-  * révoquer une session ciblée
-  * révoquer toutes les autres sessions
-
-Sans cela :
-
-* la règle "révocable par device/browser" reste une intention, pas un contrat partagé
 
 ### 6.5 Polling, retry, backoff, jitter
 
@@ -936,7 +882,6 @@ Action :
 * Fermer la table canonique des `ErrorResponse.code`.
 * Fermer le registre canonique des feature keys `v1.0.0`.
 * Fermer le registre canonique des événements observabilité cross-app.
-* Fermer la gestion normative des sessions interactives par device/browser.
 * Fermer l'encodage, la pagination et le tri de `GET /assets`.
 * Fermer le schéma et le transport de delivery des dérivés.
 * Fermer le contrat observable de `revision_history` et son lien avec `revision_etag`.

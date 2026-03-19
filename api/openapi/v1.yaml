@@ -290,6 +290,93 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /auth/me/sessions:
+    get:
+      tags: [Auth]
+      summary: List interactive sessions for current user
+      security:
+        - UserBearerAuth: []
+      responses:
+        "200":
+          description: Interactive sessions list
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AuthSession"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/me/sessions/{session_id}/revoke:
+    post:
+      tags: [Auth]
+      summary: Revoke one interactive session for current user
+      security:
+        - UserBearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Interactive session revoked
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Current session cannot be self-revoked (`STATE_CONFLICT`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/me/sessions/revoke-others:
+    post:
+      tags: [Auth]
+      summary: Revoke all other interactive sessions for current user
+      security:
+        - UserBearerAuth: []
+      responses:
+        "200":
+          description: Other interactive sessions revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [revoked]
+                properties:
+                  revoked:
+                    type: integer
+                    minimum: 0
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /auth/me/features:
     get:
       tags: [Auth]
@@ -2668,6 +2755,40 @@ components:
             type: string
         mfa_enabled:
           type: boolean
+
+    AuthSession:
+      type: object
+      additionalProperties: false
+      required: [session_id, client_id, created_at, last_used_at, is_current]
+      properties:
+        session_id:
+          type: string
+        client_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        last_used_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        is_current:
+          type: boolean
+        device_label:
+          type: string
+          nullable: true
+        browser:
+          type: string
+          nullable: true
+        os:
+          type: string
+          nullable: true
+        ip_address_last_seen:
+          type: string
+          nullable: true
 
     Auth2faOtpRequest:
       type: object

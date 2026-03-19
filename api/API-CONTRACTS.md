@@ -431,6 +431,49 @@ Normalisation des timestamps (normatif) :
   * `200` utilisateur courant
   * `401 UNAUTHORIZED`
 
+`GET /auth/me/sessions`
+
+* security: `UserBearerAuth`
+* effet: liste les sessions interactives connues de l'utilisateur courant, device/browser par device/browser
+* règles:
+  * la session courante DOIT être identifiable via `is_current=true`
+  * chaque session DOIT exposer au minimum :
+    * `session_id`
+    * `client_id`
+    * `created_at`
+    * `last_used_at`
+    * `expires_at?`
+    * `is_current`
+    * `device_label?`
+    * `browser?`
+    * `os?`
+    * `ip_address_last_seen?`
+  * aucune valeur secrète (`access_token`, `refresh_token`) ne DOIT être exposée
+* réponses:
+  * `200` liste des sessions interactives
+  * `401 UNAUTHORIZED`
+
+`POST /auth/me/sessions/{session_id}/revoke`
+
+* security: `UserBearerAuth`
+* effet: révoque une session interactive ciblée de l'utilisateur courant
+* règles:
+  * la session ciblée DOIT appartenir à l'utilisateur courant
+  * la session courante DOIT être protégée par anti lock-out et refusée sur cet endpoint
+* réponses:
+  * `200` session révoquée
+  * `401 UNAUTHORIZED`
+  * `409 STATE_CONFLICT` si tentative de révoquer la session courante
+  * `404` si session inconnue ou non possédée
+
+`POST /auth/me/sessions/revoke-others`
+
+* security: `UserBearerAuth`
+* effet: révoque toutes les autres sessions interactives de l'utilisateur courant sauf la session courante
+* réponses:
+  * `200` avec compteur `revoked`
+  * `401 UNAUTHORIZED`
+
 `GET /app/features`
 
 * security: `UserBearerAuth`
