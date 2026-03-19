@@ -155,6 +155,13 @@ Validation UI_WEB du device flow (`verification_uri*`)
 * acteur `MCP_TECHNICAL`: explicitement interdit (`403 FORBIDDEN_ACTOR`)
 * état: `REJECTED`
 
+`POST /assets/purge`
+
+* scope: `purge:execute`
+* acteur: `USER_INTERACTIVE`
+* acteur `MCP_TECHNICAL`: explicitement interdit (`403 FORBIDDEN_ACTOR`)
+* chaque asset ciblé DOIT être en `REJECTED`
+
 ## 3) Codes d'erreur authz
 
 * scope manquant -> `403 FORBIDDEN_SCOPE`

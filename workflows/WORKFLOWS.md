@@ -290,6 +290,7 @@ Utilisateur (UI) et/ou politique de purge (serveur)
 
 1. Les assets `REJECTED` deviennent éligibles à purge après un délai (ex: 180 jours).
 2. L’utilisateur confirme une purge (ou une politique auto est activée explicitement).
+   * l'action UI PEUT cibler un asset unique (`POST /assets/{uuid}/purge`) ou une liste explicite (`POST /assets/purge`)
 3. Suppression des fichiers :
 
    * originaux + sidecars
@@ -302,6 +303,7 @@ Utilisateur (UI) et/ou politique de purge (serveur)
 * La purge est destructive.
 * La purge ne s’applique jamais à `ARCHIVED`.
 * La purge est idempotente (relance possible sans casse).
+* une purge groupée NE SIGNIFIE jamais “purge tout”; la sélection des UUID DOIT rester explicite.
 
 
 ## Workflow 11 — Travail offline / on-the-go

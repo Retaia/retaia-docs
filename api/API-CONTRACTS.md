@@ -185,6 +185,7 @@ Endpoints avec `Idempotency-Key` obligatoire :
 
 * `POST /assets/{uuid}/reprocess`
 * `POST /assets/{uuid}/purge`
+* `POST /assets/purge`
 * `POST /jobs/{job_id}/submit`
 * `POST /jobs/{job_id}/fail`
 * `POST /assets/{uuid}/derived/upload/init`
@@ -265,7 +266,7 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 * `MCP` PEUT piloter/orchestrer l'agent (configuration, déclenchement, supervision) mais NE DOIT JAMAIS exécuter de traitement média
 * `MCP` est interdit sur les endpoints de processing `/jobs/*` (`claim`, `heartbeat`, `submit`) avec refus `403 FORBIDDEN_ACTOR`
 * `MCP` NE DOIT JAMAIS pouvoir exécuter une action destructive ou de suppression
-* cela inclut explicitement les endpoints de type `DELETE`, la purge (`/assets/{uuid}/purge`) et toute future opération destructive équivalente
+* cela inclut explicitement les endpoints de type `DELETE`, la purge (`/assets/{uuid}/purge`, `/assets/purge`) et toute future opération destructive équivalente
 * `MCP_TECHNICAL` DOIT suivre les mêmes principes que l'agent :
   * pas d'implémentation crypto maison
   * standard existant
@@ -1431,6 +1432,32 @@ Effet :
 * `REJECTED → PURGED`
 * supprime originaux + sidecars + dérivés
 
+### POST `/assets/purge`
+
+Exécute une purge groupée explicite.
+
+Body :
+
+* `asset_uuids[]` (obligatoire, liste explicite d'UUID)
+* `confirm: true`
+
+Effet :
+
+* traite chaque asset demandé de manière unitaire côté Core
+* chaque asset DOIT déjà être en `REJECTED`
+* supprime originaux + sidecars + dérivés pour chaque asset purgé
+* NE DOIT jamais signifier “purge tout” sans sélection explicite
+* PEUT réussir partiellement; la réponse DOIT détailler les résultats par asset
+
+Réponse minimale :
+
+* `requested`
+* `purged`
+* `failed`
+* `results[]` avec au minimum :
+  * `asset_uuid`
+  * `status`
+
 ## 8.1) Concurrence & verrous (normatif)
 
 * un asset sous `asset_move_lock` interdit : claim job, reprocess, reopen, decision write, purge
@@ -1806,7 +1833,7 @@ Le payload d’erreur normatif est défini dans [`ERROR-MODEL.md`](ERROR-MODEL.m
 * Claim jobs : `GET /jobs` pour discovery + `POST /jobs/{job_id}/claim` pour lease atomique
 * Dérivés : upload HTTP, pas d’écriture directe côté client sur le filesystem NAS
 * Move apply : endpoint unitaire `PATCH /assets/{uuid}` avec `state=ARCHIVED|REJECTED`, lock par asset (multi-sélection gérée UI)
-* Purge : purge unitaire v1 (+ multi-sélection UI possible plus tard, sans entité batch Core)
+* Purge : endpoint unitaire `POST /assets/{uuid}/purge` + endpoint groupé `POST /assets/purge`, sans entité batch persistante Core
 * Scopes : agents strictement limités aux scopes jobs (jamais décisions/moves/purge)
 * Filtres `tags=` : tags humains uniquement
 * Recherche full-text `q=` disponible

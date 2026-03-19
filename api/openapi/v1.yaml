@@ -1622,6 +1622,73 @@ paths:
         "404":
           description: Not found
 
+  /assets/purge:
+    post:
+      tags: [Purge]
+      summary: Purge multiple rejected assets
+      security:
+        - UserBearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [asset_uuids, confirm]
+              properties:
+                asset_uuids:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: string
+                    format: uuid
+                confirm:
+                  type: boolean
+                  enum: [true]
+      responses:
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "200":
+          description: Purge executed with per-asset results
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [requested, purged, failed, results]
+                properties:
+                  requested:
+                    type: integer
+                    minimum: 0
+                  purged:
+                    type: integer
+                    minimum: 0
+                  failed:
+                    type: integer
+                    minimum: 0
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      required: [asset_uuid, status]
+                      properties:
+                        asset_uuid:
+                          type: string
+                          format: uuid
+                        status:
+                          type: string
+        "409":
+          description: State conflict or idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /assets/{uuid}/purge:
     post:
       tags: [Purge]
