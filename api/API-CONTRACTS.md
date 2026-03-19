@@ -60,7 +60,7 @@ Objectif : fournir une surface stable consommée par :
 * Une feature stabilisée DOIT être assimilée au comportement nominal puis son feature flag DOIT être supprimé (pas de flag permanent hors kill-switch explicite).
 * Les fonctionnalités `v1.1+` suivent la même règle et restent inactives tant que leur flag n'est pas activé.
 * Convention de nommage : `features.<domaine>.<fonction>`.
-* Contrat de transport : l’état effectif des flags DOIT être transporté dans un payload standard `server_policy.feature_flags` pour tous les clients (`UI_WEB`, `AGENT`, `MCP`) via `GET /app/policy`.
+* Contrat de transport : l’état effectif des flags DOIT être transporté dans un payload standard `server_policy.feature_flags` pour tous les clients (`UI_WEB`, `AGENT` et, à partir de v1.1+, `MCP`) via `GET /app/policy`.
 * Versionnement/acceptance obligatoire des flags :
   * client -> Core : `client_feature_flags_contract_version` (query `GET /app/policy` ou body `POST /agents/register`)
   * Core -> client : `feature_flags_contract_version`, `accepted_feature_flags_contract_versions`, `effective_feature_flags_contract_version`, `feature_flags_compatibility_mode`
@@ -100,7 +100,7 @@ Objectif : fournir une surface stable consommée par :
 ### Orchestration runtime (normatif)
 
 * Core est l'orchestrateur unique des états métier, jobs, policies et flags.
-* Les clients actifs (`UI_WEB`, `AGENT`, `MCP`) DOIVENT synchroniser l'état runtime via **polling HTTP** (source de vérité).
+* Les clients actifs (`UI_WEB`, `AGENT` et, à partir de v1.1+, `MCP`) DOIVENT synchroniser l'état runtime via **polling HTTP** (source de vérité).
 * Les canaux push serveur-vers-client sont autorisés pour diffusion d'information/alerte (WebSocket, SSE, webhook client, autres canaux push).
 * Ces canaux push servent de signal temps réel/UX, mais NE SONT PAS source de vérité métier.
 * Tout changement de disponibilité fonctionnelle DOIT être observé via polling des endpoints contractuels (notamment `GET /app/policy`).
@@ -223,7 +223,7 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 * `AGENT_TECHNICAL` : agent daemon non-interactif (service) authentifié via bearer technique obtenu par `client_id + secret_key`
 * `MCP_TECHNICAL` : client MCP non-humain authentifié via challenge/réponse asymétrique standard, après enrôlement de sa clé publique depuis l'UI par un utilisateur autorisé
 * `TECHNICAL_ACTORS` : alias générique couvrant `AGENT_TECHNICAL | MCP_TECHNICAL`
-* `client_kind` interactif est borné à `UI_WEB` ou `AGENT`; le mode technique autorise `AGENT` et `MCP`
+* `client_kind` interactif v1 est borné à `UI_WEB`; le mode technique v1 autorise `AGENT` (`MCP` rejoint le contrat en v1.1+)
 * rollout projet global actif : `UI_WEB` et `AGENT_UI` sont intégrés dès la v1 globale; `MCP` et les fonctionnalités dépendantes de l'AI sont intégrés à partir de la v1.1 globale
 * distinction de lecture obligatoire : l'existence du contrat runtime `feature_flags` dès v1 pour `AGENT_TECHNICAL`, `UI_WEB` et `AGENT_UI` ne signifie pas que le rollout produit global de `MCP` et des fonctions dépendantes de l'AI est déjà actif en v1
 
@@ -622,7 +622,7 @@ Séquence normative bootstrap `MCP_TECHNICAL` (`v1.1+`, obligatoire) :
 6. le client MCP demande un challenge via `POST /auth/mcp/challenge` (`v1.1+`)
 7. le client MCP signe le challenge puis échange la preuve via `POST /auth/mcp/token` (`v1.1+`)
 8. le client MCP signe ensuite ses écritures sensibles avec sa clé privée locale
-9. le client MCP NE DOIT PAS initier `POST /auth/login` ni `POST /auth/clients/device/*`
+9. le client MCP (v1.1+) NE DOIT PAS initier `POST /auth/login` ni `POST /auth/clients/device/*`
 
 Matrice de migration v1 runtime (gelée) :
 

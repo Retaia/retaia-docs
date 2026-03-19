@@ -16,7 +16,7 @@ Acteurs normatifs :
 * `MCP_TECHNICAL` (client technique non-interactif d'orchestration MCP)
 * `TECHNICAL_ACTORS` = `AGENT_TECHNICAL|MCP_TECHNICAL`
 * `ADMIN_INTERACTIVE` (sous-ensemble `USER_INTERACTIVE` avec droits admin)
-* `client_kind` interactif: `UI_WEB|AGENT`; `client_kind` technique: `AGENT|MCP`
+* `client_kind` interactif v1: `UI_WEB`; `client_kind` technique v1: `AGENT` (`MCP` rejoint le contrat en v1.1+)
 * rollout projet global actif: `UI_WEB` et `AGENT_UI` en v1; `MCP` et les fonctionnalités dépendantes de l'AI en v1.1
 * gate applicatif: `app_feature_enabled.features.ai=false` => seules les fonctionnalités MCP dépendantes de l’AI sont refusées (`403 FORBIDDEN_SCOPE`), sans désactiver le client MCP dans son ensemble
 * `AGENT_UI` reste une surface locale de setup/contrôle/debug du daemon; toute identité humaine provient de `UI_WEB`
@@ -107,7 +107,7 @@ Acteurs normatifs :
 * scope: aucun
 * contrainte: `client_kind=AGENT` uniquement
 
-Validation UI du device flow (`verification_uri*`)
+Validation UI_WEB du device flow (`verification_uri*`)
 
 * acteur: `USER_INTERACTIVE`
 * scope: session utilisateur valide (`UserBearerAuth`)

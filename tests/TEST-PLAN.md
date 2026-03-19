@@ -114,7 +114,7 @@ Tests obligatoires :
   * bearer utilisateur valide => `200` + `server_policy.feature_flags`
   * bearer client technique valide (`TechnicalBearerAuth`) => `200`
   * bearer absent/invalide => `401 UNAUTHORIZED`
-  * endpoint runtime canonique pour `UI_WEB`, `AGENT`, `MCP`
+  * endpoint runtime canonique pour `UI_WEB` et `AGENT` en v1; `MCP` rejoint ce contrat en v1.1+
 * `POST /app/policy`:
   * bearer admin valide + body valide (`feature_flags`) => `200`
   * bearer absent/invalide => `401 UNAUTHORIZED`
@@ -202,7 +202,7 @@ Tests obligatoires :
   * bearer utilisateur valide => `200` + `server_policy.feature_flags`
   * bearer client technique valide (`TechnicalBearerAuth`) => `200`
   * bearer absent/invalide => `401 UNAUTHORIZED`
-  * endpoint runtime canonique pour `UI_WEB`, `AGENT`, `MCP`
+  * endpoint runtime canonique pour `UI_WEB` et `AGENT` en v1; `MCP` rejoint ce contrat en v1.1+
 * `POST /app/policy`:
   * bearer admin valide + body valide (`feature_flags`) => `200`
   * bearer absent/invalide => `401 UNAUTHORIZED`

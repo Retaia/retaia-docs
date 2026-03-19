@@ -30,7 +30,7 @@ paths:
     post:
       tags: [Auth]
       summary: User login with email and password
-      description: Interactive bootstrap/recovery login endpoint for supported human-operated clients (`UI_WEB` and `AGENT`). Supports optional TOTP 2FA code when enabled.
+      description: Interactive bootstrap/recovery login endpoint for `UI_WEB`, the only human-authenticated UI in v1. Supports optional TOTP 2FA code when enabled.
       security: []
       requestBody:
         required: true
@@ -427,7 +427,7 @@ paths:
       summary: Get runtime app policy
       description: |
         Returns runtime `server_policy` including `feature_flags`.
-        This endpoint is the canonical runtime policy transport for UI_WEB, AGENT, and MCP clients.
+        This endpoint is the canonical runtime policy transport for UI_WEB and AGENT clients in v1. MCP joins this contract in v1.1+.
         Clients may optionally send their supported feature-flags contract version for compatibility negotiation.
       security:
         - UserBearerAuth: []
@@ -747,7 +747,7 @@ paths:
       summary: Start device authorization flow for technical client bootstrap
       description: |
         Starts a browser-assisted authorization flow (GitHub-style) for `AGENT_TECHNICAL`.
-        User validation (and optional 2FA) happens via `verification_uri`.
+        User validation (and optional 2FA) happens via `verification_uri`, which MUST open the human approval flow in `UI_WEB`.
       security: []
       requestBody:
         required: true
@@ -2371,7 +2371,7 @@ components:
       description: |
         Technical bearer credential for non-human clients.
         `AGENT_TECHNICAL` uses a bearer token minted from `(client_id, secret_key)`.
-        `MCP_TECHNICAL` uses a bearer token minted from an OpenPGP-backed challenge/response flow after UI key enrollment.
+        `MCP_TECHNICAL` joins in v1.1+ via an OpenPGP-backed challenge/response flow after UI key enrollment.
 
   parameters:
     UuidPath:
@@ -2642,8 +2642,8 @@ components:
 
     ClientKind:
       type: string
-      description: Form factor identifier for interactive login flows.
-      enum: [UI_WEB, AGENT]
+      description: Form factor identifier for interactive login flows in v1.
+      enum: [UI_WEB]
 
     NonUiClientKind:
       type: string
@@ -2652,8 +2652,8 @@ components:
 
     TechnicalClientKind:
       type: string
-      description: Allowed client kinds for technical bearer tokens.
-      enum: [AGENT, MCP]
+      description: Allowed client kinds for v1 technical bearer tokens.
+      enum: [AGENT]
 
     AuthRotateClientSecretResponse:
       type: object
@@ -2795,7 +2795,7 @@ components:
     AuthDevicePollApproved:
       type: object
       additionalProperties: false
-      required: [status, client_id, client_kind, secret_key]
+      required: [status, client_id, client_kind, secret_key, approved_at]
       properties:
         status:
           type: string
@@ -2807,6 +2807,14 @@ components:
         secret_key:
           type: string
           description: One-shot credential shown only once after approval.
+        approved_at:
+          type: string
+          format: date-time
+          description: Timestamp of the human approval performed in UI_WEB.
+        approved_by_user_id:
+          type: string
+          format: uuid
+          description: Optional audit identifier of the human approver in UI_WEB.
 
     AuthDevicePollDenied:
       type: object
