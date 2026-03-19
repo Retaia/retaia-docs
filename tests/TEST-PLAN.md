@@ -725,7 +725,7 @@ Tests obligatoires :
 * rejet explicite des algorithmes interdits (SHA-1, RSA < 3072, DSA legacy)
 * adresses, coordonnées GPS, transcriptions non lisibles en clair dans dump DB/backups
 * rotation/rekey OpenPGP sans perte d'accès légitime
-* mode transparent par défaut: aucun setup OpenPGP manuel requis pour un utilisateur standard dans `UI_WEB`
+* mode transparent par défaut: aucun setup OpenPGP manuel requis pour un utilisateur standard lors de l'enrôlement d'un client technique
 * mode avancé: intégration `gpg-agent`/clés existantes fonctionne quand activée
 * fallback sûr: indisponibilité du mode avancé ne bloque pas l'usage standard
 

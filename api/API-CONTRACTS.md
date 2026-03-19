@@ -475,7 +475,7 @@ Normalisation des timestamps (normatif) :
 * security: `UserBearerAuth` ou `TechnicalBearerAuth`
 * paramètre optionnel: `client_feature_flags_contract_version`
 * effet: retourne `server_policy` (incluant `feature_flags`) pour clients interactifs et techniques
-* règle: `UI_WEB`, `AGENT` et `MCP` DOIVENT consommer cet endpoint pour la disponibilité runtime des features
+* règle: `UI_WEB` et `AGENT` DOIVENT consommer cet endpoint en v1 pour la disponibilité runtime des features; `MCP` rejoint ce contrat en v1.1+
 * versionnement: Core retourne la version effective servie et le mode `STRICT|COMPAT`
 * réponses:
   * `200` succès
