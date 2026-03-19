@@ -331,6 +331,7 @@ Règle de cardinalité des tokens (obligatoire) :
 * `jobs:claim` (**agents uniquement**)
 * `jobs:heartbeat` (**agents uniquement**)
 * `jobs:submit` (**agents uniquement**)
+* `jobs:fail` (**agents uniquement**)
 * `suggestions:write` (**v1.1+**, agents/MCP)
 * `purge:execute` (**humain uniquement**, jamais `MCP`)
 

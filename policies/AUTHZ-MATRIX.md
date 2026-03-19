@@ -133,7 +133,7 @@ Validation UI_WEB du device flow (`verification_uri*`)
 
 `POST /jobs/*`
 
-* scopes: `jobs:claim|jobs:heartbeat|jobs:submit`
+* scopes: `jobs:claim|jobs:heartbeat|jobs:submit|jobs:fail`
 * acteur: `AGENT_TECHNICAL`
 * contrainte: `client_kind=MCP` interdit (`403 FORBIDDEN_ACTOR`)
 
