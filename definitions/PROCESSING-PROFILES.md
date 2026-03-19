@@ -76,6 +76,27 @@ Règles de lecture :
 * `suggest_tags` n'entre pas dans la complétude de `PROCESSED`
 * `transcribe_audio` ne dépend jamais du seul `media_type`; il dépend du `processing_profile` effectif et de la phase active
 
+### Matrice canonique — déclenchement des jobs
+
+| `media_type` | `processing_profile` effectif | Phase active | Conditions complémentaires | Jobs à créer |
+|---|---|---|---|---|
+| `PHOTO` | `photo_standard` | `v1` ou `v1.1+` | aucune | `extract_facts`, `generate_preview` |
+| `AUDIO` | `audio_undefined` | `v1` ou `v1.1+` | aucune | `extract_facts`, `generate_preview`, `generate_audio_waveform` |
+| `AUDIO` | `audio_music` | `v1` ou `v1.1+` | aucune | `extract_facts`, `generate_preview`, `generate_audio_waveform` |
+| `AUDIO` | `audio_voice` | avant `v1.1+` validée | `transcribe_audio` activé sous `feature_flags` | `extract_facts`, `generate_preview`, `generate_audio_waveform`, `transcribe_audio` |
+| `AUDIO` | `audio_voice` | avant `v1.1+` validée | `transcribe_audio` non activé | `extract_facts`, `generate_preview`, `generate_audio_waveform` |
+| `AUDIO` | `audio_voice` | `v1.1+` validée | aucune | `extract_facts`, `generate_preview`, `generate_audio_waveform`, `transcribe_audio` |
+| `VIDEO` | `video_standard` | `v1` ou `v1.1+` | sans piste audio exploitable | `extract_facts`, `generate_preview`, `generate_thumbnails` |
+| `VIDEO` | `video_standard` | avant `v1.1+` validée | piste audio exploitable + `transcribe_audio` non activé | `extract_facts`, `generate_preview`, `generate_thumbnails`, `generate_audio_waveform` |
+| `VIDEO` | `video_standard` | avant `v1.1+` validée | piste audio exploitable + `transcribe_audio` activé sous `feature_flags` | `extract_facts`, `generate_preview`, `generate_thumbnails`, `generate_audio_waveform`, `transcribe_audio` |
+| `VIDEO` | `video_standard` | `v1.1+` validée | piste audio exploitable | `extract_facts`, `generate_preview`, `generate_thumbnails`, `generate_audio_waveform`, `transcribe_audio` |
+
+Règles :
+
+* cette matrice définit la création attendue des jobs structurants de processing
+* `suggest_tags` reste hors de cette matrice, car il s'agit d'un enrichissement AI transversal non bloquant
+* pour `audio_undefined`, aucun job AI n'est créé tant qu'un humain n'a pas fixé le profil final
+
 ### `video_standard`
 
 Usage : rush vidéo standard.

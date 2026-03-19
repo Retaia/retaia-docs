@@ -407,6 +407,7 @@ Tests obligatoires :
 * `video_standard`, `audio_music`, `audio_voice`, `photo_standard` sont des profils effectifs de processing
 * `audio_undefined` est un profil transitoire de qualification, pas un profil final de processing complet
 * `suggest_tags` est un enrichissement AI transversal; il ne définit pas les profils et ne fait pas partie des prérequis de `PROCESSED`
+* la matrice canonique `processing_profile -> jobs` définie dans `PROCESSING-PROFILES.md` est respectée sans variante implicite runtime
 * avant validation `v1.1+`, `transcribe_audio` peut être activé plus tôt sous `feature_flags` et exposer un `transcript` pré-release hors conformité v1
 * dès validation `v1.1+`, tout média avec piste audio exploitable dont le profil l'exige (`video_standard`, `audio_voice`) exige `transcribe_audio` pour atteindre `PROCESSED`
 * changement de profil après claim exige reprocess
@@ -435,6 +436,15 @@ Tests obligatoires :
 
 Tests obligatoires :
 
+* `generate_preview` utilise un `preview_profile` canonique :
+  * `video_review_default_v1`
+  * `audio_review_default_v1`
+  * `photo_review_default_v1`
+* un changement non rétrocompatible de rendu preview impose un nouveau `preview_profile`
+* `generate_thumbnails` utilise un `thumbnail_profile` canonique :
+  * `video_representative_v1`
+  * `video_storyboard_v1`
+* un changement non rétrocompatible de sélection temporelle impose un nouveau `thumbnail_profile`
 * `preview_video` :
   * conteneur `video/mp4`
   * codec vidéo `H.264/AVC` lisible navigateur
@@ -477,6 +487,20 @@ Tests obligatoires :
 * cohérence globale :
   * `duration`/`fps`/dimensions exposés cohérents avec le fichier dérivé livré
   * aucun dérivé ne modifie implicitement le sens temporel du média
+* politique de remplacement :
+  * `derived/upload/complete` seul ne publie jamais un dérivé courant
+  * seul un `submit` valide publiant le `derived_patch` rend le dérivé courant visible
+  * pour un même `asset_uuid`, une même révision et un même `kind`, la dernière référence acceptée remplace atomiquement la précédente
+
+## 3.3) Facts contract (obligatoire)
+
+Tests obligatoires :
+
+* `PHOTO` : `facts_patch` contient au minimum `media_format`, `width`, `height`
+* `AUDIO` : `facts_patch` contient au minimum `duration_ms`, `media_format`, `audio_codec`
+* `VIDEO` : `facts_patch` contient au minimum `duration_ms`, `media_format`, `video_codec`, `width`, `height`, `fps`
+* `VIDEO` avec piste audio exploitable : `audio_codec` est aussi présent
+* absence d'un champ minimal applicable => résultat facts incomplet, l'asset ne peut pas être considéré `PROCESSED`
 
 ## 4) Merge patch par domaine
 
@@ -620,6 +644,10 @@ Tests obligatoires :
 * `transcribe_audio`, `suggest_tags` et `suggested_tags*` sont hors périmètre v1 et planifiés en `v1.1+`
 * `transcribe_audio` devient obligatoire à partir de la phase `v1.1+` validée pour tout média dont le `processing_profile` l'exige
 * avant cette phase validée, `transcribe_audio` PEUT être exercé en pré-release uniquement via `feature_flags`
+* `suggest_tags` refuse de tourner si `facts_ref` est absent
+* `suggest_tags` accepte l'absence de `transcript_ref`
+* si `transcript_ref` est présent, il est utilisé comme enrichissement sémantique préféré
+* les tags/champs/notes humains existants sont traités comme contexte faisant autorité pour éviter doublons et contradictions, jamais comme cible à réécrire automatiquement
 
 ## 8.3) Feature flags (général)
 

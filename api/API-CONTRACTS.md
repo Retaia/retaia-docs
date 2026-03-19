@@ -1234,6 +1234,14 @@ Effet :
 * le serveur stocke le dérivé dans `RUSHES_DB/.derived/{uuid}/...`
 * référence interne mise à jour
 
+Politique normative de remplacement des dérivés :
+
+* `derived/upload/complete` rend un dérivé éligible, mais NE DOIT PAS à lui seul le publier comme dérivé courant de l'asset
+* la publication du dérivé courant est actée seulement lors du `submit` du job propriétaire via `derived_patch`
+* pour un même `asset_uuid`, une même révision métier et un même `kind`, la dernière référence acceptée dans le `derived_patch` courant remplace atomiquement la précédente
+* un dérivé antérieur PEUT rester stocké pour garbage collection, audit technique ou retry, mais NE DOIT plus être servi comme dérivé courant une fois remplacé
+* un upload incomplet ou non référencé par un `submit` valide NE DOIT JAMAIS devenir visible comme dérivé courant
+
 ### GET `/assets/{uuid}/derived`
 
 Retourne les dérivés disponibles et leurs URLs.
@@ -1728,6 +1736,14 @@ Règles :
 * merge par domaine uniquement (pas de replace global)
 * un job ne peut mettre à jour que son domaine autorisé
 * toute clé hors domaine autorisé renvoie `422 VALIDATION_FAILED`
+
+Contrat minimal `facts_patch` :
+
+* pour `PHOTO` : `media_format`, `width`, `height`
+* pour `AUDIO` : `duration_ms`, `media_format`, `audio_codec`
+* pour `VIDEO` : `duration_ms`, `media_format`, `video_codec`, `width`, `height`, `fps`
+* si une piste audio exploitable est détectée sur `VIDEO`, `audio_codec` devient requis
+* des champs supplémentaires sont autorisés, mais les champs minimaux applicables au `media_type` NE DOIVENT PAS manquer
 
 
 ## 10) Codes d’erreur (normatifs)
