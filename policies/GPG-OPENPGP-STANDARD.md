@@ -78,6 +78,12 @@ Conditions:
 * version pinnee et suivie via policy supply-chain
 * aucune implementation crypto maison
 * toute exception de librairie DOIT etre validee securite
+* point de vigilance implementation:
+  * avant adoption runtime definitive, chaque stack DOIT valider en integration reelle:
+    * signatures OpenPGP detachees
+    * verification sur payload HTTP canonique exact
+    * compatibilite version/runtime de la stack applicative
+  * pour PHP en particulier, `php-privacy/openpgp` DOIT etre verifiee sur ces trois points avant generalisation dans `CORE`
 
 ## 8) Cycle de vie et gouvernance (MUST)
 
