@@ -11,7 +11,7 @@ Ce document définit la matrice d'autorisation normative par endpoint, scope et 
 
 Acteurs normatifs :
 
-* `USER_INTERACTIVE` (client `UI_WEB` application web, ou `AGENT_UI` pour l'agent en CLI ou GUI)
+* `USER_INTERACTIVE` (client `UI_WEB`, seule application web humaine authentifiée)
 * `AGENT_TECHNICAL` (daemon/service non-interactif de processing)
 * `MCP_TECHNICAL` (client technique non-interactif d'orchestration MCP)
 * `TECHNICAL_ACTORS` = `AGENT_TECHNICAL|MCP_TECHNICAL`
@@ -19,8 +19,8 @@ Acteurs normatifs :
 * `client_kind` interactif: `UI_WEB|AGENT`; `client_kind` technique: `AGENT|MCP`
 * rollout projet global actif: `UI_WEB` et `AGENT_UI` en v1; `MCP` et les fonctionnalités dépendantes de l'AI en v1.1
 * gate applicatif: `app_feature_enabled.features.ai=false` => seules les fonctionnalités MCP dépendantes de l’AI sont refusées (`403 FORBIDDEN_SCOPE`), sans désactiver le client MCP dans son ensemble
-* `AGENT_UI` PEUT converger fonctionnellement avec `UI_WEB` pour les actions humaines, sans fusionner son identité avec le daemon `AGENT_TECHNICAL`
-* aucune action user-scoped ou admin-scoped ne DOIT être implicitement transférée de `AGENT_UI` vers `AGENT_TECHNICAL`
+* `AGENT_UI` reste une surface locale de setup/contrôle/debug du daemon; toute identité humaine provient de `UI_WEB`
+* aucune action user-scoped ou admin-scoped ne DOIT être implicitement transférée de `UI_WEB` ou `AGENT_UI` vers `AGENT_TECHNICAL`
 
 ## 2) Matrice v1 (résumé)
 
@@ -31,15 +31,10 @@ Acteurs normatifs :
 * acteur: public (anonyme autorisé)
 * scope: aucun
 
-`POST /auth/refresh`, `POST /auth/webauthn/authenticate/options`, `POST /auth/webauthn/authenticate/verify`
+`POST /auth/refresh`
 
 * acteur: public (anonyme autorisé)
 * scope: aucun
-
-`POST /auth/webauthn/register/options`, `POST /auth/webauthn/register/verify`
-
-* acteur: `USER_INTERACTIVE`
-* scope: session utilisateur valide (`UserBearerAuth`)
 
 `POST /auth/2fa/setup|enable|disable`, `POST /auth/logout`, `GET /auth/me`
 

@@ -42,7 +42,7 @@ The following consumer repositories must align with these specs:
 
 - `retaia-core` (backend/API runtime)
 - `retaia-ui` (user interface client)
-- `retaia-agent` (processing client with `AGENT_UI` in CLI and GUI, plus technical daemon)
+- `retaia-agent` (processing client with local `AGENT_UI` for setup/control/debug, plus technical daemon)
 - `retaia-mcp` (MCP orchestration client, no media processing)
 
 ## Quick links

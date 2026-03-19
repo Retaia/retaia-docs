@@ -62,21 +62,6 @@ Tests obligatoires :
   * refresh token valide => `200` + nouveau bearer token + refresh token rotaté
   * refresh token invalide/révoqué/expiré => `401 UNAUTHORIZED`
   * body invalide => `422 VALIDATION_FAILED`
-* `POST /auth/webauthn/register/options`:
-  * bearer utilisateur valide => `200`
-  * bearer absent/invalide => `401 UNAUTHORIZED`
-* `POST /auth/webauthn/register/verify`:
-  * attestation valide + bearer utilisateur valide => `200`
-  * attestation invalide => `422 VALIDATION_FAILED`
-  * conflit device/credential => `409 STATE_CONFLICT`
-* `POST /auth/webauthn/authenticate/options`:
-  * credential connu / compte admissible => `200`
-  * demande invalide => `422 VALIDATION_FAILED`
-  * rate limit => `429 TOO_MANY_ATTEMPTS`
-* `POST /auth/webauthn/authenticate/verify`:
-  * assertion valide => `200` + bearer token + refresh token
-  * assertion invalide => `401 UNAUTHORIZED`
-  * body invalide => `422 VALIDATION_FAILED`
 * `POST /auth/2fa/setup`:
   * bearer valide + 2FA inactive => `200` + `otpauth_uri` / `secret` pour app externe (Authy...)
   * bearer absent/invalide => `401 UNAUTHORIZED`
@@ -213,11 +198,94 @@ Tests obligatoires :
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR|FORBIDDEN_SCOPE`
   * conflit de rotation => `409 STATE_CONFLICT`
   * body invalide => `422 VALIDATION_FAILED`
-* `POST /auth/webauthn/register/options` et `POST /auth/webauthn/authenticate/options`:
-  * options/challenge one-shot avec TTL <= 5 minutes
-  * rejeu ou double soumission après succès => refusés
-* `POST /auth/webauthn/register/verify` et `POST /auth/webauthn/authenticate/verify`:
-  * challenge expiré, consommé ou rejoué => refusé
+* `GET /app/policy`:
+  * bearer utilisateur valide => `200` + `server_policy.feature_flags`
+  * bearer client technique valide (`TechnicalBearerAuth`) => `200`
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+  * endpoint runtime canonique pour `UI_WEB`, `AGENT`, `MCP`
+* `POST /app/policy`:
+  * bearer admin valide + body valide (`feature_flags`) => `200`
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+  * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
+  * tentative de mutation d’un flag encore `code-backed` => `409 STATE_CONFLICT`
+  * body invalide => `422 VALIDATION_FAILED`
+* `POST /auth/lost-password/request`:
+  * body valide (`email`) => `202`
+  * body invalide => `422 VALIDATION_FAILED`
+  * rate limit => `429 TOO_MANY_ATTEMPTS`
+* `POST /auth/lost-password/reset`:
+  * body valide (`token`, `new_password`) => `200`
+  * token invalide/expiré => `400 INVALID_TOKEN`
+  * body invalide => `422 VALIDATION_FAILED`
+* `POST /auth/verify-email/request`:
+  * body valide (`email`) => `202`
+  * body invalide => `422 VALIDATION_FAILED`
+  * rate limit => `429 TOO_MANY_ATTEMPTS`
+* `POST /auth/verify-email/confirm`:
+  * body valide (`token`) => `200`
+  * token invalide/expiré => `400 INVALID_TOKEN`
+  * body invalide => `422 VALIDATION_FAILED`
+* `POST /auth/verify-email/admin-confirm`:
+  * bearer admin valide + body valide (`email`) => `200`
+  * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
+  * utilisateur inexistant => `404 USER_NOT_FOUND`
+  * body invalide => `422 VALIDATION_FAILED`
+* `POST /auth/clients/{client_id}/revoke-token`:
+  * bearer admin valide + `client_id` valide => `200` et token(s) invalide(s)
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+  * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
+  * `client_id` invalide => `422 VALIDATION_FAILED`
+  * `client_id` de type `UI_WEB` protégé => `403` (non révocable via cet endpoint)
+* `POST /auth/clients/token`:
+  * `client_id + client_kind=AGENT + secret_key` valides => `200` + bearer token client
+  * credentials client invalides => `401 UNAUTHORIZED`
+  * body invalide => `422 VALIDATION_FAILED`
+  * rate limit => `429 TOO_MANY_ATTEMPTS`
+  * invariant: nouveau token minté pour un client révoque l’ancien token (1 token actif / client)
+  * `client_kind in {UI_WEB, MCP}` refusé (`403 FORBIDDEN_ACTOR`)
+* `POST /auth/clients/device/start`:
+  * `client_kind=AGENT` => `200` + `device_code`, `user_code`, `verification_uri`, `verification_uri_complete`
+  * `client_kind=MCP` => `403 FORBIDDEN_ACTOR`
+  * body invalide => `422 VALIDATION_FAILED`
+  * rate limit => `429 TOO_MANY_ATTEMPTS`
+* `POST /auth/clients/device/poll`:
+  * avant validation UI => statut `PENDING`
+  * après approval UI => statut `APPROVED` + `secret_key` one-shot
+  * approval refusée par utilisateur => statut `DENIED`
+  * code expiré => statut `EXPIRED`
+  * body invalide => `422 VALIDATION_FAILED`
+  * polling trop fréquent => `429 SLOW_DOWN`/`TOO_MANY_ATTEMPTS`
+* `POST /auth/clients/device/cancel`:
+  * flow en cours => `200` canceled
+  * `device_code` invalide/expiré => `400 INVALID_DEVICE_CODE|EXPIRED_DEVICE_CODE`
+* `POST /auth/clients/{client_id}/rotate-secret`:
+  * bearer admin valide + `client_id` valide => `200` + nouvelle `secret_key` (retournée une fois)
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+  * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
+  * `client_id` invalide => `422 VALIDATION_FAILED`
+* `POST /auth/mcp/register` (`v1.1+`):
+  * bearer utilisateur valide + clé publique valide => `200` + `client_id` MCP
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+  * acteur/scope interdit => `403 FORBIDDEN_ACTOR|FORBIDDEN_SCOPE`
+  * conflit d'enrôlement => `409 STATE_CONFLICT`
+  * body invalide => `422 VALIDATION_FAILED`
+* `POST /auth/mcp/challenge` (`v1.1+`):
+  * `client_id` MCP + fingerprint valides => `200` + challenge court
+  * challenge one-shot avec TTL <= 5 minutes
+  * challenge expiré ou rejoué => refusé
+  * body invalide => `422 VALIDATION_FAILED`
+  * rate limit => `429 TOO_MANY_ATTEMPTS`
+* `POST /auth/mcp/token` (`v1.1+`):
+  * challenge valide + signature valide => `200` + bearer token client `MCP`
+  * challenge expiré, consommé ou rejoué => `401 UNAUTHORIZED`
+  * signature/challenge invalides => `401 UNAUTHORIZED`
+  * body invalide => `422 VALIDATION_FAILED`
+  * rate limit => `429 TOO_MANY_ATTEMPTS`
+* `POST /auth/mcp/{client_id}/rotate-key` (`v1.1+`):
+  * bearer admin valide + clé publique valide => `200` + fingerprint rotaté
+  * acteur/scope interdit => `403 FORBIDDEN_ACTOR|FORBIDDEN_SCOPE`
+  * conflit de rotation => `409 STATE_CONFLICT`
+  * body invalide => `422 VALIDATION_FAILED`
 * `GET /assets/{uuid}`:
   * retourne `summary.revision_etag` et le header `ETag`
 * `PATCH /assets/{uuid}`, `POST /assets/{uuid}/reprocess`, `POST /assets/{uuid}/reopen`:
@@ -249,12 +317,11 @@ Matrice de migration v1 runtime (gelée) :
   * rotation invalide immédiatement les tokens actifs du client
 * toutes réponses d’erreur 4xx/5xx auth conformes au schéma `ErrorResponse`
 * endpoints humains mutateurs exigent un bearer token (`UserBearerAuth`) conforme à la spec
-* même flux login/token validé sur clients interactifs: `UI_WEB` et `AGENT`
+* flux login/token humain canonique validé sur `UI_WEB` uniquement
 * compatibilité UI validée:
-  * `UI_WEB` utilise `WebAuthn` + bearer + refresh token comme auth primaire
-  * `AGENT_UI` utilise `POST /auth/login` + bearer dans un premier temps, puis peut adopter `WebAuthn` quand la surface le permet, sans changer le modèle de compte
-  * `AGENT_TECHNICAL` n'utilise jamais `WebAuthn` au runtime
-* anti lock-out: l'UI n'expose jamais le token en clair et n'offre pas d'action d'auto-révocation du token UI actif
+  * `UI_WEB` utilise `POST /auth/login` + bearer + refresh token
+  * `AGENT_UI` n'effectue aucun login humain direct; il ouvre `UI_WEB` dans le browser pour l'approval du daemon
+  * anti lock-out: l'UI n'expose jamais le token en clair et n'offre pas d'action d'auto-révocation du token UI actif
 * régression interdite: aucun endpoint runtime n'accepte encore `SessionCookieAuth` (API stateless/sessionless)
 * 2FA optionnelle: compte sans 2FA active ne requiert pas OTP
 * création de secret `AGENT` via UI :
@@ -273,9 +340,10 @@ Tests obligatoires :
 * `AGENT_UI` en mode `CLI` fonctionne en Linux headless (sans dépendance GUI)
 * `AGENT_UI` en mode `GUI` (quand présent) utilise le même moteur de processing que `CLI` (mêmes capabilities et mêmes résultats)
 * `AGENT_UI` en mode `CLI` et `GUI` expose les mêmes fonctionnalités opérateur
-* `AGENT_UI` en mode `GUI` PEUT couvrir les mêmes parcours humains que `UI_WEB` sans transférer l'identité utilisateur au daemon
+* `AGENT_UI` en mode `GUI` reste limité au setup, au contrôle et au debug du daemon
+* `AGENT_UI` ouvre `UI_WEB` dans le browser pour toute approval humaine ou auth liée au daemon
 * aucune action user-scoped initiée depuis `AGENT_UI` n'est exécutée par `AGENT_TECHNICAL` sans contrat de délégation explicite
-* client `AGENT` validé dans les deux modes d’auth: interactif (`/auth/login`) et technique (`/auth/clients/token`)
+* client `AGENT_TECHNICAL` validé via `/auth/clients/token` après approval humain dans `UI_WEB`
 * client `MCP` validé en mode technique asymétrique standard, sans login interactif ni device flow (gate `v1.1` global)
 * client `MCP` obtient son bearer technique via `POST /auth/mcp/challenge` + `POST /auth/mcp/token`
 * client `MCP` peut piloter/orchestrer l'agent sans exécuter de processing (gate `v1.1` global)
@@ -639,7 +707,7 @@ Tests obligatoires :
 
 Tests obligatoires :
 
-* conformité au standard [`GPG-OPENPGP-STANDARD.md`](../policies/GPG-OPENPGP-STANDARD.md) sur tous les clients actifs (`UI_WEB`, `AGENT`, `MCP`)
+* conformité au standard [`GPG-OPENPGP-STANDARD.md`](../policies/GPG-OPENPGP-STANDARD.md) sur tous les clients techniques actifs (`AGENT`, `MCP`)
 
 ## 8.9) Observabilité feature governance
 
@@ -657,7 +725,7 @@ Tests obligatoires :
 * rejet explicite des algorithmes interdits (SHA-1, RSA < 3072, DSA legacy)
 * adresses, coordonnées GPS, transcriptions non lisibles en clair dans dump DB/backups
 * rotation/rekey OpenPGP sans perte d'accès légitime
-* mode transparent par défaut: aucun setup PGP manuel requis pour un utilisateur standard
+* mode transparent par défaut: aucun setup OpenPGP manuel requis pour un utilisateur standard dans `UI_WEB`
 * mode avancé: intégration `gpg-agent`/clés existantes fonctionne quand activée
 * fallback sûr: indisponibilité du mode avancé ne bloque pas l'usage standard
 

@@ -219,7 +219,7 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 
 ### Typologie des acteurs (normatif)
 
-* `USER_INTERACTIVE` : utilisateur humain connecté via client `UI_WEB` (application web) ou via `AGENT_UI` (`client_kind=AGENT`, surfaces CLI ou GUI) pour bootstrap, administration ou diagnostic
+* `USER_INTERACTIVE` : utilisateur humain connecté via `UI_WEB` (application web), seule surface d'authentification humaine complète
 * `AGENT_TECHNICAL` : agent daemon non-interactif (service) authentifié via bearer technique obtenu par `client_id + secret_key`
 * `MCP_TECHNICAL` : client MCP non-humain authentifié via challenge/réponse asymétrique standard, après enrôlement de sa clé publique depuis l'UI par un utilisateur autorisé
 * `TECHNICAL_ACTORS` : alias générique couvrant `AGENT_TECHNICAL | MCP_TECHNICAL`
@@ -229,48 +229,38 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 
 ### UI (humain)
 
-* `UI_WEB` DOIT utiliser `WebAuthn` comme mécanisme primaire d'authentification utilisateur
-* l'API reste stateless/sessionless côté runtime :
-  * `WebAuthn` sert à obtenir ou renouveler des tokens
-  * les appels API métiers continuent via `Authorization: Bearer ...`
-  * aucun retour à `SessionCookieAuth` n'est autorisé
-* `refresh_token` est autorisé pour les clients interactifs humains (`UI_WEB`, `AGENT_UI`)
-* le mot de passe utilisateur reste un mécanisme de bootstrap, recovery et opérations sensibles, pas un mécanisme d'usage quotidien obligatoire sur chaque navigateur
+* `UI_WEB` est la seule UI humaine complète du produit
+* `UI_WEB` utilise `POST /auth/login` pour l'authentification humaine
+* `UI_WEB` consomme ensuite l'API via `Authorization: Bearer ...` et `refresh_token`
+* l'API reste stateless/sessionless côté runtime; aucun retour à `SessionCookieAuth` n'est autorisé
+* seul `UI_WEB` a droit au modèle `login + bearer + refresh_token`
+* le mot de passe utilisateur reste un mécanisme autorisé et explicite pour éviter tout verrouillage hors de l'UI
 * `client_kind=UI_WEB` couvre uniquement l'UI web servie par Core
-* `AGENT_UI` relève du `client_kind=AGENT`, avec parité fonctionnelle obligatoire entre surfaces CLI et GUI
-* `AGENT_UI` PEUT, à terme, devenir une surface applicative comparable à `UI_WEB` pour les fonctionnalités humaines, tout en restant distincte du daemon `AGENT_TECHNICAL`
 * le token UI est non exportable dans l'interface (jamais affiché en clair)
 * un utilisateur ne peut pas invalider son token UI depuis l'UI (anti lock-out)
 * l'UI DOIT supporter l'enrôlement 2FA TOTP via app externe (Authy, Google Authenticator, etc.)
-* un même compte utilisateur PEUT enregistrer plusieurs navigateurs/appareils de confiance
+* un même compte utilisateur PEUT utiliser plusieurs navigateurs/appareils
 * l'enregistrement d'un nouveau browser ou d'une nouvelle machine NE DOIT PAS créer un nouveau compte utilisateur
-
-Modèle multi-device (obligatoire) :
-
-* le compte utilisateur reste unique
-* chaque device/browser interactif PEUT avoir :
-  * un `client_id`
-  * un `device_id`
-  * un credential `WebAuthn`
-* plusieurs devices PEUVENT être rattachés au même compte utilisateur
-* la révocation DOIT pouvoir se faire device par device, sans impacter les autres devices du même compte
+* la révocation des tokens interactifs DOIT pouvoir se faire device/browser par device/browser sans impacter les autres
 
 ### Agents / MCP
 
 * les modes non interactifs utilisent une API technique stateless/sessionless avec `TechnicalBearerAuth`, mais ce bearer ne suffit jamais seul à établir une preuve forte d'instance
-* mode `AGENT` interactif : `AGENT_UI` opéré par un humain (CLI ou GUI), avec bearer utilisateur via `POST /auth/login` aujourd'hui
-* `AGENT_UI` PEUT utiliser `WebAuthn` quand la surface le permet (GUI desktop, shell natif ou environnement capable), sans changer le modèle de compte utilisateur ni le contrat bearer
-* mode `AGENT_TECHNICAL` : `client_id + secret_key` pour obtenir un bearer token via `POST /auth/clients/token`
+* `AGENT_UI` est une surface locale de setup, contrôle et debug du daemon; ce n'est pas une UI métier complète autonome
+* `AGENT_UI` NE DOIT PAS authentifier directement l'utilisateur via `POST /auth/login`
+* `AGENT_UI` DOIT ouvrir un browser vers `UI_WEB` pour tout flow d'autorisation humaine du daemon
+* l'approval humain du daemon se fait exclusivement dans `UI_WEB`, avec login utilisateur et contrôles de sécurité applicables
+* mode `AGENT_TECHNICAL` : `client_id + secret_key` pour obtenir un bearer token via `POST /auth/clients/token` après approval via `UI_WEB`
 * pour `AGENT_TECHNICAL`, le `secret_key` reste un credential technique de bootstrap et d'autorisation; la preuve forte d'instance est portée par `agent_id` + clé `OpenPGP` + signature mutatrice
 * `AGENT_TECHNICAL` N'UTILISE JAMAIS `WebAuthn` au runtime
 * `client_id + secret_key` servent au bootstrap et à l'autorisation technique de `AGENT_TECHNICAL`; ils NE SUFFISENT JAMAIS à eux seuls à prouver l'instance pour une écriture mutatrice
 * toute écriture mutatrice `AGENT_TECHNICAL` DOIT présenter à la fois un bearer technique valide et une preuve d'instance valide (`agent_id` + signature `OpenPGP`)
 * mode `MCP_TECHNICAL` : identité asymétrique standard avec clé publique enregistrée côté Core, clé privée locale côté client et signatures obligatoires sur les écritures sensibles
 * toute lecture runtime technique PEUT utiliser le bearer technique seul quand le contrat endpoint l'autorise; toute écriture mutatrice technique DOIT exiger la preuve asymétrique d'instance associée
-* seul `AGENT_TECHNICAL` exécute les jobs de processing; un `AGENT` interactif ne claim pas de job et ne traite pas de média
-* `AGENT_UI` PEUT gérer des fonctionnalités humaines comparables à `UI_WEB` (review, préférences, profil utilisateur, pilotage daemon), mais ces mutations restent des actions `USER_INTERACTIVE`
-* toute action `USER_INTERACTIVE` depuis `AGENT_UI` DOIT rester portée par une identité humaine authentifiée; le daemon `AGENT_TECHNICAL` NE DOIT PAS hériter implicitement de cette identité
-* une éventuelle délégation future de droits user-scoped vers `AGENT_TECHNICAL` DOIT être explicite, bornée dans le temps, liée à un `agent_id` et documentée comme un contrat séparé
+* seul `AGENT_TECHNICAL` exécute les jobs de processing; `AGENT_UI` ne claim pas de job et ne traite pas de média
+* `AGENT_UI` pilote localement le daemon (setup, status, start/stop, configuration, debug) sans porter d'identité humaine autonome
+* toute identité humaine utilisée pour approuver ou configurer le daemon reste portée par `UI_WEB`; le daemon `AGENT_TECHNICAL` NE DOIT PAS hériter implicitement de cette identité
+* Core DOIT tracer au minimum `approved_by_user_id`, `approved_at`, `client_id` et `agent_id` pour chaque enrôlement daemon
 * `MCP` PEUT piloter/orchestrer l'agent (configuration, déclenchement, supervision) mais NE DOIT JAMAIS exécuter de traitement média
 * `MCP` est interdit sur les endpoints de processing `/jobs/*` (`claim`, `heartbeat`, `submit`) avec refus `403 FORBIDDEN_ACTOR`
 * `MCP` NE DOIT JAMAIS pouvoir exécuter une action destructive ou de suppression
@@ -288,14 +278,14 @@ Modèle multi-device (obligatoire) :
 Règles 2FA par client (obligatoire) :
 
 * la 2FA est optionnelle au niveau compte utilisateur
-* `UI_WEB` : `WebAuthn` + bearer + refresh token comme mécanisme primaire; `POST /auth/login` reste un fallback de bootstrap/recovery
-* `AGENT_UI` PEUT utiliser `WebAuthn` quand la surface le permet; sinon `POST /auth/login` reste le fallback interactif
+* `UI_WEB` : `POST /auth/login` + bearer + refresh token
+* `AGENT_UI` : aucun login humain direct; ouvre `UI_WEB` dans un browser pour l'approval
 * `AGENT_TECHNICAL` au runtime : jamais de `WebAuthn`, pas de 2FA directe
 * `MCP_TECHNICAL` au runtime : pas de 2FA directe
 * création d’un `secret_key` pour `AGENT_TECHNICAL` : DOIT passer par une validation utilisateur via UI
 * l’enregistrement initial de la clé publique `MCP_TECHNICAL` DOIT passer par l’UI et une action explicite d’un utilisateur autorisé
 * si 2FA est activée sur ce compte utilisateur, la validation UI de création `secret_key` `AGENT` ou d’enregistrement de clé `MCP` DOIT exiger la 2FA
-* flow cible `AGENT_TECHNICAL` : type GitHub device authorization (ouverture URL navigateur, auth UI, validation 2FA optionnelle, approval explicite)
+* flow cible `AGENT_TECHNICAL` : type GitHub device authorization (ouverture URL navigateur vers `UI_WEB`, login humain, validation 2FA optionnelle, approval explicite, retour d'un credential technique propre au daemon)
 * `MCP_TECHNICAL` NE DOIT PAS pouvoir initier de login utilisateur ni de device flow en autonomie
 
 Règle de cardinalité des tokens (obligatoire) :
@@ -374,54 +364,6 @@ Normalisation des timestamps (normatif) :
 * body requis: `{ refresh_token }`
 * body optionnel: `client_id`, `client_kind`
 * effet: renouvelle un bearer token interactif sans repasser par le mot de passe
-* réponses:
-  * `200` succès + bearer token (`access_token`, `token_type=Bearer`, `expires_in?`, `refresh_token?`, `client_id`, `client_kind`)
-  * `401 UNAUTHORIZED`
-  * `422 VALIDATION_FAILED`
-  * `429 TOO_MANY_ATTEMPTS`
-
-`POST /auth/webauthn/register/options`
-
-* security: `UserBearerAuth`
-* effet: retourne les options d'enregistrement `WebAuthn` pour attacher un nouveau browser/device au compte utilisateur courant
-* règles: challenge/options à durée courte (TTL max 5 minutes), usage unique, toute tentative de rejeu ou double soumission DOIT être refusée
-* réponses:
-  * `200` options `WebAuthn`
-  * `401 UNAUTHORIZED`
-  * `409 STATE_CONFLICT`
-
-`POST /auth/webauthn/register/verify`
-
-* security: `UserBearerAuth`
-* body requis: attestation `WebAuthn`
-* body optionnel: `device_id`, `device_label`
-* effet: enregistre un credential `WebAuthn` pour le compte utilisateur courant
-* règles: l'attestation DOIT correspondre à des options encore valides, non expirées et non déjà consommées; une vérification réussie consomme définitivement le challenge/options
-* réponses:
-  * `200` credential enregistré
-  * `401 UNAUTHORIZED`
-  * `409 STATE_CONFLICT`
-  * `422 VALIDATION_FAILED`
-
-`POST /auth/webauthn/authenticate/options`
-
-* security: aucune (`security: []`)
-* body optionnel: `email`, `client_id`, `client_kind`
-* effet: retourne les options d'assertion `WebAuthn` pour un browser/device déjà enregistré
-* règles: challenge/options à durée courte (TTL max 5 minutes), usage unique, toute tentative de rejeu ou double soumission DOIT être refusée
-* réponses:
-  * `200` options `WebAuthn`
-  * `401 UNAUTHORIZED`
-  * `422 VALIDATION_FAILED`
-  * `429 TOO_MANY_ATTEMPTS`
-
-`POST /auth/webauthn/authenticate/verify`
-
-* security: aucune (`security: []`)
-* body requis: assertion `WebAuthn`
-* body optionnel: `client_id`, `client_kind`
-* effet: vérifie l'assertion `WebAuthn` puis émet un bearer token interactif + `refresh_token`
-* règles: l'assertion DOIT correspondre à des options encore valides, non expirées et non déjà consommées; une vérification réussie consomme définitivement le challenge/options
 * réponses:
   * `200` succès + bearer token (`access_token`, `token_type=Bearer`, `expires_in?`, `refresh_token?`, `client_id`, `client_kind`)
   * `401 UNAUTHORIZED`
@@ -763,10 +705,10 @@ Règle d'erreur (obligatoire) :
 
 Règle d’unification clients (obligatoire) :
 
-* `UserBearerAuth` DOIT rester commun aux clients interactifs `UI_WEB` et `AGENT`
-* `UI_WEB` utilise `WebAuthn` comme auth primaire pour obtenir ce bearer
-* `AGENT_UI` utilise `POST /auth/login` dans un premier temps, puis PEUT adopter `WebAuthn` sans changer le contrat bearer
-* le fallback `POST /auth/login` reste disponible pour les parcours de bootstrap/recovery interactifs
+* `UserBearerAuth` DOIT rester réservé à `UI_WEB`
+* `UI_WEB` utilise `POST /auth/login` pour obtenir ce bearer
+* `AGENT_UI` n'obtient pas de bearer utilisateur propre; il délègue l'approval humain à `UI_WEB` dans le browser
+* `POST /auth/login` reste le flux humain canonique de bootstrap/recovery interactif
   * `401 UNAUTHORIZED`
   * `403 FORBIDDEN_ACTOR|FORBIDDEN_SCOPE`
   * `422 VALIDATION_FAILED`

@@ -21,9 +21,10 @@ Portée d'exécution :
 * rollout projet global: le client applicatif `MCP` (mappé `client_kind=MCP`) est intégré à partir de la v1.1 globale
 * gate applicatif: `app_feature_enabled.features.ai=false` désactive uniquement les fonctions `MCP` dépendantes de l'AI; le client `MCP` reste disponible pour ses fonctions non destructives non liées à l'AI
 * un client `AGENT`/`MCP` DOIT appliquer `effective_feature_enabled` (pas de logique locale alternative)
-* `AGENT_UI` est la surface interactive de l'agent, opérée par un humain pour le bootstrap, le diagnostic, l'administration et les usages applicatifs humains
-* `AGENT_UI` PEUT, à terme, converger fonctionnellement avec `UI_WEB` pour les parcours humains, tout en restant un client distinct qui pilote aussi le daemon local
-* même si `AGENT_UI` devient une surface riche comparable à `UI_WEB`, le daemon `AGENT_TECHNICAL` reste un acteur technique séparé, sans identité humaine implicite
+* `AGENT_UI` est la surface locale de setup, contrôle et debug de l'agent
+* `AGENT_UI` n'est pas une UI métier humaine complète autonome
+* toute auth ou approval humaine liée à l'agent passe par ouverture du browser vers `UI_WEB`
+* le daemon `AGENT_TECHNICAL` reste un acteur technique séparé, sans identité humaine implicite
 
 
 ## 2. Principes fondamentaux
@@ -120,8 +121,8 @@ Règles de vérification côté Core :
 * la `GUI` DOIT offrir les mêmes fonctionnalités opérateur que la `CLI`
 * la `CLI` DOIT réciproquement offrir les mêmes fonctionnalités opérateur que la `GUI`
 * les deux surfaces DOIVENT déléguer le processing au même moteur (mêmes capacités, mêmes règles)
-* les deux surfaces PEUVENT couvrir à terme les mêmes parcours humains que `UI_WEB`, en plus du pilotage local du daemon
 * le pilotage du daemon (start/stop/status/configuration locale) fait partie du périmètre propre de `AGENT_UI`
+* `AGENT_UI` NE DOIT PAS dériver vers une UI métier complète concurrente de `UI_WEB`
 
 Support plateforme minimal attendu :
 
@@ -143,20 +144,21 @@ Pour éviter le code local à maintenir, cette règle s'applique à toute implé
 
 ### 3.3 Modes d’auth agent (normatif)
 
-* mode non-interactif (service/daemon): `client_id + secret_key -> POST /auth/clients/token`
-* mode interactif opéré via `AGENT_UI` (CLI/GUI): login utilisateur via `POST /auth/login` (+ 2FA si active) dans un premier temps
-* `AGENT_UI` PEUT utiliser `WebAuthn` quand la surface le permet, sans changer le modèle de compte humain ni le contrat bearer interactif
+* mode non-interactif (service/daemon): `client_id + secret_key -> POST /auth/clients/token` après approval humain via `UI_WEB`
+* `AGENT_UI` est une surface locale de setup/contrôle/debug; il NE DOIT PAS implémenter de login humain direct
+* `AGENT_UI` DOIT ouvrir le browser vers `UI_WEB` pour toute authentification ou approval humaine liée au daemon
+* `UI_WEB` reste la seule UI autorisée à porter l'identité humaine (`login + bearer + refresh`)
 * un agent non-interactif NE DOIT PAS dépendre d’un login UI pour redémarrer
-* le bearer utilisateur obtenu via `AGENT_UI` appartient à l'acteur humain `USER_INTERACTIVE`; il NE DOIT PAS être réutilisé par le daemon `AGENT_TECHNICAL`
-* le daemon `AGENT_TECHNICAL` agit toujours sous sa propre identité technique (`agent_id` + clé OpenPGP + auth technique), jamais au nom implicite de l'utilisateur connecté dans `AGENT_UI`
+* le bearer utilisateur appartient exclusivement à `UI_WEB`; il NE DOIT JAMAIS être exposé ni réutilisé par `AGENT_UI` ou `AGENT_TECHNICAL`
+* le daemon `AGENT_TECHNICAL` agit toujours sous sa propre identité technique (`agent_id` + clé OpenPGP + auth technique), jamais au nom implicite de l'utilisateur connecté dans `UI_WEB`
 * `client_id + secret_key` autorise le client technique et permet de mint le bearer technique; une écriture mutatrice agent NE DOIT JAMAIS être acceptée sur cette seule base sans preuve `agent_id + OpenPGP + signature`
 * `AGENT_TECHNICAL` N'UTILISE JAMAIS `WebAuthn` au runtime
 
 Extension future user-scoped (réservée) :
 
-* si `AGENT_UI` doit déclencher via le daemon une action user-scoped (préférences, profil, review, autres mutations humaines), cette délégation DOIT être explicite
-* une telle délégation DOIT être approuvée par un utilisateur authentifié, bornée dans le temps, liée à un `agent_id` précis et limitée à des scopes nommément listés
-* en l'absence d'un tel contrat de délégation, les actions user-scoped restent portées directement par `AGENT_UI` comme `USER_INTERACTIVE`
+* si une action user-scoped liée au daemon doit exister plus tard, elle DOIT passer par un contrat de délégation explicite séparé
+* une telle délégation DOIT être approuvée par un utilisateur authentifié dans `UI_WEB`, bornée dans le temps, liée à un `agent_id` précis et limitée à des scopes nommément listés
+* en l'absence d'un tel contrat, `AGENT_UI` reste limité au setup/contrôle/debug local et ne porte aucune action user-scoped autonome
 
 Feature flags runtime :
 
