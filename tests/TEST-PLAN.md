@@ -228,6 +228,10 @@ Tests obligatoires :
   * retourne `summary.revision_etag` et le header `ETag`
   * `summary.revision_etag` et `ETag` utilisent le même strong validator HTTP quoté
   * retourne `Cache-Control: private, no-store`
+  * `summary` expose aussi `name`, `updated_at?` et `revision_etag?`
+  * `processing.processing_profile` suit l'enum canonique des processing profiles
+  * `transcript` pré-release n'expose pas de jeton de concurrence propre
+  * `decisions.history[]` expose au minimum `action`, `at`, `by` dans l'ordre chronologique croissant
 * `GET /assets`:
   * retourne `Cache-Control: private, no-store`
   * `state` et `tags` utilisent un encodage CSV sur une occurrence unique du paramètre

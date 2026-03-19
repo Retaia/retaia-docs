@@ -1858,9 +1858,12 @@ Response (`202 Accepted`) :
 ### AssetSummary
 
 * `uuid`
+* `name`
 * `media_type`
 * `state`
 * `created_at`
+* `updated_at?`
+* `revision_etag?`
 * `captured_at?`
 * `duration?`
 * `tags[]`
@@ -1873,11 +1876,18 @@ Response (`202 Accepted`) :
 * `notes: string?`
 * `fields: Record<string, FieldValue>`
 * `paths: { storage_id, original_relative, sidecars_relative[] }`
-* `processing: { facts_done, thumbs_done, preview_done, waveform_done, review_processing_version }`
+* `processing: { facts_done, thumbs_done, preview_done, waveform_done, processing_profile, review_processing_version }`
 * `derived: { preview_video_url?, preview_audio_url?, preview_photo_url?, waveform_url?, thumbs[] }`
 * `transcript: { status, text_preview?, updated_at? }`
 * `decisions: { current?, history[] }`
 * `audit: { path_history[], revision_history[] }`
+
+`decisions.history[]` (normatif) :
+
+* `action` (`KEEP | REJECT | CLEAR`)
+* `at` (UTC ISO-8601)
+* `by` (identifiant acteur)
+* ordre chronologique croissant
 
 `revision_history[]` (normatif) :
 

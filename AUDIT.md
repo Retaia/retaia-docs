@@ -500,56 +500,6 @@ Impact :
   * stable ou éphémère
   * servie directement ou via route Core
 
-### 6.8.h.b `AssetSummary` et `AssetDetail` divergent déjà champ par champ
-
-Références :
-
-* [api/API-CONTRACTS.md](api/API-CONTRACTS.md)
-* [api/openapi/v1.yaml](api/openapi/v1.yaml)
-* [tests/TEST-PLAN.md](tests/TEST-PLAN.md)
-* [definitions/PROCESSING-PROFILES.md](definitions/PROCESSING-PROFILES.md)
-
-Constats :
-
-* `AssetSummary` n'est pas identique entre prose et OpenAPI :
-  * la prose liste `uuid`, `media_type`, `state`, `created_at`, `captured_at?`, `duration?`, `tags[]`, `has_preview`, `thumb_url?`
-  * OpenAPI exige aussi `updated_at` et `revision_etag`, et expose `name`
-* `AssetDetail.processing` diverge :
-  * la prose liste `facts_done`, `thumbs_done`, `preview_done`, `waveform_done`, `review_processing_version`
-  * OpenAPI ajoute `processing_profile`
-* `AssetTranscript` diverge fortement :
-  * la prose décrit `transcript: { status, text_preview?, updated_at? }`
-  * OpenAPI ajoute `revision_etag`
-  * OpenAPI le marque en plus "Pre-release field only. Outside v1 conformance scope"
-* `AssetDecisions.history[]` reste trop vague :
-  * OpenAPI ne requiert aucun champ dans chaque entrée
-  * la prose ne ferme ni l'ordre, ni la forme minimale
-* `AssetProcessing.processing_profile` est exposé sans enum ni lien machine direct avec la table canonique des profils
-
-Impact :
-
-* `Core`, `UI_WEB` et `Agent` ne partent pas du même objet métier exact
-* un client qui suit la prose et un client qui génère ses types depuis OpenAPI n'obtiendront pas la même forme
-* même sans blocage métier `v1`, `transcript` reste encore partiellement divergent entre prose et OpenAPI
-
-À normer avant `v1.0.0` :
-
-* aligner strictement `AssetSummary` prose / OpenAPI / tests
-* décider explicitement si `name`, `updated_at` et `revision_etag` appartiennent au contrat minimal toujours présent
-* typer `processing_profile` par enum partagée et le relier sans ambiguïté à `PROCESSING-PROFILES.md`
-* fermer la structure minimale de chaque entrée `decisions.history[]`
-
-### 6.8.j Contrat HTTP réellement opposable encore incomplet dans OpenAPI
-
-Références :
-
-* [api/API-CONTRACTS.md](api/API-CONTRACTS.md)
-* [api/openapi/v1.yaml](api/openapi/v1.yaml)
-* [policies/I18N-LOCALIZATION.md](policies/I18N-LOCALIZATION.md)
-* [tests/TEST-PLAN.md](tests/TEST-PLAN.md)
-
-Constats :
-
 ### 6.8 Error model partagé
 
 Couverture existante :

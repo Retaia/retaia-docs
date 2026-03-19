@@ -3531,6 +3531,7 @@ components:
           type: boolean
         processing_profile:
           type: string
+          enum: [video_standard, audio_undefined, audio_music, audio_voice, photo_standard]
         review_processing_version:
           type: string
 
@@ -3603,10 +3604,6 @@ components:
           type: string
           format: date-time
           description: Timestamp of the last accepted business mutation on this asset. Informational only; not a write precondition.
-        revision_etag:
-          type: string
-          pattern: '^"[^"]+"$'
-          description: Strong quoted HTTP entity-tag to be reused byte-for-byte in `If-Match` for the next mutation.
 
     AssetDecisions:
       type: object
@@ -3621,6 +3618,7 @@ components:
           items:
             type: object
             additionalProperties: false
+            required: [action, at, by]
             properties:
               action:
                 type: string
