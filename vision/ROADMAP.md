@@ -23,28 +23,7 @@ Toute évolution future DOIT respecter :
 
 ## Prévu
 
-### 1. V1.1 — Extension MCP et fonctions AI
-
-Objectif :
-
-* étendre le scope produit au client MCP et aux fonctionnalités dépendantes de l'AI
-
-Contenu prévu :
-
-* `MCP`
-* transcription audio
-* suggestions de tags
-* inventaire runtime providers/modèles
-* continuité du modèle runtime status-driven déjà cadré dans les specs
-
-Notes :
-
-* le MCP reste un client d’orchestration ; il ne traite pas les médias directement
-* `AGENT_UI` couvre les surfaces CLI et GUI avec parité fonctionnelle obligatoire
-* cette étape correspond à un élargissement du produit livré, pas à un changement de philosophie
-
-
-### 2. V1 — Release initiale
+### 1. V1 — Release initiale
 
 Objectif :
 
@@ -63,8 +42,30 @@ Contraintes produit :
 * aucune IA ne prend de décision KEEP / REJECT
 * les enrichissements dépendants de l'AI restent hors conformité v1
 * `AGENT_UI` fait partie de la release initiale et n'est pas un scope différé
+* `AGENT_UI` couvre les surfaces CLI et GUI avec parité fonctionnelle obligatoire
 * `video_standard` reste le profil vidéo canonique en `v1`
 * une scission future de `video_standard` reste possible, mais n'est pas retenue avant la release `v1.0.0`
+* la purge groupée fait partie du scope `v1` via `POST /assets/purge`, avec sélection explicite des UUID et traitement unitaire par asset côté Core
+
+
+### 2. V1.1 — Extension MCP et fonctions AI
+
+Objectif :
+
+* étendre le scope produit au client MCP et aux fonctionnalités dépendantes de l'AI
+
+Contenu prévu :
+
+* `MCP`
+* transcription audio
+* suggestions de tags
+* inventaire runtime providers/modèles
+* continuité du modèle runtime status-driven déjà cadré dans les specs
+
+Notes :
+
+* le MCP reste un client d’orchestration ; il ne traite pas les médias directement
+* cette étape correspond à un élargissement du produit livré, pas à un changement de philosophie
 
 
 ## Exploratoire
@@ -120,19 +121,7 @@ Impact :
 
 ## À Revoir Plus Tard
 
-### 5. Purge multi-sélection UI
-
-Statut :
-
-* possible plus tard
-* non prioritaire
-
-Cadre :
-
-* la purge reste unitaire côté Core
-* une éventuelle multi-sélection resterait un comportement UI, sans ressource batch dédiée
-
-### 6. Évolution future des processing profiles
+### 5. Évolution future des processing profiles
 
 Statut :
 

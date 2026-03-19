@@ -555,6 +555,10 @@ Tests obligatoires :
 * purge seulement depuis `REJECTED`
 * purge supprime originaux + sidecars + dérivés
 * purge idempotente avec `Idempotency-Key`
+* `POST /assets/purge` exige une liste explicite `asset_uuids[]`
+* `POST /assets/purge` ne signifie jamais “purge tout” sans sélection explicite
+* `POST /assets/purge` peut réussir partiellement et retourne un résultat par asset
+* `POST /assets/purge` refuse chaque asset non `REJECTED` avec un statut d'erreur par item
 
 ## 6.1) Sidecars unmatched observability
 
