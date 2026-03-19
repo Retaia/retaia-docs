@@ -613,7 +613,7 @@ Tests obligatoires :
 * `server_policy` expose l’état effectif des flags utiles aux agents
 * client feature OFF => UI/action API de la feature interdite
 * client feature ON => disponibilité immédiate sans redéploiement
-* `AGENT_TECHNICAL`, `UI_WEB` et `AGENT_UI` appliquent les `feature_flags` runtime du Core dès le scope produit v1 ; `MCP` les applique dans son rollout produit global validé en v1.1
+* `AGENT_TECHNICAL`, `UI_WEB` et `AGENT_UI` appliquent les `feature_flags` runtime du Core dès le scope produit v1 ; `MCP` les applique dans son rollout produit global validé en v1.1+
 
 Cas OFF/ON minimum :
 
