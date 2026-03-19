@@ -70,36 +70,6 @@ Principaux constats :
 
 ## 4. Findings critiques
 
-### 4.1 Gouvernance locale non alignée avec la gouvernance normative
-
-Le document de gouvernance impose :
-
-* pas de commit direct sur `master`
-* blocage local au `pre-commit`
-* Conventional Commits
-
-Références :
-
-* [change-management/CHANGE-MANAGEMENT.md](change-management/CHANGE-MANAGEMENT.md)
-* [\.husky/pre-commit](.husky/pre-commit)
-
-Constat :
-
-* le hook local ne bloque pas les commits directs sur `master`
-* le hook local ne vérifie pas la convention de commit
-* il ne fait que recalculer les hashes OpenAPI et relancer `check:contract-drift`
-
-Risque :
-
-* la gouvernance annoncée comme normative n'est pas opposable au niveau repo
-* le repo "source of truth" ne prouve pas lui-même la discipline qu'il impose aux consommateurs
-
-À normer / fermer avant `v1.0.0` :
-
-* règle locale obligatoire de blocage des commits sur `master`
-* règle locale ou CI obligatoire sur Conventional Commits
-* distinction explicite entre ce qui est "normatif GitHub org" et ce qui est "normatif repo"
-
 ### 4.2 Secure SDLC normatif mais non matérialisé dans le repo
 
 Le baseline Secure SDLC impose :
@@ -1113,8 +1083,6 @@ Tant que ces trois conditions ne sont pas remplies sur les domaines listés ci-d
 ## 11. Findings additionnels verbatim
 
 ### Findings
-
-* `P1` La gouvernance de branche annoncée comme normative n’est pas réellement enforceable dans le repo. `CHANGE-MANAGEMENT.md` (line 189) impose notamment blocage des commits directs sur `master` au `pre-commit` et Conventional Commits, mais le seul hook local `pre-commit` (line 1) ne fait que recalculer les hashes OpenAPI et relancer `check:contract-drift`. Résultat: un des garde-fous explicitement “DOIT” n’existe pas, donc la release discipline repose sur convention humaine.
 
 * `P1` Le Secure SDLC normatif n’est quasiment pas reflété dans la CI présente. `SECURE-SDLC.md` (line 5) exige SAST, secret scanning, Dependabot, branch protection, preuve de permissions CI minimales. Or le repo n’expose qu’un unique workflow `ci.yml` (line 1) avec `branch-up-to-date`, `contract-drift` et validation OpenAPI. Aucun `CODEOWNERS`, aucune PR template, aucun workflow sécurité, aucune config Dependabot n’est versionné. Pour un repo “source of truth”, ce manque de mécanisation est un point de failure avant `v1.0.0`.
 
