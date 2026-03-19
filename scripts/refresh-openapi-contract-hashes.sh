@@ -6,7 +6,7 @@ declare -a versions=()
 if [[ "$#" -gt 0 ]]; then
   versions=("$@")
 else
-  versions=("v1" "v1.1" "v1.2")
+  versions=("v1")
 fi
 
 for version in "${versions[@]}"; do

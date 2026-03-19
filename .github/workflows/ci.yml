@@ -41,9 +41,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate OpenAPI specs (v1, v1.1, v1.2)
+      - name: Validate OpenAPI specs (v1)
         run: |
-          for version in v1 v1.1 v1.2; do
+          for version in v1; do
             docker run --rm \
               -v "$PWD:/local" \
               openapitools/openapi-generator-cli validate \

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-declare -a versions=("v1" "v1.1" "v1.2")
+declare -a versions=("v1")
 
 for version in "${versions[@]}"; do
   expected_file="contracts/openapi-${version}.sha256"

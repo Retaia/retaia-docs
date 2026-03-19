@@ -66,7 +66,7 @@ Principaux constats :
 * certains domaines partagés sont normés, mais pas jusqu'au niveau nécessaire pour empêcher deux implémentations compatibles "sur le papier" de diverger au runtime
 * quelques contradictions documentaires existent déjà
 * le statut normatif des documents n'est pas uniformisé
-* la frontière `v1` / `v1.1+` / `v1.2` reste trop poreuse pour un repo censé piloter un rollout contract-first
+* la frontière entre contrat `v1` exécutable et futures extensions reste encore à clarifier sur certains domaines, même si seul `v1` est désormais publié en OpenAPI
 
 ## 4. Findings critiques
 
@@ -134,34 +134,6 @@ Risque :
 * liste minimale des contrôles sécurité réellement obligatoires et où ils vivent
 * si certains contrôles sont "hors repo", le document doit le dire explicitement
 * versionner les artefacts manquants ou réduire la formulation normative actuelle
-
-### 4.3 Contradiction sur le statut de `v1.2`
-
-Le repo présente `v1.2` comme piste réservée et non planifiée.
-
-Références :
-
-* [README.md](README.md)
-* [api/openapi/README.md](api/openapi/README.md)
-* [vision/ROADMAP.md](vision/ROADMAP.md)
-* [api/openapi/v1.2.yaml](api/openapi/v1.2.yaml)
-
-Constat :
-
-* la roadmap indique que la piste non planifiée visible est mobile / push
-* `v1.2.yaml` reste en pratique une extension MCP / AI dérivée de `v1.1`
-* le nom de track et son contenu produit ne racontent pas la même histoire
-
-Risque :
-
-* les consommateurs peuvent interpréter `v1.2` comme un futur contrat actif alors qu'il est annoncé non planifié
-* la présence d'un fichier OpenAPI presque exécutable pour un scope non retenu pollue la lecture du périmètre
-
-À normer / fermer avant `v1.0.0` :
-
-* soit supprimer le contenu détaillé de `v1.2` tant que la piste est non planifiée
-* soit documenter explicitement ce que `v1.2` représente vraiment
-* soit aligner roadmap et tracks OpenAPI
 
 ## 5. Incohérences documentaires avérées
 
@@ -1118,7 +1090,6 @@ Action :
 ### Priorité P0
 
 * Dédupliquer [tests/TEST-PLAN.md](tests/TEST-PLAN.md).
-* Clarifier le statut réel de `v1.2`.
 * Créer un document normatif unique `release-gates` pour `v1.0.0`.
 * Matérialiser ou requalifier les exigences Secure SDLC.
 * Ajouter un index canonique des documents avec statut normatif.
@@ -1151,7 +1122,7 @@ Action :
 * Ajouter un lint docs pour les liens relatifs et le statut normatif.
 * Remplacer les liens absolus locaux.
 * Ajouter des checks de cohérence inter-docs simples.
-* Uniformiser le vocabulaire `v1`, `v1.1+`, `phase validée`, `reserved`, `non planned`.
+* Uniformiser le vocabulaire `v1`, `v1.1+`, `phase validée`, `pre-release`.
 * Fermer le protocole d'upload des dérivés.
 * Déclarer dans OpenAPI les headers cross-project normatifs manquants comme `Accept-Language`.
 
@@ -1192,8 +1163,6 @@ Tant que ces trois conditions ne sont pas remplies sur les domaines listés ci-d
 
 * `P1` Le Secure SDLC normatif n’est quasiment pas reflété dans la CI présente. `SECURE-SDLC.md` (line 5) exige SAST, secret scanning, Dependabot, branch protection, preuve de permissions CI minimales. Or le repo n’expose qu’un unique workflow `ci.yml` (line 1) avec `branch-up-to-date`, `contract-drift` et validation OpenAPI. Aucun `CODEOWNERS`, aucune PR template, aucun workflow sécurité, aucune config Dependabot n’est versionné. Pour un repo “source of truth”, ce manque de mécanisation est un point de failure avant `v1.0.0`.
 
-* `P1` La piste `v1.2` est décrite comme “reserved / non-planned”, mais son contenu n’est pas aligné avec la roadmap produit. `README.md` (line 59), `api/openapi/README.md` (line 7) et `ROADMAP.md` (line 103) positionnent `v1.2` comme non planifié, avec la seule piste explicitement citée côté roadmap: mobile/push. Pourtant `v1.2.yaml` (line 7) reste essentiellement une copie de `v1.1` et parle encore MCP/transcription `v1.2.yaml` (line 3362). Cette ambiguïté ouvre la porte à de faux signaux de scope pour les repos consommateurs.
-
 * `P2` Le `README` annonce des “testing and release gates” comme partie des contrats normatifs, alors que les documents opérationnels de release/readiness sont explicitement non normatifs. Voir `README.md` (line 30), `READINESS-CHECKLIST.md` (line 5) et `RELEASE-OPERATIONS.md` (line 5). Il manque un point d’ancrage clair: qu’est-ce qui bloque formellement une release `v1.0.0`, et qu’est-ce qui reste simple runbook ?
 
 * `P2` Le statut normatif du corpus UI est ambigu au niveau racine. `ui/README.md` (line 5) dit “non normatif par défaut”, alors que `UI-GLOBAL-SPEC.md` (line 5) est explicitement normatif. Le repo gagnerait à classifier chaque doc UI de façon uniforme, sinon les consommateurs devront interpréter au cas par cas ce qui est opposable.
@@ -1202,7 +1171,7 @@ Tant que ces trois conditions ne sont pas remplies sur les domaines listés ci-d
 
 * Définir un “release gate canonique” unique et opposable pour `v1.0.0`: critères bloquants, preuves attendues, et artefacts minimaux.
 * Transformer les exigences Secure SDLC en contrôles réellement versionnés ou expliciter ce qui relève d’un réglage GitHub externe obligatoire.
-* Clarifier la taxonomie de versions: `v1` runtime actuel, `v1.1+` extensions, `v1.2` réservé mais sans scope actif.
+* Clarifier la taxonomie de versions: `v1` runtime actuel, `v1.1+` extensions futures et pré-release sous feature flags.
 * Uniformiser le statut de chaque document: `normatif`, `non normatif`, `préparation technique`, `roadmap`.
 * Ajouter des checks docs minimums pour une release de spec: liens relatifs, lint Markdown, et éventuellement drift entre documents normatifs majeurs.
 

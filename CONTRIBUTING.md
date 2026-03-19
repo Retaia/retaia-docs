@@ -14,8 +14,6 @@ Toute implémentation Core/UI/Agent/MCP doit suivre ces specs.
   - `npm run prepare`
   - le hook `pre-commit` régénère automatiquement les snapshots OpenAPI **uniquement pour les specs modifiées**:
     - `contracts/openapi-v1.sha256`
-    - `contracts/openapi-v1.1.sha256`
-    - `contracts/openapi-v1.2.sha256`
 
 ## Exigences de PR
 - Mettre à jour les documents normatifs impactés ensemble:
