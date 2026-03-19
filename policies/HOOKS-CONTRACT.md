@@ -21,7 +21,7 @@ Un hook/plugin NE DOIT PAS :
 ## 3) Contrat d'exécution
 
 * exécution synchrone dans la transaction orchestratrice
-* timeout max par hook : 2s (configurable)
+* timeout max par hook : `2s`
 * en cas de timeout/erreur :
   * le hook est marqué failed
   * l'état principal continue selon politique définie

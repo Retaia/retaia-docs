@@ -40,9 +40,15 @@ Portée d'exécution :
 ### 2.1 Polling runtime (normatif)
 
 * Les boucles de polling (`GET /jobs`, device flow poll, policy refresh) DOIVENT respecter les intervalles contractuels renvoyés par Core.
-* En cas de `429` (`SLOW_DOWN`/`TOO_MANY_ATTEMPTS`), l'agent DOIT appliquer un backoff avec jitter.
+* En cas de `429` (`SLOW_DOWN`/`TOO_MANY_ATTEMPTS`), l'agent DOIT appliquer le backoff canonique du contrat partagé : base `2s`, facteur `x2`, plafond `60s`, full jitter, reset après succès.
 * Le refresh des flags/policy DOIT être périodique; l'agent NE DOIT PAS attendre un signal push pour appliquer un changement de vérité métier.
 * Les actions mutatrices (claim/submit/fail) ne partent qu'après lecture d'un état compatible via polling.
+
+Cadences canoniques v1 :
+
+* `GET /jobs` : toutes les `5s`, ou `max(5, server_policy.min_poll_interval_seconds)` si Core impose un minimum supérieur
+* `GET /app/policy` : toutes les `30s` tant que l'agent est actif et authentifié
+* une action opérateur locale explicite PEUT déclencher un refresh anticipé de policy, sans jamais descendre sous `15s`
 
 
 ## 3. Enregistrement d’un agent
@@ -119,11 +125,12 @@ Règles de vérification côté Core :
 * la signature DOIT être une signature **OpenPGP détachée** conforme au standard [`GPG-OPENPGP-STANDARD.md`](../policies/GPG-OPENPGP-STANDARD.md)
 * `X-Retaia-Agent-Id` DOIT correspondre au `agent_id` du bearer technique
 * `X-Retaia-OpenPGP-Fingerprint` DOIT correspondre à la clé publique active enregistrée pour cet agent
-* Core DOIT vérifier la fraîcheur de `X-Retaia-Signature-Timestamp` dans une fenêtre bornée
-* Core DOIT empêcher le rejeu via `X-Retaia-Signature-Nonce`
+* Core DOIT vérifier la fraîcheur de `X-Retaia-Signature-Timestamp` dans une fenêtre d'écart absolu `<= 60s`
+* Core DOIT empêcher le rejeu via `X-Retaia-Signature-Nonce`, avec une rétention anti-rejeu minimale de `15 minutes`
 * Core DOIT rejeter toute requête si la signature est absente, invalide, expirée, rejouée ou si la clé est révoquée/inconnue
 * Core DOIT journaliser les échecs de vérification de signature comme événements sécurité
 * agent et Core DOIVENT utiliser des librairies OpenPGP standard maintenues; aucune implémentation crypto maison n'est autorisée
+* l'agent DOIT signer les octets HTTP bruts exacts qu'il envoie; aucune canonicalisation JSON supplémentaire n'est autorisée
 
 ### 3.2 Profils d’exécution (normatif)
 
@@ -337,8 +344,13 @@ L’agent ne décide jamais de la stratégie globale de retry.
 
 ## 7. Timeouts et TTL
 
-* Les valeurs de lease/TTL doivent être explicites (configuration côté serveur).
+* Les valeurs de lease/TTL partagées DOIVENT être explicites dans la spec partagée.
 * Toute modification des TTL/lock/retry est un changement structurel.
+* fenêtre de fraîcheur signature : `60s`
+* rétention anti-rejeu des nonces de signature : `15 minutes`
+* polling `GET /jobs` : `5s` par défaut, borné par `server_policy.min_poll_interval_seconds`
+* polling `GET /app/policy` : `30s`
+* backoff canonique sur `429` : base `2s`, facteur `x2`, plafond `60s`, full jitter
 
 
 ## 8. Sécurité

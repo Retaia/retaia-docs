@@ -109,6 +109,22 @@ Objectif : fournir une surface stable consommée par :
 * Le pilotage d'état du device flow reste strictement status-driven via `POST /auth/clients/device/poll` (`200` + `status`).
 * Les opérations mutatrices REST (`POST`, `PATCH`, etc.) restent autorisées selon la matrice auth/authz.
 
+Cadences et retry runtime (obligatoires) :
+
+* `GET /app/policy` :
+  * client actif authentifié (`UI_WEB`, `AGENT`, puis `MCP` à partir de v1.1+) : refresh toutes les `30s`
+  * un refresh anticipé est autorisé après action utilisateur locale explicite, sans jamais descendre sous `15s`
+* `GET /jobs` côté `AGENT` :
+  * cadence nominale toutes les `5s`
+  * si `server_policy.min_poll_interval_seconds` est présent, l'agent DOIT utiliser `max(5, min_poll_interval_seconds)`
+* `429` (`SLOW_DOWN`/`TOO_MANY_ATTEMPTS`) :
+  * stratégie canonique = exponential backoff with full jitter
+  * base = `2s`
+  * facteur multiplicatif = `2`
+  * plafond = `60s`
+  * reset immédiat après une réponse non `429`
+  * si `Retry-After` est présent, il DOIT primer comme nouvelle base minimale avant jitter
+
 Mapping normatif v1.1 (base actuelle, obligatoire pour tous les consommateurs) :
 
 * les capacités AI (`transcribe_audio`, `suggest_tags`, providers/modèles, filtres `suggested_tags*`) sont planifiées en v1.1+ et hors validation de conformité v1.
@@ -319,6 +335,11 @@ Baseline sécurité/fuite (normatif) :
 * `UserBearerAuth` désigne un bearer JWT utilisateur
 * `TechnicalBearerAuth` désigne un bearer technique opaque
 * les exigences `kid` / `JWKS` / rotation JWT s'appliquent au seul `UserBearerAuth`, pas aux bearers techniques opaques
+* durée de vie nominale `UserBearerAuth.access_token` : `15 minutes`
+* durée de vie nominale `UI_WEB.refresh_token` : `30 jours`
+* durée de vie nominale `TechnicalBearerAuth.access_token` (`AGENT`/`MCP`) : `24 heures`
+* ces durées sont fermées pour `v1`; toute modification requiert une nouvelle révision de spec
+* l'endpoint `JWKS` (ou équivalent interne) reste un mécanisme de vérification interne/Core et ne fait pas partie de la surface publique REST partagée `v1`
 
 Normalisation HTTP (normatif) :
 
@@ -343,6 +364,20 @@ Normalisation des timestamps (normatif) :
 * tous les champs `*_at` exposés par l'API DOIVENT être ISO-8601 (`date-time`) en UTC
 * les filtres temporels (ex: `since`) DOIVENT accepter ISO-8601; les valeurs invalides renvoient `400 VALIDATION_FAILED`
 * les clients DEVRAIENT envoyer des timestamps explicites UTC (suffixe `Z` ou offset `+00:00`)
+
+Fenêtres temporelles partagées (normatif) :
+
+* fenêtre maximale de fraîcheur acceptée pour `X-Retaia-Signature-Timestamp` : `60s` d'écart absolu avec l'horloge Core
+* un timestamp hors fenêtre DOIT être refusé avec `401 UNAUTHORIZED`
+* si Core expose `details.server_time_skew_seconds`, cette valeur DOIT être purement diagnostique
+* `X-Retaia-Signature-Nonce` :
+  * portée d'unicité : par couple `(acteur technique, nonce)`
+  * rétention anti-rejeu minimale : `15 minutes` après première observation acceptée
+  * toute réutilisation dans cette fenêtre DOIT être refusée avec `401 UNAUTHORIZED`
+  * un client NE DOIT JAMAIS réessayer une écriture mutatrice avec le même nonce
+* la canonicalisation de signature porte toujours sur les octets HTTP bruts réellement envoyés :
+  * aucun reformatage JSON, tri de clés ou normalisation whitespace supplémentaire n'est autorisé
+  * si deux stacks sérialisent différemment un body JSON, chacune DOIT signer les octets exacts qu'elle émet
 
 ### Endpoints auth applicatifs (normatif)
 
@@ -717,7 +752,7 @@ Signature MCP (normative) :
 * `X-Retaia-Signature` DOIT transporter la signature OpenPGP détachée ASCII-armored de cette chaîne canonique
 * Core DOIT vérifier la signature MCP via une librairie OpenPGP standard maintenue; aucune implémentation crypto maison n'est autorisée
 * Core DOIT rejeter toute écriture MCP signée si la signature est absente, invalide, expirée, rejouée ou si la clé active est révoquée/inconnue
-* Core DOIT contrôler une fenêtre de fraîcheur bornée pour `X-Retaia-Signature-Timestamp` et empêcher le rejeu via `X-Retaia-Signature-Nonce`
+* Core DOIT contrôler la fenêtre de fraîcheur bornée `<= 60s` pour `X-Retaia-Signature-Timestamp` et empêcher le rejeu via `X-Retaia-Signature-Nonce`
 * Core DOIT journaliser les échecs de vérification de signature MCP comme événements sécurité
 
 Exemple de chaîne canonique MCP :
@@ -1090,7 +1125,7 @@ Signature agent (normative) :
 * `X-Retaia-Signature` DOIT transporter la signature OpenPGP détachée ASCII-armored de cette chaîne canonique
 * Core DOIT vérifier la signature via une librairie OpenPGP standard maintenue; aucune implémentation crypto maison n'est autorisée
 * Core DOIT rejeter toute écriture signée si la signature est absente, invalide, expirée, rejouée ou si la clé active est révoquée/inconnue
-* Core DOIT contrôler une fenêtre de fraîcheur bornée pour `X-Retaia-Signature-Timestamp` et empêcher le rejeu via `X-Retaia-Signature-Nonce`
+* Core DOIT contrôler la fenêtre de fraîcheur bornée `<= 60s` pour `X-Retaia-Signature-Timestamp` et empêcher le rejeu via `X-Retaia-Signature-Nonce`
 * Core DOIT journaliser les échecs de vérification de signature comme événements sécurité
 
 Exemple de chaîne canonique agent :

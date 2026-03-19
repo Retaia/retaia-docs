@@ -45,6 +45,9 @@ Objectif: en cas d'exfiltration partielle (DB, logs, token, backup), les donnée
 * token technique (`TechnicalBearerAuth`) : bearer opaque
 * claims JWT minimales pour `UserBearerAuth`: `sub`, `principal_type`, `client_id`, `client_kind`, `scope`, `jti`, `exp`
 * aucun PII sensible dans les claims token
+* durée de vie nominale `UserBearerAuth.access_token` : `15 minutes`
+* durée de vie nominale `UI_WEB.refresh_token` : `30 jours`
+* durée de vie nominale `TechnicalBearerAuth.access_token` : `24 heures`
 
 ## 5) Règles client UI (MUST)
 
@@ -78,6 +81,8 @@ Objectif: en cas d'exfiltration partielle (DB, logs, token, backup), les donnée
 * secret/token/credential technique ne DOIT jamais être loggé
 * toute écriture agent -> Core DOIT être signée avec la clé privée `OpenPGP` de l'agent
 * Core DOIT vérifier `agent_id`, fingerprint OpenPGP, timestamp, nonce anti-rejeu et signature avant toute mutation agent
+* fenêtre de fraîcheur maximale pour `X-Retaia-Signature-Timestamp` : `60s`
+* rétention anti-rejeu minimale pour `X-Retaia-Signature-Nonce` : `15 minutes`
 
 ## 7) Données et exfiltration (MUST)
 

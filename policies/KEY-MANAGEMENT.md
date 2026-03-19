@@ -46,6 +46,14 @@ En cas de compromission suspectee/averee:
 * verifier `alg`, `kid`, `exp`, `jti`, `scope`, `principal_type`, `client_id`
 * algorithmes faibles/interdits DOIVENT etre refuses
 * ces exigences `JWKS` / `kid` / verification JWT ne s'appliquent pas aux bearers techniques opaques
+* l'endpoint `JWKS` (ou equivalent interne) ne fait pas partie de la surface publique REST partagee `v1`; il reste un mecanisme de verification interne/Core
+
+## 5.b) Durees de vie normatives des tokens
+
+* `UserBearerAuth.access_token` : `15 minutes`
+* `UI_WEB.refresh_token` : `30 jours`
+* `TechnicalBearerAuth.access_token` (`AGENT`/`MCP`) : `24 heures`
+* ces durees sont fermees pour `v1`; toute modification requiert une revision de spec
 
 ## 6) Controle d'acces aux cles
 

@@ -138,6 +138,7 @@ Tests obligatoires :
   * bearer client technique valide (`TechnicalBearerAuth`) => `200`
   * bearer absent/invalide => `401 UNAUTHORIZED`
   * endpoint runtime canonique pour `UI_WEB` et `AGENT` en v1; `MCP` rejoint ce contrat en v1.1+
+  * refresh périodique canonique côté client actif : `30s`
 * `POST /app/policy`:
   * bearer admin valide + body valide (`feature_flags`) => `200`
   * bearer absent/invalide => `401 UNAUTHORIZED`
@@ -313,7 +314,8 @@ Tests obligatoires :
 * client `MCP` obtient son bearer technique via `POST /auth/mcp/challenge` + `POST /auth/mcp/token`
 * toute écriture MCP sensible exige bearer technique + `client_id` + signature `OpenPGP` + fingerprint + timestamp + nonce
 * rejeu d'un `X-Retaia-Signature-Nonce` MCP déjà vu => refus explicite
-* skew temps hors fenêtre autorisée sur `X-Retaia-Signature-Timestamp` MCP => refus explicite
+* rejeu d'un `X-Retaia-Signature-Nonce` MCP déjà vu dans la fenêtre de rétention `15 minutes` => `401 UNAUTHORIZED`
+* skew temps hors fenêtre autorisée (`> 60s`) sur `X-Retaia-Signature-Timestamp` MCP => `401 UNAUTHORIZED`
 * écriture MCP sensible refusée si `X-Retaia-Client-Id` ne correspond pas au `client_id` du bearer technique
 * client `MCP` peut piloter/orchestrer l'agent sans exécuter de processing (gate `v1.1` global)
 * client `MCP` ne peut pas `claim/heartbeat/submit` de job (`/jobs/*` => `403 FORBIDDEN_ACTOR`) (gate `v1.1` global)
@@ -323,7 +325,8 @@ Tests obligatoires :
 * cible Linux headless Raspberry Pi (Kodi/Plex) validée en non-régression
 * capacités IA (providers/modèles/transcription/suggestions) couvertes par le plan de tests v1.1 (hors conformité v1)
 * runtime status-driven validé: la vérité d'état est synchronisée par polling, même si un canal push existe (WebSocket, SSE, webhook, autres push)
-* polling jobs/policy respecte les intervalles contractuels et applique backoff+jitter sur `429`
+* polling jobs/policy respecte les intervalles contractuels : `GET /jobs` toutes les `5s` (ou `max(5, min_poll_interval_seconds)`), `GET /app/policy` toutes les `30s`
+* `429` applique le backoff canonique : base `2s`, facteur `x2`, plafond `60s`, full jitter, reset après succès
 * hooks serveur v1 :
   * seuls `after_processed_before_decision_pending` et `on_enter_decision_pending` existent
   * `blocking=true` n'est autorisé que pour `after_processed_before_decision_pending`
@@ -361,7 +364,8 @@ Tests obligatoires :
 * job `pending` sans agent compatible reste `pending` sans erreur
 * `claim`, `heartbeat`, `submit`, `fail`, `derived/upload/*` refusés si la signature agent est absente/invalide
 * rejeu d'un `X-Retaia-Signature-Nonce` déjà vu => refus explicite
-* skew temps hors fenêtre autorisée sur `X-Retaia-Signature-Timestamp` => refus explicite
+* rejeu d'un `X-Retaia-Signature-Nonce` déjà vu dans la fenêtre de rétention `15 minutes` => `401 UNAUTHORIZED`
+* skew temps hors fenêtre autorisée (`> 60s`) sur `X-Retaia-Signature-Timestamp` => `401 UNAUTHORIZED`
 * rotation de clé agent explicite uniquement; aucune régénération silencieuse acceptée
 
 ## 3) Processing profiles

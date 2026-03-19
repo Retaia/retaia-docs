@@ -184,19 +184,12 @@ Points forts :
 * headers de signature bien nommés
 * séparation `client_id` / `agent_id` / clé OpenPGP claire
 
-Reste à normer :
+Points forts :
 
-* valeur numérique de la fenêtre de fraîcheur de `X-Retaia-Signature-Timestamp`
-* politique exacte de stockage / durée de rétention / portée de rejet des nonces anti-rejeu
-* comportement exact en cas de clock skew :
-  * tolérance
-  * code d'erreur attendu
-  * `retryable` attendu
-* règle explicite d'encodage/normalisation si le body est sérialisé différemment par deux stacks
-
-Sans cela :
-
-* deux implémentations conformes "au sens large" peuvent diverger sur ce qui est considéré comme signature fraîche ou rejeu
+* fenêtre de fraîcheur désormais fermée à `60s`
+* rétention anti-rejeu des nonces fermée à `15 minutes`
+* rejet canonique `401 UNAUTHORIZED` pour skew/rejeu
+* règle explicite : la signature porte toujours sur les octets HTTP bruts réellement envoyés
 
 ### 6.4.b Claims, rotation et vérification des tokens encore insuffisamment fermées
 
@@ -207,18 +200,15 @@ Couverture existante :
 * [api/openapi/v1.yaml](api/openapi/v1.yaml)
 * [tests/TEST-PLAN.md](tests/TEST-PLAN.md)
 
-Reste à normer :
+Points forts :
 
-* quels tokens portent réellement des claims JWT vérifiables
-* quels tokens portent un `kid`
-* si un endpoint `JWKS` public/interne fait partie du contrat v1
-* stratégie de vérification pour les tokens techniques opaques
-* durée de vie nominale des access tokens et refresh tokens
-* politique de révocation par `jti`, par `kid`, ou par cardinalité seulement
-
-Sans cela :
-
-* les règles de rotation et de vérification restent partiellement infra-spécifiées
+* seul `UserBearerAuth` porte des claims JWT vérifiables et un `kid`
+* `TechnicalBearerAuth` reste explicitement opaque
+* le mécanisme `JWKS` est désormais classé comme exigence interne/Core, hors surface partagée REST `v1`
+* durées de vie nominales désormais fermées :
+  * `UserBearerAuth.access_token` = `15 minutes`
+  * `UI_WEB.refresh_token` = `30 jours`
+  * `TechnicalBearerAuth.access_token` = `24 heures`
 
 ### 6.5 Polling, retry, backoff, jitter
 
@@ -234,20 +224,11 @@ Points forts :
 * `429` implique backoff + jitter
 * `POST /agents/register` renvoie `min_poll_interval_seconds`
 
-Reste à normer :
+Points forts :
 
-* cadence canonique minimale de refresh `GET /app/policy`
-* cadence canonique de `GET /jobs`
-* stratégie de backoff exacte :
-  * base
-  * max
-  * jitter plein ou partiel
-  * reset après succès
-* comportement UI si la policy change entre deux écrans
-
-Sans cela :
-
-* `Agent` et `UI_WEB` peuvent être tous deux "compatibles" mais avoir des comportements runtime très différents
+* cadence canonique `GET /app/policy` = `30s`
+* cadence canonique `GET /jobs` = `5s`, bornée par `server_policy.min_poll_interval_seconds`
+* stratégie de `429` fermée : base `2s`, facteur `x2`, plafond `60s`, full jitter, reset après succès
 
 ### 6.6 Verrous, TTL, fencing token
 
@@ -329,9 +310,9 @@ Impact :
 
 * le mécanisme v1 est maintenant suffisamment borné pour éviter des divergences majeures entre implémentations
 
-À normer avant `v1.0.0` :
+Points forts :
 
-* exposition observabilité/audit correspondante
+* timeout max hook v1 désormais fermé à `2s`
 
 ### 6.8.d Contrats visibles UI encore décrits en prose, mais pas toujours reflétés dans OpenAPI
 
@@ -451,24 +432,6 @@ Impact :
 
 ## 7. Zones de flou qui peuvent produire des divergences réelles
 
-### 7.1 Fenêtres temporelles partiellement non chiffrées
-
-Exemples :
-
-* fraîcheur des signatures OpenPGP
-* stratégie de rejeu des nonces
-* cadence de certains pollings
-* comportement de retry/backoff hors `device flow`
-
-Constat :
-
-* plusieurs règles sont qualitatives
-* elles ne sont pas toujours chiffrées dans le contrat partagé
-
-Risque :
-
-* deux clients peuvent implémenter des marges différentes et rester "apparemment conformes"
-
 ### 7.2 Statuts normatifs mélangés avec des documents de cadrage
 
 Constat :
@@ -542,11 +505,6 @@ Action :
 
 ### Priorité P1
 
-* Fermer numériquement les fenêtres temporelles partagées :
-  * signature freshness
-  * nonce anti-rejeu
-  * polling
-  * backoff
 * Fermer la lecture partagée de `notes` / `fields` et le registre typé des champs métier partagés.
 
 ### Priorité P2
