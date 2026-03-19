@@ -70,7 +70,9 @@ Principaux constats :
 
 ## 4. Findings critiques
 
-### 4.2 Secure SDLC encore partiellement matérialisé dans le repo
+À date de cet audit, aucun finding critique bloquant supplémentaire n'est resté ouvert dans le repo ou dans la configuration GitHub du dépôt.
+
+### 4.1 Secure SDLC désormais matérialisé et prouvé
 
 Le baseline Secure SDLC impose :
 
@@ -89,17 +91,22 @@ Références :
 Constat :
 
 * le repo versionne désormais un workflow sécurité, un template PR, une config Dependabot, un `CODEOWNERS` et des permissions CI minimales explicites
-* la branch protection effective reste un contrôle GitHub externe non prouvé par le repo
+* la branch protection `master` est désormais active côté GitHub
+* les checks requis sont désormais configurés sur le dépôt :
+  * `branch-up-to-date`
+  * `contract-drift`
+  * `contract-docs-consistency`
+  * `doc-governance`
+  * `openapi-validate`
+* les reviews PR exigent désormais au moins une approbation, `CODEOWNERS`, la résolution des conversations et un historique linéaire
 
 Risque :
 
-* une partie significative des exigences Secure SDLC est maintenant matérialisée
-* le reliquat le plus important concerne les contrôles GitHub externes et les owners réels du dépôt
+* le principal risque restant n'est plus un trou de gouvernance partagé, mais l'évolution future si ces réglages GitHub sont modifiés hors repo
 
 À normer / fermer avant `v1.0.0` :
 
-* activer/prouver la branch protection et les checks requis côté GitHub
-* garder la distinction explicite entre contrôles versionnés et contrôles GitHub externes
+* aucun point critique supplémentaire identifié à ce stade
 
 ## 5. Domaines partagés bien couverts, mais encore insuffisamment fermés
 
@@ -418,30 +425,30 @@ Les points suivants sont globalement solides et réutilisables tels quels comme 
 
 Le repo est désormais proche d'un état `v1.0.0` fermable sur le plan documentaire partagé.
 
-Les reliquats principaux ne sont plus nombreux, mais il en reste encore deux à fermer avant `v1.0.0` :
-
-* branch protection effective
-* preuve des checks requis côté dépôt GitHub
+Les reliquats principaux ne sont plus des écarts critiques de contrat partagé identifiés dans cet audit.
 
 Le point central à retenir avant `v1.0.0` est désormais simple :
 
 * le comportement partagé est documenté ici
 * le repo outille désormais une partie significative de sa propre cohérence
-* le dernier verrou critique restant est hors repo, côté configuration GitHub
+* la configuration GitHub critique a été fermée et vérifiée pendant cette passe
 
 ## 11. Findings additionnels verbatim
 
 ### Findings
 
-* `P1` Le Secure SDLC normatif reste partiellement non prouvé. Le repo versionne désormais un workflow sécurité, une config Dependabot, un template PR, un `CODEOWNERS` et des permissions CI minimales explicites, mais la branch protection effective reste à fermer côté GitHub. Tant qu’elle n’est pas établie, la chaîne Secure SDLC reste incomplète avant `v1.0.0`.
+* `P0` Aucun finding critique bloquant supplémentaire n'est resté ouvert après fermeture des derniers écarts repo et GitHub pendant cette passe d'audit.
 
 
 ### Ce qui reste à normer avant `v1.0.0`
 
-* Transformer les exigences Secure SDLC en contrôles réellement versionnés ou expliciter ce qui relève d’un réglage GitHub externe obligatoire.
+* Aucun manque critique supplémentaire n'a été identifié pendant cette passe. Maintenir les checks et la branch protection au niveau GitHub fait partie du baseline à conserver.
 
 ### Vérifications faites
 
 * `check-contract-drift` passe.
+* `check-contract-docs-consistency` passe.
+* `check-doc-governance` passe.
+* `gh api repos/Retaia/retaia-docs/branches/master/protection` confirme la branch protection et les checks requis sur `master`.
 * Les liens internes du repo sont globalement résolus.
 * Je n’ai pas pu valider OpenAPI via Docker localement car le daemon Docker n’était pas accessible, malgré un client Docker installé.
