@@ -210,28 +210,6 @@ Décision à prendre avant `v1.0.0` :
 * créer un document normatif unique de release gates
 * ou réduire la portée normative annoncée dans le README
 
-### 5.7 Vocabulaire UI "canonique" mais libellés seulement "recommandés"
-
-Références :
-
-* [ui/UI-GLOBAL-SPEC.md](ui/UI-GLOBAL-SPEC.md)
-* [policies/I18N-LOCALIZATION.md](policies/I18N-LOCALIZATION.md)
-
-Constat :
-
-* la policy i18n dit que les libellés visibles DOIVENT suivre le vocabulaire UI canonique
-* le document UI dit "Libellés FR visibles recommandés"
-
-Impact :
-
-* le repo appelle "canonique" quelque chose qui n'est pas clairement normatif au niveau du wording
-* un client peut estimer qu'un autre libellé FR reste acceptable, alors qu'un autre document semble l'interdire
-
-Décision à prendre avant `v1.0.0` :
-
-* soit rendre ces libellés normatifs
-* soit dire explicitement que seul le mapping métier est normatif, pas le wording exact
-
 ### 5.8 Contrat i18n partiellement hors transport OpenAPI
 
 Références :

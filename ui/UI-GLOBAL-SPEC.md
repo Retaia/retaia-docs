@@ -89,7 +89,7 @@ Le registre de reference est :
 
 ## 4) Vocabulaire UI canonique
 
-Libelles FR visibles recommandes :
+Libelles FR visibles normatifs :
 
 * `Review` -> `A traiter`
 * `Library` -> `Bibliotheque`
@@ -102,6 +102,7 @@ Regles :
 * ne pas exposer les etats metier bruts dans l'UI si un libelle utilisateur plus clair existe
 * `Rejects` est le nom technique de route/espace interne ; `A supprimer` est le libelle visible prioritaire en FR
 * le mapping entre libelles UI et constantes metier DOIT rester explicite et teste
+* pour la locale `fr`, ces libelles visibles DOIVENT etre utilises sur les surfaces de navigation partagees sauf derogation normative explicite documentee ici
 
 ## 5) Shell UI global
 
