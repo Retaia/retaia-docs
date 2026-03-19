@@ -36,6 +36,14 @@ Tests obligatoires :
 * l'horloge et les sources d'aléa sont contrôlées (mock/fake) pour garantir le déterminisme
 * un test "unitaire" qui dépend d'une ressource réelle est reclassé en test d'intégration
 
+## 0.3) Transport i18n
+
+Tests obligatoires :
+
+* tous les endpoints REST v1 partagés acceptent `Accept-Language`
+* la présence ou l'absence de `Accept-Language` ne modifie jamais `code`, `state`, `job_type`, `decision` ni la structure métier des payloads
+* si un payload expose un `message` humain, `Accept-Language` peut en influencer la locale avec fallback sans effet sur les champs machine
+
 ## 1) State machine
 
 Tests obligatoires :

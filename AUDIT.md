@@ -103,32 +103,6 @@ Risque :
 
 ## 5. Incohérences documentaires avérées
 
-### 5.8 Contrat i18n partiellement hors transport OpenAPI
-
-Références :
-
-* [policies/I18N-LOCALIZATION.md](policies/I18N-LOCALIZATION.md)
-* [api/API-CONTRACTS.md](api/API-CONTRACTS.md)
-* [api/openapi/v1.yaml](api/openapi/v1.yaml)
-
-Constat :
-
-* la policy i18n indique que le client envoie `Accept-Language`
-* OpenAPI ne déclare pas ce header
-* le contrat API ne le ferme pas non plus au niveau transport
-
-Impact :
-
-* le comportement de localisation des messages reste implicite
-* `UI_WEB` peut l'implémenter
-* `Core` peut l'ignorer
-* les tests contractuels n'ont pas de surface formelle à vérifier
-
-Décision à prendre avant `v1.0.0` :
-
-* ajouter `Accept-Language` au contrat OpenAPI des endpoints concernés
-* ou retirer cette exigence du champ normatif v1 si elle n'est pas opposable
-
 ## 6. Domaines partagés bien couverts, mais encore insuffisamment fermés
 
 ### 6.1 Machine à états et transitions
@@ -679,7 +653,6 @@ Constats :
 * la prose pose plusieurs règles HTTP partagées fortes
 * OpenAPI n'en ferme qu'une partie
 * écarts avérés :
-  * `Accept-Language` est normé en policy, mais absent d'OpenAPI
   * `If-Match` est défini comme simple string, sans règle machine sur format quoted/unquoted
   * aucune règle OpenAPI n'indique si les URLs de dérivés peuvent être redirigées, signées, éphémères ou si la route Core doit toujours servir le contenu directement
   * les politiques de cache HTTP ne sont pas fermées sur les ressources dérivées ou l'asset detail
@@ -692,8 +665,7 @@ Impact :
 
 À normer avant `v1.0.0` :
 
- * déclarer les headers cross-project normatifs :
-  * `Accept-Language`
+ * déclarer ou fermer complètement les headers cross-project encore partiellement ouverts :
   * `If-Match`
   * `ETag`
 * fermer la politique de cache et de redirection des dérivés
@@ -898,8 +870,6 @@ Action :
 * Ajouter des checks de cohérence inter-docs simples.
 * Uniformiser le vocabulaire `v1`, `v1.1+`, `phase validée`, `pre-release`.
 * Fermer le protocole d'upload des dérivés.
-* Déclarer dans OpenAPI les headers cross-project normatifs manquants comme `Accept-Language`.
-
 ## 9. Ce qui est déjà suffisamment bien normé
 
 Les points suivants sont globalement solides et réutilisables tels quels comme socle `v1` :

@@ -31,6 +31,8 @@ tags:
 
 paths:
   /auth/login:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: User login with email and password
@@ -75,6 +77,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/refresh:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Refresh interactive user bearer token
@@ -116,6 +120,8 @@ paths:
 
 
   /auth/2fa/setup:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Setup TOTP 2FA for current user
@@ -145,6 +151,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/2fa/enable:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Confirm and enable TOTP 2FA
@@ -189,6 +197,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/2fa/disable:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Disable TOTP 2FA
@@ -229,6 +239,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/2fa/recovery-codes/regenerate:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Regenerate backup recovery codes for current user
@@ -255,6 +267,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/logout:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Logout current user token session
@@ -271,6 +285,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/me:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Auth]
       summary: Get current authenticated user
@@ -291,6 +307,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/me/sessions:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Auth]
       summary: List interactive sessions for current user
@@ -318,6 +336,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/me/sessions/{session_id}/revoke:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Revoke one interactive session for current user
@@ -352,6 +372,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/me/sessions/revoke-others:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Revoke all other interactive sessions for current user
@@ -378,6 +400,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/me/features:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Auth]
       summary: Get current user feature preferences
@@ -441,6 +465,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /app/features:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Auth]
       summary: Get effective app feature switches
@@ -508,6 +534,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /app/policy:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Auth]
       summary: Get runtime app policy
@@ -590,6 +618,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/lost-password/request:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Request lost password reset email
@@ -617,6 +647,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/lost-password/reset:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Reset password with token
@@ -644,6 +676,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/verify-email/request:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Request verification email
@@ -671,6 +705,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/verify-email/confirm:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Confirm email verification token
@@ -698,6 +734,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/verify-email/admin-confirm:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Admin confirms user email verification
@@ -739,6 +777,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/clients/{client_id}/revoke-token:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Revoke one technical client token access
@@ -776,6 +816,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/clients/token:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Mint client bearer token from secret key
@@ -821,6 +863,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/clients/device/start:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Start device authorization flow for technical client bootstrap
@@ -860,6 +904,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/clients/device/poll:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Poll device authorization status
@@ -899,6 +945,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/clients/device/cancel:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Cancel an in-progress device authorization flow
@@ -930,6 +978,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/clients/{client_id}/rotate-secret:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Rotate client secret key
@@ -967,6 +1017,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /assets:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Assets]
       summary: List assets
@@ -1080,6 +1132,8 @@ paths:
                     nullable: true
 
   /assets/{uuid}:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Assets]
       summary: Get one asset detail
@@ -1088,7 +1142,6 @@ paths:
         - TechnicalBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
-        - $ref: "#/components/parameters/AcceptLanguage"
       responses:
         "200":
           description: Asset detail
@@ -1181,6 +1234,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /agents/register:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Agents]
       summary: Register a processing agent
@@ -1267,6 +1322,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /assets/{uuid}/reprocess:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Assets]
       summary: Trigger explicit reprocess
@@ -1305,6 +1362,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /assets/{uuid}/reopen:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Decisions]
       summary: Reopen archived or rejected asset to decision pending
@@ -1347,6 +1406,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /jobs:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Jobs]
       summary: List claimable jobs for the authenticated agent
@@ -1372,6 +1433,8 @@ paths:
                   $ref: "#/components/schemas/Job"
 
   /jobs/{job_id}/claim:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Jobs]
       summary: Claim a job (atomic lease)
@@ -1405,6 +1468,8 @@ paths:
           description: Job not claimable
 
   /jobs/{job_id}/heartbeat:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Jobs]
       summary: Extend job lease
@@ -1462,6 +1527,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /jobs/{job_id}/submit:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Jobs]
       summary: Submit job result patch
@@ -1510,6 +1577,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /jobs/{job_id}/fail:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Jobs]
       summary: Mark job as failed
@@ -1566,6 +1635,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /assets/{uuid}/derived/upload/init:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Derived]
       summary: Initialize derived upload
@@ -1614,6 +1685,8 @@ paths:
           description: Upload initialized
 
   /assets/{uuid}/derived/upload/part:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Derived]
       summary: Upload one part
@@ -1650,6 +1723,8 @@ paths:
           description: Part uploaded
 
   /assets/{uuid}/derived/upload/complete:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Derived]
       summary: Complete derived upload
@@ -1689,6 +1764,8 @@ paths:
           description: Upload completed
 
   /assets/{uuid}/derived:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Derived]
       summary: List available derived files for one asset
@@ -1713,6 +1790,8 @@ paths:
                 additionalProperties: true
 
   /assets/{uuid}/derived/{kind}:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Derived]
       summary: Fetch one derived file by kind
@@ -1768,6 +1847,8 @@ paths:
           description: Requested range not satisfiable
 
   /assets/purge:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Purge]
       summary: Purge multiple rejected assets
@@ -1835,6 +1916,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /assets/{uuid}/purge:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Purge]
       summary: Purge one rejected asset
@@ -1872,6 +1955,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /assets/{uuid}/purge/preview:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Purge]
       summary: Preview purge impact for one asset
@@ -1890,6 +1975,8 @@ paths:
           description: Purge preview
 
   /ops/ingest/diagnostics:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Ops]
       summary: Get ingest diagnostics counters and latest unmatched sidecars
@@ -1945,6 +2032,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /ops/readiness:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Ops]
       summary: Get operational readiness checks
@@ -2011,6 +2100,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /ops/locks:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Ops]
       summary: List active operation locks
@@ -2096,6 +2187,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /ops/locks/recover:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Ops]
       summary: Recover stale operation locks
@@ -2150,6 +2243,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /ops/jobs/queue:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Ops]
       summary: Get jobs queue diagnostics
@@ -2217,6 +2312,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /ops/agents:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Ops]
       summary: List known agents with runtime status and debug information
@@ -2390,6 +2487,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /ops/ingest/unmatched:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Ops]
       summary: List unmatched ingest sidecars
@@ -2467,6 +2566,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /ops/ingest/requeue:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Ops]
       summary: Requeue ingest processing for a specific target

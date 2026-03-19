@@ -29,6 +29,7 @@ Objectif : fournir une surface stable consommée par :
 * Dates : ISO‑8601 UTC (`YYYY-MM-DDTHH:mm:ssZ`)
 * Pagination : `limit` + `cursor`
 * Idempotence : header `Idempotency-Key` sur endpoints critiques
+* Localisation : tous les endpoints REST v1 partagés acceptent le header optionnel `Accept-Language`; si un payload contient un `message` humain, Core DOIT appliquer au mieux cette préférence sans jamais modifier les codes, états, identifiants ni la structure métier de la réponse
 * Approche d'implémentation préférée : **DDD** (Domain-Driven Design), avec **TDD** et **BDD** comme pratiques de validation par défaut
 
 ### Versioning mineur (v1 / v1.1)
