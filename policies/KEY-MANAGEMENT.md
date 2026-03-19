@@ -6,7 +6,7 @@ Ce document definit la gestion normative des cles cryptographiques et des secret
 
 * cles de signature token (JWT)
 * cles de chiffrement donnees applicatives (KMS/HSM)
-* cles OpenPGP/GPG pour payloads et donnees sensibles
+* cles OpenPGP pour payloads et donnees sensibles
 * secrets runtime sensibles utilises par Core
 
 ## 2) Exigences MUST

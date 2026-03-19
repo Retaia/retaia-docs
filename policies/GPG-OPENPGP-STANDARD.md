@@ -1,6 +1,6 @@
-# GPG/OpenPGP Standard — Technical Clients and Sensitive Data Baseline
+# OpenPGP Standard — Technical Clients and Sensitive Data Baseline
 
-Ce document definit la standardisation GPG/OpenPGP pour Core, AGENT, MCP et la protection des donnees sensibles.
+Ce document definit la standardisation OpenPGP pour Core, AGENT, MCP et la protection des donnees sensibles.
 
 Objectif: en cas de fuite DB/logs/backups, les donnees sensibles restent inutilisables sans cles.
 
@@ -46,7 +46,7 @@ Mode par defaut (obligatoire):
 
 Mode avance (optionnel):
 
-* l'utilisateur PEUT connecter un agent PGP externe (`gpg-agent`/equivalent) pour des usages documentaires ou d'artefacts quand le parcours applicatif le supporte explicitement
+* l'utilisateur PEUT connecter un agent OpenPGP externe (`gpg-agent`/equivalent) pour des usages documentaires ou d'artefacts quand le parcours applicatif le supporte explicitement
 * l'utilisateur PEUT utiliser ses cles existantes pour import/publication/verification de documents ou artefacts OpenPGP
 * ce mode NE DOIT PAS etre pre-requis pour les parcours standard
 * si necessaire, ce mode peut etre livre en phase ulterieure sans bloquer la securite by default
@@ -93,7 +93,7 @@ Conditions:
 * test rejet d'algorithmes interdits
 * test DB dump/backups: adresse, GPS, transcription non lisibles en clair
 * test rekey/re-encrypt sans perte de donnees autorisees
-* test mode transparent: premier login/utilisation sans setup PGP manuel
+* test mode transparent: premier login/utilisation sans setup OpenPGP manuel
 * test mode avance: branchement `gpg-agent`/cles existantes sans regression
 * test fallback: indisponibilite du mode avance ne bloque pas le mode transparent
 

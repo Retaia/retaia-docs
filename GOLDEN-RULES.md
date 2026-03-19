@@ -30,7 +30,7 @@ Elles ne sont pas toutes immédiatement simples à lire pour une personne non d�
 
 7. **Tout concept reconnu doit être implémenté avec une bibliothèque reconnue**  
    Lorsqu’un standard, un protocole ou un concept largement reconnu existe, son implémentation doit reposer sur une bibliothèque reconnue par consensus et maintenue.
-   En pratique: on n'écrit pas de PGP maison, pas de WebAuthn maison, pas de parser ou protocole critique maison quand un standard sérieux existe déjà.
+   En pratique: on n'écrit pas d'OpenPGP maison, pas de WebAuthn maison, pas de parser ou protocole critique maison quand un standard sérieux existe déjà.
 
 8. **Les identités humaines et techniques doivent rester séparées**  
    Un utilisateur humain, une UI interactive, un daemon technique ou un client MCP ne sont pas le même acteur.
