@@ -117,7 +117,7 @@ Règles de vérification côté Core :
 ### 3.2 Profils d’exécution (normatif)
 
 * l’agent DOIT fournir `AGENT_UI` en mode `CLI` (obligatoire)
-* l’agent PEUT fournir `AGENT_UI` en mode `GUI` (optionnel)
+* l’agent DOIT fournir `AGENT_UI` en mode `GUI` (obligatoire)
 * la `GUI` DOIT offrir les mêmes fonctionnalités opérateur que la `CLI`
 * la `CLI` DOIT réciproquement offrir les mêmes fonctionnalités opérateur que la `GUI`
 * les deux surfaces DOIVENT déléguer le processing au même moteur (mêmes capacités, mêmes règles)
@@ -126,8 +126,8 @@ Règles de vérification côté Core :
 
 Support plateforme minimal attendu :
 
-* Linux headless (Raspberry Pi cible Kodi/Plex) via `CLI` uniquement
-* macOS (laptop) via `CLI` et/ou `GUI`
+* Linux headless (Raspberry Pi cible Kodi/Plex) via `CLI` obligatoire; la `GUI` peut être indisponible sur cette cible sans remettre en cause l'obligation produit globale
+* macOS (laptop) via `CLI` et `GUI`
 * Windows (desktop) via `CLI` et/ou `GUI`
 
 Contrainte d’implémentation :

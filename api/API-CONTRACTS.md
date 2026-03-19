@@ -45,7 +45,7 @@ Objectif : fournir une surface stable consommée par :
   * API v1
   * `UI_WEB`
   * Agent v1
-  * client `AGENT_UI` (mappé sur `client_kind=AGENT`)
+  * surface locale `AGENT_UI` en CLI et GUI
   * système `capabilities` v1
   * système `feature_flags` v1
 * `v1.1` (projet global) :
@@ -944,8 +944,8 @@ Response :
 Normes d’exécution agent (obligatoires) :
 
 * un agent DOIT fournir `AGENT_UI` en mode `CLI` (mode headless Linux obligatoire)
-* un agent PEUT aussi fournir `AGENT_UI` en mode `GUI` pour usage desktop
-* si une `GUI` existe, elle DOIT offrir les mêmes fonctionnalités opérateur que la `CLI`
+* un agent DOIT aussi fournir `AGENT_UI` en mode `GUI` pour usage desktop
+* la `GUI` DOIT offrir les mêmes fonctionnalités opérateur que la `CLI`
 * la `CLI` DOIT réciproquement permettre les mêmes actions opérateur que la `GUI`
 * les surfaces `CLI` et `GUI` DOIVENT déléguer au même moteur (mêmes capabilities, mêmes contraintes protocole)
 * l’auth non-interactive agent DOIT fonctionner sans login humain (service/daemon)

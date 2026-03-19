@@ -131,7 +131,7 @@ Le système de capabilities vise à :
 
 Toute implémentation qui court‑circuite ces objectifs est invalide.
 
-## 9. Capabilities LLM minimales (`v1.1+` validated; activables plus tôt sous `feature_flags`)
+## 9. Capabilities LLM minimales (`validé en v1.1+`; activables plus tôt sous `feature_flags`)
 
 Pour tout agent qui déclare `meta.tags.suggestions@1` :
 
@@ -140,7 +140,7 @@ Pour tout agent qui déclare `meta.tags.suggestions@1` :
 * la sélection du client LLM DOIT rester explicite (configuration/feature flag/runtime policy)
 * un client LLM indisponible ne DOIT PAS casser le runtime agent global (fallback ou retry policy)
 
-## 10. Transcription local-first (`v1.1+` validated; activable plus tôt sous `feature_flags`)
+## 10. Transcription local-first (`validé en v1.1+`; activable plus tôt sous `feature_flags`)
 
 Pour tout agent qui déclare `speech.transcription@1` :
 
@@ -148,7 +148,7 @@ Pour tout agent qui déclare `speech.transcription@1` :
 * le support `speech.transcription.local.whispercpp@1` est obligatoire (minimum actuel)
 * un backend distant de transcription PEUT exister, mais uniquement en opt-in explicite utilisateur/policy
 
-## 11. Invalidation capability par inventaire modèle (`v1.1+` validated; activable plus tôt sous `feature_flags`)
+## 11. Invalidation capability par inventaire modèle (`validé en v1.1+`; activable plus tôt sous `feature_flags`)
 
 Pour les capabilities dépendantes d'un provider/modèle (`llm.*`, `speech.transcription.*`) :
 
