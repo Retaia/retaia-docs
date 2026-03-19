@@ -30,7 +30,7 @@ paths:
     post:
       tags: [Auth]
       summary: User login with email and password
-      description: Interactive bootstrap/recovery login endpoint for supported human-operated clients (`UI_WEB` and `AGENT`). Supports optional TOTP 2FA code when enabled.
+      description: Interactive bootstrap/recovery login endpoint for `UI_WEB`, the only human-authenticated UI in v1. Supports optional TOTP 2FA code when enabled.
       security: []
       requestBody:
         required: true
@@ -107,155 +107,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /auth/webauthn/register/options:
-    post:
-      tags: [Auth]
-      summary: Start WebAuthn device registration
-      description: |
-        Returns one-shot WebAuthn registration options for the authenticated user.
-        The returned challenge/options must expire within 5 minutes and must be rejected after first successful use or replay.
-      security:
-        - UserBearerAuth: []
-      responses:
-        "200":
-          description: WebAuthn registration options
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/WebAuthnPublicKeyOptionsResponse"
-        "401":
-          description: Unauthorized (`UNAUTHORIZED`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "409":
-          description: Registration conflict (`STATE_CONFLICT`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
 
-  /auth/webauthn/register/verify:
-    post:
-      tags: [Auth]
-      summary: Verify WebAuthn device registration
-      description: |
-        Verifies a WebAuthn attestation against a still-valid one-shot registration challenge.
-        Successful verification consumes the challenge permanently.
-      security:
-        - UserBearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/WebAuthnRegisterVerifyRequest"
-      responses:
-        "200":
-          description: WebAuthn device registered
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/WebAuthnDeviceResponse"
-        "401":
-          description: Unauthorized (`UNAUTHORIZED`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "409":
-          description: Registration conflict (`STATE_CONFLICT`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "422":
-          description: Validation failed (`VALIDATION_FAILED`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
 
-  /auth/webauthn/authenticate/options:
-    post:
-      tags: [Auth]
-      summary: Start WebAuthn authentication
-      description: |
-        Returns one-shot WebAuthn authentication options for a previously enrolled device/browser.
-        The returned challenge/options must expire within 5 minutes and must be rejected after first successful use or replay.
-      security: []
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/WebAuthnAuthenticateOptionsRequest"
-      responses:
-        "200":
-          description: WebAuthn authentication options
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/WebAuthnPublicKeyOptionsResponse"
-        "401":
-          description: Unauthorized (`UNAUTHORIZED`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "422":
-          description: Validation failed (`VALIDATION_FAILED`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "429":
-          description: Too many attempts (`TOO_MANY_ATTEMPTS`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
 
-  /auth/webauthn/authenticate/verify:
-    post:
-      tags: [Auth]
-      summary: Verify WebAuthn authentication
-      description: |
-        Verifies a WebAuthn assertion against a still-valid one-shot authentication challenge.
-        Successful verification consumes the challenge permanently.
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/WebAuthnAuthenticateVerifyRequest"
-      responses:
-        "200":
-          description: WebAuthn authentication success
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AuthLoginSuccess"
-        "401":
-          description: Unauthorized (`UNAUTHORIZED`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "422":
-          description: Validation failed (`VALIDATION_FAILED`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "429":
-          description: Too many attempts (`TOO_MANY_ATTEMPTS`)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
 
   /auth/2fa/setup:
     post:
@@ -503,7 +357,7 @@ paths:
         Returns global app switches (`app_feature_enabled`).
         Also returns dependency/escalation metadata for deterministic client behavior.
         Effective global availability requires Core `feature_flags` AND `app_feature_enabled`.
-        Normative gate: when `app_feature_enabled.features.ai=false`, only MCP functions that depend on AI are disabled at runtime.
+        Normative gate: dépendantes de l'AI functions remain disabled in v1 unless explicitly enabled as pre-release feature-flagged behavior ahead of v1.1+ validation.
         Admin-only endpoint.
         Runtime payload contract is stable: `app_feature_enabled`, `feature_governance`, `core_v1_global_features`.
       security:
@@ -573,7 +427,7 @@ paths:
       summary: Get runtime app policy
       description: |
         Returns runtime `server_policy` including `feature_flags`.
-        This endpoint is the canonical runtime policy transport for UI_WEB, AGENT, and MCP clients.
+        This endpoint is the canonical runtime policy transport for UI_WEB and AGENT clients in v1. MCP rejoint ce contrat en v1.1+.
         Clients may optionally send their supported feature-flags contract version for compatibility negotiation.
       security:
         - UserBearerAuth: []
@@ -893,7 +747,7 @@ paths:
       summary: Start device authorization flow for technical client bootstrap
       description: |
         Starts a browser-assisted authorization flow (GitHub-style) for `AGENT_TECHNICAL`.
-        User validation (and optional 2FA) happens via `verification_uri`.
+        User validation (and optional 2FA) happens via `verification_uri`, which MUST open the human approval flow in `UI_WEB`.
       security: []
       requestBody:
         required: true
@@ -2515,9 +2369,8 @@ components:
       scheme: bearer
       bearerFormat: opaque
       description: |
-        Technical bearer credential for non-human clients.
+        Technical bearer credential for non-human clients in v1.
         `AGENT_TECHNICAL` uses a bearer token minted from `(client_id, secret_key)`.
-        `MCP_TECHNICAL` uses a bearer token minted from an OpenPGP-backed challenge/response flow after UI key enrollment.
 
   parameters:
     UuidPath:
@@ -2633,68 +2486,10 @@ components:
         client_kind:
           $ref: "#/components/schemas/ClientKind"
 
-    WebAuthnAuthenticateOptionsRequest:
-      type: object
-      additionalProperties: false
-      properties:
-        email:
-          type: string
-          format: email
-        client_id:
-          type: string
-        client_kind:
-          $ref: "#/components/schemas/ClientKind"
 
-    WebAuthnRegisterVerifyRequest:
-      type: object
-      additionalProperties: false
-      required: [credential]
-      properties:
-        credential:
-          type: object
-          additionalProperties: true
-        device_id:
-          type: string
-          format: uuid
-        device_label:
-          type: string
 
-    WebAuthnAuthenticateVerifyRequest:
-      type: object
-      additionalProperties: false
-      required: [credential]
-      properties:
-        credential:
-          type: object
-          additionalProperties: true
-        client_id:
-          type: string
-        client_kind:
-          $ref: "#/components/schemas/ClientKind"
 
-    WebAuthnPublicKeyOptionsResponse:
-      type: object
-      additionalProperties: false
-      required: [public_key]
-      properties:
-        request_id:
-          type: string
-        public_key:
-          type: object
-          additionalProperties: true
 
-    WebAuthnDeviceResponse:
-      type: object
-      additionalProperties: false
-      required: [device_id]
-      properties:
-        device_id:
-          type: string
-          format: uuid
-        device_label:
-          type: string
-        webauthn_fingerprint:
-          type: string
 
     AuthEmailRequest:
       type: object
@@ -2846,8 +2641,8 @@ components:
 
     ClientKind:
       type: string
-      description: Form factor identifier for interactive login flows.
-      enum: [UI_WEB, AGENT]
+      description: Form factor identifier for interactive login flows in v1.
+      enum: [UI_WEB]
 
     NonUiClientKind:
       type: string
@@ -2856,8 +2651,8 @@ components:
 
     TechnicalClientKind:
       type: string
-      description: Allowed client kinds for technical bearer tokens.
-      enum: [AGENT, MCP]
+      description: Allowed client kinds for v1 technical bearer tokens.
+      enum: [AGENT]
 
     AuthRotateClientSecretResponse:
       type: object
@@ -2873,72 +2668,10 @@ components:
           type: string
           format: date-time
 
-    AuthMcpRegisterRequest:
-      type: object
-      additionalProperties: false
-      required: [openpgp_public_key, openpgp_fingerprint]
-      properties:
-        client_label:
-          type: string
-        openpgp_public_key:
-          type: string
-        openpgp_fingerprint:
-          type: string
 
-    AuthMcpRegisterResponse:
-      type: object
-      additionalProperties: false
-      required: [client_id, client_kind, openpgp_fingerprint]
-      properties:
-        client_id:
-          type: string
-        client_kind:
-          type: string
-          enum: [MCP]
-        openpgp_fingerprint:
-          type: string
-        registered_at:
-          type: string
-          format: date-time
-        rotated_at:
-          type: string
-          format: date-time
 
-    AuthMcpChallengeRequest:
-      type: object
-      additionalProperties: false
-      required: [client_id, openpgp_fingerprint]
-      properties:
-        client_id:
-          type: string
-        openpgp_fingerprint:
-          type: string
 
-    AuthMcpChallengeResponse:
-      type: object
-      additionalProperties: false
-      required: [challenge_id, challenge, expires_in]
-      properties:
-        challenge_id:
-          type: string
-        challenge:
-          type: string
-        expires_in:
-          type: integer
 
-    AuthMcpTokenRequest:
-      type: object
-      additionalProperties: false
-      required: [client_id, openpgp_fingerprint, challenge_id, signature]
-      properties:
-        client_id:
-          type: string
-        openpgp_fingerprint:
-          type: string
-        challenge_id:
-          type: string
-        signature:
-          type: string
 
     AuthDeviceStartRequest:
       type: object
@@ -2999,7 +2732,7 @@ components:
     AuthDevicePollApproved:
       type: object
       additionalProperties: false
-      required: [status, client_id, client_kind, secret_key]
+      required: [status, client_id, client_kind, secret_key, approved_at, approved_by_user_id]
       properties:
         status:
           type: string
@@ -3011,6 +2744,14 @@ components:
         secret_key:
           type: string
           description: One-shot credential shown only once after approval.
+        approved_at:
+          type: string
+          format: date-time
+          description: Timestamp of the human approval performed in UI_WEB.
+        approved_by_user_id:
+          type: string
+          format: uuid
+          description: Audit identifier of the human approver in UI_WEB.
 
     AuthDevicePollDenied:
       type: object
@@ -3107,7 +2848,7 @@ components:
       description: |
         Application-level feature switches.
         Effective feature availability requires Core `FeatureFlags` AND `AppFeatureEnabled`.
-        `features.ai` controls MCP AI-dependent capabilities (false => MCP AI-dependent functions disabled).
+        `features.ai` gates pre-release dépendantes de l'AI capabilities ahead of their validated v1.1+ rollout.
       additionalProperties:
         type: boolean
 
@@ -3307,7 +3048,9 @@ components:
         derived:
           $ref: "#/components/schemas/AssetDerived"
         transcript:
-          $ref: "#/components/schemas/AssetTranscript"
+          allOf:
+            - $ref: "#/components/schemas/AssetTranscript"
+          description: Pre-release field only. Outside v1 conformance scope; may be exposed earlier under feature flags before validated v1.1+ rollout.
         decisions:
           $ref: "#/components/schemas/AssetDecisions"
         audit:
@@ -3386,6 +3129,7 @@ components:
     AssetTranscript:
       type: object
       additionalProperties: false
+      description: Transcript enrichment payload. Outside v1 conformance scope; reserved for pre-release feature-flagged exposure before validated v1.1+ rollout.
       properties:
         status:
           type: string

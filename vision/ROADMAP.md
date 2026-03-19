@@ -40,7 +40,7 @@ Contenu prévu :
 Notes :
 
 * le MCP reste un client d’orchestration ; il ne traite pas les médias directement
-* `AGENT_UI` couvre les surfaces CLI et GUI de l’agent avec parité fonctionnelle
+* `AGENT_UI` couvre les surfaces CLI et GUI avec parité fonctionnelle obligatoire
 * cette étape correspond à un élargissement du produit livré, pas à un changement de philosophie
 
 

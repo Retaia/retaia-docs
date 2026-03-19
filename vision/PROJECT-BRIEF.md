@@ -118,13 +118,10 @@ Rôle : moteur de processing en arrière‑plan, avec surfaces `AGENT_UI` en CLI
 Règle d'architecture :
 
 * le daemon `AGENT_TECHNICAL` reste le moteur technique de processing
-* `AGENT_UI` reste la surface humaine de l'agent
-* `AGENT_UI` peut à terme devenir aussi riche que `UI_WEB` pour les parcours humains, tout en gardant le pilotage local du daemon
-* cette convergence fonctionnelle ne fusionne pas les identités : actions humaines via `USER_INTERACTIVE`, processing via `AGENT_TECHNICAL`
-* le compte utilisateur reste unique et multi-device :
-  * un nouveau browser ou une nouvelle machine ne crée pas un nouveau compte
-  * `UI_WEB` enregistre des devices de confiance via `WebAuthn`
-  * `AGENT_UI` partage le même modèle de compte humain, même si son mécanisme interactif évolue par phases
+* `AGENT_UI` reste une surface locale de setup, contrôle et debug du daemon
+* toute authentification humaine complète passe par `UI_WEB`, seule UI métier authentifiée
+* `AGENT_UI` ouvre le browser vers `UI_WEB` pour l'approval du daemon
+* cette architecture ne fusionne pas les identités : actions humaines via `UI_WEB`, processing via `AGENT_TECHNICAL`
 
 Responsabilités :
 
@@ -153,13 +150,13 @@ Caractéristiques :
 
 ### AGENT_UI
 
-Rôle : surface humaine locale de l'agent, en CLI et éventuellement en GUI.
+Rôle : surface locale de setup, contrôle et debug de l'agent, en CLI et éventuellement en GUI.
 
 Caractéristiques :
 
-* partage le même modèle de compte humain que `UI_WEB`
+* n'est pas une UI métier complète autonome
+* ouvre le browser vers `UI_WEB` pour toute auth ou approval humaine
 * pilote le daemon local sans lui transférer implicitement l'identité utilisateur
-* peut converger fonctionnellement avec `UI_WEB` pour les parcours humains, sans fusionner avec `AGENT_TECHNICAL`
 
 
 ## Types de médias supportés

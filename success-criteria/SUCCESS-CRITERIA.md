@@ -88,7 +88,7 @@ Le projet est considéré comme réussi si :
 
 * L’API est versionnée.
 * Toute rupture introduit une nouvelle version.
-* UI web, `AGENT_UI`, agent daemon, MCP et futurs clients consomment la même API.
+* UI web, shell local `AGENT_UI`, agent daemon, MCP et futurs clients consomment la même API, chacun selon son rôle et son mode d'authentification.
 
 
 ### 10) Performance maîtrisée
