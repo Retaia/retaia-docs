@@ -105,29 +105,6 @@ Risque :
 
 ## 5. Incohérences documentaires avérées
 
-### 5.2 UI : corpus non normatif par défaut vs document UI explicitement normatif
-
-Références :
-
-* [ui/README.md](ui/README.md)
-* [ui/UI-GLOBAL-SPEC.md](ui/UI-GLOBAL-SPEC.md)
-
-Constat :
-
-* `ui/README.md` dit "non normatif par défaut"
-* `UI-GLOBAL-SPEC.md` dit explicitement "normatif"
-
-Impact :
-
-* lecture ambiguë pour tout repo consommateur
-* le niveau d'opposabilité du corpus UI n'est pas évident au premier coup d'œil
-
-Décision à prendre avant `v1.0.0` :
-
-* établir une classification uniforme par document
-* afficher le statut normatif dans chaque fichier UI
-* éventuellement ajouter un index UI avec colonne `normatif/non normatif`
-
 ### 5.8 Contrat i18n partiellement hors transport OpenAPI
 
 Références :
@@ -1061,13 +1038,11 @@ Tant que ces trois conditions ne sont pas remplies sur les domaines listés ci-d
 
 * `P1` Le Secure SDLC normatif reste partiellement non prouvé. Le repo versionne désormais un workflow sécurité, une config Dependabot, un template PR et des permissions CI minimales explicites, mais `CODEOWNERS` et la branch protection effective restent à fermer côté GitHub. Tant que ces deux contrôles ne sont pas établis, la chaîne Secure SDLC reste incomplète avant `v1.0.0`.
 
-* `P2` Le statut normatif du corpus UI est ambigu au niveau racine. `ui/README.md` (line 5) dit “non normatif par défaut”, alors que `UI-GLOBAL-SPEC.md` (line 5) est explicitement normatif. Le repo gagnerait à classifier chaque doc UI de façon uniforme, sinon les consommateurs devront interpréter au cas par cas ce qui est opposable.
 
 ### Ce qui reste à normer avant `v1.0.0`
 
 * Transformer les exigences Secure SDLC en contrôles réellement versionnés ou expliciter ce qui relève d’un réglage GitHub externe obligatoire.
 * Clarifier la taxonomie de versions: `v1` runtime actuel, `v1.1+` extensions futures et pré-release sous feature flags.
-* Uniformiser le statut de chaque document: `normatif`, `non normatif`, `préparation technique`, `roadmap`.
 * Ajouter des checks docs minimums pour une release de spec: liens relatifs, lint Markdown, et éventuellement drift entre documents normatifs majeurs.
 
 ### Vérifications faites
