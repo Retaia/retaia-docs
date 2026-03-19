@@ -165,35 +165,6 @@ Risque :
 
 ## 5. Incohérences documentaires avérées
 
-### 5.1 `os_name`, `os_version`, `arch` : obligatoires ou optionnels ?
-
-Références :
-
-* [workflows/AGENT-PROTOCOL.md](workflows/AGENT-PROTOCOL.md)
-* [definitions/CAPABILITIES.md](definitions/CAPABILITIES.md)
-* [api/API-CONTRACTS.md](api/API-CONTRACTS.md)
-* [tests/TEST-PLAN.md](tests/TEST-PLAN.md)
-* [api/openapi/v1.yaml](api/openapi/v1.yaml)
-
-Constat :
-
-* `AGENT-PROTOCOL` les met dans les champs minimum
-* `API-CONTRACTS` les met dans le body attendu
-* `OpenAPI` les marque requis
-* `TEST-PLAN` les marque requis
-* `CAPABILITIES.md` les dit "optionnels mais fortement recommandés"
-
-Impact :
-
-* un implémenteur Agent peut légitimement lire deux contrats différents
-* le serveur, l'agent et les tests ne partent pas de la même obligation
-
-Décision à prendre avant `v1.0.0` :
-
-* les rendre strictement obligatoires partout
-* ou les rendre strictement optionnels partout
-* mais plus jamais les deux
-
 ### 5.2 UI : corpus non normatif par défaut vs document UI explicitement normatif
 
 Références :
@@ -1234,7 +1205,6 @@ Action :
 ### Priorité P0
 
 * Dédupliquer [tests/TEST-PLAN.md](tests/TEST-PLAN.md).
-* Fermer la contradiction `os_name/os_version/arch`.
 * Clarifier le statut réel de `v1.2`.
 * Créer un document normatif unique `release-gates` pour `v1.0.0`.
 * Matérialiser ou requalifier les exigences Secure SDLC.

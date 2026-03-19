@@ -68,7 +68,7 @@ La version suit une logique **major only** :
 Lors de son enregistrement, un agent **DOIT** déclarer explicitement :
 
 * son identifiant
-* `os_name`, `os_version`, `arch` (optionnels mais fortement recommandés pour le debug)
+* `os_name`, `os_version`, `arch` (obligatoires pour le debug, le support ops et la corrélation cross-platform)
 * la liste complète de ses capabilities
 
 Un agent ne peut **jamais** exécuter un job pour lequel il n’a pas déclaré la capability requise.
