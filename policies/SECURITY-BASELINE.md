@@ -41,7 +41,9 @@ Objectif: en cas d'exfiltration partielle (DB, logs, token, backup), les donnée
 * token utilisateur: 1 token actif par `(user_id, client_id)`
 * token technique: 1 token actif par `client_id`
 * émission d'un nouveau token pour la même cardinalité => révocation immédiate de l'ancien
-* JWT/claims minimales: `sub`, `principal_type`, `client_id`, `client_kind`, `scope`, `jti`, `exp`
+* token utilisateur (`UserBearerAuth`) : JWT
+* token technique (`TechnicalBearerAuth`) : bearer opaque
+* claims JWT minimales pour `UserBearerAuth`: `sub`, `principal_type`, `client_id`, `client_kind`, `scope`, `jti`, `exp`
 * aucun PII sensible dans les claims token
 
 ## 5) Règles client UI (MUST)

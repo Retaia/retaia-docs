@@ -4,7 +4,7 @@ Ce document definit la gestion normative des cles cryptographiques et des secret
 
 ## 1) Portee
 
-* cles de signature token (JWT)
+* cles de signature des tokens utilisateur JWT
 * cles de chiffrement donnees applicatives (KMS/HSM)
 * cles OpenPGP pour payloads et donnees sensibles
 * secrets runtime sensibles utilises par Core
@@ -12,18 +12,18 @@ Ce document definit la gestion normative des cles cryptographiques et des secret
 ## 2) Exigences MUST
 
 * toute cle DOIT avoir un identifiant de version (`kid`) unique
-* toute emission de token DOIT inclure un `kid` resolvable
+* toute emission de token JWT DOIT inclure un `kid` resolvable
 * les cles privees de signature ne DOIVENT jamais etre exportees en clair hors du gestionnaire de secrets
 * toute cle DOIT avoir un owner, une date de creation et une date de rotation cible
 * toute rotation de cle DOIT etre journalisee et auditee
 
 ## 3) Rotation standard
 
-* JWT signing keys: rotation reguliere planifiee (max 90 jours)
+* JWT signing keys (tokens utilisateur): rotation reguliere planifiee (max 90 jours)
 * cles de chiffrement de donnees: rotation planifiee (max 180 jours) ou selon exigences legales
 * secret applicatif critique: rotation immediate en cas de suspicion de fuite
 
-Procedure minimale de rotation JWT:
+Procedure minimale de rotation JWT utilisateur:
 
 1. generer nouvelle cle et publier son `kid`
 2. signer les nouveaux tokens avec la nouvelle cle
@@ -42,9 +42,10 @@ En cas de compromission suspectee/averee:
 
 ## 5) JWKS et verification
 
-* endpoint JWKS (ou equivalent interne) DOIT exposer uniquement les cles publiques actives
+* endpoint JWKS (ou equivalent interne) DOIT exposer uniquement les cles publiques actives des tokens utilisateur JWT
 * verifier `alg`, `kid`, `exp`, `jti`, `scope`, `principal_type`, `client_id`
 * algorithmes faibles/interdits DOIVENT etre refuses
+* ces exigences `JWKS` / `kid` / verification JWT ne s'appliquent pas aux bearers techniques opaques
 
 ## 6) Controle d'acces aux cles
 

@@ -131,41 +131,6 @@ Décision à prendre avant `v1.0.0` :
 * ajouter `Accept-Language` au contrat OpenAPI des endpoints concernés
 * ou retirer cette exigence du champ normatif v1 si elle n'est pas opposable
 
-### 5.9 Contradiction sur le modèle exact des tokens : JWT revendiqué vs bearer opaque
-
-Références :
-
-* [policies/SECURITY-BASELINE.md](policies/SECURITY-BASELINE.md)
-* [policies/KEY-MANAGEMENT.md](policies/KEY-MANAGEMENT.md)
-* [api/API-CONTRACTS.md](api/API-CONTRACTS.md)
-* [api/openapi/v1.yaml](api/openapi/v1.yaml)
-* [tests/TEST-PLAN.md](tests/TEST-PLAN.md)
-
-Constat :
-
-* `SECURITY-BASELINE` exige des claims minimales de token : `sub`, `principal_type`, `client_id`, `client_kind`, `scope`, `jti`, `exp`
-* `KEY-MANAGEMENT` parle explicitement de clés de signature JWT, `kid`, rotation JWT et endpoint `JWKS`
-* `OpenAPI` déclare :
-  * `UserBearerAuth` en `bearerFormat: JWT`
-  * `TechnicalBearerAuth` en `bearerFormat: opaque`
-* le corpus ne dit pas clairement si :
-  * seuls les tokens UI sont des JWT
-  * ou si tous les tokens sont censés être des JWT
-
-Impact :
-
-* le repo impose simultanément un modèle JWT fort et un modèle opaque pour les tokens techniques
-* sans clarification, les repos enfants devront inférer la vérité
-
-Décision à prendre avant `v1.0.0` :
-
-* fermer explicitement le modèle :
-  * `UI_WEB` = JWT
-  * `AGENT/MCP` = opaque
-  * ou autre
-* borner les exigences `kid` / `JWKS` au seul type de token concerné si elles ne s'appliquent pas aux tokens techniques
-* aligner `SECURITY-BASELINE`, `KEY-MANAGEMENT`, `API-CONTRACTS`, `OpenAPI` et `TEST-PLAN`
-
 ### 5.10 Révocation interactive par device/browser exigée, mais non contractuellement exposée
 
 Références :
@@ -983,7 +948,6 @@ Action :
 * Fermer la table canonique des `ErrorResponse.code`.
 * Fermer le registre canonique des feature keys `v1.0.0`.
 * Fermer le registre canonique des événements observabilité cross-app.
-* Fermer le modèle exact des tokens (`JWT` vs `opaque`) et le périmètre `JWKS`/`kid`.
 * Fermer la gestion normative des sessions interactives par device/browser.
 * Fermer l'encodage, la pagination et le tri de `GET /assets`.
 * Fermer le schéma et le transport de delivery des dérivés.

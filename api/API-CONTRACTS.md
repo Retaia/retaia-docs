@@ -323,6 +323,9 @@ Baseline sécurité/fuite (normatif) :
 * la baseline security "assume breach" est définie dans [`SECURITY-BASELINE.md`](../policies/SECURITY-BASELINE.md)
 * toute implémentation Core/UI/Agent/MCP DOIT appliquer les exigences MUST de cette baseline
 * en cas de conflit d'interprétation, le modèle le plus restrictif s'applique
+* `UserBearerAuth` désigne un bearer JWT utilisateur
+* `TechnicalBearerAuth` désigne un bearer technique opaque
+* les exigences `kid` / `JWKS` / rotation JWT s'appliquent au seul `UserBearerAuth`, pas aux bearers techniques opaques
 
 Normalisation HTTP (normatif) :
 
