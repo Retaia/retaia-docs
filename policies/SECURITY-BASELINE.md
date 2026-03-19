@@ -43,21 +43,23 @@ Objectif: en cas d'exfiltration partielle (DB, logs, token, backup), les donnée
 
 ## 5) Règles client UI (MUST)
 
-* UI web (`UI_WEB`) DOIT utiliser `WebAuthn` comme mécanisme primaire d'auth interactif, avec émission de bearer token et refresh token
-* `POST /auth/login` reste autorisé comme fallback de bootstrap/recovery interactif
+* UI web (`UI_WEB`) est la seule UI humaine complète et DOIT utiliser `POST /auth/login` pour obtenir bearer token et refresh token
 * le token UI ne DOIT jamais être affiché/exporté en clair
 * l'UI ne DOIT pas proposer l'auto-révocation du token actif UI (anti lock-out)
 * stockage secret OS obligatoire:
   * macOS: Keychain
   * Windows: DPAPI/Credential Manager
   * Linux: Secret Service (ou store OS équivalent)
-* 2FA TOTP optionnelle au niveau compte, mais si active elle DOIT être appliquée au fallback login UI et aux approvals sensibles UI
+* 2FA TOTP optionnelle au niveau compte, mais si active elle DOIT être appliquée au login UI et aux approvals sensibles UI
 * les refresh tokens interactifs DOIVENT être stockés de manière protégée, rotatables, révocables et tracés par device/browser
 
 ## 6) Règles client Agent/MCP (MUST)
 
 * `AGENT_UI` :
-  * mode interactif humain: login utilisateur (Bearer user), puis `WebAuthn` quand la surface le permet
+  * surface locale de setup, contrôle et debug du daemon
+  * n'est pas une UI métier humaine complète
+  * ne DOIT pas faire de login humain direct
+  * DOIT ouvrir le browser vers `UI_WEB` pour toute authentification ou approval humaine
 * `AGENT_TECHNICAL` :
   * bootstrap/auth technique: `client_id + secret_key -> POST /auth/clients/token`
   * `client_id + secret_key` autorise le client et permet de mint le bearer technique
@@ -65,9 +67,9 @@ Objectif: en cas d'exfiltration partielle (DB, logs, token, backup), les donnée
   * `AGENT_TECHNICAL` n'utilise jamais `WebAuthn` au runtime
 * `MCP_TECHNICAL` :
   * mode technique asymétrique standard, avec clé publique enregistrée côté Core, clé privée locale côté client et signatures obligatoires sur écritures sensibles
-* création d'un `secret_key` `AGENT` DOIT passer par validation UI utilisateur (device flow)
+* création d'un `secret_key` `AGENT` DOIT passer par validation utilisateur via `UI_WEB` (device flow browser-based)
 * enregistrement d'une clé publique `MCP` DOIT passer par l'UI utilisateur
-* si 2FA utilisateur est active, la validation UI de création `secret_key` ou d'enregistrement de clé `MCP` DOIT exiger OTP
+* si 2FA utilisateur est active, la validation via `UI_WEB` de création `secret_key` ou d'enregistrement de clé `MCP` DOIT exiger OTP
 * secret/token/credential technique ne DOIT jamais être loggé
 * toute écriture agent -> Core DOIT être signée avec la clé privée `OpenPGP` de l'agent
 * Core DOIT vérifier `agent_id`, fingerprint OpenPGP, timestamp, nonce anti-rejeu et signature avant toute mutation agent

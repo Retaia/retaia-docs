@@ -1,6 +1,6 @@
-# GPG/OpenPGP Standard — Cross-Client Security Baseline
+# GPG/OpenPGP Standard — Technical Clients and Sensitive Data Baseline
 
-Ce document definit la standardisation GPG/OpenPGP pour Core, UI_WEB, AGENT_UI/AGENT et MCP.
+Ce document definit la standardisation GPG/OpenPGP pour Core, AGENT, MCP et la protection des donnees sensibles.
 
 Objectif: en cas de fuite DB/logs/backups, les donnees sensibles restent inutilisables sans cles.
 
@@ -40,9 +40,9 @@ Objectif: en cas de fuite DB/logs/backups, les donnees sensibles restent inutili
 
 Mode par defaut (obligatoire):
 
-* setup PGP transparent pour l'utilisateur final (aucune etape manuelle requise pour demarrer)
+* setup OpenPGP transparent pour les parcours standards concernes (aucune etape manuelle requise pour demarrer)
 * generation, stockage et rotation des cles geres par la plateforme
-* l'utilisateur n'a pas besoin de comprendre OpenPGP pour utiliser l'app
+* l'utilisateur n'a pas besoin de comprendre OpenPGP pour utiliser `UI_WEB` ou les parcours standards de l'application
 
 Mode avance (optionnel):
 
@@ -88,7 +88,7 @@ Conditions:
 
 ## 9) Tests de conformite (MUST)
 
-* test roundtrip encrypt/decrypt par client type (`UI_WEB`, `AGENT_UI/AGENT`, `MCP`)
+* test roundtrip encrypt/decrypt par composant concerne (`CORE`, `AGENT`, `MCP`)
 * test signature verify pour payload sensible signe
 * test rejet d'algorithmes interdits
 * test DB dump/backups: adresse, GPS, transcription non lisibles en clair
