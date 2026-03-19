@@ -17,6 +17,9 @@ Objectif: en cas d'exfiltration partielle (DB, logs, token, backup), les donnée
 ## 2) Exigences transverses (MUST)
 
 * toutes les communications runtime DOIVENT utiliser TLS
+* le point d'entrée partagé exposé à `UI_WEB`, `AGENT` et `MCP` DOIT être en `HTTPS`, y compris en développement
+* la terminaison TLS peut être assurée directement par le composant exposé ou par un reverse proxy frontal optionnel
+* un certificat public ou un certificat signé par une CA locale de confiance opérateur sont tous deux conformes selon l'environnement
 * tout secret applicatif DOIT être redigé des logs, traces et crash reports
 * toutes les erreurs 4xx/5xx exposées aux clients DOIVENT rester compatibles `ErrorResponse` (pas de stacktrace, pas de secret)
 * tous les tokens DOIVENT avoir `exp` borné et `jti` unique

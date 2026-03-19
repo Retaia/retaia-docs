@@ -13,23 +13,32 @@ This profile is normative for interoperability expectations between `core`, `ui`
 - `core` service is private (not published directly on LAN).
 - `core` image is PHP-FPM (`core:9000`), not an HTTP server.
 - `ui` service serves static application on internal Docker network.
-- front `caddy` service is published on LAN (example: `http://192.168.0.14:8080`).
-- front `caddy` routes:
-  - `/api/*` and `/device*` to `core:9000` via `php_fastcgi`
+- the exposed shared entrypoint for `UI_WEB` and workstation agents MUST be `HTTPS`, including in development.
+- TLS termination MAY be provided either:
+  - directly by the exposed application component
+  - or by an optional front reverse proxy (`Caddy`, `Traefik`, `NGINX`, equivalent)
+- when a front reverse proxy is used, it routes:
+  - `/api/*` and `/device*` to `core:9000` via `php_fastcgi` or equivalent upstream wiring
   - other paths to `ui:80`
-- Workstation agents call Core through the same LAN gateway URL:
-  - `http://192.168.0.14:8080/api/v1`
+- Workstation agents call Core through the same routable `HTTPS` gateway URL:
+  - `https://retaia.local/api/v1`
 
 ## 2. Client URL rules
 
 - Browser-based UI clients MUST use a relative API base path (`/api/v1`).
 - Browser-based UI clients MUST NOT use internal Docker hostnames such as `core:9000`.
 - External workstation agents MUST use a routable LAN/edge URL (example above), never Docker-internal DNS names.
+- Cleartext `HTTP` is not a conforming shared runtime profile.
 
 ## 3. Security and exposure
 
+- The exposed shared runtime endpoint MUST present TLS to clients.
+- Certificates MAY be issued either by:
+  - a public CA
+  - or an operator-installed local CA trusted by the participating clients
 - Core container SHOULD remain non-exposed on host ports in this profile.
-- Only the Caddy reverse-proxy port is exposed to LAN users/agents.
+- If a reverse proxy is present, only the reverse-proxy port is exposed to LAN users/agents.
+- If no reverse proxy is present, the component exposed to LAN users/agents MUST itself terminate TLS.
 - Access control (authN/authZ, network policy, optional VPN/allowlist) remains mandatory.
 
 ## 4. Core env loading order (normative)
@@ -88,7 +97,7 @@ services:
   caddy:
     image: caddy:2-alpine
     depends_on: [core, ui]
-    ports: ["8080:80"]
+    ports: ["443:443"]
     volumes:
       - ./docker/Caddyfile.prod.example:/etc/caddy/Caddyfile:ro
       - ./public:/var/www/html/public:ro
@@ -112,11 +121,7 @@ volumes:
 Front Caddyfile pattern:
 
 ```caddyfile
-{
-  auto_https off
-}
-
-:80 {
+retaia.local {
   @api path /api/* /device*
   handle @api {
     root * /var/www/html/public
@@ -133,13 +138,20 @@ Front Caddyfile pattern:
 Agent workstation configuration example:
 
 ```text
-CORE_API_URL=http://192.168.0.14:8080/api/v1
+CORE_API_URL=https://retaia.local/api/v1
 ```
+
+Certificate note:
+
+- `retaia.local` is illustrative.
+- The shared runtime name MAY be a LAN DNS name, mDNS name, split-horizon name or equivalent routable host name.
+- The certificate MAY be public or signed by a local CA installed on participating clients.
 
 ## 6. API request flow
 
-1. Browser/UI and workstation agents call `http://<nas-ip>:8080/api/v1/...`.
-2. Front Caddy matches `/api/*` and forwards to Core PHP-FPM (`core:9000`).
-3. Core executes request and returns response through Caddy to callers.
+1. Browser/UI and workstation agents call `https://<shared-host>/api/v1/...`.
+2. The exposed TLS entrypoint terminates TLS directly or forwards through an optional front reverse proxy.
+3. If a front reverse proxy is present, it matches `/api/*` and forwards to Core PHP-FPM (`core:9000`).
+4. Core executes request and returns response through the exposed TLS entrypoint to callers.
 
-This keeps Core private while exposing a single LAN gateway.
+This keeps Core private while exposing a single shared `HTTPS` gateway.

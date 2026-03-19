@@ -210,37 +210,6 @@ Décision à prendre avant `v1.0.0` :
 * créer un document normatif unique de release gates
 * ou réduire la portée normative annoncée dans le README
 
-### 5.4 Topologie de déploiement normative incompatible avec la baseline TLS
-
-Références :
-
-* [architecture/DEPLOYMENT-TOPOLOGY.md](architecture/DEPLOYMENT-TOPOLOGY.md)
-* [policies/SECURITY-BASELINE.md](policies/SECURITY-BASELINE.md)
-
-Constat :
-
-* la topologie de déploiement, explicitement normative pour l'interopérabilité, donne comme URL de référence `http://192.168.0.14:8080`
-* le `Caddyfile` d'exemple désactive `auto_https`
-* la baseline sécurité impose que toutes les communications runtime utilisent TLS
-* la cible d'exploitation exprimée est au contraire de réduire les écarts dev/prod, avec TLS aussi en développement
-
-Impact :
-
-* un repo consommateur peut se croire conforme en exposant HTTP clair sur le LAN
-* cela pousse à des écarts dev/prod inutiles sur cookies, origines, mixed content, politique navigateur et configuration client
-* la contradiction porte sur un comportement runtime partagé, pas sur un détail d'implémentation locale
-
-Décision à prendre avant `v1.0.0` :
-
-* rendre la topo d'exemple strictement TLS
-* expliciter que le point d'entrée partagé `UI_WEB` / `Agent` est toujours en `HTTPS`, y compris en dev
-* expliciter que la terminaison TLS peut être assurée :
-  * directement par le composant exposé
-  * ou par un reverse proxy frontal
-* expliciter que le reverse proxy est autorisé mais optionnel
-* expliciter qu'un certificat public ou une CA locale de confiance opérateur sont tous deux conformes selon l'environnement
-* retirer `HTTP` clair comme exemple normatif, y compris en dev
-
 ### 5.6 Contradiction sur le marker storage : `/.retaia` JSON vs `/.retaia.storage_id`
 
 Références :
@@ -1241,7 +1210,6 @@ Action :
 * Uniformiser le vocabulaire `v1`, `v1.1+`, `phase validée`, `reserved`, `non planned`.
 * Fermer le protocole d'upload des dérivés.
 * Fermer le contrat du marker `/.retaia` et supprimer toute variante concurrente.
-* Aligner topo de déploiement et baseline TLS.
 * Déclarer dans OpenAPI les headers cross-project normatifs manquants comme `Accept-Language`.
 
 ## 9. Ce qui est déjà suffisamment bien normé
@@ -1300,10 +1268,3 @@ Tant que ces trois conditions ne sont pas remplies sur les domaines listés ci-d
 * `check-contract-drift` passe.
 * Les liens internes du repo sont globalement résolus.
 * Je n’ai pas pu valider OpenAPI via Docker localement car le daemon Docker n’était pas accessible, malgré un client Docker installé.
-
-### Nuance environnement réelle
-
-* l'environnement IRL initial visé est un NAS Synology sur LAN privé, sans exposition WAN directe
-* le certificat peut être émis par une CA locale de confiance, y compris une CA de développement/opérateur
-* l'usage d'un reverse proxy (`Traefik`, `NGINX`, `Caddy`) pour la résolution de nom et la terminaison TLS est autorisé, mais ne doit pas être rendu obligatoire par la spec
-* le point normatif à fermer reste : l'endpoint exposé aux clients partagés doit être en `HTTPS`, y compris en développement
