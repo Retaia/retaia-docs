@@ -4,18 +4,19 @@ Documents UI/UX rapatries depuis `retaia-ui` pour centraliser le cadrage produit
 
 Statut :
 
-* non normatif par defaut
+* index de statut documentaire UI
 * aligne sur les specs normatives du repo
-* a utiliser comme base de cadrage pour design, wireframes et implementation UI
+* a utiliser comme point d'entree avant de consulter chaque document UI
 
-Contenu :
+Contenu et statut :
 
-* `UI-GLOBAL-SPEC.md`
-* `KEYBOARD-SHORTCUTS-REGISTRY.md`
-* `UI-UX-BRIEF-DESIGNER.md`
-* `UI-REFONTE-RECOMMANDATION.md`
-* `UI-WIREFRAMES-TEXTE.md`
+* `UI-GLOBAL-SPEC.md` : normatif
+* `KEYBOARD-SHORTCUTS-REGISTRY.md` : normatif
+* `UI-UX-BRIEF-DESIGNER.md` : non normatif
+* `UI-REFONTE-RECOMMANDATION.md` : non normatif
+* `UI-WIREFRAMES-TEXTE.md` : non normatif
 
 Regle :
 
 * en cas de conflit, les contrats/policies/workflows normatifs du repo priment
+* un document UI non marque `normatif` ne peut pas redefinir une regle partagee implicite pour `Core`, `UI_WEB` ou `Agent`

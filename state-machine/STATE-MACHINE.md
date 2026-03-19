@@ -272,6 +272,37 @@ Règles :
 
 Toute transition non listée comme autorisée est interdite par défaut.
 
+## Matrice canonique — transition, endpoint, préconditions, refus
+
+| Transition | Déclencheur canonique | Endpoint / porteur | Préconditions minimales | Refus canonique |
+| --- | --- | --- | --- | --- |
+| `DISCOVERED -> READY` | stabilisation ingest | Core interne | stabilité fichier confirmée | hors contrat HTTP partagé |
+| `READY -> PROCESSING_REVIEW` | claim d'un job review | `POST /jobs/{job_id}/claim` | bearer technique valide, signature valide, capability requise, lock/fencing valides | `401 UNAUTHORIZED`, `403 FORBIDDEN_ACTOR|FORBIDDEN_SCOPE`, `409 STATE_CONFLICT`, `423 LOCK_REQUIRED|LOCK_INVALID|STALE_LOCK_TOKEN` |
+| `PROCESSING_REVIEW -> REVIEW_PENDING_PROFILE` | submit d'un job review laissant un profil humain requis | `POST /jobs/{job_id}/submit` | signature valide, lock/fencing valides, complétude review minimale atteinte, `processing_profile=audio_undefined` ou choix humain encore requis | mêmes refus que `submit` |
+| `PROCESSING_REVIEW -> PROCESSED` | submit du dernier job requis | `POST /jobs/{job_id}/submit` | signature valide, lock/fencing valides, tous les jobs requis du profil effectif sont complets | mêmes refus que `submit` |
+| `PROCESSING_REVIEW -> READY` | échec retryable ou replanification | `POST /jobs/{job_id}/fail` ou logique Core | signature valide, lock/fencing valides, erreur retryable | mêmes refus que `fail` |
+| `REVIEW_PENDING_PROFILE -> READY` | choix humain d'un profil exigeant des jobs supplémentaires | `PATCH /assets/{uuid}` | `If-Match` obligatoire, bearer utilisateur valide, `processing_profile` autorisé | `401`, `403`, `412 PRECONDITION_FAILED`, `428 PRECONDITION_REQUIRED`, `409 STATE_CONFLICT` |
+| `REVIEW_PENDING_PROFILE -> PROCESSED` | choix humain d'un profil déjà complet | `PATCH /assets/{uuid}` | mêmes préconditions, aucune tâche supplémentaire requise | mêmes refus que `PATCH /assets/{uuid}` |
+| `PROCESSED -> DECISION_PENDING` | clôture automatique post-processing | Core interne à la fin de `submit` | hooks v1 terminés, aucun hook bloquant en échec | `409 STATE_CONFLICT` si hook bloquant échoue |
+| `PROCESSED -> READY` | reprocess explicite | `POST /assets/{uuid}/reprocess` | `If-Match` obligatoire, bearer autorisé | `401`, `403`, `412`, `428`, `409` |
+| `DECISION_PENDING -> DECIDED_KEEP` | décision humaine KEEP | `PATCH /assets/{uuid}` avec `state=DECIDED_KEEP` | `If-Match` obligatoire, bearer utilisateur valide, asset en `DECISION_PENDING` | `401`, `403`, `412`, `428`, `409 STATE_CONFLICT` |
+| `DECISION_PENDING -> DECIDED_REJECT` | décision humaine REJECT | `PATCH /assets/{uuid}` avec `state=DECIDED_REJECT` | `If-Match` obligatoire, bearer utilisateur valide, asset en `DECISION_PENDING` | `401`, `403`, `412`, `428`, `409 STATE_CONFLICT` |
+| `DECIDED_KEEP -> ARCHIVED` | application explicite KEEP | `PATCH /assets/{uuid}` avec `state=ARCHIVED` | `If-Match` obligatoire, décision `DECIDED_KEEP` déjà présente | `401`, `403`, `412`, `428`, `409 STATE_CONFLICT` |
+| `DECIDED_REJECT -> REJECTED` | application explicite REJECT | `PATCH /assets/{uuid}` avec `state=REJECTED` | `If-Match` obligatoire, décision `DECIDED_REJECT` déjà présente | `401`, `403`, `412`, `428`, `409 STATE_CONFLICT` |
+| `DECIDED_KEEP -> DECISION_PENDING` | annulation décision | `POST /assets/{uuid}/reopen` | `If-Match` obligatoire, bearer utilisateur valide | `401`, `403`, `412`, `428`, `409 STATE_CONFLICT` |
+| `DECIDED_REJECT -> DECISION_PENDING` | annulation décision | `POST /assets/{uuid}/reopen` | `If-Match` obligatoire, bearer utilisateur valide | `401`, `403`, `412`, `428`, `409 STATE_CONFLICT` |
+| `ARCHIVED -> DECISION_PENDING` | réouverture explicite | `POST /assets/{uuid}/reopen` | `If-Match` obligatoire, bearer utilisateur valide | `401`, `403`, `412`, `428`, `409 STATE_CONFLICT` |
+| `REJECTED -> DECISION_PENDING` | réouverture explicite | `POST /assets/{uuid}/reopen` | `If-Match` obligatoire, bearer utilisateur valide | `401`, `403`, `412`, `428`, `409 STATE_CONFLICT` |
+| `ARCHIVED -> READY` | reprocess explicite | `POST /assets/{uuid}/reprocess` | `If-Match` obligatoire, bearer autorisé | `401`, `403`, `412`, `428`, `409` |
+| `REJECTED -> READY` | reprocess explicite | `POST /assets/{uuid}/reprocess` | `If-Match` obligatoire, bearer autorisé | `401`, `403`, `412`, `428`, `409` |
+| `REJECTED -> PURGED` | purge destructive explicite | `POST /assets/{uuid}/purge` | `If-Match` obligatoire, bearer autorisé, confirmation UI hors API | `401`, `403`, `412`, `428`, `409 STATE_CONFLICT` |
+
+Règles de lecture :
+
+* toute transition pilotée par un endpoint mutateur partagé DOIT utiliser cette matrice comme source unique
+* si une précondition n'est pas satisfaite et qu'un code plus spécifique existe dans la matrice ci-dessus, il prime sur tout comportement local
+* `PROCESSED -> DECISION_PENDING` est toujours déclenchée par Core, jamais par `UI_WEB` ni par `AGENT`
+
 
 ## Lecture rapide (résumé)
 

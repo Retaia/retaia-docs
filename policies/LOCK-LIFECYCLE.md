@@ -56,6 +56,29 @@ Si crash entre étapes :
 * reprise idempotente depuis dernier point audité
 * jamais de transition d'état sans validation FS réussie
 
+Matrice normative minimale :
+
+* FS non modifié, DB non modifiée :
+  * release/expiration du lock
+  * reprise simple de l'opération possible
+* FS modifié, DB non modifiée :
+  * l'asset reste dans l'état métier pré-opération
+  * recovery DOIT prioriser la réconciliation filesystem puis rejouer la mise à jour DB/audit avant toute transition d'état
+* FS modifié, DB partiellement modifiée mais transition finale absente :
+  * recovery DOIT reprendre depuis le dernier audit persistant cohérent
+  * aucune publication d'état final (`ARCHIVED`, `REJECTED`, `PURGED`) sans validation finale FS réussie
+* DB marquée finale alors que FS invalide :
+  * état non conforme
+  * un événement ops `ERROR` DOIT être émis
+  * l'asset DOIT être placé en recovery manuel/assisté, jamais silencieusement considéré comme terminé
+
+Invariants de recovery :
+
+* le lock expiré ne vaut jamais validation de l'opération
+* l'audit persistant fait foi pour déterminer le dernier point de reprise
+* aucune implémentation ne PEUT considérer `ARCHIVED`, `REJECTED` ou `PURGED` comme acquis tant que la validation FS n'est pas confirmée
+* toute routine de recovery DOIT être idempotente
+
 ## 6) Purge
 
 Ordre obligatoire :

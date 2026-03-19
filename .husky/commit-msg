@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+set -eu
+
+MSG_FILE="$1"
+FIRST_LINE="$(sed -n '1p' "$MSG_FILE")"
+
+PATTERN='^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([a-z0-9._/-]+\))?!?: .+'
+
+if printf '%s' "$FIRST_LINE" | grep -Eq "$PATTERN"; then
+  exit 0
+fi
+
+echo "commit-msg: Conventional Commits required."
+echo "Expected: <type>(optional-scope): <description>"
+echo "Got: $FIRST_LINE"
+exit 1

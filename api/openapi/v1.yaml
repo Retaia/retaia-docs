@@ -31,6 +31,8 @@ tags:
 
 paths:
   /auth/login:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: User login with email and password
@@ -75,6 +77,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/refresh:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Refresh interactive user bearer token
@@ -116,6 +120,8 @@ paths:
 
 
   /auth/2fa/setup:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Setup TOTP 2FA for current user
@@ -145,6 +151,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/2fa/enable:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Confirm and enable TOTP 2FA
@@ -189,6 +197,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/2fa/disable:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Disable TOTP 2FA
@@ -229,6 +239,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/2fa/recovery-codes/regenerate:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Regenerate backup recovery codes for current user
@@ -255,6 +267,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/logout:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Logout current user token session
@@ -271,6 +285,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/me:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Auth]
       summary: Get current authenticated user
@@ -290,7 +306,102 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /auth/me/sessions:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
+    get:
+      tags: [Auth]
+      summary: List interactive sessions for current user
+      security:
+        - UserBearerAuth: []
+      responses:
+        "200":
+          description: Interactive sessions list
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AuthSession"
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/me/sessions/{session_id}/revoke:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
+    post:
+      tags: [Auth]
+      summary: Revoke one interactive session for current user
+      security:
+        - UserBearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Interactive session revoked
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Current session cannot be self-revoked (`STATE_CONFLICT`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/me/sessions/revoke-others:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
+    post:
+      tags: [Auth]
+      summary: Revoke all other interactive sessions for current user
+      security:
+        - UserBearerAuth: []
+      responses:
+        "200":
+          description: Other interactive sessions revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [revoked]
+                properties:
+                  revoked:
+                    type: integer
+                    minimum: 0
+        "401":
+          description: Unauthorized (`UNAUTHORIZED`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /auth/me/features:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Auth]
       summary: Get current user feature preferences
@@ -354,6 +465,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /app/features:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Auth]
       summary: Get effective app feature switches
@@ -421,6 +534,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /app/policy:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Auth]
       summary: Get runtime app policy
@@ -503,6 +618,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/lost-password/request:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Request lost password reset email
@@ -530,6 +647,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/lost-password/reset:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Reset password with token
@@ -557,6 +676,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/verify-email/request:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Request verification email
@@ -584,6 +705,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/verify-email/confirm:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Confirm email verification token
@@ -611,6 +734,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/verify-email/admin-confirm:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Admin confirms user email verification
@@ -652,6 +777,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/clients/{client_id}/revoke-token:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Revoke one technical client token access
@@ -689,6 +816,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/clients/token:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Mint client bearer token from secret key
@@ -734,6 +863,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/clients/device/start:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Start device authorization flow for technical client bootstrap
@@ -773,6 +904,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/clients/device/poll:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Poll device authorization status
@@ -812,6 +945,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/clients/device/cancel:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Cancel an in-progress device authorization flow
@@ -843,6 +978,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /auth/clients/{client_id}/rotate-secret:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Auth]
       summary: Rotate client secret key
@@ -880,6 +1017,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /assets:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Assets]
       summary: List assets
@@ -890,7 +1029,12 @@ paths:
         - name: state
           in: query
           schema:
-            $ref: "#/components/schemas/AssetState"
+            type: array
+            items:
+              $ref: "#/components/schemas/AssetState"
+          style: form
+          explode: false
+          description: Comma-separated asset states. Ordering is not significant; duplicates are ignored.
         - name: media_type
           in: query
           schema:
@@ -899,7 +1043,12 @@ paths:
         - name: tags
           in: query
           schema:
-            type: string
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+          description: Comma-separated human tags. Ordering is not significant; duplicates are ignored.
         - name: has_preview
           in: query
           schema:
@@ -929,11 +1078,13 @@ paths:
           schema:
             type: string
             example: "4.30,50.80,4.45,50.92"
-          description: Bounding box filter `min_lon,min_lat,max_lon,max_lat` (uses secure derived spatial index).
+            pattern: '^-?[0-9]+(?:\.[0-9]+)?,-?[0-9]+(?:\.[0-9]+)?,-?[0-9]+(?:\.[0-9]+)?,-?[0-9]+(?:\.[0-9]+)?$'
+          description: Bounding box filter `min_lon,min_lat,max_lon,max_lat` with lon in `[-180,180]`, lat in `[-90,90]`, strict `min < max`, and no antimeridian crossing in v1.
         - name: sort
           in: query
           schema:
             type: string
+            default: -created_at
             enum:
               - name
               - -name
@@ -950,6 +1101,7 @@ paths:
               - state
               - -state
             example: -created_at
+          description: Primary sort key. Ties are stabilized by `uuid` ascending.
         - name: captured_at_from
           in: query
           schema:
@@ -970,6 +1122,7 @@ paths:
           in: query
           schema:
             type: string
+          description: Opaque server-issued cursor bound to the exact `(filters, sort, limit)` tuple of the previous page.
       responses:
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
@@ -979,6 +1132,12 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Asset list
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                enum: ["private, no-store"]
+              description: Canonical cache policy for authenticated asset list responses.
           content:
             application/json:
               schema:
@@ -993,6 +1152,8 @@ paths:
                     nullable: true
 
   /assets/{uuid}:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Assets]
       summary: Get one asset detail
@@ -1002,6 +1163,23 @@ paths:
       parameters:
         - $ref: "#/components/parameters/UuidPath"
       responses:
+        "200":
+          description: Asset detail
+          headers:
+            ETag:
+              schema:
+                type: string
+                pattern: '^"[^"]+"$'
+              description: Strong quoted HTTP entity-tag for the current asset revision.
+            Cache-Control:
+              schema:
+                type: string
+                enum: ["private, no-store"]
+              description: Canonical cache policy for authenticated asset detail responses.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetDetail"
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
           content:
@@ -1031,9 +1209,9 @@ paths:
                     type: string
                 notes:
                   type: string
+                  nullable: true
                 fields:
-                  type: object
-                  additionalProperties: true
+                  $ref: "#/components/schemas/AssetFields"
                 processing_profile:
                   type: string
                   enum: [video_standard, audio_undefined, audio_music, audio_voice, photo_standard]
@@ -1053,7 +1231,8 @@ paths:
             ETag:
               schema:
                 type: string
-              description: Strong asset revision tag after the accepted mutation.
+                pattern: '^"[^"]+"$'
+              description: Strong quoted HTTP entity-tag after the accepted mutation.
         "409":
           description: State conflict (invalid transition)
           content:
@@ -1082,6 +1261,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /agents/register:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Agents]
       summary: Register a processing agent
@@ -1168,6 +1349,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /assets/{uuid}/reprocess:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Assets]
       summary: Trigger explicit reprocess
@@ -1206,6 +1389,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /assets/{uuid}/reopen:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Decisions]
       summary: Reopen archived or rejected asset to decision pending
@@ -1221,7 +1406,8 @@ paths:
             ETag:
               schema:
                 type: string
-              description: Strong asset revision tag after the accepted mutation.
+                pattern: '^"[^"]+"$'
+              description: Strong quoted HTTP entity-tag after the accepted mutation.
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
           content:
@@ -1248,6 +1434,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /jobs:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Jobs]
       summary: List claimable jobs for the authenticated agent
@@ -1273,6 +1461,8 @@ paths:
                   $ref: "#/components/schemas/Job"
 
   /jobs/{job_id}/claim:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Jobs]
       summary: Claim a job (atomic lease)
@@ -1306,6 +1496,8 @@ paths:
           description: Job not claimable
 
   /jobs/{job_id}/heartbeat:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Jobs]
       summary: Extend job lease
@@ -1328,10 +1520,13 @@ paths:
           application/json:
             schema:
               type: object
-              required: [lock_token]
+              required: [lock_token, fencing_token]
               properties:
                 lock_token:
                   type: string
+                fencing_token:
+                  type: integer
+                  minimum: 1
       responses:
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
@@ -1345,12 +1540,30 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [locked_until, fencing_token]
                 properties:
                   locked_until:
                     type: string
                     format: date-time
+                  fencing_token:
+                    type: integer
+                    minimum: 1
+        "409":
+          description: Stale lock token (`STALE_LOCK_TOKEN`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "423":
+          description: Missing or invalid lock (`LOCK_REQUIRED` or `LOCK_INVALID`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /jobs/{job_id}/submit:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Jobs]
       summary: Submit job result patch
@@ -1386,7 +1599,7 @@ paths:
         "200":
           description: Job completed
         "409":
-          description: Idempotency conflict
+          description: Stale lock token or idempotency conflict (`STALE_LOCK_TOKEN` or `IDEMPOTENCY_CONFLICT`)
           content:
             application/json:
               schema:
@@ -1399,6 +1612,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /jobs/{job_id}/fail:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Jobs]
       summary: Mark job as failed
@@ -1422,10 +1637,13 @@ paths:
           application/json:
             schema:
               type: object
-              required: [lock_token, error_code, retryable]
+              required: [lock_token, fencing_token, error_code, retryable]
               properties:
                 lock_token:
                   type: string
+                fencing_token:
+                  type: integer
+                  minimum: 1
                 error_code:
                   type: string
                 message:
@@ -1442,13 +1660,21 @@ paths:
         "200":
           description: Job failed recorded
         "409":
-          description: Idempotency conflict
+          description: Stale lock token or idempotency conflict (`STALE_LOCK_TOKEN` or `IDEMPOTENCY_CONFLICT`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "423":
+          description: Missing or invalid lock (`LOCK_REQUIRED` or `LOCK_INVALID`)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /assets/{uuid}/derived/upload/init:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Derived]
       summary: Initialize derived upload
@@ -1497,6 +1723,8 @@ paths:
           description: Upload initialized
 
   /assets/{uuid}/derived/upload/part:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Derived]
       summary: Upload one part
@@ -1513,15 +1741,18 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
-              required: [upload_id, part_number]
+              required: [upload_id, part_number, chunk]
               properties:
                 upload_id:
                   type: string
                 part_number:
                   type: integer
+                chunk:
+                  type: string
+                  format: binary
       responses:
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
@@ -1531,8 +1762,19 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Part uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [part_etag]
+                properties:
+                  part_etag:
+                    type: string
 
   /assets/{uuid}/derived/upload/complete:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Derived]
       summary: Complete derived upload
@@ -1561,6 +1803,13 @@ paths:
                   type: array
                   items:
                     type: object
+                    additionalProperties: false
+                    required: [part_number, part_etag]
+                    properties:
+                      part_number:
+                        type: integer
+                      part_etag:
+                        type: string
       responses:
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
@@ -1572,6 +1821,8 @@ paths:
           description: Upload completed
 
   /assets/{uuid}/derived:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Derived]
       summary: List available derived files for one asset
@@ -1589,21 +1840,30 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Derived list
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                enum: ["private, no-store"]
+              description: Canonical cache policy for authenticated derived listing responses.
           content:
             application/json:
               schema:
-                type: object
-                additionalProperties: true
+                $ref: "#/components/schemas/AssetDerived"
 
   /assets/{uuid}/derived/{kind}:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Derived]
       summary: Fetch one derived file by kind
+      description: Direct Core byte delivery for the current derived file. No redirect response is part of the v1 contract.
       security:
         - UserBearerAuth: []
         - TechnicalBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
+        - $ref: "#/components/parameters/Range"
         - name: kind
           in: path
           required: true
@@ -1619,10 +1879,59 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Derived content
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: Media type of the returned derived content.
+            Cache-Control:
+              schema:
+                type: string
+                enum: ["private, no-store"]
+              description: Canonical cache policy for authenticated derived delivery responses.
+            Accept-Ranges:
+              schema:
+                type: string
+                enum: [bytes]
+              description: Present for range-capable derived resources.
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: binary
+        "206":
+          description: Partial derived content
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: Media type of the returned derived content.
+            Cache-Control:
+              schema:
+                type: string
+                enum: ["private, no-store"]
+              description: Canonical cache policy for authenticated derived delivery responses.
+            Accept-Ranges:
+              schema:
+                type: string
+                enum: [bytes]
+            Content-Range:
+              schema:
+                type: string
+              description: Byte range actually returned when serving a partial response.
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: binary
         "404":
           description: Not found
+        "416":
+          description: Requested range not satisfiable
 
   /assets/purge:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Purge]
       summary: Purge multiple rejected assets
@@ -1690,6 +1999,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /assets/{uuid}/purge:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Purge]
       summary: Purge one rejected asset
@@ -1727,6 +2038,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /assets/{uuid}/purge/preview:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Purge]
       summary: Preview purge impact for one asset
@@ -1745,6 +2058,8 @@ paths:
           description: Purge preview
 
   /ops/ingest/diagnostics:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Ops]
       summary: Get ingest diagnostics counters and latest unmatched sidecars
@@ -1800,6 +2115,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /ops/readiness:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Ops]
       summary: Get operational readiness checks
@@ -1866,6 +2183,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /ops/locks:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Ops]
       summary: List active operation locks
@@ -1936,7 +2255,7 @@ paths:
                   total:
                     type: integer
                     minimum: 0
-                    description: Total count after filters, before pagination.
+                    description: Total count after filters, before pagination. Items are returned by canonical default order `acquired_at DESC`.
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
           content:
@@ -1951,6 +2270,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /ops/locks/recover:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Ops]
       summary: Recover stale operation locks
@@ -2005,6 +2326,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /ops/jobs/queue:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Ops]
       summary: Get jobs queue diagnostics
@@ -2072,6 +2395,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /ops/agents:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Ops]
       summary: List known agents with runtime status and debug information
@@ -2231,6 +2556,7 @@ paths:
                   total:
                     type: integer
                     minimum: 0
+                    description: Items are returned by canonical default order `last_seen_at DESC`.
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
           content:
@@ -2245,6 +2571,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /ops/ingest/unmatched:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     get:
       tags: [Ops]
       summary: List unmatched ingest sidecars
@@ -2322,6 +2650,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /ops/ingest/requeue:
+    parameters:
+      - $ref: "#/components/parameters/AcceptLanguage"
     post:
       tags: [Ops]
       summary: Requeue ingest processing for a specific target
@@ -2337,6 +2667,9 @@ paths:
               type: object
               additionalProperties: false
               required: [reason]
+              anyOf:
+                - required: [asset_uuid]
+                - required: [path]
               properties:
                 asset_uuid:
                   type: string
@@ -2446,6 +2779,22 @@ components:
       name: If-Match
       in: header
       required: true
+      description: Strong quoted HTTP entity-tag previously read from the asset `ETag` response header.
+      schema:
+        type: string
+        pattern: '^"[^"]+"$'
+    AcceptLanguage:
+      name: Accept-Language
+      in: header
+      required: false
+      description: Optional locale preference for localized human-readable messages. Business payload semantics remain locale-independent.
+      schema:
+        type: string
+    Range:
+      name: Range
+      in: header
+      required: false
+      description: Optional byte range request. Supported for audio/video preview delivery.
       schema:
         type: string
     ClientIdPath:
@@ -2595,6 +2944,40 @@ components:
             type: string
         mfa_enabled:
           type: boolean
+
+    AuthSession:
+      type: object
+      additionalProperties: false
+      required: [session_id, client_id, created_at, last_used_at, is_current]
+      properties:
+        session_id:
+          type: string
+        client_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        last_used_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        is_current:
+          type: boolean
+        device_label:
+          type: string
+          nullable: true
+        browser:
+          type: string
+          nullable: true
+        os:
+          type: string
+          nullable: true
+        ip_address_last_seen:
+          type: string
+          nullable: true
 
     Auth2faOtpRequest:
       type: object
@@ -2926,6 +3309,26 @@ components:
       additionalProperties:
         type: boolean
 
+    FeatureExplanation:
+      type: object
+      additionalProperties: false
+      required: [effective_value]
+      properties:
+        effective_value:
+          type: boolean
+        reason_code:
+          type: string
+          enum: [FEATURE_FLAG_OFF, ADMIN_DISABLED, USER_OPT_OUT, DEPENDENCY_OFF, DISABLE_ESCALATION, CORE_PROTECTED, UNSUPPORTED_CONTRACT_VERSION]
+        dependency_key:
+          type: string
+        parent_feature_key:
+          type: string
+
+    FeatureExplanations:
+      type: object
+      additionalProperties:
+        $ref: "#/components/schemas/FeatureExplanation"
+
     FeatureGovernanceRule:
       type: object
       additionalProperties: false
@@ -2955,11 +3358,14 @@ components:
       additionalProperties: false
       required:
         - app_feature_enabled
+        - app_feature_explanations
         - feature_governance
         - core_v1_global_features
       properties:
         app_feature_enabled:
           $ref: "#/components/schemas/AppFeatureEnabled"
+        app_feature_explanations:
+          $ref: "#/components/schemas/FeatureExplanations"
         core_v1_global_features:
           $ref: "#/components/schemas/CoreV1GlobalFeatures"
         feature_governance:
@@ -2978,12 +3384,14 @@ components:
     UserFeaturesResponse:
       type: object
       additionalProperties: false
-      required: [user_feature_enabled, effective_feature_enabled, feature_governance, core_v1_global_features]
+      required: [user_feature_enabled, effective_feature_enabled, effective_feature_explanations, feature_governance, core_v1_global_features]
       properties:
         user_feature_enabled:
           $ref: "#/components/schemas/UserFeatureEnabled"
         effective_feature_enabled:
           $ref: "#/components/schemas/EffectiveFeatureEnabled"
+        effective_feature_explanations:
+          $ref: "#/components/schemas/FeatureExplanations"
         feature_governance:
           type: array
           items:
@@ -3074,7 +3482,8 @@ components:
         revision_etag:
           type: string
           nullable: true
-          description: Opaque asset revision tag to be reused in `If-Match` for the next mutation.
+          pattern: '^"[^"]+"$'
+          description: Strong quoted HTTP entity-tag to be reused byte-for-byte in `If-Match` for the next mutation.
         captured_at:
           type: string
           format: date-time
@@ -3094,11 +3503,16 @@ components:
 
     AssetDetail:
       type: object
-      required: [summary]
+      required: [summary, paths, processing, derived, decisions, audit]
       additionalProperties: false
       properties:
         summary:
           $ref: "#/components/schemas/AssetSummary"
+        notes:
+          type: string
+          nullable: true
+        fields:
+          $ref: "#/components/schemas/AssetFields"
         paths:
           $ref: "#/components/schemas/AssetPaths"
         processing:
@@ -3156,8 +3570,32 @@ components:
           type: boolean
         processing_profile:
           type: string
+          enum: [video_standard, audio_undefined, audio_music, audio_voice, photo_standard]
         review_processing_version:
           type: string
+
+    AssetFieldValue:
+      anyOf:
+        - type: string
+        - type: number
+        - type: boolean
+        - type: array
+          items:
+            type: string
+        - type: array
+          items:
+            type: number
+        - type: array
+          items:
+            type: boolean
+
+    AssetFields:
+      type: object
+      additionalProperties:
+        $ref: "#/components/schemas/AssetFieldValue"
+      description: >
+        Shared complementary metadata map. Values stay JSON-simple; domains requiring
+        dedicated semantics, storage or security rules must not be hidden implicitly here.
 
     AssetDerived:
       type: object
@@ -3165,22 +3603,30 @@ components:
       properties:
         preview_video_url:
           type: string
+          format: uri-reference
           nullable: true
+          description: Stable Core URL for the current video preview. Served directly by Core in v1.
         preview_audio_url:
           type: string
+          format: uri-reference
           nullable: true
+          description: Stable Core URL for the current audio preview. Served directly by Core in v1.
         preview_photo_url:
           type: string
+          format: uri-reference
           nullable: true
+          description: Stable Core URL for the current photo preview. Served directly by Core in v1.
         waveform_url:
           type: string
+          format: uri-reference
           nullable: true
-          description: Required when the effective processing profile requires waveform data beyond READY.
+          description: Stable Core URL for the current waveform payload. Required when the effective processing profile requires waveform data beyond READY.
         thumbs:
           type: array
           description: Video-only thumbnails.
           items:
             type: string
+            format: uri-reference
 
     AssetTranscript:
       type: object
@@ -3197,9 +3643,6 @@ components:
           type: string
           format: date-time
           description: Timestamp of the last accepted business mutation on this asset. Informational only; not a write precondition.
-        revision_etag:
-          type: string
-          description: Strong opaque asset revision tag to be reused in `If-Match` for the next mutation.
 
     AssetDecisions:
       type: object
@@ -3214,6 +3657,7 @@ components:
           items:
             type: object
             additionalProperties: false
+            required: [action, at, by]
             properties:
               action:
                 type: string
@@ -3230,18 +3674,23 @@ components:
       properties:
         path_history:
           type: array
+          description: Chronological path history in ascending order, using canonical relative paths only.
           items:
-            type: string
+            $ref: "#/components/schemas/RelativeStoragePath"
         revision_history:
           type: array
+          description: Append-only revision timeline in ascending `revision` order. The entry marked `is_current=true` matches the current `summary.revision_etag`.
           items:
             type: object
             additionalProperties: false
-            required: [revision, is_current, validation_status]
+            required: [revision, created_at, is_current, validation_status]
             properties:
               revision:
                 type: integer
                 minimum: 1
+              created_at:
+                type: string
+                format: date-time
               is_current:
                 type: boolean
               published_at:
@@ -3293,6 +3742,12 @@ components:
         lock_token:
           type: string
           nullable: true
+          description: Opaque current lease token.
+        fencing_token:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: Monotone write-protection token bound to the current lease. Must be replayed unchanged on heartbeat/submit/fail.
         locked_until:
           type: string
           format: date-time
@@ -3306,10 +3761,13 @@ components:
     SubmitExtractFacts:
       type: object
       additionalProperties: false
-      required: [lock_token, job_type, result]
+      required: [lock_token, fencing_token, job_type, result]
       properties:
         lock_token:
           type: string
+        fencing_token:
+          type: integer
+          minimum: 1
         job_type:
           type: string
           enum: [extract_facts]
@@ -3331,10 +3789,13 @@ components:
     SubmitDerived:
       type: object
       additionalProperties: false
-      required: [lock_token, job_type, result]
+      required: [lock_token, fencing_token, job_type, result]
       properties:
         lock_token:
           type: string
+        fencing_token:
+          type: integer
+          minimum: 1
         job_type:
           type: string
           enum: [generate_preview, generate_thumbnails, generate_audio_waveform]
@@ -3440,7 +3901,6 @@ components:
             - EXPIRED_DEVICE_CODE
             - UNSUPPORTED_FEATURE_FLAGS_CONTRACT_VERSION
             - SLOW_DOWN
-            - RATE_LIMITED
             - TEMPORARY_UNAVAILABLE
             - PRECONDITION_REQUIRED
             - PRECONDITION_FAILED

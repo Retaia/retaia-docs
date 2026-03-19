@@ -21,13 +21,34 @@ Un hook/plugin NE DOIT PAS :
 ## 3) Contrat d'exécution
 
 * exécution synchrone dans la transaction orchestratrice
-* timeout max par hook : 2s (configurable)
+* timeout max par hook : `2s`
 * en cas de timeout/erreur :
   * le hook est marqué failed
   * l'état principal continue selon politique définie
   * un événement d'audit est écrit
 
 Politique v1 : fail-open (lifecycle continue), sauf hook explicitement marqué `blocking=true`.
+
+Statut `blocking` autorisé en `v1` :
+
+* `blocking=true` N'EST autorisé que pour le hook point `after_processed_before_decision_pending`
+* `on_enter_decision_pending` DOIT toujours rester `blocking=false` en `v1`
+* un hook `blocking=true` NE DOIT PAS émettre de `patches`
+* un hook `blocking=true` DOIT être déclaré explicitement dans la configuration Core; aucun plugin ne peut s'auto-déclarer bloquant
+
+Effet runtime normatif d'un hook bloquant en échec :
+
+* si un hook `blocking=true` échoue (`status=failed`, exception, timeout), Core DOIT interrompre la transition courante
+* l'asset DOIT rester dans son état précédent la transition tentée
+* Core DOIT répondre avec `409 STATE_CONFLICT`
+* aucun patch partiel du hook bloquant ne DOIT être appliqué
+* un événement d'audit/opservabilité DOIT être émis avec au minimum :
+  * `asset_uuid`
+  * `hook_name`
+  * `hook_point`
+  * `blocking=true`
+  * `status=failed`
+  * `event_id`
 
 ## 4) Idempotence
 
@@ -60,6 +81,17 @@ Output v1 :
 * `status: ok | failed | skipped`
 * `notes?`
 * `patches?` (uniquement domaines autorisés non destructifs)
+
+Domaines de patch autorisés en `v1` :
+
+* `fields`
+* `notes`
+
+Règles de patch :
+
+* `patches` NE DOIT modifier ni `state`, ni `decision`, ni `paths`, ni `derived`, ni `facts`, ni `transcript`, ni `revision_history`
+* un hook non bloquant PEUT omettre `patches`
+* un hook `blocking=true` DOIT omettre `patches`
 
 ## 7) Versioning
 

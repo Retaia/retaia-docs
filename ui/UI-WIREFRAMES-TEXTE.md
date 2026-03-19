@@ -1,7 +1,7 @@
 # Wireframes texte - refonte UI
 
 > Statut : recommandation design/UX non normative.
-> Source de cadrage : [UI-REFONTE-RECOMMANDATION.md](/Users/fullfrontend/Jobs/A%20-%20Full%20Front-End/retaia-workspace/retaia-docs/ui/UI-REFONTE-RECOMMANDATION.md)
+> Source de cadrage : [UI-REFONTE-RECOMMANDATION.md](UI-REFONTE-RECOMMANDATION.md)
 > Objectif : decrire les ecrans cibles en filaire texte, sans imposer le design final.
 
 ## 1. Principes de lecture

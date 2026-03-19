@@ -37,7 +37,7 @@ Retaia Core Server
 * Le discovery est **read-only**.
 * Si la migration `/.retaia` échoue (create/update atomique ou upgrade requis du champ JSON `version` dans `/.retaia`), Core DOIT échouer explicitement au boot/update (pas de mode dégradé implicite).
 * En mode multi-mount, un échec sur un seul `storage_id` DOIT faire échouer tout le startup (fail-fast global).
-* `APP_STORAGE_ID` DOIT matcher strictement `/.retaia.storage_id` pour chaque mount ciblé; sinon boot refusé.
+* `APP_STORAGE_ID` DOIT matcher strictement le champ JSON `storage_id` du marker `/.retaia` pour chaque mount ciblé; sinon boot refusé.
 * Les sidecars/dérivés de review `UNMATCHED_SIDECAR` n'engendrent pas d'asset autonome.
 * L'observabilité ingest expose au minimum `queued`, `missing`, `unmatched_sidecars`.
 

@@ -4,13 +4,12 @@ Ce document décrit le **contrat API v1** de Retaia Core.
 
 Cette spécification est **normative**. Toute implémentation serveur, agent ou client doit s’y conformer strictement.
 
-Les fichiers OpenAPI versionnés sont :
+Le fichier OpenAPI versionné exécutable est :
 
 * `openapi/v1.yaml` (gate runtime actuelle, opposable)
-* `openapi/v1.1.yaml` (track v1.1+ validée)
-* `openapi/v1.2.yaml` (piste reservee, actuellement non planifiee)
 
 `openapi/v1.yaml` reste la description contractuelle exécutable de référence tant que les gates CI pointent v1.
+Les extensions futures (`v1.1+`, MCP, AI, autres phases) peuvent être décrites en prose normative ici, mais ne sont pas publiées comme contrat OpenAPI tant qu'elles ne sont pas stabilisées.
 Ce document doit rester strictement aligné avec `openapi/v1.yaml`.
 
 Objectif : fournir une surface stable consommée par :
@@ -30,6 +29,7 @@ Objectif : fournir une surface stable consommée par :
 * Dates : ISO‑8601 UTC (`YYYY-MM-DDTHH:mm:ssZ`)
 * Pagination : `limit` + `cursor`
 * Idempotence : header `Idempotency-Key` sur endpoints critiques
+* Localisation : tous les endpoints REST v1 partagés acceptent le header optionnel `Accept-Language`; si un payload contient un `message` humain, Core DOIT appliquer au mieux cette préférence sans jamais modifier les codes, états, identifiants ni la structure métier de la réponse
 * Approche d'implémentation préférée : **DDD** (Domain-Driven Design), avec **TDD** et **BDD** comme pratiques de validation par défaut
 
 ### Versioning mineur (v1 / v1.1)
@@ -37,6 +37,13 @@ Objectif : fournir une surface stable consommée par :
 * `v1` = socle stable (ingestion, processing review, décision humaine, moves, purge, recherche full-text `q`).
 * `v1.1` = extensions compatibles, incluant les fonctionnalités dépendantes de l'AI et le client MCP.
 * Toute fonctionnalité dépendant de l'AI (ex: `transcribe_audio`, `suggest_tags`, filtres `suggested_tags*`) est hors périmètre de conformité v1 et planifiée en `v1.1+`.
+
+Glossaire de lecture (opposable) :
+
+* `v1` = surface actuellement publiée et opposable en OpenAPI (`api/openapi/v1.yaml`) + baseline projet global validée
+* `v1.1+` = famille d'extensions futures compatibles, pas encore publiées en OpenAPI tant qu'elles ne sont pas stabilisées
+* `pre-release sous feature_flags` = fonctionnalité pouvant être exposée avant validation officielle de `v1.1+`, mais restant hors conformité `v1`
+* `validation v1.1+` = moment où une fonctionnalité quitte le statut pré-release et rejoint la baseline validée `v1.1+`
 
 ### Versioning projet global (rollout)
 
@@ -96,6 +103,7 @@ Objectif : fournir une surface stable consommée par :
 * Ce cycle DOIT permettre le continuous development sans casse des clients encore dans la fenêtre d'acceptance.
 * Ownership runtime: `accepted_feature_flags_contract_versions` est piloté par release/config Core (pas modifiable via endpoint admin runtime).
 * Les kill-switches permanents autorisés DOIVENT être listés dans [`FEATURE-FLAG-KILLSWITCH-REGISTRY.md`](../change-management/FEATURE-FLAG-KILLSWITCH-REGISTRY.md).
+* Le registre canonique des clés partagées `v1.0.0`, de leur tier, mutabilité et dépendances est défini dans [`FEATURE-FLAG-REGISTRY.md`](../change-management/FEATURE-FLAG-REGISTRY.md).
 
 ### Orchestration runtime (normatif)
 
@@ -107,6 +115,22 @@ Objectif : fournir une surface stable consommée par :
 * Sur `429` (`SLOW_DOWN`/`TOO_MANY_ATTEMPTS`), le client DOIT appliquer backoff + jitter avant la tentative suivante.
 * Le pilotage d'état du device flow reste strictement status-driven via `POST /auth/clients/device/poll` (`200` + `status`).
 * Les opérations mutatrices REST (`POST`, `PATCH`, etc.) restent autorisées selon la matrice auth/authz.
+
+Cadences et retry runtime (obligatoires) :
+
+* `GET /app/policy` :
+  * client actif authentifié (`UI_WEB`, `AGENT`, puis `MCP` à partir de v1.1+) : refresh toutes les `30s`
+  * un refresh anticipé est autorisé après action utilisateur locale explicite, sans jamais descendre sous `15s`
+* `GET /jobs` côté `AGENT` :
+  * cadence nominale toutes les `5s`
+  * si `server_policy.min_poll_interval_seconds` est présent, l'agent DOIT utiliser `max(5, min_poll_interval_seconds)`
+* `429` (`SLOW_DOWN`/`TOO_MANY_ATTEMPTS`) :
+  * stratégie canonique = exponential backoff with full jitter
+  * base = `2s`
+  * facteur multiplicatif = `2`
+  * plafond = `60s`
+  * reset immédiat après une réponse non `429`
+  * si `Retry-After` est présent, il DOIT primer comme nouvelle base minimale avant jitter
 
 Mapping normatif v1.1 (base actuelle, obligatoire pour tous les consommateurs) :
 
@@ -159,16 +183,16 @@ Catalogue de dépendances et escalade (opposable) :
 * règle de sûreté v1 globale : les features socle v1 (`CORE_V1_GLOBAL`) restent disponibles et ne sont pas impactées par des opt-out utilisateur
 * registre explicite obligatoire : Core DOIT exposer `core_v1_global_features[]` (liste canonique des clés non désactivables)
 * toute entrée `feature_governance` dont `key` appartient à `core_v1_global_features[]` DOIT avoir `tier=CORE_V1_GLOBAL` et `user_can_disable=false`
-
-Registre canonique `CORE_V1_GLOBAL` (v1) :
-
-* `features.core.auth`
-* `features.core.assets.lifecycle`
-* `features.core.jobs.runtime`
-* `features.core.search.query`
-* `features.core.policy.runtime`
-* `features.core.derived.access`
-* `features.core.clients.bootstrap`
+* `core_v1_global_features[]` DOIT correspondre exactement aux clés `Tier = CORE_V1_GLOBAL` du registre [`FEATURE-FLAG-REGISTRY.md`](../change-management/FEATURE-FLAG-REGISTRY.md)
+* Core DOIT exposer un payload canonique d'explication :
+  * `app_feature_explanations.<feature_key>` dans `GET /app/features`
+  * `effective_feature_explanations.<feature_key>` dans `GET /auth/me/features`
+* chaque explication DOIT inclure au minimum :
+  * `effective_value`
+  * `reason_code?`
+  * `dependency_key?`
+  * `parent_feature_key?`
+* `reason_code`, `dependency_key` et `parent_feature_key` suivent exactement la taxonomie publiée dans [`FEATURE-GOVERNANCE-OBSERVABILITY.md`](../policies/FEATURE-GOVERNANCE-OBSERVABILITY.md)
 
 Arbitrage admin/user (opposable) :
 
@@ -195,7 +219,7 @@ Comportement :
 
 * même `(actor, method, path, key)` et même body : même réponse rejouée
 * même clé mais body différent : `409 IDEMPOTENCY_CONFLICT`
-* durée de rétention des clés : 24h (configurable)
+* durée de rétention des clés : `24h`
 
 ### Derived URLs
 
@@ -307,6 +331,7 @@ Règle de cardinalité des tokens (obligatoire) :
 * `jobs:claim` (**agents uniquement**)
 * `jobs:heartbeat` (**agents uniquement**)
 * `jobs:submit` (**agents uniquement**)
+* `jobs:fail` (**agents uniquement**)
 * `suggestions:write` (**v1.1+**, agents/MCP)
 * `purge:execute` (**humain uniquement**, jamais `MCP`)
 
@@ -324,6 +349,14 @@ Baseline sécurité/fuite (normatif) :
 * la baseline security "assume breach" est définie dans [`SECURITY-BASELINE.md`](../policies/SECURITY-BASELINE.md)
 * toute implémentation Core/UI/Agent/MCP DOIT appliquer les exigences MUST de cette baseline
 * en cas de conflit d'interprétation, le modèle le plus restrictif s'applique
+* `UserBearerAuth` désigne un bearer JWT utilisateur
+* `TechnicalBearerAuth` désigne un bearer technique opaque
+* les exigences `kid` / `JWKS` / rotation JWT s'appliquent au seul `UserBearerAuth`, pas aux bearers techniques opaques
+* durée de vie nominale `UserBearerAuth.access_token` : `15 minutes`
+* durée de vie nominale `UI_WEB.refresh_token` : `30 jours`
+* durée de vie nominale `TechnicalBearerAuth.access_token` (`AGENT`/`MCP`) : `24 heures`
+* ces durées sont fermées pour `v1`; toute modification requiert une nouvelle révision de spec
+* l'endpoint `JWKS` (ou équivalent interne) reste un mécanisme de vérification interne/Core et ne fait pas partie de la surface publique REST partagée `v1`
 
 Normalisation HTTP (normatif) :
 
@@ -332,8 +365,11 @@ Normalisation HTTP (normatif) :
 * `403` = authentification valide mais action interdite (`FORBIDDEN_ACTOR`, `FORBIDDEN_SCOPE`)
 * `404` = ressource métier introuvable (`USER_NOT_FOUND`)
 * `409` = conflit d’état métier (`MFA_ALREADY_ENABLED`, `MFA_NOT_ENABLED`, `STATE_CONFLICT`)
+* `409 STALE_LOCK_TOKEN` = lock/fencing token présent mais obsolète
+* `409 IDEMPOTENCY_CONFLICT` = même clé d'idempotence avec body différent
 * `422` = validation de payload échouée (`VALIDATION_FAILED`)
 * `429` = anti-abus/rate-limit (`TOO_MANY_ATTEMPTS`, `SLOW_DOWN`)
+* `423` = verrou requis absent ou invalide (`LOCK_REQUIRED`, `LOCK_INVALID`)
 
 Règle `VALIDATION_FAILED` (normatif) :
 
@@ -345,6 +381,20 @@ Normalisation des timestamps (normatif) :
 * tous les champs `*_at` exposés par l'API DOIVENT être ISO-8601 (`date-time`) en UTC
 * les filtres temporels (ex: `since`) DOIVENT accepter ISO-8601; les valeurs invalides renvoient `400 VALIDATION_FAILED`
 * les clients DEVRAIENT envoyer des timestamps explicites UTC (suffixe `Z` ou offset `+00:00`)
+
+Fenêtres temporelles partagées (normatif) :
+
+* fenêtre maximale de fraîcheur acceptée pour `X-Retaia-Signature-Timestamp` : `60s` d'écart absolu avec l'horloge Core
+* un timestamp hors fenêtre DOIT être refusé avec `401 UNAUTHORIZED`
+* si Core expose `details.server_time_skew_seconds`, cette valeur DOIT être purement diagnostique
+* `X-Retaia-Signature-Nonce` :
+  * portée d'unicité : par couple `(acteur technique, nonce)`
+  * rétention anti-rejeu minimale : `15 minutes` après première observation acceptée
+  * toute réutilisation dans cette fenêtre DOIT être refusée avec `401 UNAUTHORIZED`
+  * un client NE DOIT JAMAIS réessayer une écriture mutatrice avec le même nonce
+* la canonicalisation de signature porte toujours sur les octets HTTP bruts réellement envoyés :
+  * aucun reformatage JSON, tri de clés ou normalisation whitespace supplémentaire n'est autorisé
+  * si deux stacks sérialisent différemment un body JSON, chacune DOIT signer les octets exacts qu'elle émet
 
 ### Endpoints auth applicatifs (normatif)
 
@@ -426,6 +476,49 @@ Normalisation des timestamps (normatif) :
   * `200` utilisateur courant
   * `401 UNAUTHORIZED`
 
+`GET /auth/me/sessions`
+
+* security: `UserBearerAuth`
+* effet: liste les sessions interactives connues de l'utilisateur courant, device/browser par device/browser
+* règles:
+  * la session courante DOIT être identifiable via `is_current=true`
+  * chaque session DOIT exposer au minimum :
+    * `session_id`
+    * `client_id`
+    * `created_at`
+    * `last_used_at`
+    * `expires_at?`
+    * `is_current`
+    * `device_label?`
+    * `browser?`
+    * `os?`
+    * `ip_address_last_seen?`
+  * aucune valeur secrète (`access_token`, `refresh_token`) ne DOIT être exposée
+* réponses:
+  * `200` liste des sessions interactives
+  * `401 UNAUTHORIZED`
+
+`POST /auth/me/sessions/{session_id}/revoke`
+
+* security: `UserBearerAuth`
+* effet: révoque une session interactive ciblée de l'utilisateur courant
+* règles:
+  * la session ciblée DOIT appartenir à l'utilisateur courant
+  * la session courante DOIT être protégée par anti lock-out et refusée sur cet endpoint
+* réponses:
+  * `200` session révoquée
+  * `401 UNAUTHORIZED`
+  * `409 STATE_CONFLICT` si tentative de révoquer la session courante
+  * `404` si session inconnue ou non possédée
+
+`POST /auth/me/sessions/revoke-others`
+
+* security: `UserBearerAuth`
+* effet: révoque toutes les autres sessions interactives de l'utilisateur courant sauf la session courante
+* réponses:
+  * `200` avec compteur `revoked`
+  * `401 UNAUTHORIZED`
+
 `GET /app/features`
 
 * security: `UserBearerAuth`
@@ -433,6 +526,7 @@ Normalisation des timestamps (normatif) :
 * prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
 * contrat payload stable obligatoire:
   * `app_feature_enabled`
+  * `app_feature_explanations`
   * `feature_governance`
   * `core_v1_global_features`
 * réponses:
@@ -457,10 +551,11 @@ Normalisation des timestamps (normatif) :
 
 * security: `UserBearerAuth`
 * effet: retourne les préférences feature de l’utilisateur (`user_feature_enabled`) et l’état effectif (`effective_feature_enabled`)
-* inclut `feature_governance` et `core_v1_global_features` pour appliquer localement dépendances, escalade et règles de protection
+* inclut `feature_governance`, `core_v1_global_features` et `effective_feature_explanations` pour appliquer localement dépendances, escalade, règles de protection et explication canonique d'un `OFF`
 * contrat payload stable obligatoire:
   * `user_feature_enabled`
   * `effective_feature_enabled`
+  * `effective_feature_explanations`
   * `feature_governance`
   * `core_v1_global_features`
 * réponses:
@@ -676,7 +771,7 @@ Signature MCP (normative) :
 * `X-Retaia-Signature` DOIT transporter la signature OpenPGP détachée ASCII-armored de cette chaîne canonique
 * Core DOIT vérifier la signature MCP via une librairie OpenPGP standard maintenue; aucune implémentation crypto maison n'est autorisée
 * Core DOIT rejeter toute écriture MCP signée si la signature est absente, invalide, expirée, rejouée ou si la clé active est révoquée/inconnue
-* Core DOIT contrôler une fenêtre de fraîcheur bornée pour `X-Retaia-Signature-Timestamp` et empêcher le rejeu via `X-Retaia-Signature-Nonce`
+* Core DOIT contrôler la fenêtre de fraîcheur bornée `<= 60s` pour `X-Retaia-Signature-Timestamp` et empêcher le rejeu via `X-Retaia-Signature-Nonce`
 * Core DOIT journaliser les échecs de vérification de signature MCP comme événements sécurité
 
 Exemple de chaîne canonique MCP :
@@ -788,10 +883,10 @@ Liste filtrable/paginée des assets.
 
 Query params (exemples) :
 
-* `state=DECISION_PENDING` (multi)
+* `state=DECISION_PENDING,READY` (multi CSV)
 * `media_type=VIDEO|PHOTO|AUDIO`
 * `has_preview=true`
-* `tags=foo,bar` (tags **humains** uniquement)
+* `tags=foo,bar` (tags **humains** uniquement, CSV)
 * `tags_mode=AND|OR` (défaut: AND)
 * `suggested_tags=foo,bar` (**v1.1+**, suggestions uniquement)
 * `suggested_tags_mode=AND|OR` (**v1.1+**, défaut: AND)
@@ -812,6 +907,23 @@ Règles `q=` :
 * `q` DOIT utiliser un index de recherche dérivé compatible chiffrement (pas de plaintext de transcription en index)
 * filtres localisation DOIVENT reposer sur index spatial dérivé; les valeurs GPS source restent chiffrées
 
+Règles de transport et pagination (normatives) :
+
+* `state` et `tags` DOIVENT utiliser un encodage CSV dans une occurrence unique du paramètre (`explode=false`)
+* les clients NE DOIVENT PAS répéter `state=` ou `tags=` plusieurs fois dans la même requête
+* l'ordre des valeurs CSV n'a pas de sémantique métier; Core DOIT dédupliquer les doublons avant évaluation
+* le tri par défaut canonique est `sort=-created_at`
+* à égalité sur la clé de tri demandée, l'ordre DOIT être stabilisé par `uuid` croissant
+* `cursor` est opaque, émis par Core, et NE DOIT PAS être décodé, modifié ni reconstruit côté client
+* un `cursor` DOIT être réutilisé strictement avec le même tuple `(filtres, sort, limit)`; tout changement de ce tuple avec un `cursor` fourni DOIT être rejeté en `400 VALIDATION_FAILED`
+* `geo_bbox` DOIT être fourni au format exact `min_lon,min_lat,max_lon,max_lat`
+* chaque coordonnée DOIT être un nombre décimal valide avec :
+  * longitude dans `[-180,180]`
+  * latitude dans `[-90,90]`
+* `min_lon` DOIT être strictement inférieur à `max_lon`
+* `min_lat` DOIT être strictement inférieur à `max_lat`
+* une bbox traversant l'antiméridien n'est pas autorisée en `v1` et DOIT être refusée en `400 VALIDATION_FAILED`
+
 Response :
 
 * `items: AssetSummary[]`
@@ -821,6 +933,7 @@ Règle :
 
 * `AssetSummary.revision_etag` est le jeton canonique de précondition d'écriture sur l'asset
 * `AssetSummary.updated_at` reste informatif pour l'affichage et l'audit
+* `GET /assets` DOIT renvoyer `Cache-Control: private, no-store`
 
 ### GET `/assets/{uuid}`
 
@@ -831,7 +944,12 @@ Response : `AssetDetail`
 Concurrence optimiste (obligatoire) :
 
 * `GET /assets/{uuid}` DOIT exposer la révision canonique courante dans `summary.revision_etag` et dans le header HTTP `ETag`
+* `GET /assets/{uuid}` DOIT aussi renvoyer `Cache-Control: private, no-store`
+* le format canonique de `revision_etag`, `ETag` et `If-Match` est le strong validator HTTP quoté, par exemple `"asset-rev-42"`
 * toute mutation humaine sur l'asset DOIT envoyer `If-Match: <revision_etag>`
+* `AssetSummary.revision_etag` dans `GET /assets` et `summary.revision_etag` dans `GET /assets/{uuid}` DOIVENT toujours être identiques pour une même révision métier
+* un client PEUT préremplir `If-Match` depuis `AssetSummary.revision_etag`, mais DOIT recharger `GET /assets/{uuid}` avant mutation s'il ne détient plus la révision détail courante
+* aucune stratégie de cache liste ne DOIT primer sur le détail : le détail et son `ETag` restent la source canonique de précondition d'écriture
 * absence de `If-Match` => `428 PRECONDITION_REQUIRED`
 * révision périmée => `412 PRECONDITION_FAILED`
 * `revision_etag` DOIT changer sur toute mutation métier acceptée visible côté review/opérateur
@@ -850,9 +968,26 @@ Body (exemple) :
 
 * `tags: string[]`
 * `notes: string`
-* `fields: Record<string, any>`
+* `fields: Record<string, FieldValue>`
 * `processing_profile: video_standard | audio_undefined | audio_music | audio_voice | photo_standard`
 * `state: DECISION_PENDING | DECIDED_KEEP | DECIDED_REJECT | ARCHIVED | REJECTED` (transition explicite)
+
+Contrat `fields` (normatif) :
+
+* `fields` porte les métadonnées complémentaires partagées entre `Core`, `UI_WEB` et `AGENT`
+* `fields` reste extensible par clé, mais les valeurs DOIVENT rester JSON-simples :
+  * `string`
+  * `number`
+  * `boolean`
+  * `string[]`
+  * `number[]`
+  * `boolean[]`
+* tout domaine qui exige une sémantique dédiée, un stockage spécialisé ou une policy spécifique NE DOIT PAS être encodé implicitement dans `fields`
+* exemples de domaines à sortir du map générique quand ils existent comme contrat dédié :
+  * géométrie GPS précise
+  * adresse structurée
+  * transcript
+* `notes` et `fields` font partie du contrat de lecture partagé via `AssetDetail`
 
 Règles :
 
@@ -881,9 +1016,6 @@ Règles :
 * toute transition non listée DOIT être refusée (`409 STATE_CONFLICT`)
 * refus obligatoire de décision `KEEP` incompatible :
   * tout asset en `REVIEW_PENDING_PROFILE` DOIT refuser toute demande de `DECIDED_KEEP`, `DECIDED_REJECT`, `ARCHIVED` ou `REJECTED` avec `409 STATE_CONFLICT`
-  * si le `processing_profile` effectif après patch exige `transcribe_audio` dans la phase active
-  * et si `transcript.status != DONE`
-  * alors toute demande qui fait aboutir l'asset en `DECIDED_KEEP` ou `ARCHIVED` DOIT être refusée avec `409 STATE_CONFLICT`
 * mise à jour metadata (`tags/notes/fields`) et transition `state` peuvent être combinées dans un même `PATCH`
 * `If-Match` est obligatoire
 * toute mutation validée DOIT mettre à jour `updated_at` et `revision_etag`
@@ -1015,7 +1147,7 @@ Signature agent (normative) :
 * `X-Retaia-Signature` DOIT transporter la signature OpenPGP détachée ASCII-armored de cette chaîne canonique
 * Core DOIT vérifier la signature via une librairie OpenPGP standard maintenue; aucune implémentation crypto maison n'est autorisée
 * Core DOIT rejeter toute écriture signée si la signature est absente, invalide, expirée, rejouée ou si la clé active est révoquée/inconnue
-* Core DOIT contrôler une fenêtre de fraîcheur bornée pour `X-Retaia-Signature-Timestamp` et empêcher le rejeu via `X-Retaia-Signature-Nonce`
+* Core DOIT contrôler la fenêtre de fraîcheur bornée `<= 60s` pour `X-Retaia-Signature-Timestamp` et empêcher le rejeu via `X-Retaia-Signature-Nonce`
 * Core DOIT journaliser les échecs de vérification de signature comme événements sécurité
 
 Exemple de chaîne canonique agent :
@@ -1093,12 +1225,14 @@ Headers obligatoires :
 
 Response :
 
-* `200` + `Job` (avec `lock_token`, `locked_until`) si claim accepté
+* `200` + `Job` (avec `lock_token`, `fencing_token`, `locked_until`) si claim accepté
 * `409 STATE_CONFLICT` si job déjà claimé, non compatible ou non claimable
 
 Règles :
 
 * lock + TTL obligatoires
+* `lock_token` identifie la lease courante; `fencing_token` est son monotone de protection d'écriture
+* tout endpoint consommant une `job_lease` DOIT vérifier le couple `lock_token` + `fencing_token`
 * pour un `claim` accepté (`200`), la réponse DOIT inclure un `source` locator :
   * `storage_id` (identifiant logique du storage, stable côté Core)
   * `original_relative` (chemin relatif du média principal)
@@ -1112,6 +1246,7 @@ Règles :
 Body :
 
 * `lock_token`
+* `fencing_token`
 
 Headers obligatoires :
 
@@ -1124,12 +1259,15 @@ Headers obligatoires :
 Response :
 
 * `locked_until`
+* `423 LOCK_REQUIRED|LOCK_INVALID` si le `lock_token` ou le `fencing_token` requis est absent ou invalide
+* `409 STALE_LOCK_TOKEN` si le couple `lock_token` + `fencing_token` est présent mais obsolète
 
 ### POST `/jobs/{job_id}/submit`
 
 Body :
 
 * `lock_token`
+* `fencing_token`
 * `job_type`
 * `result: ProcessingResultPatch`
 
@@ -1161,11 +1299,18 @@ Règle d'extension:
 
 * les `job_type` IA (`transcribe_audio`, `suggest_tags`) et leurs patch domains sont hors périmètre v1 et documentés dans le paquet normatif v1.1.
 
+Erreurs de lock/idempotence (normatif) :
+
+* `423 LOCK_REQUIRED|LOCK_INVALID` si le `lock_token` ou le `fencing_token` requis est absent ou invalide
+* `409 STALE_LOCK_TOKEN` si le couple `lock_token` + `fencing_token` est présent mais obsolète
+* `409 IDEMPOTENCY_CONFLICT` si la clé d'idempotence est réutilisée avec un body différent
+
 ### POST `/jobs/{job_id}/fail`
 
 Body :
 
 * `lock_token`
+* `fencing_token`
 * `error_code`
 * `message`
 * `retryable: boolean`
@@ -1178,17 +1323,25 @@ Headers obligatoires :
 * `X-Retaia-Signature-Timestamp`
 * `X-Retaia-Signature-Nonce`
 
+Erreurs de lock/idempotence (normatif) :
+
+* `423 LOCK_REQUIRED|LOCK_INVALID` si le `lock_token` ou le `fencing_token` requis est absent ou invalide
+* `409 STALE_LOCK_TOKEN` si le couple `lock_token` + `fencing_token` est présent mais obsolète
+* `409 IDEMPOTENCY_CONFLICT` si la clé d'idempotence est réutilisée avec un body différent
+
 
 ## 6) Derived (previews/dérivés)
 
 Principe v1 :
 
 * les dérivés sont **uploadés via HTTP** par les agents
-* l’UI y accède via HTTP (URLs stables), pas via SMB
+* l’UI y accède via HTTP (URLs Core stables), pas via SMB
 * pour tout asset avec piste audio exploitable, `waveform_url` DOIT être présent pour tout état métier au-delà de `READY`
 * un asset audio NE DOIT PAS dépasser `READY` si la waveform dérivée obligatoire n’est pas disponible
 * un rendu local waveform côté client PEUT exister comme dégradation UX de lecture, mais NE REMPLACE PAS l’obligation de dérivé serveur/agent
 * toutes les écritures agent -> Core sur `/assets/{uuid}/derived/upload/*` DOIVENT porter les headers de signature agent
+* en `v1`, les URLs de dérivés exposées par Core DOIVENT rester des URLs Core stables servies directement par Core; les redirections `3xx`, URLs signées temporaires et URLs éphémères hors Core ne font pas partie du contrat canonique
+* `GET /assets/{uuid}/derived` et `GET /assets/{uuid}/derived/{kind}` DOIVENT renvoyer `Cache-Control: private, no-store`
 
 ### POST `/assets/{uuid}/derived/upload/init`
 
@@ -1213,13 +1366,19 @@ Upload d’une part (si chunking).
 
 Body :
 
-* `upload_id`
-* `part_number`
-* payload binaire (transport à préciser côté implémentation)
+* `multipart/form-data` obligatoire
+* champ texte `upload_id`
+* champ texte `part_number`
+* champ fichier binaire `chunk`
+
+Règles :
+
+* le transport JSON pour `derived/upload/part` n'est pas autorisé en `v1`
+* le form-data DOIT contenir exactement un champ binaire nommé `chunk`
 
 Response :
 
-* `etag` (ou checksum)
+* `part_etag`
 
 ### POST `/assets/{uuid}/derived/upload/complete`
 
@@ -1228,7 +1387,9 @@ Finalise l’upload.
 Body :
 
 * `upload_id`
-* `parts[]` (si multipart)
+* `parts[]` (si multipart), avec pour chaque entrée :
+  * `part_number`
+  * `part_etag`
 
 Effet :
 
@@ -1247,6 +1408,12 @@ Politique normative de remplacement des dérivés :
 
 Retourne les dérivés disponibles et leurs URLs.
 
+Règles :
+
+* la réponse `200` DOIT suivre le schéma `AssetDerived`
+* chaque URL exposée DOIT être une URL Core stable correspondant au dérivé courant visible
+* l'absence d'un dérivé courant DOIT être représentée par l'absence de l'URL correspondante
+
 ### GET `/assets/{uuid}/derived/{kind}`
 
 `kind = preview_video | preview_audio | preview_photo | thumb | waveform`
@@ -1254,6 +1421,8 @@ Retourne les dérivés disponibles et leurs URLs.
 Règles :
 
 * support Range requests pour previews audio/vidéo
+* la route DOIT servir directement le contenu binaire courant; aucune redirection `3xx` n'est autorisée en `v1`
+* `200` et `206` DOIVENT exposer `Content-Type` et `Cache-Control: private, no-store`
 * 404 si `state == PURGED`
 * `thumb` est réservé aux dérivés vidéo; une image fixe utilise `preview_photo` comme dérivé principal de consultation
 
@@ -1550,7 +1719,7 @@ Règles pagination :
 
 * `items[]` correspond à la page demandée (`limit`/`offset`)
 * `total` représente le total filtré avant pagination (pas seulement la taille de page)
-* tri par défaut recommandé : `acquired_at DESC`
+* tri par défaut canonique : `acquired_at DESC`
 * authentification HTTP via `UserBearerAuth`, puis vérification du statut admin obligatoire
 
 ### POST `/ops/locks/recover`
@@ -1567,7 +1736,7 @@ Body :
 Validation attendue :
 
 * les clients DOIVENT envoyer `stale_lock_minutes` en entier >= 1
-* les implémentations peuvent coerce les types en v1; un durcissement explicite `400 VALIDATION_FAILED` est recommandé
+* tout type invalide ou valeur `< 1` DOIT être rejeté en `400 VALIDATION_FAILED`
 
 Response :
 
@@ -1669,7 +1838,7 @@ Règles :
 * `status=stale` si l'agent n'est plus vu actif au-delà de la fenêtre runtime serveur
 * `last_successful_job` représente le dernier job soumis avec succès et accepté par Core
 * `identity_conflict=true` si plusieurs agents actifs partagent le même `agent_id`
-* tri par défaut recommandé : `last_seen_at DESC`
+* tri par défaut canonique : `last_seen_at DESC`
 * l'authentification HTTP utilise `UserBearerAuth`, puis l'autorisation DOIT vérifier le statut admin de l'utilisateur
 
 ## 8.7) Ingest unmatched listing (ops)
@@ -1743,9 +1912,12 @@ Response (`202 Accepted`) :
 ### AssetSummary
 
 * `uuid`
+* `name`
 * `media_type`
 * `state`
 * `created_at`
+* `updated_at?`
+* `revision_etag?`
 * `captured_at?`
 * `duration?`
 * `tags[]`
@@ -1755,23 +1927,53 @@ Response (`202 Accepted`) :
 ### AssetDetail
 
 * `summary: AssetSummary`
+* `notes: string?`
+* `fields: Record<string, FieldValue>`
 * `paths: { storage_id, original_relative, sidecars_relative[] }`
-* `processing: { facts_done, thumbs_done, preview_done, waveform_done, review_processing_version }`
+* `processing: { facts_done, thumbs_done, preview_done, waveform_done, processing_profile, review_processing_version }`
 * `derived: { preview_video_url?, preview_audio_url?, preview_photo_url?, waveform_url?, thumbs[] }`
 * `transcript: { status, text_preview?, updated_at? }`
 * `decisions: { current?, history[] }`
 * `audit: { path_history[], revision_history[] }`
 
+Règles de visibilité et présence (normatives) :
+
+* dès que `GET /assets/{uuid}` est autorisé pour l'acteur courant, `AssetDetail` DOIT être exposé sans redaction actor-specific en `v1`
+* Core NE DOIT PAS masquer conditionnellement `paths`, `processing`, `derived`, `decisions` ou `audit` selon qu'il s'agit d'un `UserBearerAuth` ou d'un `TechnicalBearerAuth`
+* les sous-objets `paths`, `processing`, `derived`, `decisions` et `audit` DOIVENT toujours être présents dans `AssetDetail`
+* l'absence de données dans un sous-domaine DOIT être représentée par des champs nuls, tableaux vides ou valeurs par défaut compatibles, pas par l'omission du sous-objet
+
+`path_history[]` (normatif) :
+
+* liste chronologique croissante des chemins de référence connus pour l'asset
+* chaque entrée DOIT être un chemin relatif canonicalisé
+* `path_history[]` NE DOIT contenir ni chemin absolu, ni `..`, ni doublon consécutif
+
+`decisions.history[]` (normatif) :
+
+* `action` (`KEEP | REJECT | CLEAR`)
+* `at` (UTC ISO-8601)
+* `by` (identifiant acteur)
+* ordre chronologique croissant
+
 `revision_history[]` (normatif) :
 
 * `revision` (int >= 1)
+* `created_at` (UTC ISO-8601)
 * `is_current` (bool)
 * `published_at` (UTC ISO-8601, nullable)
 * `validation_status` (`VALIDATED | PENDING_VALIDATION | REJECTED`)
 
 Règle :
 
+* `revision_history[]` DOIT être retourné en ordre chronologique croissant de `revision`
+* `revision_history[]` est append-only du point de vue du contrat observable
+* une seule entrée DOIT avoir `is_current=true`
+* l'entrée `is_current=true` DOIT porter le numéro de révision actuellement représenté par `summary.revision_etag`
+* `published_at` PEUT être nul uniquement tant que la révision n'est pas publiée
 * une révision peut être `VALIDATED` et publiée alors qu'une révision suivante est `PENDING_VALIDATION`
+* `revision_history[]` est l'historique métier partagé et exposé
+* les traces techniques internes (ORM, migrations, retries, journal FS, événements de recovery) restent hors contrat partagé tant qu'elles ne sont pas projetées explicitement dans `AssetDetail`
 
 ### Job
 
@@ -1779,8 +1981,13 @@ Règle :
 * `job_type` (`extract_facts | generate_preview | generate_thumbnails | generate_audio_waveform`)
 * `asset_uuid`
 * `lock_token`
+* `fencing_token`
 * `locked_until`
 * `source: { storage_id, original_relative, sidecars_relative[] }`
+
+Règle :
+
+* `fencing_token` est monotone par lease et DOIT être traité comme opaque côté client, sauf pour son transport intégral dans les écritures suivantes
 
 ### ProcessingResultPatch
 
@@ -1802,6 +2009,8 @@ Contrat minimal `facts_patch` :
 * pour `VIDEO` : `duration_ms`, `media_format`, `video_codec`, `width`, `height`, `fps`
 * si une piste audio exploitable est détectée sur `VIDEO`, `audio_codec` devient requis
 * des champs supplémentaires sont autorisés, mais les champs minimaux applicables au `media_type` NE DOIVENT PAS manquer
+* un champ facts optionnel peut être promu vers `AssetDetail.fields` s'il doit rester visible et éditable côté `UI_WEB`
+* un champ facts nécessitant une sémantique dédiée, un index spécialisé ou une policy de sécurité spécifique DOIT devenir un champ/colonne dédié côté Core, pas une clé implicite de `fields`
 
 
 ## 10) Codes d’erreur (normatifs)
@@ -1819,9 +2028,11 @@ Contrat minimal `facts_patch` :
 * `423 LOCK_REQUIRED` / `LOCK_INVALID`
 * `426 UNSUPPORTED_FEATURE_FLAGS_CONTRACT_VERSION`
 * `410 PURGED`
+* `412 PRECONDITION_FAILED`
 * `422 VALIDATION_FAILED`
+* `428 PRECONDITION_REQUIRED`
 * `429 TOO_MANY_ATTEMPTS`
-* `429 RATE_LIMITED`
+* `429 SLOW_DOWN`
 * `503 TEMPORARY_UNAVAILABLE`
 
 Le payload d’erreur normatif est défini dans [`ERROR-MODEL.md`](ERROR-MODEL.md).
@@ -1864,7 +2075,7 @@ Règles normatives (tous les repos consommateurs : UI, core, agents, MCP, toolin
 * la valeur DOIT être le hash SHA-256 calculé depuis `api/openapi/v1.yaml` de `retaia-docs`
 * la CI DOIT échouer si le hash versionné localement ne correspond plus au hash de la spec courante (drift détecté)
 * la mise à jour du hash DOIT être explicite dans une PR, via une commande dédiée (pas d’update implicite en pipeline)
-* la CI DOIT aussi échouer si un endpoint/champ documenté dans `API-CONTRACTS.md` n'existe plus dans `openapi/v1.yaml` (gate de cohérence contrat/docs)
+* la CI DOIT aussi échouer si un endpoint/champ contractuel listé dans `contracts/api-contracts-v1.required.json` n'existe plus dans `openapi/v1.yaml` (gate de cohérence contrat/docs)
 
 Notes d'interprétation :
 

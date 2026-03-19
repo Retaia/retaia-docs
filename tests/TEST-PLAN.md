@@ -17,7 +17,7 @@ Tests obligatoires :
 
 * precedence de config Core respectée : `.env` < `.env.<APP_ENV>` < `.env.local` < variables shell runtime (la valeur finale DOIT être celle de la dernière couche)
 * absence de `.env.<APP_ENV>` et/ou `.env.local` ne fait pas échouer le boot si les variables requises sont résolues
-* `APP_STORAGE_ID` mismatch avec `/.retaia.storage_id` => boot refusé (erreur explicite)
+* `APP_STORAGE_ID` mismatch avec le champ JSON `storage_id` du marker `/.retaia` => boot refusé (erreur explicite)
 * marker `/.retaia` absent => création automatique par Core au boot/update, puis validation
 * marker `/.retaia` JSON invalide => boot refusé (erreur explicite)
 * échec de migration atomique du marker (`create/write/rename`) => boot/update refusé (pas de mode dégradé)
@@ -36,6 +36,14 @@ Tests obligatoires :
 * l'horloge et les sources d'aléa sont contrôlées (mock/fake) pour garantir le déterminisme
 * un test "unitaire" qui dépend d'une ressource réelle est reclassé en test d'intégration
 
+## 0.3) Transport i18n
+
+Tests obligatoires :
+
+* tous les endpoints REST v1 partagés acceptent `Accept-Language`
+* la présence ou l'absence de `Accept-Language` ne modifie jamais `code`, `state`, `job_type`, `decision` ni la structure métier des payloads
+* si un payload expose un `message` humain, `Accept-Language` peut en influencer la locale avec fallback sans effet sur les champs machine
+
 ## 1) State machine
 
 Tests obligatoires :
@@ -43,6 +51,8 @@ Tests obligatoires :
 * toutes transitions autorisées passent
 * transitions interdites renvoient `409 STATE_CONFLICT`
 * `PURGED` est terminal
+* la matrice canonique `transition -> endpoint -> préconditions -> refus` définie dans `STATE-MACHINE.md` est respectée sans exception locale
+* `PROCESSED -> DECISION_PENDING` est toujours déclenchée par Core, jamais par un endpoint client dédié
 
 ## 1.1) Auth applicative
 
@@ -84,12 +94,28 @@ Tests obligatoires :
 * `GET /auth/me`:
   * bearer valide => `200` + payload utilisateur courant
   * bearer absent/invalide => `401 UNAUTHORIZED`
+* `GET /auth/me/sessions`:
+  * bearer valide => `200` + liste des sessions interactives
+  * payload minimal par session: `session_id`, `client_id`, `created_at`, `last_used_at`, `expires_at?`, `is_current`, `device_label?`, `browser?`, `os?`, `ip_address_last_seen?`
+  * une seule session courante a `is_current=true`
+  * aucun `access_token` ni `refresh_token` n'est exposé
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+* `POST /auth/me/sessions/{session_id}/revoke`:
+  * bearer valide + session tierce appartenant à l'utilisateur => `200`
+  * tentative de révoquer la session courante => `409 STATE_CONFLICT`
+  * session inconnue ou non possédée => `404`
+  * bearer absent/invalide => `401 UNAUTHORIZED`
+* `POST /auth/me/sessions/revoke-others`:
+  * bearer valide => `200` + compteur `revoked`
+  * la session courante reste active
+  * bearer absent/invalide => `401 UNAUTHORIZED`
 * `GET /app/features`:
   * bearer admin valide => `200` + payload `app_feature_enabled`
   * bearer user non-admin => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
-  * payload stable obligatoire: `app_feature_enabled`, `feature_governance`, `core_v1_global_features`
+  * payload stable obligatoire: `app_feature_enabled`, `app_feature_explanations`, `feature_governance`, `core_v1_global_features`
   * réponse inclut `feature_governance[]` (`key`, `tier`, `user_can_disable`, `dependencies[]`, `disable_escalation[]`)
   * réponse inclut `core_v1_global_features[]` (registre canonique des features non désactivables)
+  * réponse inclut `app_feature_explanations.<feature_key>` avec `effective_value`, `reason_code?`, `dependency_key?`, `parent_feature_key?`
   * bearer absent/invalide => `401 UNAUTHORIZED`
 * `PATCH /app/features`:
   * bearer admin valide + body valide => `200` + payload `app_feature_enabled` mis à jour
@@ -99,8 +125,9 @@ Tests obligatoires :
   * `app_feature_enabled.features.ai=false` => seules les fonctionnalités MCP dépendantes de l’AI sont désactivées
 * `GET /auth/me/features`:
   * bearer valide => `200` + `user_feature_enabled` + `effective_feature_enabled` + `feature_governance`
-  * payload stable obligatoire: `user_feature_enabled`, `effective_feature_enabled`, `feature_governance`, `core_v1_global_features`
+  * payload stable obligatoire: `user_feature_enabled`, `effective_feature_enabled`, `effective_feature_explanations`, `feature_governance`, `core_v1_global_features`
   * réponse inclut `core_v1_global_features[]`
+  * réponse inclut `effective_feature_explanations.<feature_key>` avec `effective_value`, `reason_code?`, `dependency_key?`, `parent_feature_key?`
   * bearer absent/invalide => `401 UNAUTHORIZED`
 * `PATCH /auth/me/features`:
   * bearer valide + body valide => `200` + préférences utilisateur mises à jour
@@ -115,6 +142,7 @@ Tests obligatoires :
   * bearer client technique valide (`TechnicalBearerAuth`) => `200`
   * bearer absent/invalide => `401 UNAUTHORIZED`
   * endpoint runtime canonique pour `UI_WEB` et `AGENT` en v1; `MCP` rejoint ce contrat en v1.1+
+  * refresh périodique canonique côté client actif : `30s`
 * `POST /app/policy`:
   * bearer admin valide + body valide (`feature_flags`) => `200`
   * bearer absent/invalide => `401 UNAUTHORIZED`
@@ -201,98 +229,30 @@ Tests obligatoires :
   * acteur/scope interdit => `403 FORBIDDEN_ACTOR|FORBIDDEN_SCOPE`
   * conflit de rotation => `409 STATE_CONFLICT`
   * body invalide => `422 VALIDATION_FAILED`
-* `GET /app/policy`:
-  * bearer utilisateur valide => `200` + `server_policy.feature_flags`
-  * bearer client technique valide (`TechnicalBearerAuth`) => `200`
-  * bearer absent/invalide => `401 UNAUTHORIZED`
-  * endpoint runtime canonique pour `UI_WEB` et `AGENT` en v1; `MCP` rejoint ce contrat en v1.1+
-* `POST /app/policy`:
-  * bearer admin valide + body valide (`feature_flags`) => `200`
-  * bearer absent/invalide => `401 UNAUTHORIZED`
-  * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
-  * tentative de mutation d’un flag encore `code-backed` => `409 STATE_CONFLICT`
-  * body invalide => `422 VALIDATION_FAILED`
-* `POST /auth/lost-password/request`:
-  * body valide (`email`) => `202`
-  * body invalide => `422 VALIDATION_FAILED`
-  * rate limit => `429 TOO_MANY_ATTEMPTS`
-* `POST /auth/lost-password/reset`:
-  * body valide (`token`, `new_password`) => `200`
-  * token invalide/expiré => `400 INVALID_TOKEN`
-  * body invalide => `422 VALIDATION_FAILED`
-* `POST /auth/verify-email/request`:
-  * body valide (`email`) => `202`
-  * body invalide => `422 VALIDATION_FAILED`
-  * rate limit => `429 TOO_MANY_ATTEMPTS`
-* `POST /auth/verify-email/confirm`:
-  * body valide (`token`) => `200`
-  * token invalide/expiré => `400 INVALID_TOKEN`
-  * body invalide => `422 VALIDATION_FAILED`
-* `POST /auth/verify-email/admin-confirm`:
-  * bearer admin valide + body valide (`email`) => `200`
-  * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
-  * utilisateur inexistant => `404 USER_NOT_FOUND`
-  * body invalide => `422 VALIDATION_FAILED`
-* `POST /auth/clients/{client_id}/revoke-token`:
-  * bearer admin valide + `client_id` valide => `200` et token(s) invalide(s)
-  * bearer absent/invalide => `401 UNAUTHORIZED`
-  * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
-  * `client_id` invalide => `422 VALIDATION_FAILED`
-  * `client_id` de type `UI_WEB` protégé => `403` (non révocable via cet endpoint)
-* `POST /auth/clients/token`:
-  * `client_id + client_kind=AGENT + secret_key` valides => `200` + bearer token client
-  * credentials client invalides => `401 UNAUTHORIZED`
-  * body invalide => `422 VALIDATION_FAILED`
-  * rate limit => `429 TOO_MANY_ATTEMPTS`
-  * invariant: nouveau token minté pour un client révoque l’ancien token (1 token actif / client)
-  * `client_kind in {UI_WEB, MCP}` refusé (`403 FORBIDDEN_ACTOR`)
-* `POST /auth/clients/device/start`:
-  * `client_kind=AGENT` => `200` + `device_code`, `user_code`, `verification_uri`, `verification_uri_complete`
-  * `client_kind=MCP` => `403 FORBIDDEN_ACTOR`
-  * body invalide => `422 VALIDATION_FAILED`
-  * rate limit => `429 TOO_MANY_ATTEMPTS`
-* `POST /auth/clients/device/poll`:
-  * avant validation UI => statut `PENDING`
-  * après approval UI => statut `APPROVED` + `secret_key` one-shot
-  * approval refusée par utilisateur => statut `DENIED`
-  * code expiré => statut `EXPIRED`
-  * body invalide => `422 VALIDATION_FAILED`
-  * polling trop fréquent => `429 SLOW_DOWN`/`TOO_MANY_ATTEMPTS`
-* `POST /auth/clients/device/cancel`:
-  * flow en cours => `200` canceled
-  * `device_code` invalide/expiré => `400 INVALID_DEVICE_CODE|EXPIRED_DEVICE_CODE`
-* `POST /auth/clients/{client_id}/rotate-secret`:
-  * bearer admin valide + `client_id` valide => `200` + nouvelle `secret_key` (retournée une fois)
-  * bearer absent/invalide => `401 UNAUTHORIZED`
-  * acteur/scope interdit => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
-  * `client_id` invalide => `422 VALIDATION_FAILED`
-* `POST /auth/mcp/register` (`v1.1+`):
-  * bearer utilisateur valide + clé publique valide => `200` + `client_id` MCP
-  * bearer absent/invalide => `401 UNAUTHORIZED`
-  * acteur/scope interdit => `403 FORBIDDEN_ACTOR|FORBIDDEN_SCOPE`
-  * conflit d'enrôlement => `409 STATE_CONFLICT`
-  * body invalide => `422 VALIDATION_FAILED`
-* `POST /auth/mcp/challenge` (`v1.1+`):
-  * `client_id` MCP + fingerprint valides => `200` + challenge court
-  * challenge one-shot avec TTL <= 5 minutes
-  * challenge expiré ou rejoué => refusé
-  * body invalide => `422 VALIDATION_FAILED`
-  * rate limit => `429 TOO_MANY_ATTEMPTS`
-* `POST /auth/mcp/token` (`v1.1+`):
-  * challenge valide + signature valide => `200` + bearer token client `MCP`
-  * challenge expiré, consommé ou rejoué => `401 UNAUTHORIZED`
-  * signature/challenge invalides => `401 UNAUTHORIZED`
-  * body invalide => `422 VALIDATION_FAILED`
-  * rate limit => `429 TOO_MANY_ATTEMPTS`
-* `POST /auth/mcp/{client_id}/rotate-key` (`v1.1+`):
-  * bearer admin valide + clé publique valide => `200` + fingerprint rotaté
-  * acteur/scope interdit => `403 FORBIDDEN_ACTOR|FORBIDDEN_SCOPE`
-  * conflit de rotation => `409 STATE_CONFLICT`
-  * body invalide => `422 VALIDATION_FAILED`
 * `GET /assets/{uuid}`:
   * retourne `summary.revision_etag` et le header `ETag`
+  * `summary.revision_etag` et `ETag` utilisent le même strong validator HTTP quoté
+  * retourne `Cache-Control: private, no-store`
+  * expose toujours `paths`, `processing`, `derived`, `decisions` et `audit`
+  * ne pratique aucune redaction actor-specific entre `UserBearerAuth` et `TechnicalBearerAuth` en `v1`
+  * `summary` expose aussi `name`, `updated_at?` et `revision_etag?`
+  * `processing.processing_profile` suit l'enum canonique des processing profiles
+  * `transcript` pré-release n'expose pas de jeton de concurrence propre
+  * `decisions.history[]` expose au minimum `action`, `at`, `by` dans l'ordre chronologique croissant
+  * `audit.path_history[]` est une liste de chemins relatifs canonicalisés, en ordre chronologique croissant
+* `GET /assets`:
+  * retourne `Cache-Control: private, no-store`
+  * `state` et `tags` utilisent un encodage CSV sur une occurrence unique du paramètre
+  * ordre des valeurs CSV non significatif, doublons ignorés
+  * `sort` par défaut = `-created_at`
+  * tie-break déterministe par `uuid` croissant
+  * `cursor` est opaque et rejeté si réutilisé avec un tuple `(filtres, sort, limit)` différent
+  * `geo_bbox` invalide, hors bornes, avec min/max inversés ou traversant l'antiméridien => `400 VALIDATION_FAILED`
 * `PATCH /assets/{uuid}`, `POST /assets/{uuid}/reprocess`, `POST /assets/{uuid}/reopen`:
   * `If-Match` obligatoire
+  * `If-Match` reprend exactement le strong validator HTTP quoté lu dans `ETag` / `summary.revision_etag`
+  * `AssetSummary.revision_etag` et `GET /assets/{uuid}` exposent la même révision métier
+  * le détail et son `ETag` restent la source canonique avant écriture si le client a un doute sur la fraîcheur de sa liste
   * précondition absente => `428 PRECONDITION_REQUIRED`
   * révision périmée => `412 PRECONDITION_FAILED`
   * `revision_etag` change sur toute mutation métier visible en UI
@@ -308,6 +268,12 @@ Tests obligatoires :
   * `os_name`, `os_version`, `arch` requis
   * reconnexion avec le même `agent_id` => même instance corrélable côté Core
   * deux agents actifs avec le même `agent_id` : register autorisé, conflit journalisé et visible en ops
+* `POST /jobs/{job_id}/claim`:
+  * `200` expose `lock_token`, `fencing_token` et `locked_until`
+* `POST /jobs/{job_id}/heartbeat`, `POST /jobs/{job_id}/submit`, `POST /jobs/{job_id}/fail`:
+  * `lock_token` et `fencing_token` sont tous deux obligatoires
+  * `fencing_token` obsolète renvoie `409 STALE_LOCK_TOKEN`
+  * absence ou invalidité de `lock_token` ou `fencing_token` renvoie `423 LOCK_REQUIRED|LOCK_INVALID`
   * `agent_id` absent/vide => `422 VALIDATION_FAILED`
   * aucun identifiant DB interne Core distinct n'est exposé dans le payload API
   * clé publique OpenPGP inconnue/invalide ou signature register invalide => refus auth explicite
@@ -327,6 +293,7 @@ Matrice de migration v1 runtime (gelée) :
   * `UI_WEB` utilise `POST /auth/login` + bearer + refresh token
   * `AGENT_UI` n'effectue aucun login humain direct; il ouvre `UI_WEB` dans le browser pour l'approval du daemon
   * anti lock-out: l'UI n'expose jamais le token en clair et n'offre pas d'action d'auto-révocation du token UI actif
+  * la révocation ciblée device/browser passe par `GET /auth/me/sessions`, `POST /auth/me/sessions/{session_id}/revoke` et `POST /auth/me/sessions/revoke-others`
 * régression interdite: aucun endpoint runtime n'accepte encore `SessionCookieAuth` (API stateless/sessionless)
 * 2FA optionnelle: compte sans 2FA active ne requiert pas OTP
 * création de secret `AGENT` via UI :
@@ -353,7 +320,8 @@ Tests obligatoires :
 * client `MCP` obtient son bearer technique via `POST /auth/mcp/challenge` + `POST /auth/mcp/token`
 * toute écriture MCP sensible exige bearer technique + `client_id` + signature `OpenPGP` + fingerprint + timestamp + nonce
 * rejeu d'un `X-Retaia-Signature-Nonce` MCP déjà vu => refus explicite
-* skew temps hors fenêtre autorisée sur `X-Retaia-Signature-Timestamp` MCP => refus explicite
+* rejeu d'un `X-Retaia-Signature-Nonce` MCP déjà vu dans la fenêtre de rétention `15 minutes` => `401 UNAUTHORIZED`
+* skew temps hors fenêtre autorisée (`> 60s`) sur `X-Retaia-Signature-Timestamp` MCP => `401 UNAUTHORIZED`
 * écriture MCP sensible refusée si `X-Retaia-Client-Id` ne correspond pas au `client_id` du bearer technique
 * client `MCP` peut piloter/orchestrer l'agent sans exécuter de processing (gate `v1.1` global)
 * client `MCP` ne peut pas `claim/heartbeat/submit` de job (`/jobs/*` => `403 FORBIDDEN_ACTOR`) (gate `v1.1` global)
@@ -363,7 +331,14 @@ Tests obligatoires :
 * cible Linux headless Raspberry Pi (Kodi/Plex) validée en non-régression
 * capacités IA (providers/modèles/transcription/suggestions) couvertes par le plan de tests v1.1 (hors conformité v1)
 * runtime status-driven validé: la vérité d'état est synchronisée par polling, même si un canal push existe (WebSocket, SSE, webhook, autres push)
-* polling jobs/policy respecte les intervalles contractuels et applique backoff+jitter sur `429`
+* polling jobs/policy respecte les intervalles contractuels : `GET /jobs` toutes les `5s` (ou `max(5, min_poll_interval_seconds)`), `GET /app/policy` toutes les `30s`
+* `429` applique le backoff canonique : base `2s`, facteur `x2`, plafond `60s`, full jitter, reset après succès
+* hooks serveur v1 :
+  * seuls `after_processed_before_decision_pending` et `on_enter_decision_pending` existent
+  * `blocking=true` n'est autorisé que pour `after_processed_before_decision_pending`
+  * un hook `blocking=true` en échec interrompt la transition, laisse l'asset dans l'état précédent et renvoie `409 STATE_CONFLICT`
+  * un hook `blocking=true` n'émet jamais de `patches`
+  * les `patches` de hook v1 sont limités à `fields` et `notes`
 
 ## 1.3) Gates de non-régression obligatoires (release blockers)
 
@@ -392,10 +367,12 @@ Tests obligatoires :
 * claim atomique concurrent (un gagnant)
 * lease expiry rend le job reclaimable
 * heartbeat prolonge `locked_until`
+* recovery crash suit la matrice normative FS/DB de `LOCK-LIFECYCLE.md`
 * job `pending` sans agent compatible reste `pending` sans erreur
 * `claim`, `heartbeat`, `submit`, `fail`, `derived/upload/*` refusés si la signature agent est absente/invalide
 * rejeu d'un `X-Retaia-Signature-Nonce` déjà vu => refus explicite
-* skew temps hors fenêtre autorisée sur `X-Retaia-Signature-Timestamp` => refus explicite
+* rejeu d'un `X-Retaia-Signature-Nonce` déjà vu dans la fenêtre de rétention `15 minutes` => `401 UNAUTHORIZED`
+* skew temps hors fenêtre autorisée (`> 60s`) sur `X-Retaia-Signature-Timestamp` => `401 UNAUTHORIZED`
 * rotation de clé agent explicite uniquement; aucune régénération silencieuse acceptée
 
 ## 3) Processing profiles
@@ -416,12 +393,12 @@ Tests obligatoires :
 * `AUDIO` découvert sans qualification humaine démarre en `audio_undefined`
 * `audio_undefined` mène à `REVIEW_PENDING_PROFILE` quand les dérivés minimaux sont prêts
 * `REVIEW_PENDING_PROFILE` est visible dans la même surface UI de review mais n'autorise aucune décision KEEP/REJECT
+* aucun état Core exposé par l'API n'est entièrement masqué par `UI_WEB`
 * si le choix humain fixe un profil qui exige `transcribe_audio` dans la phase active, Core crée automatiquement ce job puis repasse l'asset en `READY`
 * si le choix humain fixe un profil déjà complet, l'asset passe à `PROCESSED`
 * `PATCH /assets/{uuid}` avec `processing_profile` est refusé hors `READY|PROCESSING_REVIEW|REVIEW_PENDING_PROFILE`
 * `PATCH /assets/{uuid}` avec `processing_profile=audio_voice` DOIT être accepté comme mutation humaine explicite via `UI_WEB`
-* si le profil effectif après patch exige `transcribe_audio` dans la phase active et que `transcript.status != DONE`, toute tentative de faire aboutir l'asset en `DECIDED_KEEP` ou `ARCHIVED` DOIT être refusée avec `409 STATE_CONFLICT`
-* `PATCH /assets/{uuid}` combinant choix de profil + décision `DECIDED_KEEP` DOIT donc être refusé tant que le transcript requis n'est pas produit
+* avant validation `v1.1+`, la présence ou l'absence d'un `transcript` pré-release ne DOIT PAS bloquer une décision humaine `v1`
 
 ## 3.1) Audio waveform UX (client)
 
@@ -507,6 +484,18 @@ Tests obligatoires :
   * `derived/upload/complete` seul ne publie jamais un dérivé courant
   * seul un `submit` valide publiant le `derived_patch` rend le dérivé courant visible
   * pour un même `asset_uuid`, une même révision et un même `kind`, la dernière référence acceptée remplace atomiquement la précédente
+* delivery HTTP :
+  * `GET /assets/{uuid}/derived` retourne un payload `AssetDerived` stable
+  * les URLs de dérivés exposées sont des URLs Core stables, non signées, non éphémères
+  * `GET /assets/{uuid}/derived/{kind}` ne redirige jamais en `3xx`
+  * `GET /assets/{uuid}/derived` et `GET /assets/{uuid}/derived/{kind}` retournent `Cache-Control: private, no-store`
+  * `GET /assets/{uuid}/derived/{kind}` retourne `200` ou `206` avec `Content-Type`
+  * `Accept-Ranges: bytes` n'est présent que pour `preview_video` et `preview_audio`
+* upload multipart dérivés :
+  * `POST /assets/{uuid}/derived/upload/part` utilise `multipart/form-data`
+  * le champ binaire s'appelle `chunk`
+  * la réponse expose `part_etag`
+  * `POST /assets/{uuid}/derived/upload/complete` réutilise `parts[].part_number` + `parts[].part_etag`
 
 ## 3.3) Facts contract (obligatoire)
 
@@ -530,6 +519,10 @@ Tests obligatoires :
 * ajout manuel de keywords : après confirmation UI, aucune liste Core "non appliquée" spécifique n'est créée; la mutation est immédiatement persistée par asset
 * action groupée UI sans validation explicite (annulation de confirmation) : aucun appel unitaire Core émis
 * historique de révisions asset mis à jour après mutation validée (`revision_history[]` append + `is_current=true` sur la dernière)
+* `revision_history[]` expose au minimum `revision`, `created_at`, `is_current`, `published_at?`, `validation_status`
+* `revision_history[]` est retourné en ordre croissant de `revision`
+* une seule entrée de `revision_history[]` a `is_current=true`
+* l'entrée courante de `revision_history[]` correspond au `summary.revision_etag` courant
 * mutation asset avec `If-Match` périmé => `412 PRECONDITION_FAILED`
 * `412 PRECONDITION_FAILED` asset expose `details.current_revision_etag` et `details.current_state`
 * `PATCH /assets/{uuid}`, `POST /assets/{uuid}/reprocess` et `POST /assets/{uuid}/reopen` renvoient `428 PRECONDITION_REQUIRED` si `If-Match` est absent
@@ -555,6 +548,7 @@ Tests obligatoires :
 * purge seulement depuis `REJECTED`
 * purge supprime originaux + sidecars + dérivés
 * purge idempotente avec `Idempotency-Key`
+* rétention idempotency fixée à `24h`
 * `POST /assets/purge` exige une liste explicite `asset_uuids[]`
 * `POST /assets/purge` ne signifie jamais “purge tout” sans sélection explicite
 * `POST /assets/purge` peut réussir partiellement et retourne un résultat par asset
@@ -618,16 +612,18 @@ Tests obligatoires :
 * endpoint `GET /ops/locks` présent et conforme :
   * filtres `asset_uuid`, `lock_type`, pagination `limit`, `offset`
   * payload `items[]` + `total` (total avant pagination)
+  * tri implicite canonique `acquired_at DESC`
 * endpoint `POST /ops/locks/recover` présent et conforme :
   * body `stale_lock_minutes`, `dry_run`
   * payload `stale_examined`, `recovered`, `dry_run`
-  * `stale_lock_minutes` non entier ou < 1: comportement explicite documenté (coercion v1 ou `400 VALIDATION_FAILED`)
+  * `stale_lock_minutes` non entier ou < 1 => `400 VALIDATION_FAILED`
 * endpoint `GET /ops/jobs/queue` présent et conforme :
   * `summary.pending_total|claimed_total|failed_total`
   * `by_type[]` avec `job_type`, `pending`, `claimed`, `failed`, `oldest_pending_age_seconds`
 * endpoint `GET /ops/agents` présent et conforme :
   * filtres `status`, pagination `limit`, `offset`
   * payload `items[]` + `total`
+  * tri implicite canonique `last_seen_at DESC`
   * `items[]` expose `agent_id`, `client_id`, `agent_name`, `agent_version`, `os_name`, `os_version`, `arch`, `status`, `last_seen_at`, `effective_capabilities[]`
   * `agent_id` exposé correspond à l'identifiant public persistant d'instance, pas à une clé interne DB
   * `identity_conflict` booléen exposé si le même `agent_id` est vu sur plusieurs agents actifs
@@ -662,10 +658,16 @@ Tests obligatoires :
 
 * `q` (full-text) fonctionne en `v1`
 * `transcribe_audio`, `suggest_tags` et `suggested_tags*` sont hors périmètre v1 et planifiés en `v1.1+`
+* le registre canonique `job_type -> required_capabilities -> outputs` défini dans `JOB-TYPES.md` est respecté sans output structurant implicite
 * `transcribe_audio` devient obligatoire à partir de la phase `v1.1+` validée pour tout média dont le `processing_profile` l'exige
 * avant cette phase validée, `transcribe_audio` PEUT être exercé en pré-release uniquement via `feature_flags`
 * `suggest_tags` refuse de tourner si `facts_ref` est absent
 * `suggest_tags` accepte l'absence de `transcript_ref`
+* provider indisponible pour `suggest_tags` => `failed` retryable, sans fallback implicite de provider
+* `generate_preview` projette exactement un dérivé canonique `preview_video|preview_audio|preview_photo`
+* `generate_thumbnails` projette `thumbs[]` dans `AssetDetail.derived.thumbs[]`
+* `generate_audio_waveform` projette `waveform_data` via `AssetDetail.derived.waveform_url`
+* `extract_facts` produit les champs minimaux applicables au `media_type`
 * si `transcript_ref` est présent, il est utilisé comme enrichissement sémantique préféré
 * les tags/champs/notes humains existants sont traités comme contexte faisant autorité pour éviter doublons et contradictions, jamais comme cible à réécrire automatiquement
 
@@ -728,6 +730,9 @@ Tests obligatoires :
 * continuous development validé: suppression d’un flag n’interrompt pas UI/Agent/MCP déjà déployés dans la fenêtre d’acceptance
 * continuous deployment validé: une release Core avec retrait de flag passe les gates CD sans exiger upgrade client synchronisée
 * chaque kill-switch permanent a une entrée dans `change-management/FEATURE-FLAG-KILLSWITCH-REGISTRY.md`
+* chaque clé partagée `v1.0.0` existe dans `change-management/FEATURE-FLAG-REGISTRY.md`
+* `core_v1_global_features[]` correspond exactement aux clés `Tier = CORE_V1_GLOBAL` du registre
+* `feature_governance[]` reste aligné avec `FEATURE-FLAG-REGISTRY.md` pour `tier`, `dependencies[]`, `disable_escalation[]` et `user_can_disable`
 
 ## 8.4.b) Matrice de vérité feature governance
 
@@ -752,7 +757,7 @@ Tests obligatoires :
 * la commande dédiée de refresh met à jour explicitement `contracts/openapi-v1.sha256`
 * toute mise à jour de snapshot est visible dans la PR (pas de mutation implicite en post-merge)
 * non-régression v1 : un refresh de snapshot ne modifie pas la sémantique des comportements `v1` existants
-* gate de cohérence contrat/docs : CI échoue si un endpoint/champ mentionné dans `api/API-CONTRACTS.md` n'existe pas dans `api/openapi/v1.yaml`
+* gate de cohérence contrat/docs : CI échoue si un endpoint/champ contractuel listé dans `contracts/api-contracts-v1.required.json` n'existe pas dans `api/openapi/v1.yaml`
 
 ## 8.6) Workflow Git (historique linéaire)
 
@@ -791,9 +796,43 @@ Tests obligatoires :
 * update admin de `app_feature_enabled` produit un audit event `app_feature_enabled.updated`
 * update user de `user_feature_enabled` produit un audit event `user_feature_enabled.updated`
 * refus `FORBIDDEN_SCOPE` produit un audit event `feature_access.denied` avec `reason_code`
+* `feature_effective.resolved` expose `effective_value` et, si `OFF`, un `reason_code` canonique
+* `reason_code` feature canonique limite a `FEATURE_FLAG_OFF|ADMIN_DISABLED|USER_OPT_OUT|DEPENDENCY_OFF|DISABLE_ESCALATION|CORE_PROTECTED|UNSUPPORTED_CONTRACT_VERSION`
+* `DEPENDENCY_OFF` expose `dependency_key`
+* `DISABLE_ESCALATION` expose `parent_feature_key`
+* taxonomie observabilite cross-app disponible :
+  * `asset.state.changed`
+  * `asset.reprocess.requested`
+  * `asset.reopen.requested`
+  * `asset.processing_profile.changed`
+  * `asset.purge.requested`
+  * `asset.purge.completed`
+  * `job.claim.succeeded|job.claim.conflict`
+  * `job.heartbeat.succeeded|job.heartbeat.conflict`
+  * `job.submit.succeeded|job.submit.conflict`
+  * `job.fail.recorded`
+  * `hook.execution.succeeded|hook.execution.failed`
+  * `feature.contract_version.unsupported`
+* severite canonique observee :
+  * `job.fail.recorded` = `ERROR`
+  * `job.*.conflict` = `WARN`
+  * `asset.purge.*` = `WARN`
+  * `feature.contract_version.unsupported` = `WARN`
 * calcul de `effective_feature_enabled` produit `feature_effective.resolved` traçable par `request_id`/`trace_id`
+* payloads `app_feature_explanations` et `effective_feature_explanations` reprennent sans dérive locale la même taxonomie `reason_code`
 * métriques `feature_toggle_admin_total`, `feature_toggle_user_total`, `feature_denied_total`, `feature_effective_off_total` exposées
 * histogramme `feature_resolution_duration_ms` exposé
+* tout `app_feature_enabled.updated` accepté produit un audit event et incrémente `feature_toggle_admin_total`
+* tout `user_feature_enabled.updated` accepté produit un audit event et incrémente `feature_toggle_user_total`
+* tout `feature_access.denied` produit un audit event et incrémente `feature_denied_total`
+* tout `feature_effective.resolved` avec `effective_value=false` produit un audit event, incrémente `feature_effective_off_total` et observe `feature_resolution_duration_ms`
+* toute UI ops qui expose les événements conserve au minimum `event_name`, `severity`, `timestamp_utc`, `outcome`, `error_code?`
+* `actor_id` brut reste présent dans les journaux d'audit protégés
+* toute exportation hors frontière de confiance utilise `actor_id_pseudonymized=psd_<16 octets hex HMAC>`
+* seuils canoniques d'alerte conformes :
+  * `feature_denied_total{reason_code=\"CORE_PROTECTED\"}` >= `5` sur `5 minutes`
+  * `p95(feature_resolution_duration_ms) > 250ms` sur `15 minutes`
+  * `feature_effective_off_total` sur feature critique >= `10` sur `10 minutes`
 * logs/traces ne contiennent ni token, ni secret, ni PII en clair
 * roundtrip encrypt/decrypt valide avec librairie OpenPGP autorisée par stack
 * signature/verification valide pour payloads sensibles signés

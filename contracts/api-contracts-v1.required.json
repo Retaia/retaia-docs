@@ -1,0 +1,92 @@
+{
+  "paths": [
+    "/auth/me/sessions",
+    "/auth/me/sessions/{session_id}/revoke",
+    "/auth/me/sessions/revoke-others",
+    "/auth/me/features",
+    "/app/features",
+    "/app/policy",
+    "/assets",
+    "/assets/{uuid}",
+    "/assets/{uuid}/derived/upload/init",
+    "/assets/{uuid}/derived/upload/part",
+    "/assets/{uuid}/derived/upload/complete",
+    "/jobs/{job_id}/claim",
+    "/jobs/{job_id}/heartbeat",
+    "/jobs/{job_id}/submit",
+    "/jobs/{job_id}/fail",
+    "/ops/locks"
+  ],
+  "schemas": {
+    "ServerPolicy": {
+      "properties": [
+        "feature_flags",
+        "feature_flags_contract_version",
+        "effective_feature_flags_contract_version",
+        "accepted_feature_flags_contract_versions"
+      ]
+    },
+    "AssetSummary": {
+      "properties": [
+        "uuid",
+        "state",
+        "name",
+        "updated_at",
+        "revision_etag"
+      ]
+    },
+    "AssetDetail": {
+      "properties": [
+        "summary",
+        "notes",
+        "fields",
+        "paths",
+        "processing",
+        "derived",
+        "decisions",
+        "audit"
+      ]
+    },
+    "AssetPaths": {
+      "properties": [
+        "storage_id",
+        "original_relative",
+        "sidecars_relative"
+      ]
+    },
+    "AssetProcessing": {
+      "properties": [
+        "facts_done",
+        "thumbs_done",
+        "preview_done",
+        "waveform_done",
+        "processing_profile",
+        "review_processing_version"
+      ]
+    },
+    "AssetDerived": {
+      "properties": [
+        "preview_video_url",
+        "preview_audio_url",
+        "preview_photo_url",
+        "thumbs",
+        "waveform_url"
+      ]
+    },
+    "Job": {
+      "properties": [
+        "lock_token",
+        "fencing_token",
+        "locked_until"
+      ]
+    },
+    "ErrorResponse": {
+      "properties": [
+        "code",
+        "message",
+        "retryable",
+        "correlation_id"
+      ]
+    }
+  }
+}

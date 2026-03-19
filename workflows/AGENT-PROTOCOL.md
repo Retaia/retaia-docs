@@ -40,9 +40,15 @@ Portée d'exécution :
 ### 2.1 Polling runtime (normatif)
 
 * Les boucles de polling (`GET /jobs`, device flow poll, policy refresh) DOIVENT respecter les intervalles contractuels renvoyés par Core.
-* En cas de `429` (`SLOW_DOWN`/`TOO_MANY_ATTEMPTS`), l'agent DOIT appliquer un backoff avec jitter.
+* En cas de `429` (`SLOW_DOWN`/`TOO_MANY_ATTEMPTS`), l'agent DOIT appliquer le backoff canonique du contrat partagé : base `2s`, facteur `x2`, plafond `60s`, full jitter, reset après succès.
 * Le refresh des flags/policy DOIT être périodique; l'agent NE DOIT PAS attendre un signal push pour appliquer un changement de vérité métier.
 * Les actions mutatrices (claim/submit/fail) ne partent qu'après lecture d'un état compatible via polling.
+
+Cadences canoniques v1 :
+
+* `GET /jobs` : toutes les `5s`, ou `max(5, server_policy.min_poll_interval_seconds)` si Core impose un minimum supérieur
+* `GET /app/policy` : toutes les `30s` tant que l'agent est actif et authentifié
+* une action opérateur locale explicite PEUT déclencher un refresh anticipé de policy, sans jamais descendre sous `15s`
 
 
 ## 3. Enregistrement d’un agent
@@ -119,11 +125,12 @@ Règles de vérification côté Core :
 * la signature DOIT être une signature **OpenPGP détachée** conforme au standard [`GPG-OPENPGP-STANDARD.md`](../policies/GPG-OPENPGP-STANDARD.md)
 * `X-Retaia-Agent-Id` DOIT correspondre au `agent_id` du bearer technique
 * `X-Retaia-OpenPGP-Fingerprint` DOIT correspondre à la clé publique active enregistrée pour cet agent
-* Core DOIT vérifier la fraîcheur de `X-Retaia-Signature-Timestamp` dans une fenêtre bornée
-* Core DOIT empêcher le rejeu via `X-Retaia-Signature-Nonce`
+* Core DOIT vérifier la fraîcheur de `X-Retaia-Signature-Timestamp` dans une fenêtre d'écart absolu `<= 60s`
+* Core DOIT empêcher le rejeu via `X-Retaia-Signature-Nonce`, avec une rétention anti-rejeu minimale de `15 minutes`
 * Core DOIT rejeter toute requête si la signature est absente, invalide, expirée, rejouée ou si la clé est révoquée/inconnue
 * Core DOIT journaliser les échecs de vérification de signature comme événements sécurité
 * agent et Core DOIVENT utiliser des librairies OpenPGP standard maintenues; aucune implémentation crypto maison n'est autorisée
+* l'agent DOIT signer les octets HTTP bruts exacts qu'il envoie; aucune canonicalisation JSON supplémentaire n'est autorisée
 
 ### 3.2 Profils d’exécution (normatif)
 
@@ -141,17 +148,17 @@ Support plateforme minimal attendu :
 * macOS (laptop) via `CLI` et `GUI`
 * Windows (desktop) via `CLI` et/ou `GUI`
 
-Contrainte d’implémentation :
+Contrainte d’implémentation partagée :
 
-* la stack agent DOIT être implémentée en Rust pour la portabilité binaire cross-platform et le service mode.
+* la stack agent DOIT rester portable en binaire/service mode sur les plateformes supportées.
 
 ### 3.2.1 Baseline implémentation (normatif)
 
-Pour éviter le code local à maintenir, cette règle s'applique à toute implémentation (quel que soit le langage) :
+Pour éviter le code local à maintenir, cette règle s'applique à toute implémentation :
 
 * pour une préoccupation transverse (parsing CLI, sérialisation, erreurs typées, notification OS, retry/backoff, etc.), une librairie dédiée et maintenue DOIT être utilisée
 * l'implémentation locale d'une préoccupation transverse est interdite tant qu'une librairie maintenue existe
-* si l'implémentation est en Rust, baseline attendue: `clap` (CLI), `thiserror` (erreurs typées), `tauri-plugin-notification` (notifications GUI Tauri)
+* le choix du langage, du framework et des bibliothèques concrètes relève du repo enfant tant qu'il respecte les contraintes de portabilité, de maintenance et le contrat partagé défini ici
 
 ### 3.3 Modes d’auth agent (normatif)
 
@@ -269,7 +276,7 @@ Configuration agent obligatoire:
 * pour chaque mount `storage_mounts[*]`, l’agent DOIT lire et valider le marker `/.retaia`
 * le marker `/.retaia` DOIT être considéré comme la référence locale canonique pour `paths.inbox`, `paths.archive`, `paths.rejects`
 * le marker `/.retaia` est créé et maintenu exclusivement par Retaia Core (au boot et lors des updates applicatifs); l’agent NE DOIT JAMAIS le créer, l’éditer ou le réparer
-* `source.storage_id` DOIT matcher strictement `/.retaia.storage_id`; sinon l’agent DOIT échouer explicitement
+* `source.storage_id` DOIT matcher strictement le champ JSON `storage_id` du marker `/.retaia`; sinon l’agent DOIT échouer explicitement
 * la résolution du fichier source DOIT se faire par concaténation contrôlée:
   * `absolute_input_path = storage_mounts[source.storage_id] + "/" + source.original_relative`
 * `source.*` DOIT rester relatif et ne DOIT PAS contenir `..`, de chemin absolu, ni de null byte
@@ -337,8 +344,13 @@ L’agent ne décide jamais de la stratégie globale de retry.
 
 ## 7. Timeouts et TTL
 
-* Les valeurs de lease/TTL doivent être explicites (configuration côté serveur).
+* Les valeurs de lease/TTL partagées DOIVENT être explicites dans la spec partagée.
 * Toute modification des TTL/lock/retry est un changement structurel.
+* fenêtre de fraîcheur signature : `60s`
+* rétention anti-rejeu des nonces de signature : `15 minutes`
+* polling `GET /jobs` : `5s` par défaut, borné par `server_policy.min_poll_interval_seconds`
+* polling `GET /app/policy` : `30s`
+* backoff canonique sur `429` : base `2s`, facteur `x2`, plafond `60s`, full jitter
 
 
 ## 8. Sécurité

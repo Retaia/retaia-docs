@@ -17,6 +17,9 @@ Objectif: en cas d'exfiltration partielle (DB, logs, token, backup), les donnée
 ## 2) Exigences transverses (MUST)
 
 * toutes les communications runtime DOIVENT utiliser TLS
+* le point d'entrée partagé exposé à `UI_WEB`, `AGENT` et `MCP` DOIT être en `HTTPS`, y compris en développement
+* la terminaison TLS peut être assurée directement par le composant exposé ou par un reverse proxy frontal optionnel
+* un certificat public ou un certificat signé par une CA locale de confiance opérateur sont tous deux conformes selon l'environnement
 * tout secret applicatif DOIT être redigé des logs, traces et crash reports
 * toutes les erreurs 4xx/5xx exposées aux clients DOIVENT rester compatibles `ErrorResponse` (pas de stacktrace, pas de secret)
 * tous les tokens DOIVENT avoir `exp` borné et `jti` unique
@@ -38,8 +41,13 @@ Objectif: en cas d'exfiltration partielle (DB, logs, token, backup), les donnée
 * token utilisateur: 1 token actif par `(user_id, client_id)`
 * token technique: 1 token actif par `client_id`
 * émission d'un nouveau token pour la même cardinalité => révocation immédiate de l'ancien
-* JWT/claims minimales: `sub`, `principal_type`, `client_id`, `client_kind`, `scope`, `jti`, `exp`
+* token utilisateur (`UserBearerAuth`) : JWT
+* token technique (`TechnicalBearerAuth`) : bearer opaque
+* claims JWT minimales pour `UserBearerAuth`: `sub`, `principal_type`, `client_id`, `client_kind`, `scope`, `jti`, `exp`
 * aucun PII sensible dans les claims token
+* durée de vie nominale `UserBearerAuth.access_token` : `15 minutes`
+* durée de vie nominale `UI_WEB.refresh_token` : `30 jours`
+* durée de vie nominale `TechnicalBearerAuth.access_token` : `24 heures`
 
 ## 5) Règles client UI (MUST)
 
@@ -73,6 +81,8 @@ Objectif: en cas d'exfiltration partielle (DB, logs, token, backup), les donnée
 * secret/token/credential technique ne DOIT jamais être loggé
 * toute écriture agent -> Core DOIT être signée avec la clé privée `OpenPGP` de l'agent
 * Core DOIT vérifier `agent_id`, fingerprint OpenPGP, timestamp, nonce anti-rejeu et signature avant toute mutation agent
+* fenêtre de fraîcheur maximale pour `X-Retaia-Signature-Timestamp` : `60s`
+* rétention anti-rejeu minimale pour `X-Retaia-Signature-Nonce` : `15 minutes`
 
 ## 7) Données et exfiltration (MUST)
 

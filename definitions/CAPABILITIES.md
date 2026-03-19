@@ -68,7 +68,7 @@ La version suit une logique **major only** :
 Lors de son enregistrement, un agent **DOIT** déclarer explicitement :
 
 * son identifiant
-* `os_name`, `os_version`, `arch` (optionnels mais fortement recommandés pour le debug)
+* `os_name`, `os_version`, `arch` (obligatoires pour le debug, le support ops et la corrélation cross-platform)
 * la liste complète de ses capabilities
 
 Un agent ne peut **jamais** exécuter un job pour lequel il n’a pas déclaré la capability requise.
@@ -138,7 +138,10 @@ Pour tout agent qui déclare `meta.tags.suggestions@1` :
 * le support `llm.client.ollama@1` est obligatoire (phase 1)
 * `llm.client.chatgpt@1` et `llm.client.claude@1` sont activables en phase 2 via feature flags runtime
 * la sélection du client LLM DOIT rester explicite (configuration/feature flag/runtime policy)
-* un client LLM indisponible ne DOIT PAS casser le runtime agent global (fallback ou retry policy)
+* un client LLM indisponible ne DOIT PAS casser le runtime agent global :
+  * retry explicite autorisé
+  * aucun fallback implicite de provider dans le contrat partagé
+  * tout changement de provider DOIT résulter d'un choix runtime déjà validé
 
 ## 10. Transcription local-first (`validé en v1.1+`; activable plus tôt sous `feature_flags`)
 

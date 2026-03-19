@@ -27,6 +27,11 @@ Ce document definit les exigences minimales de protection des donnees personnell
 
 * tags classification obligatoires pour donnees SENSITIVE/SECRET
 * pseudonymisation/anonymisation pour environnements non prod
+* pseudonymisation canonique des identifiants exportes hors frontiere de confiance :
+  * `HMAC-SHA-256(secret_scope, actor_id)`
+  * troncature aux `16` premiers octets hexadécimaux lowercase
+  * prefixe obligatoire `psd_`
+  * `secret_scope` distinct par environnement
 * interdiction de copier des dumps prod sans redaction controlee
 
 ## 5) Tests obligatoires
