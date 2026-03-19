@@ -226,8 +226,10 @@ Tests obligatoires :
   * body invalide => `422 VALIDATION_FAILED`
 * `GET /assets/{uuid}`:
   * retourne `summary.revision_etag` et le header `ETag`
+  * `summary.revision_etag` et `ETag` utilisent le même strong validator HTTP quoté
 * `PATCH /assets/{uuid}`, `POST /assets/{uuid}/reprocess`, `POST /assets/{uuid}/reopen`:
   * `If-Match` obligatoire
+  * `If-Match` reprend exactement le strong validator HTTP quoté lu dans `ETag` / `summary.revision_etag`
   * précondition absente => `428 PRECONDITION_REQUIRED`
   * révision périmée => `412 PRECONDITION_FAILED`
   * `revision_etag` change sur toute mutation métier visible en UI

@@ -142,9 +142,6 @@ Points forts :
 
 Reste à normer :
 
-* format exact du header `ETag` :
-  * valeur brute
-  * ou valeur HTTP quotée
 * normalisation exacte du transport côté UI/Agent
 * stratégie claire pour les clients qui mettent en cache des listes vs détail asset
 
@@ -653,7 +650,6 @@ Constats :
 * la prose pose plusieurs règles HTTP partagées fortes
 * OpenAPI n'en ferme qu'une partie
 * écarts avérés :
-  * `If-Match` est défini comme simple string, sans règle machine sur format quoted/unquoted
   * aucune règle OpenAPI n'indique si les URLs de dérivés peuvent être redirigées, signées, éphémères ou si la route Core doit toujours servir le contenu directement
   * les politiques de cache HTTP ne sont pas fermées sur les ressources dérivées ou l'asset detail
 

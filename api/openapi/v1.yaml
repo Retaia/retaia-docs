@@ -1149,7 +1149,8 @@ paths:
             ETag:
               schema:
                 type: string
-              description: Strong asset revision tag for the current asset revision.
+                pattern: '^"[^"]+"$'
+              description: Strong quoted HTTP entity-tag for the current asset revision.
           content:
             application/json:
               schema:
@@ -1205,7 +1206,8 @@ paths:
             ETag:
               schema:
                 type: string
-              description: Strong asset revision tag after the accepted mutation.
+                pattern: '^"[^"]+"$'
+              description: Strong quoted HTTP entity-tag after the accepted mutation.
         "409":
           description: State conflict (invalid transition)
           content:
@@ -1379,7 +1381,8 @@ paths:
             ETag:
               schema:
                 type: string
-              description: Strong asset revision tag after the accepted mutation.
+                pattern: '^"[^"]+"$'
+              description: Strong quoted HTTP entity-tag after the accepted mutation.
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
           content:
@@ -2692,9 +2695,10 @@ components:
       name: If-Match
       in: header
       required: true
-      description: Strong opaque asset revision tag previously read from the asset `ETag` response header.
+      description: Strong quoted HTTP entity-tag previously read from the asset `ETag` response header.
       schema:
         type: string
+        pattern: '^"[^"]+"$'
     AcceptLanguage:
       name: Accept-Language
       in: header
@@ -3369,7 +3373,8 @@ components:
         revision_etag:
           type: string
           nullable: true
-          description: Opaque asset revision tag to be reused in `If-Match` for the next mutation.
+          pattern: '^"[^"]+"$'
+          description: Strong quoted HTTP entity-tag to be reused byte-for-byte in `If-Match` for the next mutation.
         captured_at:
           type: string
           format: date-time
@@ -3522,7 +3527,8 @@ components:
           description: Timestamp of the last accepted business mutation on this asset. Informational only; not a write precondition.
         revision_etag:
           type: string
-          description: Strong opaque asset revision tag to be reused in `If-Match` for the next mutation.
+          pattern: '^"[^"]+"$'
+          description: Strong quoted HTTP entity-tag to be reused byte-for-byte in `If-Match` for the next mutation.
 
     AssetDecisions:
       type: object

@@ -880,6 +880,7 @@ Response : `AssetDetail`
 Concurrence optimiste (obligatoire) :
 
 * `GET /assets/{uuid}` DOIT exposer la révision canonique courante dans `summary.revision_etag` et dans le header HTTP `ETag`
+* le format canonique de `revision_etag`, `ETag` et `If-Match` est le strong validator HTTP quoté, par exemple `"asset-rev-42"`
 * toute mutation humaine sur l'asset DOIT envoyer `If-Match: <revision_etag>`
 * absence de `If-Match` => `428 PRECONDITION_REQUIRED`
 * révision périmée => `412 PRECONDITION_FAILED`
