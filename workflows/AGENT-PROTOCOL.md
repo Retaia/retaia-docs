@@ -156,6 +156,7 @@ Pour éviter le code local à maintenir, cette règle s'applique à toute implé
 ### 3.3 Modes d’auth agent (normatif)
 
 * mode non-interactif (service/daemon): `client_id + secret_key -> POST /auth/clients/token` après approval humain via `UI_WEB`
+* en `v1`, la preuve de possession de `secret_key` consiste uniquement en sa présentation directe sur `POST /auth/clients/token` via TLS; aucun schéma HMAC ou signature symétrique local supplémentaire n'est autorisé
 * `AGENT_UI` est une surface locale de setup/contrôle/debug; il NE DOIT PAS implémenter de login humain direct
 * `AGENT_UI` DOIT ouvrir le browser vers `UI_WEB` pour toute authentification ou approval humaine liée au daemon
 * `UI_WEB` reste la seule UI autorisée à porter l'identité humaine (`login + bearer + refresh`)
@@ -163,6 +164,7 @@ Pour éviter le code local à maintenir, cette règle s'applique à toute implé
 * le bearer utilisateur appartient exclusivement à `UI_WEB`; il NE DOIT JAMAIS être exposé ni réutilisé par `AGENT_UI` ou `AGENT_TECHNICAL`
 * le daemon `AGENT_TECHNICAL` agit toujours sous sa propre identité technique (`agent_id` + clé OpenPGP + auth technique), jamais au nom implicite de l'utilisateur connecté dans `UI_WEB`
 * `client_id + secret_key` autorise le client technique et permet de mint le bearer technique; une écriture mutatrice agent NE DOIT JAMAIS être acceptée sur cette seule base sans preuve `agent_id + OpenPGP + signature`
+* `Core` DOIT vérifier `secret_key` en temps constant, ne jamais la logguer et ne jamais l'exposer après émission initiale ou rotation explicite
 * `AGENT_TECHNICAL` N'UTILISE JAMAIS `WebAuthn` au runtime
 
 Extension future user-scoped (réservée) :

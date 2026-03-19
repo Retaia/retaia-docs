@@ -155,6 +155,9 @@ Tests obligatoires :
   * rate limit => `429 TOO_MANY_ATTEMPTS`
   * invariant: nouveau token minté pour un client révoque l’ancien token (1 token actif / client)
   * `client_kind in {UI_WEB, MCP}` refusé (`403 FORBIDDEN_ACTOR`)
+  * la possession de `secret_key` est prouvée par sa présentation directe sur cet endpoint via TLS; aucun schéma symétrique supplémentaire n'est attendu en `v1`
+  * comparaison `secret_key` côté Core en temps constant
+  * `secret_key` jamais loggée ni réexposée après émission initiale ou rotation explicite
 * `POST /auth/clients/device/start`:
   * `client_kind=AGENT` => `200` + `device_code`, `user_code`, `verification_uri`, `verification_uri_complete`
   * `client_kind=MCP` => `403 FORBIDDEN_ACTOR`

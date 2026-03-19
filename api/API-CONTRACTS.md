@@ -570,6 +570,12 @@ Normalisation des timestamps (normatif) :
 * `client_kind` autorisé: `AGENT` (`UI_WEB` et `MCP` exclus)
 * effet: émet un bearer token technique pour `AGENT_TECHNICAL`
 * règle stricte: **1 token actif par client_id** (mint d’un nouveau token => révocation de l’ancien token pour ce client)
+* preuve normative de possession `secret_key`:
+  * en `v1`, la possession de `secret_key` est prouvée par sa présentation directe dans `POST /auth/clients/token` via TLS
+  * `Core` DOIT comparer `secret_key` au credential technique actif correspondant en temps constant
+  * `secret_key` NE DOIT JAMAIS être utilisée comme base d'une signature ou d'un schéma crypto local additionnel en `v1`
+  * `secret_key` est un secret one-shot de bootstrap/mint technique; elle NE DOIT PAS être renvoyée par un autre endpoint hors émission initiale ou rotation explicite
+  * `secret_key` NE DOIT JAMAIS être loggée, persistée en clair côté Core ni exposée après la réponse initiale
 * réponses:
   * `200` token client (`access_token`, `token_type=Bearer`, `expires_in?`, `client_id`, `client_kind`)
   * `401 UNAUTHORIZED` (credentials client invalides)
