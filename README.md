@@ -53,6 +53,7 @@ The following consumer repositories must align with these specs:
 - UI recommendations: [`ui/README.md`](ui/README.md)
 - Agent client docs: [`agent/README.md`](agent/README.md)
 - Operations runbooks: [`ops/README.md`](ops/README.md)
+- Release gates: [`ops/RELEASE-GATES.md`](ops/RELEASE-GATES.md)
 - UI global spec: [`ui/UI-GLOBAL-SPEC.md`](ui/UI-GLOBAL-SPEC.md)
 - Deployment topology (NAS + workstations): [`architecture/DEPLOYMENT-TOPOLOGY.md`](architecture/DEPLOYMENT-TOPOLOGY.md)
 - API contract: [`api/API-CONTRACTS.md`](api/API-CONTRACTS.md)

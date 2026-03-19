@@ -128,28 +128,6 @@ Décision à prendre avant `v1.0.0` :
 * afficher le statut normatif dans chaque fichier UI
 * éventuellement ajouter un index UI avec colonne `normatif/non normatif`
 
-### 5.3 Release gates annoncées comme partie du cœur normatif, mais runbooks ops non normatifs
-
-Références :
-
-* [README.md](README.md)
-* [ops/READINESS-CHECKLIST.md](ops/READINESS-CHECKLIST.md)
-* [ops/RELEASE-OPERATIONS.md](ops/RELEASE-OPERATIONS.md)
-
-Constat :
-
-* le README annonce "testing and release gates" comme composant des contrats du repo
-* les documents ops de readiness/release sont explicitement non normatifs
-
-Impact :
-
-* il manque un document canonique qui dise clairement ce qui bloque formellement une release
-
-Décision à prendre avant `v1.0.0` :
-
-* créer un document normatif unique de release gates
-* ou réduire la portée normative annoncée dans le README
-
 ### 5.8 Contrat i18n partiellement hors transport OpenAPI
 
 Références :
@@ -1014,7 +992,6 @@ Action :
 ### Priorité P0
 
 * Dédupliquer [tests/TEST-PLAN.md](tests/TEST-PLAN.md).
-* Créer un document normatif unique `release-gates` pour `v1.0.0`.
 * Matérialiser ou requalifier les exigences Secure SDLC.
 * Ajouter un index canonique des documents avec statut normatif.
 
@@ -1084,13 +1061,10 @@ Tant que ces trois conditions ne sont pas remplies sur les domaines listés ci-d
 
 * `P1` Le Secure SDLC normatif reste partiellement non prouvé. Le repo versionne désormais un workflow sécurité, une config Dependabot, un template PR et des permissions CI minimales explicites, mais `CODEOWNERS` et la branch protection effective restent à fermer côté GitHub. Tant que ces deux contrôles ne sont pas établis, la chaîne Secure SDLC reste incomplète avant `v1.0.0`.
 
-* `P2` Le `README` annonce des “testing and release gates” comme partie des contrats normatifs, alors que les documents opérationnels de release/readiness sont explicitement non normatifs. Voir `README.md` (line 30), `READINESS-CHECKLIST.md` (line 5) et `RELEASE-OPERATIONS.md` (line 5). Il manque un point d’ancrage clair: qu’est-ce qui bloque formellement une release `v1.0.0`, et qu’est-ce qui reste simple runbook ?
-
 * `P2` Le statut normatif du corpus UI est ambigu au niveau racine. `ui/README.md` (line 5) dit “non normatif par défaut”, alors que `UI-GLOBAL-SPEC.md` (line 5) est explicitement normatif. Le repo gagnerait à classifier chaque doc UI de façon uniforme, sinon les consommateurs devront interpréter au cas par cas ce qui est opposable.
 
 ### Ce qui reste à normer avant `v1.0.0`
 
-* Définir un “release gate canonique” unique et opposable pour `v1.0.0`: critères bloquants, preuves attendues, et artefacts minimaux.
 * Transformer les exigences Secure SDLC en contrôles réellement versionnés ou expliciter ce qui relève d’un réglage GitHub externe obligatoire.
 * Clarifier la taxonomie de versions: `v1` runtime actuel, `v1.1+` extensions futures et pré-release sous feature flags.
 * Uniformiser le statut de chaque document: `normatif`, `non normatif`, `préparation technique`, `roadmap`.
