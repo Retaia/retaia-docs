@@ -357,7 +357,7 @@ paths:
         Returns global app switches (`app_feature_enabled`).
         Also returns dependency/escalation metadata for deterministic client behavior.
         Effective global availability requires Core `feature_flags` AND `app_feature_enabled`.
-        Normative gate: when `app_feature_enabled.features.ai=false`, only MCP functions that depend on AI are disabled at runtime.
+        Normative gate: AI-related functions remain disabled in v1 unless explicitly enabled as pre-release feature-flagged behavior ahead of v1.1+ validation.
         Admin-only endpoint.
         Runtime payload contract is stable: `app_feature_enabled`, `feature_governance`, `core_v1_global_features`.
       security:
@@ -2369,9 +2369,8 @@ components:
       scheme: bearer
       bearerFormat: opaque
       description: |
-        Technical bearer credential for non-human clients.
+        Technical bearer credential for non-human clients in v1.
         `AGENT_TECHNICAL` uses a bearer token minted from `(client_id, secret_key)`.
-        `MCP_TECHNICAL` joins in v1.1+ via an OpenPGP-backed challenge/response flow after UI key enrollment.
 
   parameters:
     UuidPath:
@@ -2669,72 +2668,10 @@ components:
           type: string
           format: date-time
 
-    AuthMcpRegisterRequest:
-      type: object
-      additionalProperties: false
-      required: [openpgp_public_key, openpgp_fingerprint]
-      properties:
-        client_label:
-          type: string
-        openpgp_public_key:
-          type: string
-        openpgp_fingerprint:
-          type: string
 
-    AuthMcpRegisterResponse:
-      type: object
-      additionalProperties: false
-      required: [client_id, client_kind, openpgp_fingerprint]
-      properties:
-        client_id:
-          type: string
-        client_kind:
-          type: string
-          enum: [MCP]
-        openpgp_fingerprint:
-          type: string
-        registered_at:
-          type: string
-          format: date-time
-        rotated_at:
-          type: string
-          format: date-time
 
-    AuthMcpChallengeRequest:
-      type: object
-      additionalProperties: false
-      required: [client_id, openpgp_fingerprint]
-      properties:
-        client_id:
-          type: string
-        openpgp_fingerprint:
-          type: string
 
-    AuthMcpChallengeResponse:
-      type: object
-      additionalProperties: false
-      required: [challenge_id, challenge, expires_in]
-      properties:
-        challenge_id:
-          type: string
-        challenge:
-          type: string
-        expires_in:
-          type: integer
 
-    AuthMcpTokenRequest:
-      type: object
-      additionalProperties: false
-      required: [client_id, openpgp_fingerprint, challenge_id, signature]
-      properties:
-        client_id:
-          type: string
-        openpgp_fingerprint:
-          type: string
-        challenge_id:
-          type: string
-        signature:
-          type: string
 
     AuthDeviceStartRequest:
       type: object
@@ -2795,7 +2732,7 @@ components:
     AuthDevicePollApproved:
       type: object
       additionalProperties: false
-      required: [status, client_id, client_kind, secret_key, approved_at]
+      required: [status, client_id, client_kind, secret_key, approved_at, approved_by_user_id]
       properties:
         status:
           type: string
@@ -2814,7 +2751,7 @@ components:
         approved_by_user_id:
           type: string
           format: uuid
-          description: Optional audit identifier of the human approver in UI_WEB.
+          description: Audit identifier of the human approver in UI_WEB.
 
     AuthDevicePollDenied:
       type: object
@@ -2911,7 +2848,7 @@ components:
       description: |
         Application-level feature switches.
         Effective feature availability requires Core `FeatureFlags` AND `AppFeatureEnabled`.
-        `features.ai` controls MCP AI-dependent capabilities (false => MCP AI-dependent functions disabled).
+        `features.ai` gates pre-release AI-related capabilities ahead of their validated v1.1+ rollout.
       additionalProperties:
         type: boolean
 
@@ -3111,7 +3048,9 @@ components:
         derived:
           $ref: "#/components/schemas/AssetDerived"
         transcript:
-          $ref: "#/components/schemas/AssetTranscript"
+          allOf:
+            - $ref: "#/components/schemas/AssetTranscript"
+          description: Pre-release field only. Outside v1 conformance scope; may be exposed earlier under feature flags before validated v1.1+ rollout.
         decisions:
           $ref: "#/components/schemas/AssetDecisions"
         audit:
@@ -3190,6 +3129,7 @@ components:
     AssetTranscript:
       type: object
       additionalProperties: false
+      description: Transcript enrichment payload. Outside v1 conformance scope; reserved for pre-release feature-flagged exposure before validated v1.1+ rollout.
       properties:
         status:
           type: string

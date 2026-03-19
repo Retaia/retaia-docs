@@ -394,7 +394,7 @@ Tests obligatoires :
 Tests obligatoires :
 
 * `PROCESSED` atteint uniquement quand jobs `required` du profil sont complets
-* avant validation `v1.1+`, `transcribe_audio` peut être activé plus tôt sous `feature_flags`
+* avant validation `v1.1+`, `transcribe_audio` peut être activé plus tôt sous `feature_flags` et exposer un `transcript` pré-release hors conformité v1
 * dès validation `v1.1+`, tout média avec piste audio exploitable exige `transcribe_audio` pour atteindre `PROCESSED`
 * changement de profil après claim exige reprocess
 * pour un profil audio qui exige `generate_audio_waveform`, son absence rend le flux processing non conforme

@@ -260,7 +260,7 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 * seul `AGENT_TECHNICAL` exécute les jobs de processing; `AGENT_UI` ne claim pas de job et ne traite pas de média
 * `AGENT_UI` pilote localement le daemon (setup, status, start/stop, configuration, debug) sans porter d'identité humaine autonome
 * toute identité humaine utilisée pour approuver ou configurer le daemon reste portée par `UI_WEB`; le daemon `AGENT_TECHNICAL` NE DOIT PAS hériter implicitement de cette identité
-* Core DOIT tracer au minimum `approved_by_user_id`, `approved_at`, `client_id` et `agent_id` pour chaque enrôlement daemon
+* Core DOIT tracer et pouvoir exposer au minimum `approved_by_user_id`, `approved_at`, `client_id` et `agent_id` pour chaque enrôlement daemon
 * `MCP` PEUT piloter/orchestrer l'agent (configuration, déclenchement, supervision) mais NE DOIT JAMAIS exécuter de traitement média
 * `MCP` est interdit sur les endpoints de processing `/jobs/*` (`claim`, `heartbeat`, `submit`) avec refus `403 FORBIDDEN_ACTOR`
 * `MCP` NE DOIT JAMAIS pouvoir exécuter une action destructive ou de suppression
