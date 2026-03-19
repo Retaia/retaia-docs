@@ -404,10 +404,13 @@ Tests obligatoires :
 
 * `PROCESSED` atteint uniquement quand jobs `required` du profil sont complets
 * avant validation `v1.1+`, `transcribe_audio` peut être activé plus tôt sous `feature_flags` et exposer un `transcript` pré-release hors conformité v1
-* dès validation `v1.1+`, tout média avec piste audio exploitable exige `transcribe_audio` pour atteindre `PROCESSED`
+* dès validation `v1.1+`, tout média avec piste audio exploitable dont le profil l'exige (`video_standard`, `audio_voice`) exige `transcribe_audio` pour atteindre `PROCESSED`
 * changement de profil après claim exige reprocess
 * pour un profil audio qui exige `generate_audio_waveform`, son absence rend le flux processing non conforme
 * pour tout média avec piste audio exploitable, l'absence de `generate_audio_waveform` rend le flux processing non conforme
+* `AUDIO` découvert sans qualification humaine démarre en `audio_undefined`
+* `audio_undefined` bloque `PROCESSED` jusqu'au choix explicite `audio_music` ou `audio_voice` dans `UI_WEB`
+* si le choix humain fixe un profil qui exige `transcribe_audio` dans la phase active, Core crée automatiquement ce job
 
 ## 3.1) Audio waveform UX (client)
 

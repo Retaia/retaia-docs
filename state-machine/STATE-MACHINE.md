@@ -163,7 +163,7 @@ Ces flags existent dans la DB et sont mis à jour par les jobs.
 * `thumbs_done` (bool)
 * `proxy_done` (bool) — requis
 * `waveform_done` (bool) — requis pour tout média avec piste audio exploitable
-* `processing_profile` (string) — ex: `video_standard`, `audio_music`, `audio_voice`
+* `processing_profile` (string) — ex: `video_standard`, `audio_undefined`, `audio_music`, `audio_voice`
 * `review_processing_version` (string/int)
 
 ### Transcription
@@ -171,7 +171,7 @@ Ces flags existent dans la DB et sont mis à jour par les jobs.
 * `transcript_status` = `NONE | RUNNING | DONE | FAILED`
 * `transcript_version`
 * `transcript_updated_at`
-* à partir de la phase `v1.1+` validée, la transcription devient un prérequis de `PROCESSED` pour tout média avec piste audio exploitable
+* à partir de la phase `v1.1+` validée, la transcription devient un prérequis de `PROCESSED` pour tout média avec piste audio exploitable dont le `processing_profile` l'exige
 * avant cette phase validée, elle PEUT être activée plus tôt sous `feature_flags` sans modifier la conformité v1
 
 ### Suggestions (tags)
@@ -191,7 +191,13 @@ Après `PROCESSED`, le serveur peut rendre éligible :
 
 * `suggest_tags` (**v1.1+**, LLM, basé sur transcript + metadata)
 
-Règle : dès que la phase `v1.1+` validée rend `transcribe_audio` obligatoire pour un média avec piste audio exploitable, cette transcription n'est plus un job secondaire post-review mais un prérequis de `PROCESSED`.
+Règle : dès que la phase `v1.1+` validée rend `transcribe_audio` obligatoire pour un média avec piste audio exploitable dont le profil l'exige, cette transcription n'est plus un job secondaire post-review mais un prérequis de `PROCESSED`.
+
+Règle audio ambigu :
+
+* `processing_profile=audio_undefined` bloque le passage à `PROCESSED`
+* Core DOIT exiger un choix humain explicite vers `audio_music` ou `audio_voice`
+* si ce choix rend `transcribe_audio` requis dans la phase active, Core DOIT créer automatiquement le job après mutation du profil
 
 ## Hooks autour de DECISION_PENDING
 

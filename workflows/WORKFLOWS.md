@@ -28,7 +28,7 @@ Retaia Core Server
    * taille identique sur **2 scans consécutifs**
    * `mtime` plus ancien que **5–6 minutes**
 8. Passage de l’état `DISCOVERED` à `READY` si conditions remplies.
-9. Attribution d'un `processing_profile` (auto par défaut, modifiable manuellement avant claim).
+9. Attribution d'un `processing_profile` (auto par défaut, modifiable manuellement avant claim; `AUDIO` démarre en `audio_undefined` tant qu'un humain n'a pas qualifié le média).
 
 ### Règles
 
@@ -117,7 +117,7 @@ Retaia Agent
 7. Enregistrer les références de dérivés côté serveur.
 8. En cas de job long : envoyer des heartbeats pour prolonger le TTL.
 9. Soumettre le résultat final, libérer le lock.
-10. Le serveur passe l’asset à `PROCESSED` quand tous les jobs requis par le `processing_profile` sont terminés.
+10. Le serveur passe l’asset à `PROCESSED` quand tous les jobs requis par le `processing_profile` sont terminés et que le profil n'est pas bloquant.
 
 ### Règles
 
@@ -125,6 +125,8 @@ Retaia Agent
 * L’agent ne prend jamais de décision KEEP/REJECT.
 * Les agents n'écrivent jamais directement dans `RUSHES_DB/.derived`.
 * `PROCESSED` dépend du `processing_profile` de l'asset.
+* `audio_undefined` est un profil bloquant: il force un choix humain explicite dans `UI_WEB` avant `PROCESSED`.
+* si ce choix fixe `audio_voice` et que la phase active exige la transcription, Core crée automatiquement le job `transcribe_audio`.
 * Le fichier `/.retaia` est créé et maintenu par Retaia Core uniquement.
 
 

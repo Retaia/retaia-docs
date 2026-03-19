@@ -14,6 +14,8 @@ Règles :
 * après le premier claim de job review, tout changement de profil exige un reprocess explicite
 * `PROCESSED` est atteint uniquement quand tous les jobs `required` du profil sont `completed`
 * à partir de la phase `v1.1+` validée, `transcribe_audio` devient requis pour tout média avec piste audio exploitable; avant cette phase validée, il PEUT être exercé plus tôt sous `feature_flags`
+* pour un asset `AUDIO`, le profil auto par défaut est `audio_undefined` tant qu'un humain n'a pas qualifié explicitement le média
+* `audio_undefined` bloque le passage à `PROCESSED` et force un choix explicite via `UI_WEB` pendant la review
 
 ## 2) Profils canoniques v1
 
@@ -39,7 +41,7 @@ Jobs required dès validation `v1.1+` :
 
 ### `audio_music`
 
-Usage : musique / ambiances. Le transcript n'est pas un besoin produit de v1, mais devient un prérequis technique de conformité à partir de la phase `v1.1+` validée dès qu'une piste audio exploitable existe.
+Usage : musique / ambiances. La transcription n'est pas requise.
 
 Jobs required :
 
@@ -50,14 +52,8 @@ Jobs required :
 
 Jobs optional avant validation `v1.1+` :
 
-* `transcribe_audio`
-  (dépendant de l'AI, **v1.1+**, activable plus tôt uniquement sous `feature_flags`)
 * `suggest_tags`
   (dépendant de l'AI, **v1.1+**)
-
-Jobs required dès validation `v1.1+` :
-
-* `transcribe_audio`
 
 
 ### `audio_voice`
@@ -81,6 +77,29 @@ Jobs optional avant validation `v1.1+` du profil :
 Jobs required dès validation `v1.1+` du profil :
 
 * `transcribe_audio`
+
+### `audio_undefined`
+
+Usage : audio découvert automatiquement mais non encore qualifié par un humain entre `audio_music` et `audio_voice`.
+
+Jobs required :
+
+* `extract_facts`
+* `generate_proxy`
+* `generate_thumbnails`
+* `generate_audio_waveform`
+
+Jobs forbidden tant que le profil n'a pas été choisi explicitement :
+
+* `transcribe_audio`
+* `suggest_tags`
+
+Règles spécifiques :
+
+* `audio_undefined` NE DOIT JAMAIS permettre le passage à `PROCESSED`
+* un utilisateur humain DOIT choisir explicitement `audio_music` ou `audio_voice` via `UI_WEB`
+* ce choix DOIT être audité
+* si le profil choisi rend `transcribe_audio` requis dans la phase active, Core DOIT créer automatiquement ce job après mutation du profil
 
 ### `photo_standard`
 
@@ -108,21 +127,21 @@ Détection par défaut (override humain autorisé) :
 
 * `VIDEO` -> `video_standard`
 * `PHOTO` -> `photo_standard`
-* `AUDIO` -> `audio_music`
-
-Pour `AUDIO`, l'utilisateur peut forcer `audio_voice` avant claim si transcript requis.
+* `AUDIO` -> `audio_undefined`
 
 Règles explicites :
 
 * aucune détection implicite par IA/LLM
 * aucune inférence implicite depuis tags non validés
 * seules les métadonnées techniques et le choix humain explicite sont autorisés
+* pour `AUDIO`, seul un choix humain explicite dans `UI_WEB` PEUT fixer `audio_music` ou `audio_voice`
 
 ## 3.1) Mutation de profil
 
 Avant premier claim de job review :
 
 * mutation autorisée `* -> *` par action humaine explicite
+* pour `audio_undefined`, mutation humaine explicite obligatoire avant toute clôture de processing review
 
 Après premier claim :
 
