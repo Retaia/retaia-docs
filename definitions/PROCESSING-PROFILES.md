@@ -60,6 +60,22 @@ Catégories :
 * `video_standard`, `audio_music`, `audio_voice`, `photo_standard` = profils de processing effectifs
 * `audio_undefined` = profil transitoire de qualification, jamais profil final de processing complet
 
+### Tableau canonique — `processing_profile -> jobs`
+
+| `processing_profile` | Jobs required v1 | `transcribe_audio` avant `v1.1+` validée | `transcribe_audio` dès `v1.1+` validée | `suggest_tags` |
+|---|---|---|---|---|
+| `video_standard` | `extract_facts`, `generate_preview`, `generate_thumbnails`, `generate_audio_waveform` si piste audio exploitable | optionnel sous `feature_flags` si piste audio exploitable | requis si piste audio exploitable | enrichissement transversal non bloquant |
+| `audio_music` | `extract_facts`, `generate_preview`, `generate_audio_waveform` | interdit | interdit | enrichissement transversal non bloquant |
+| `audio_voice` | `extract_facts`, `generate_preview`, `generate_audio_waveform` | optionnel sous `feature_flags` | requis | enrichissement transversal non bloquant |
+| `audio_undefined` | `extract_facts`, `generate_preview`, `generate_audio_waveform` | interdit | interdit tant qu'un humain n'a pas choisi le profil final | interdit tant que le profil n'a pas été choisi |
+| `photo_standard` | `extract_facts`, `generate_preview` | interdit | interdit | enrichissement transversal non bloquant |
+
+Règles de lecture :
+
+* `audio_undefined` reste un profil transitoire de qualification, pas un profil final
+* `suggest_tags` n'entre pas dans la complétude de `PROCESSED`
+* `transcribe_audio` ne dépend jamais du seul `media_type`; il dépend du `processing_profile` effectif et de la phase active
+
 ### `video_standard`
 
 Usage : rush vidéo standard.

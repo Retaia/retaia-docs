@@ -866,6 +866,7 @@ Règles :
   * autorisée uniquement pour un acteur humain via `UI_WEB`
   * autorisée uniquement si `state in {READY, PROCESSING_REVIEW, REVIEW_PENDING_PROFILE}`
   * la liste canonique des profils reste `video_standard | audio_undefined | audio_music | audio_voice | photo_standard`
+  * la matrice canonique `processing_profile -> jobs` est définie dans `definitions/PROCESSING-PROFILES.md` et fait foi pour la complétude de `PROCESSED`
   * `video_standard`, `audio_music`, `audio_voice`, `photo_standard` sont des profils effectifs de processing
   * `audio_undefined` est un profil transitoire de qualification, jamais un profil final de processing complet
 * `processing_profile=audio_undefined` est autorisé comme état transitoire de qualification audio, mais NE DOIT JAMAIS permettre de conclure le processing complet
