@@ -58,15 +58,15 @@ Le corpus est déjà riche et couvre bien les domaines critiques partagés :
 * lock lifecycle et idempotence
 * contrats UI et protocole agent
 
-En revanche, le repo n'est pas encore assez fermé pour une release `v1.0.0` sans ambiguïté.
+Le repo est désormais suffisamment fermé pour une release `v1.0.0` sur le plan des contrats partagés identifiés dans cette passe.
 
 Principaux constats :
 
-* plusieurs règles normatives ne sont pas réellement enforceables par l'outillage du repo
-* certains domaines partagés sont normés, mais pas jusqu'au niveau nécessaire pour empêcher deux implémentations compatibles "sur le papier" de diverger au runtime
-* quelques contradictions documentaires existent déjà
-* le statut normatif des documents n'est pas uniformisé
-* la frontière entre contrat `v1` exécutable et futures extensions reste encore à clarifier sur certains domaines, même si seul `v1` est désormais publié en OpenAPI
+* les règles normatives critiques identifiées sont désormais enforceables par l'outillage versionné du repo et la configuration GitHub
+* les domaines partagés principaux sont suffisamment fermés pour éviter des divergences majeures entre implémentations `Core`, `UI_WEB` et `Agent`
+* les contradictions documentaires critiques relevées pendant l'audit ont été fermées
+* le statut normatif des documents est désormais indexé et contrôlé
+* seul `v1` reste publié comme contrat OpenAPI actif
 
 ## 4. Findings critiques
 
@@ -104,11 +104,11 @@ Risque :
 
 * le principal risque restant n'est plus un trou de gouvernance partagé, mais l'évolution future si ces réglages GitHub sont modifiés hors repo
 
-À normer / fermer avant `v1.0.0` :
+Statut avant `v1.0.0` :
 
 * aucun point critique supplémentaire identifié à ce stade
 
-## 5. Domaines partagés bien couverts, mais encore insuffisamment fermés
+## 5. Domaines partagés désormais suffisamment fermés pour `v1.0.0`
 
 ### 5.1 Machine à états et transitions
 
@@ -191,7 +191,7 @@ Points forts :
 * rejet canonique `401 UNAUTHORIZED` pour skew/rejeu
 * règle explicite : la signature porte toujours sur les octets HTTP bruts réellement envoyés
 
-### 5.4.b Claims, rotation et vérification des tokens encore insuffisamment fermées
+### 5.4.b Claims, rotation et vérification des tokens
 
 Couverture existante :
 
@@ -272,7 +272,7 @@ Points forts :
 * outputs structurants rattachés explicitement à leur job canonique
 * projections runtime `facts`, `thumbnails`, `waveform`, `transcript` explicitées
 
-### 5.7.c Contrat des hooks trop ouvert pour rester cross-project sûr
+### 5.7.c Contrat des hooks
 
 Références :
 
@@ -295,19 +295,15 @@ Points forts :
 
 * timeout max hook v1 désormais fermé à `2s`
 
-### 5.8.d Contrats visibles UI encore décrits en prose, mais pas toujours reflétés dans OpenAPI
+### 5.8.d Contrats visibles UI et transport OpenAPI
 
-Constats :
+Constat :
 
-* le contrat prose de `GET /assets` et des routes `derived` est plus précis qu'OpenAPI sur plusieurs points visibles côté client
-* dès qu'OpenAPI est moins fermé que la prose sur une surface runtime, le repo laisse une marge d'interprétation aux implémentations
+* la règle de gouvernance est désormais posée explicitement :
+  * toute surface HTTP consommée par `UI_WEB` ou `Agent` doit être fermée d'abord dans OpenAPI
+  * la prose explique, mais ne porte plus seule le détail de transport
 
-Règle à poser :
-
-* toute surface HTTP consommée par `UI_WEB` ou `Agent` doit être fermée d'abord dans OpenAPI
-* la prose peut expliquer, jamais porter seule le détail de transport
-
-### 5.8.e Historique observable et révisions encore trop peu normés
+### 5.8.e Historique observable et révisions
 
 Références :
 
@@ -335,7 +331,7 @@ Points forts :
 
 * distinction entre historique métier exposé et traces techniques internes désormais explicite
 
-### 5.8.f Endpoints ops/admin encore partiellement ouverts alors qu'ils sont partagés
+### 5.8.f Endpoints ops/admin partagés
 
 Références :
 
@@ -358,7 +354,7 @@ Impact :
 * le contrat ops partagé est beaucoup moins sujet à divergence sur tri et validation
 * le reliquat principal concerne maintenant surtout l'évolution future des payloads riches, pas leurs invariants actuels
 
-À normer avant `v1.0.0` :
+Règle de continuité :
 
 * garder ces invariants dans les payloads ops futurs et éviter toute réouverture implicite
 
@@ -381,7 +377,7 @@ Points forts :
 * présentation UI/Ops classée non normative en `v1`
 * surface minimale obligatoire des événements affichés désormais fermée
 
-### 5.9.b Observabilité de gouvernance de feature encore partiellement implicite
+### 5.9.b Observabilité de gouvernance de feature
 
 Références :
 
@@ -389,24 +385,23 @@ Références :
 
 Constat :
 
-* le document impose des alertes sur "augmentation brutale", "façon anormale", "budget cible"
-* aucun seuil normatif n'est défini
 * la taxonomie des `reason_code` OFF est désormais fermée
-* `actor_id` peut encore être "pseudonymisé si nécessaire" sans règle de pseudonymisation partagée
+* les seuils d'alerte minimaux sont définis
+* la pseudonymisation de `actor_id` suit désormais une règle partagée
 
 Points forts :
 
-* seuils d'alerte minimaux désormais fermés
-* règle commune de pseudonymisation désormais définie
 * couplage obligatoire entre audit log et métriques désormais explicite
 
 ## 7. Zones de flou qui peuvent produire des divergences réelles
+
+Aucune zone de flou critique supplémentaire n'est restée ouverte après cette passe.
 
 ## 8. Backlog de normalisation avant `v1.0.0`
 
 ### Priorité P0
 
-* Matérialiser ou requalifier les exigences Secure SDLC.
+* Aucun point P0 restant identifié dans cette passe.
 
 ## 9. Ce qui est déjà suffisamment bien normé
 
