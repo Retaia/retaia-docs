@@ -338,7 +338,7 @@ Matrice de migration v1 runtime (gelée) :
 Tests obligatoires :
 
 * `AGENT_UI` en mode `CLI` fonctionne en Linux headless (sans dépendance GUI)
-* `AGENT_UI` en mode `GUI` (quand présent) utilise le même moteur de processing que `CLI` (mêmes capabilities et mêmes résultats)
+* `AGENT_UI` en mode `GUI` utilise le même moteur de processing que `CLI` (mêmes capabilities et mêmes résultats)
 * `AGENT_UI` en mode `CLI` et `GUI` expose les mêmes fonctionnalités opérateur
 * `AGENT_UI` en mode `GUI` reste limité au setup, au contrôle et au debug du daemon
 * `AGENT_UI` ouvre `UI_WEB` dans le browser pour toute approval humaine ou auth liée au daemon

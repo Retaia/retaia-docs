@@ -198,7 +198,7 @@ Règles :
 
 ### 3.5 Local-first AI/transcription (validé en v1.1+; activable plus tôt sous `feature_flags`)
 
-Pour `UI_WEB`, `AGENT` et `MCP` :
+Pour `AGENT` et `MCP` :
 
 * exécution local-first obligatoire pour les workloads AI/transcription quand un modèle local compatible est disponible
 * transcription locale minimum supportée: `Whisper.cpp`
