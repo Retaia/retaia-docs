@@ -15,7 +15,7 @@ Règles :
 * `PROCESSED` est atteint uniquement quand tous les jobs `required` du profil sont `completed`
 * à partir de la phase `v1.1+` validée, `transcribe_audio` devient requis pour tout média avec piste audio exploitable; avant cette phase validée, il PEUT être exercé plus tôt sous `feature_flags`
 * pour un asset `AUDIO`, le profil auto par défaut est `audio_undefined` tant qu'un humain n'a pas qualifié explicitement le média
-* `audio_undefined` bloque le passage à `PROCESSED` et force un choix explicite via `UI_WEB` pendant la review
+* `audio_undefined` mène à `REVIEW_PENDING_PROFILE` dès que les dérivés minimaux sont prêts et force un choix explicite via `UI_WEB`
 
 ## 2) Profils canoniques v1
 
@@ -96,10 +96,11 @@ Jobs forbidden tant que le profil n'a pas été choisi explicitement :
 
 Règles spécifiques :
 
-* `audio_undefined` NE DOIT JAMAIS permettre le passage à `PROCESSED`
+* `audio_undefined` NE DOIT JAMAIS permettre un passage direct à `PROCESSED`
 * un utilisateur humain DOIT choisir explicitement `audio_music` ou `audio_voice` via `UI_WEB`
 * ce choix DOIT être audité
-* si le profil choisi rend `transcribe_audio` requis dans la phase active, Core DOIT créer automatiquement ce job après mutation du profil
+* si le profil choisi rend `transcribe_audio` requis dans la phase active, Core DOIT créer automatiquement ce job après mutation du profil et faire repasser l'asset en `READY`
+* si le profil choisi ne nécessite aucun job supplémentaire, l'asset PEUT passer directement à `PROCESSED`
 
 ### `photo_standard`
 
@@ -141,7 +142,7 @@ Règles explicites :
 Avant premier claim de job review :
 
 * mutation autorisée `* -> *` par action humaine explicite
-* pour `audio_undefined`, mutation humaine explicite obligatoire avant toute clôture de processing review
+* pour `audio_undefined`, mutation humaine explicite obligatoire avant toute clôture du processing complet
 
 Après premier claim :
 

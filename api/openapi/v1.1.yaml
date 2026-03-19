@@ -3240,6 +3240,7 @@ components:
         - DISCOVERED
         - READY
         - PROCESSING_REVIEW
+        - REVIEW_PENDING_PROFILE
         - PROCESSED
         - DECISION_PENDING
         - DECIDED_KEEP

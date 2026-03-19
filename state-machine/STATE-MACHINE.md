@@ -51,6 +51,7 @@ Traitement “pour review” en cours via un ou plusieurs jobs atomiques : facts
 
 #### Transitions autorisées
 
+* `PROCESSING_REVIEW → REVIEW_PENDING_PROFILE` (quand les dérivés minimaux sont prêts mais qu'un choix humain de profil reste requis)
 * `PROCESSING_REVIEW → PROCESSED` (quand tous les jobs requis par le profil media sont terminés)
 * `PROCESSING_REVIEW → READY` (échec + retry/backoff côté jobs)
 
@@ -58,6 +59,25 @@ Traitement “pour review” en cours via un ou plusieurs jobs atomiques : facts
 
 * Réservation via lock + TTL
 * Aucun move autorisé
+
+
+### REVIEW_PENDING_PROFILE
+
+#### Signification
+
+Les dérivés minimaux de review sont prêts, mais un choix humain explicite de `processing_profile` est encore requis avant processing complet.
+
+#### Garanties
+
+* facts extraits et stockés en DB
+* proxy généré et disponible pour la review
+* waveform générée si le média a une piste audio exploitable
+* l’asset est visible dans la même surface UI de review, mais aucune décision KEEP/REJECT n’est encore autorisée
+
+#### Transitions autorisées
+
+* `REVIEW_PENDING_PROFILE → PROCESSED` (si le profil choisi est déjà complet avec les jobs disponibles)
+* `REVIEW_PENDING_PROFILE → READY` (si le profil choisi exige des jobs supplémentaires avant `PROCESSED`)
 
 
 ### PROCESSED
@@ -195,9 +215,10 @@ Règle : dès que la phase `v1.1+` validée rend `transcribe_audio` obligatoire 
 
 Règle audio ambigu :
 
-* `processing_profile=audio_undefined` bloque le passage à `PROCESSED`
+* `processing_profile=audio_undefined` mène à `REVIEW_PENDING_PROFILE` dès que les dérivés minimaux sont prêts
 * Core DOIT exiger un choix humain explicite vers `audio_music` ou `audio_voice`
-* si ce choix rend `transcribe_audio` requis dans la phase active, Core DOIT créer automatiquement le job après mutation du profil
+* si ce choix rend `transcribe_audio` requis dans la phase active, Core DOIT créer automatiquement le job puis faire repasser l’asset en `READY`
+* si le profil choisi est déjà complet avec les jobs disponibles, l’asset PEUT passer directement à `PROCESSED`
 
 ## Hooks autour de DECISION_PENDING
 
@@ -243,6 +264,7 @@ Règles :
 
 * `DISCOVERED → PROCESSING_REVIEW`
 * `READY → DECIDED_*`
+* `REVIEW_PENDING_PROFILE → DECIDED_*`
 * `PROCESSED → ARCHIVED/REJECTED` (sans décision)
 * `DECISION_PENDING → ARCHIVED/REJECTED` (sans décision explicite + apply)
 * `ARCHIVED/REJECTED → PROCESSED` (doit repasser par `READY` via reprocess explicite)
@@ -259,6 +281,8 @@ DISCOVERED
 READY
   ↓
 PROCESSING_REVIEW
+  ↓
+REVIEW_PENDING_PROFILE?
   ↓
 PROCESSED
   ↓

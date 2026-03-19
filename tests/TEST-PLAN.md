@@ -409,8 +409,11 @@ Tests obligatoires :
 * pour un profil audio qui exige `generate_audio_waveform`, son absence rend le flux processing non conforme
 * pour tout média avec piste audio exploitable, l'absence de `generate_audio_waveform` rend le flux processing non conforme
 * `AUDIO` découvert sans qualification humaine démarre en `audio_undefined`
-* `audio_undefined` bloque `PROCESSED` jusqu'au choix explicite `audio_music` ou `audio_voice` dans `UI_WEB`
-* si le choix humain fixe un profil qui exige `transcribe_audio` dans la phase active, Core crée automatiquement ce job
+* `audio_undefined` mène à `REVIEW_PENDING_PROFILE` quand les dérivés minimaux sont prêts
+* `REVIEW_PENDING_PROFILE` est visible dans la même surface UI de review mais n'autorise aucune décision KEEP/REJECT
+* si le choix humain fixe un profil qui exige `transcribe_audio` dans la phase active, Core crée automatiquement ce job puis repasse l'asset en `READY`
+* si le choix humain fixe un profil déjà complet, l'asset passe à `PROCESSED`
+* `PATCH /assets/{uuid}` avec `processing_profile` est refusé hors `READY|PROCESSING_REVIEW|REVIEW_PENDING_PROFILE`
 * `PATCH /assets/{uuid}` avec `processing_profile=audio_voice` DOIT être accepté comme mutation humaine explicite via `UI_WEB`
 * si le profil effectif après patch exige `transcribe_audio` dans la phase active et que `transcript.status != DONE`, toute tentative de faire aboutir l'asset en `DECIDED_KEEP` ou `ARCHIVED` DOIT être refusée avec `409 STATE_CONFLICT`
 * `PATCH /assets/{uuid}` combinant choix de profil + décision `DECIDED_KEEP` DOIT donc être refusé tant que le transcript requis n'est pas produit
@@ -548,6 +551,7 @@ Tests obligatoires :
 * détection de drift `API-CONTRACTS.md` vs OpenAPI en CI
 * payload erreur conforme à `api/ERROR-MODEL.md`
 * enum d’état `AssetState` strict sur les payloads d’assets
+* enum `AssetState` inclut `REVIEW_PENDING_PROFILE`
 * exigences de sécurité/scopes OpenAPI présentes sur chaque endpoint mutateur
 * schéma `SessionCookieAuth` absent de la spec OpenAPI
 * endpoint `GET /ops/ingest/diagnostics` présent et conforme :

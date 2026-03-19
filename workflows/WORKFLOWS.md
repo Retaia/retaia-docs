@@ -117,7 +117,8 @@ Retaia Agent
 7. Enregistrer les références de dérivés côté serveur.
 8. En cas de job long : envoyer des heartbeats pour prolonger le TTL.
 9. Soumettre le résultat final, libérer le lock.
-10. Le serveur passe l’asset à `PROCESSED` quand tous les jobs requis par le `processing_profile` sont terminés et que le profil n'est pas bloquant.
+10. Si le `processing_profile=audio_undefined` et que les dérivés minimaux sont prêts, le serveur passe l’asset à `REVIEW_PENDING_PROFILE`.
+11. Sinon, le serveur passe l’asset à `PROCESSED` quand tous les jobs requis par le `processing_profile` sont terminés.
 
 ### Règles
 
@@ -125,8 +126,9 @@ Retaia Agent
 * L’agent ne prend jamais de décision KEEP/REJECT.
 * Les agents n'écrivent jamais directement dans `RUSHES_DB/.derived`.
 * `PROCESSED` dépend du `processing_profile` de l'asset.
-* `audio_undefined` est un profil bloquant: il force un choix humain explicite dans `UI_WEB` avant `PROCESSED`.
-* si ce choix fixe `audio_voice` et que la phase active exige la transcription, Core crée automatiquement le job `transcribe_audio`.
+* `audio_undefined` mène à `REVIEW_PENDING_PROFILE` dans la même surface UI de review.
+* si ce choix fixe `audio_voice` et que la phase active exige la transcription, Core crée automatiquement le job `transcribe_audio` et repasse l’asset en `READY`.
+* si ce choix fixe un profil déjà complet, l’asset passe à `PROCESSED`.
 * Le fichier `/.retaia` est créé et maintenu par Retaia Core uniquement.
 
 
@@ -146,7 +148,7 @@ Retaia Core Server, Retaia Agent (ou autres clients), éventuellement MCP
 
    * transcription
    * suggestions de tags (LLM)
-2. À partir de la phase `v1.1+` validée, la transcription devient un prérequis de `PROCESSED` pour tout média avec piste audio exploitable.
+2. À partir de la phase `v1.1+` validée, la transcription devient un prérequis de `PROCESSED` pour tout média dont le profil l'exige.
 3. Les suggestions de tags restent, elles, des enrichissements secondaires non bloquants quand activées.
 4. Un agent claim le job, traite et soumet.
 5. Le serveur met à jour :
@@ -157,7 +159,7 @@ Retaia Core Server, Retaia Agent (ou autres clients), éventuellement MCP
 ### Règles
 
 * avant validation `v1.1+`, transcription et suggestions PEUVENT rester des jobs secondaires non bloquants sous `feature_flags`
-* dès validation `v1.1+`, la transcription n'est plus un job secondaire post-review pour un média avec piste audio exploitable : elle devient un prérequis de `PROCESSED`
+* dès validation `v1.1+`, la transcription n'est plus un job secondaire post-review pour un média dont le profil l'exige : elle devient un prérequis de `PROCESSED`
 * les suggestions de tags ne modifient jamais l’état principal (pas de transition)
 * Les suggestions ne sont jamais appliquées automatiquement comme décision.
 * Les suggestions peuvent être recalculées et remplacées.
@@ -175,16 +177,18 @@ Utilisateur via l’interface Retaia Core
 
 ### Étapes
 
-1. Consultation des assets (proxy vidéo/audio, thumbs, waveform, facts, transcript si dispo).
-2. Ajout/modification de tags libres et champs structurés.
-3. (Optionnel) acceptation manuelle de suggestions de tags.
-4. Prise de décision : `DECIDED_KEEP` ou `DECIDED_REJECT`.
+1. Consultation des assets en `REVIEW_PENDING_PROFILE` ou `PROCESSED` (proxy vidéo/audio, thumbs, waveform, facts, transcript si dispo).
+2. Si l'asset est en `REVIEW_PENDING_PROFILE`, choix explicite du `processing_profile` requis dans la même surface UI.
+3. Ajout/modification de tags libres et champs structurés.
+4. (Optionnel) acceptation manuelle de suggestions de tags.
+5. Prise de décision : `DECIDED_KEEP` ou `DECIDED_REJECT` uniquement pour les assets déjà `PROCESSED`.
 
 ### Règles
 
 * Les décisions sont **humaines uniquement**.
 * Aucun move n’est déclenché à ce stade.
 * Une décision peut être annulée (retour `DECISION_PENDING`).
+* Un asset en `REVIEW_PENDING_PROFILE` est visible dans la même surface de review, mais aucune décision KEEP/REJECT n'y est autorisée.
 * L'UI peut appliquer une même action sur une sélection multiple d'assets (ex: ajout d'un keyword, KEEP, REJECT) via appels unitaires Core.
 * Pour une mutation metadata (ex: ajout de keyword), la confirmation UI précède immédiatement l'envoi des `PATCH` unitaires; il n'existe pas d'état Core "metadata modifiée mais non appliquée".
 * Chaque mutation d'asset alimente l'historique de révisions; la révision courante peut rester en attente de validation sans invalider une révision précédente déjà validée/publiée.

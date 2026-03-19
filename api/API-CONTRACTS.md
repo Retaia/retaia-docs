@@ -210,7 +210,7 @@ Comportement :
 
 ### États (doit matcher [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md))
 
-`DISCOVERED, READY, PROCESSING_REVIEW, PROCESSED, DECISION_PENDING, DECIDED_KEEP, DECIDED_REJECT, ARCHIVED, REJECTED, PURGED`
+`DISCOVERED, READY, PROCESSING_REVIEW, REVIEW_PENDING_PROFILE, PROCESSED, DECISION_PENDING, DECIDED_KEEP, DECIDED_REJECT, ARCHIVED, REJECTED, PURGED`
 
 Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`).
 
@@ -864,16 +864,17 @@ Règles :
 * la multi-sélection UI (ex: ajout d'un keyword) DOIT envoyer des appels unitaires `PATCH /assets/{uuid}` (un par asset)
 * mutation `processing_profile` :
   * autorisée uniquement pour un acteur humain via `UI_WEB`
-  * autorisée uniquement si `state in {READY, PROCESSING_REVIEW, PROCESSED, DECISION_PENDING, DECIDED_KEEP, DECIDED_REJECT}`
-  * si l'asset a déjà été claim, tout changement de profil DOIT invalider le processing courant via reprocess explicite ou équivalent piloté par Core
-  * `processing_profile=audio_undefined` est autorisé comme état transitoire bloquant, mais NE DOIT JAMAIS permettre de conclure le processing
-  * si la mutation fixe un profil qui exige `transcribe_audio` dans la phase active, Core DOIT créer automatiquement le job `transcribe_audio`
+  * autorisée uniquement si `state in {READY, PROCESSING_REVIEW, REVIEW_PENDING_PROFILE}`
+  * `processing_profile=audio_undefined` est autorisé comme état transitoire de qualification audio, mais NE DOIT JAMAIS permettre de conclure le processing complet
+  * si la mutation fixe un profil qui exige `transcribe_audio` dans la phase active, Core DOIT créer automatiquement le job `transcribe_audio` puis faire repasser l'asset en `READY`
+  * si la mutation fixe un profil déjà complet avec les jobs disponibles, Core PEUT faire passer l'asset à `PROCESSED`
 * transitions via `state` :
   * `DECISION_PENDING -> DECIDED_KEEP | DECIDED_REJECT`
   * `DECIDED_KEEP -> DECISION_PENDING | DECIDED_REJECT | ARCHIVED`
   * `DECIDED_REJECT -> DECISION_PENDING | DECIDED_KEEP | REJECTED`
 * toute transition non listée DOIT être refusée (`409 STATE_CONFLICT`)
 * refus obligatoire de décision `KEEP` incompatible :
+  * tout asset en `REVIEW_PENDING_PROFILE` DOIT refuser toute demande de `DECIDED_KEEP`, `DECIDED_REJECT`, `ARCHIVED` ou `REJECTED` avec `409 STATE_CONFLICT`
   * si le `processing_profile` effectif après patch exige `transcribe_audio` dans la phase active
   * et si `transcript.status != DONE`
   * alors toute demande qui fait aboutir l'asset en `DECIDED_KEEP` ou `ARCHIVED` DOIT être refusée avec `409 STATE_CONFLICT`
@@ -1137,7 +1138,7 @@ Headers obligatoires :
 Effets :
 
 * `extract_facts | generate_proxy | generate_thumbnails | generate_audio_waveform` :
-  mise à jour des domaines `facts/derived`, puis `PROCESSING_REVIEW → PROCESSED → DECISION_PENDING` quand le profil est complet
+  mise à jour des domaines `facts/derived`, puis `PROCESSING_REVIEW → REVIEW_PENDING_PROFILE|PROCESSED → DECISION_PENDING` selon le profil effectif et sa complétude
 
 Note v1 (important) :
 
