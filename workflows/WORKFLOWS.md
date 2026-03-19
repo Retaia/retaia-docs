@@ -132,7 +132,7 @@ Retaia Agent
 
 ### Objectif
 
-Produire des enrichissements non bloquants : transcription et suggestions de tags.
+Produire des enrichissements AI selon la phase de rollout active.
 
 ### Acteurs
 
@@ -140,19 +140,23 @@ Retaia Core Server, Retaia Agent (ou autres clients), éventuellement MCP
 
 ### Étapes
 
-1. Après `PROCESSED`, le serveur rend éligible des jobs secondaires (si activés) :
+1. Avant validation `v1.1+`, le serveur PEUT rendre éligibles des jobs AI secondaires en pré-release via `feature_flags` :
 
    * transcription
    * suggestions de tags (LLM)
-2. Un agent claim le job, traite et soumet.
-3. Le serveur met à jour :
+2. À partir de la phase `v1.1+` validée, la transcription devient un prérequis de `PROCESSED` pour tout média avec piste audio exploitable.
+3. Les suggestions de tags restent, elles, des enrichissements secondaires non bloquants quand activées.
+4. Un agent claim le job, traite et soumet.
+5. Le serveur met à jour :
 
    * `transcript_status`
    * `suggestions_status`
 
 ### Règles
 
-* Ces jobs ne modifient pas l’état principal (pas de transition).
+* avant validation `v1.1+`, transcription et suggestions PEUVENT rester des jobs secondaires non bloquants sous `feature_flags`
+* dès validation `v1.1+`, la transcription n'est plus un job secondaire post-review pour un média avec piste audio exploitable : elle devient un prérequis de `PROCESSED`
+* les suggestions de tags ne modifient jamais l’état principal (pas de transition)
 * Les suggestions ne sont jamais appliquées automatiquement comme décision.
 * Les suggestions peuvent être recalculées et remplacées.
 
