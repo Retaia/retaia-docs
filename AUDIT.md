@@ -269,27 +269,24 @@ Points forts :
 * types de lock identifiés
 * TTLs documentés
 * `fencing_token` documenté
+* transport `job_lease` désormais explicite avec `lock_token` + `fencing_token`
 
 Reste à normer :
 
-* où et comment `fencing_token` est exposé dans les payloads API concernés
-* quels endpoints doivent le renvoyer / le consommer explicitement
-* relation exacte entre `lock_token` métier et `fencing_token`
 * règles de recovery détaillées après crash entre FS et DB
 
 Sans cela :
 
-* la policy de verrouillage est définie, mais son transport contractuel reste partiellement implicite
+* la policy de verrouillage est définie côté transport `job_lease`, mais le recovery inter-sous-systèmes reste encore partiellement implicite
 
 Constat additionnel :
 
 * `LOCK-LIFECYCLE.md` rend `fencing_token` obligatoire
-* ni `API-CONTRACTS`, ni `OpenAPI v1` ne l'exposent comme élément transporté
+* le transport `job_lease` est désormais fermé, mais pas encore les scénarios détaillés de reprise après crash
 
 Conclusion :
 
-* `fencing_token` est aujourd'hui une norme sans contrat d'échange
-* il ne peut donc pas être implémenté de manière interopérable sans règle implicite dans les repos enfants
+* le trou principal résiduel n'est plus l'échange du `fencing_token`, mais la reprise normative après crash entre DB, locks et filesystem
 
 ### 6.7 Jobs, capabilities et processing profiles
 
@@ -676,7 +673,6 @@ Action :
   * nonce anti-rejeu
   * polling
   * backoff
-* Fermer le contrat de transport des locks et `fencing_token`.
 * Fermer la table canonique des `ErrorResponse.code`.
 * Fermer le registre canonique des feature keys `v1.0.0`.
 * Fermer le registre canonique des événements observabilité cross-app.

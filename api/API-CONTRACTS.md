@@ -1176,12 +1176,14 @@ Headers obligatoires :
 
 Response :
 
-* `200` + `Job` (avec `lock_token`, `locked_until`) si claim accepté
+* `200` + `Job` (avec `lock_token`, `fencing_token`, `locked_until`) si claim accepté
 * `409 STATE_CONFLICT` si job déjà claimé, non compatible ou non claimable
 
 Règles :
 
 * lock + TTL obligatoires
+* `lock_token` identifie la lease courante; `fencing_token` est son monotone de protection d'écriture
+* tout endpoint consommant une `job_lease` DOIT vérifier le couple `lock_token` + `fencing_token`
 * pour un `claim` accepté (`200`), la réponse DOIT inclure un `source` locator :
   * `storage_id` (identifiant logique du storage, stable côté Core)
   * `original_relative` (chemin relatif du média principal)
@@ -1195,6 +1197,7 @@ Règles :
 Body :
 
 * `lock_token`
+* `fencing_token`
 
 Headers obligatoires :
 
@@ -1207,14 +1210,15 @@ Headers obligatoires :
 Response :
 
 * `locked_until`
-* `423 LOCK_REQUIRED|LOCK_INVALID` si le `lock_token` requis est absent ou invalide
-* `409 STALE_LOCK_TOKEN` si le `lock_token` est présent mais obsolète
+* `423 LOCK_REQUIRED|LOCK_INVALID` si le `lock_token` ou le `fencing_token` requis est absent ou invalide
+* `409 STALE_LOCK_TOKEN` si le couple `lock_token` + `fencing_token` est présent mais obsolète
 
 ### POST `/jobs/{job_id}/submit`
 
 Body :
 
 * `lock_token`
+* `fencing_token`
 * `job_type`
 * `result: ProcessingResultPatch`
 
@@ -1248,8 +1252,8 @@ Règle d'extension:
 
 Erreurs de lock/idempotence (normatif) :
 
-* `423 LOCK_REQUIRED|LOCK_INVALID` si le `lock_token` requis est absent ou invalide
-* `409 STALE_LOCK_TOKEN` si le `lock_token` est présent mais obsolète
+* `423 LOCK_REQUIRED|LOCK_INVALID` si le `lock_token` ou le `fencing_token` requis est absent ou invalide
+* `409 STALE_LOCK_TOKEN` si le couple `lock_token` + `fencing_token` est présent mais obsolète
 * `409 IDEMPOTENCY_CONFLICT` si la clé d'idempotence est réutilisée avec un body différent
 
 ### POST `/jobs/{job_id}/fail`
@@ -1257,6 +1261,7 @@ Erreurs de lock/idempotence (normatif) :
 Body :
 
 * `lock_token`
+* `fencing_token`
 * `error_code`
 * `message`
 * `retryable: boolean`
@@ -1271,8 +1276,8 @@ Headers obligatoires :
 
 Erreurs de lock/idempotence (normatif) :
 
-* `423 LOCK_REQUIRED|LOCK_INVALID` si le `lock_token` requis est absent ou invalide
-* `409 STALE_LOCK_TOKEN` si le `lock_token` est présent mais obsolète
+* `423 LOCK_REQUIRED|LOCK_INVALID` si le `lock_token` ou le `fencing_token` requis est absent ou invalide
+* `409 STALE_LOCK_TOKEN` si le couple `lock_token` + `fencing_token` est présent mais obsolète
 * `409 IDEMPOTENCY_CONFLICT` si la clé d'idempotence est réutilisée avec un body différent
 
 
@@ -1906,8 +1911,13 @@ Règle :
 * `job_type` (`extract_facts | generate_preview | generate_thumbnails | generate_audio_waveform`)
 * `asset_uuid`
 * `lock_token`
+* `fencing_token`
 * `locked_until`
 * `source: { storage_id, original_relative, sidecars_relative[] }`
+
+Règle :
+
+* `fencing_token` est monotone par lease et DOIT être traité comme opaque côté client, sauf pour son transport intégral dans les écritures suivantes
 
 ### ProcessingResultPatch
 

@@ -258,6 +258,12 @@ Tests obligatoires :
   * `os_name`, `os_version`, `arch` requis
   * reconnexion avec le même `agent_id` => même instance corrélable côté Core
   * deux agents actifs avec le même `agent_id` : register autorisé, conflit journalisé et visible en ops
+* `POST /jobs/{job_id}/claim`:
+  * `200` expose `lock_token`, `fencing_token` et `locked_until`
+* `POST /jobs/{job_id}/heartbeat`, `POST /jobs/{job_id}/submit`, `POST /jobs/{job_id}/fail`:
+  * `lock_token` et `fencing_token` sont tous deux obligatoires
+  * `fencing_token` obsolète renvoie `409 STALE_LOCK_TOKEN`
+  * absence ou invalidité de `lock_token` ou `fencing_token` renvoie `423 LOCK_REQUIRED|LOCK_INVALID`
   * `agent_id` absent/vide => `422 VALIDATION_FAILED`
   * aucun identifiant DB interne Core distinct n'est exposé dans le payload API
   * clé publique OpenPGP inconnue/invalide ou signature register invalide => refus auth explicite

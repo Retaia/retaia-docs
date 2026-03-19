@@ -1520,10 +1520,13 @@ paths:
           application/json:
             schema:
               type: object
-              required: [lock_token]
+              required: [lock_token, fencing_token]
               properties:
                 lock_token:
                   type: string
+                fencing_token:
+                  type: integer
+                  minimum: 1
       responses:
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
@@ -1537,10 +1540,14 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [locked_until, fencing_token]
                 properties:
                   locked_until:
                     type: string
                     format: date-time
+                  fencing_token:
+                    type: integer
+                    minimum: 1
         "409":
           description: Stale lock token (`STALE_LOCK_TOKEN`)
           content:
@@ -1630,10 +1637,13 @@ paths:
           application/json:
             schema:
               type: object
-              required: [lock_token, error_code, retryable]
+              required: [lock_token, fencing_token, error_code, retryable]
               properties:
                 lock_token:
                   type: string
+                fencing_token:
+                  type: integer
+                  minimum: 1
                 error_code:
                   type: string
                 message:
@@ -3698,6 +3708,12 @@ components:
         lock_token:
           type: string
           nullable: true
+          description: Opaque current lease token.
+        fencing_token:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: Monotone write-protection token bound to the current lease. Must be replayed unchanged on heartbeat/submit/fail.
         locked_until:
           type: string
           format: date-time
@@ -3711,10 +3727,13 @@ components:
     SubmitExtractFacts:
       type: object
       additionalProperties: false
-      required: [lock_token, job_type, result]
+      required: [lock_token, fencing_token, job_type, result]
       properties:
         lock_token:
           type: string
+        fencing_token:
+          type: integer
+          minimum: 1
         job_type:
           type: string
           enum: [extract_facts]
@@ -3736,10 +3755,13 @@ components:
     SubmitDerived:
       type: object
       additionalProperties: false
-      required: [lock_token, job_type, result]
+      required: [lock_token, fencing_token, job_type, result]
       properties:
         lock_token:
           type: string
+        fencing_token:
+          type: integer
+          minimum: 1
         job_type:
           type: string
           enum: [generate_preview, generate_thumbnails, generate_audio_waveform]
