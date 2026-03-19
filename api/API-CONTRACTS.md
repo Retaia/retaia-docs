@@ -4,13 +4,12 @@ Ce document décrit le **contrat API v1** de Retaia Core.
 
 Cette spécification est **normative**. Toute implémentation serveur, agent ou client doit s’y conformer strictement.
 
-Les fichiers OpenAPI versionnés sont :
+Le fichier OpenAPI versionné exécutable est :
 
 * `openapi/v1.yaml` (gate runtime actuelle, opposable)
-* `openapi/v1.1.yaml` (track v1.1+ validée)
-* `openapi/v1.2.yaml` (piste reservee, actuellement non planifiee)
 
 `openapi/v1.yaml` reste la description contractuelle exécutable de référence tant que les gates CI pointent v1.
+Les extensions futures (`v1.1+`, MCP, AI, autres phases) peuvent être décrites en prose normative ici, mais ne sont pas publiées comme contrat OpenAPI tant qu'elles ne sont pas stabilisées.
 Ce document doit rester strictement aligné avec `openapi/v1.yaml`.
 
 Objectif : fournir une surface stable consommée par :
@@ -881,9 +880,6 @@ Règles :
 * toute transition non listée DOIT être refusée (`409 STATE_CONFLICT`)
 * refus obligatoire de décision `KEEP` incompatible :
   * tout asset en `REVIEW_PENDING_PROFILE` DOIT refuser toute demande de `DECIDED_KEEP`, `DECIDED_REJECT`, `ARCHIVED` ou `REJECTED` avec `409 STATE_CONFLICT`
-  * si le `processing_profile` effectif après patch exige `transcribe_audio` dans la phase active
-  * et si `transcript.status != DONE`
-  * alors toute demande qui fait aboutir l'asset en `DECIDED_KEEP` ou `ARCHIVED` DOIT être refusée avec `409 STATE_CONFLICT`
 * mise à jour metadata (`tags/notes/fields`) et transition `state` peuvent être combinées dans un même `PATCH`
 * `If-Match` est obligatoire
 * toute mutation validée DOIT mettre à jour `updated_at` et `revision_etag`

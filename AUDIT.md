@@ -815,8 +815,6 @@ Constats :
   * la prose décrit `transcript: { status, text_preview?, updated_at? }`
   * OpenAPI ajoute `revision_etag`
   * OpenAPI le marque en plus "Pre-release field only. Outside v1 conformance scope"
-  * pourtant la prose métier `v1` s'appuie déjà sur `transcript.status != DONE` pour refuser certaines transitions
-  * les tests `v1` vérifient aussi cette règle
 * `AssetDecisions.history[]` reste trop vague :
   * OpenAPI ne requiert aucun champ dans chaque entrée
   * la prose ne ferme ni l'ordre, ni la forme minimale
@@ -826,17 +824,12 @@ Impact :
 
 * `Core`, `UI_WEB` et `Agent` ne partent pas du même objet métier exact
 * un client qui suit la prose et un client qui génère ses types depuis OpenAPI n'obtiendront pas la même forme
-* la contradiction sur `transcript` est particulièrement dangereuse :
-  * soit `transcript` est hors scope `v1`, et il ne peut pas bloquer une transition `v1`
-  * soit il participe déjà au contrat `v1`, et OpenAPI ne peut plus le qualifier de champ pré-release hors conformance
+* même sans blocage métier `v1`, `transcript` reste encore partiellement divergent entre prose et OpenAPI
 
 À normer avant `v1.0.0` :
 
 * aligner strictement `AssetSummary` prose / OpenAPI / tests
 * décider explicitement si `name`, `updated_at` et `revision_etag` appartiennent au contrat minimal toujours présent
-* décider explicitement si `transcript` est :
-  * hors scope `v1`
-  * ou déjà un sous-objet normatif `v1`
 * typer `processing_profile` par enum partagée et le relier sans ambiguïté à `PROCESSING-PROFILES.md`
 * fermer la structure minimale de chaque entrée `decisions.history[]`
 
@@ -1115,7 +1108,6 @@ Action :
 * Corriger le contrat OpenAPI de `GET /assets/{uuid}` et fermer tous les headers HTTP réellement normatifs.
 * Fermer la lecture partagée de `notes` / `fields` et le registre typé des champs métier partagés.
 * Fermer la table canonique `HTTP status -> ErrorResponse.code -> endpoint/scénario`.
-* Lever explicitement la contradiction `transcript` : champ pré-release hors `v1` vs précondition métier déjà opposable en `v1`.
 
 ### Priorité P2
 

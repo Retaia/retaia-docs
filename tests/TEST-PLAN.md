@@ -332,8 +332,7 @@ Tests obligatoires :
 * si le choix humain fixe un profil déjà complet, l'asset passe à `PROCESSED`
 * `PATCH /assets/{uuid}` avec `processing_profile` est refusé hors `READY|PROCESSING_REVIEW|REVIEW_PENDING_PROFILE`
 * `PATCH /assets/{uuid}` avec `processing_profile=audio_voice` DOIT être accepté comme mutation humaine explicite via `UI_WEB`
-* si le profil effectif après patch exige `transcribe_audio` dans la phase active et que `transcript.status != DONE`, toute tentative de faire aboutir l'asset en `DECIDED_KEEP` ou `ARCHIVED` DOIT être refusée avec `409 STATE_CONFLICT`
-* `PATCH /assets/{uuid}` combinant choix de profil + décision `DECIDED_KEEP` DOIT donc être refusé tant que le transcript requis n'est pas produit
+* avant validation `v1.1+`, la présence ou l'absence d'un `transcript` pré-release ne DOIT PAS bloquer une décision humaine `v1`
 
 ## 3.1) Audio waveform UX (client)
 
