@@ -70,7 +70,7 @@ Principaux constats :
 
 ## 4. Findings critiques
 
-### 4.2 Secure SDLC normatif mais non matérialisé dans le repo
+### 4.2 Secure SDLC encore partiellement matérialisé dans le repo
 
 Le baseline Secure SDLC impose :
 
@@ -88,22 +88,20 @@ Références :
 
 Constat :
 
-* le repo ne versionne qu'un seul workflow CI
-* aucun `CODEOWNERS`
-* aucune PR template
-* aucune config Dependabot visible
-* aucun workflow de scan secret / SAST / contrôle permissions CI
+* le repo versionne désormais un workflow sécurité, un template PR, une config Dependabot et des permissions CI minimales explicites
+* `CODEOWNERS` reste absent
+* la branch protection effective reste un contrôle GitHub externe non prouvé par le repo
 
 Risque :
 
-* les exigences Secure SDLC existent comme texte, pas comme système
-* les consommateurs peuvent croire ces gates acquises alors qu'elles ne sont pas prouvées ici
+* une partie significative des exigences Secure SDLC est maintenant matérialisée
+* le reliquat le plus important concerne les contrôles GitHub externes et les owners réels du dépôt
 
 À normer / fermer avant `v1.0.0` :
 
-* liste minimale des contrôles sécurité réellement obligatoires et où ils vivent
-* si certains contrôles sont "hors repo", le document doit le dire explicitement
-* versionner les artefacts manquants ou réduire la formulation normative actuelle
+* ajouter `CODEOWNERS` avec owners réels
+* activer/prouver la branch protection et les checks requis côté GitHub
+* garder la distinction explicite entre contrôles versionnés et contrôles GitHub externes
 
 ## 5. Incohérences documentaires avérées
 
@@ -1084,7 +1082,7 @@ Tant que ces trois conditions ne sont pas remplies sur les domaines listés ci-d
 
 ### Findings
 
-* `P1` Le Secure SDLC normatif n’est quasiment pas reflété dans la CI présente. `SECURE-SDLC.md` (line 5) exige SAST, secret scanning, Dependabot, branch protection, preuve de permissions CI minimales. Or le repo n’expose qu’un unique workflow `ci.yml` (line 1) avec `branch-up-to-date`, `contract-drift` et validation OpenAPI. Aucun `CODEOWNERS`, aucune PR template, aucun workflow sécurité, aucune config Dependabot n’est versionné. Pour un repo “source of truth”, ce manque de mécanisation est un point de failure avant `v1.0.0`.
+* `P1` Le Secure SDLC normatif reste partiellement non prouvé. Le repo versionne désormais un workflow sécurité, une config Dependabot, un template PR et des permissions CI minimales explicites, mais `CODEOWNERS` et la branch protection effective restent à fermer côté GitHub. Tant que ces deux contrôles ne sont pas établis, la chaîne Secure SDLC reste incomplète avant `v1.0.0`.
 
 * `P2` Le `README` annonce des “testing and release gates” comme partie des contrats normatifs, alors que les documents opérationnels de release/readiness sont explicitement non normatifs. Voir `README.md` (line 30), `READINESS-CHECKLIST.md` (line 5) et `RELEASE-OPERATIONS.md` (line 5). Il manque un point d’ancrage clair: qu’est-ce qui bloque formellement une release `v1.0.0`, et qu’est-ce qui reste simple runbook ?
 

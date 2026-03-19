@@ -31,6 +31,20 @@ Ce document definit les exigences minimales Secure SDLC pour tous les repos Reta
 * artefacts CI a retention bornee
 * provenance build tracee
 
+Artefacts versionnes minimum attendus dans le repo :
+
+* workflow CI avec `permissions` minimales explicites
+* workflow securite separé (SAST + scan secrets)
+* configuration Dependabot
+* template PR avec checklist securite
+
+Controles GitHub externes obligatoires (hors repo, mais requis) :
+
+* branch protection sur `master`
+* checks requis avant merge
+* revue(s) minimales selon la criticite
+* CODEOWNERS avec owners reels du depot ou de l'organisation
+
 ## 5) Exceptions
 
 * exception securite DOIT etre documentee avec owner + date d'expiration

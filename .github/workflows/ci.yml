@@ -6,6 +6,9 @@ on:
     branches:
       - master
 
+permissions:
+  contents: read
+
 jobs:
   branch-up-to-date:
     if: github.event_name == 'pull_request'
