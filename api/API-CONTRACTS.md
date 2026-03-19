@@ -1897,12 +1897,18 @@ Response (`202 Accepted`) :
 `revision_history[]` (normatif) :
 
 * `revision` (int >= 1)
+* `created_at` (UTC ISO-8601)
 * `is_current` (bool)
 * `published_at` (UTC ISO-8601, nullable)
 * `validation_status` (`VALIDATED | PENDING_VALIDATION | REJECTED`)
 
 Règle :
 
+* `revision_history[]` DOIT être retourné en ordre chronologique croissant de `revision`
+* `revision_history[]` est append-only du point de vue du contrat observable
+* une seule entrée DOIT avoir `is_current=true`
+* l'entrée `is_current=true` DOIT porter le numéro de révision actuellement représenté par `summary.revision_etag`
+* `published_at` PEUT être nul uniquement tant que la révision n'est pas publiée
 * une révision peut être `VALIDATED` et publiée alors qu'une révision suivante est `PENDING_VALIDATION`
 
 ### Job

@@ -498,6 +498,10 @@ Tests obligatoires :
 * ajout manuel de keywords : après confirmation UI, aucune liste Core "non appliquée" spécifique n'est créée; la mutation est immédiatement persistée par asset
 * action groupée UI sans validation explicite (annulation de confirmation) : aucun appel unitaire Core émis
 * historique de révisions asset mis à jour après mutation validée (`revision_history[]` append + `is_current=true` sur la dernière)
+* `revision_history[]` expose au minimum `revision`, `created_at`, `is_current`, `published_at?`, `validation_status`
+* `revision_history[]` est retourné en ordre croissant de `revision`
+* une seule entrée de `revision_history[]` a `is_current=true`
+* l'entrée courante de `revision_history[]` correspond au `summary.revision_etag` courant
 * mutation asset avec `If-Match` périmé => `412 PRECONDITION_FAILED`
 * `412 PRECONDITION_FAILED` asset expose `details.current_revision_etag` et `details.current_state`
 * `PATCH /assets/{uuid}`, `POST /assets/{uuid}/reprocess` et `POST /assets/{uuid}/reopen` renvoient `428 PRECONDITION_REQUIRED` si `If-Match` est absent

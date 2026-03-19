@@ -370,33 +370,19 @@ Références :
 Constats :
 
 * le mécanisme de persistance de l'historique peut rester un détail d'implémentation interne, y compris via des traits Doctrine ou `StofDoctrineExtensionsBundle`
-* en revanche le contrat observable `audit.revision_history[]` reste minimal au point d'être ambigu
-* aujourd'hui la spec ferme seulement :
-  * `revision`
-  * `is_current`
-  * `published_at`
-  * `validation_status`
-* elle ne ferme pas clairement :
-  * l'ordre canonique de `revision_history[]`
-  * si l'historique est strictement append-only
-  * le lien exact entre `revision_history`, `ETag` courant et transition métier
-  * la présence ou non d'un horodatage de création de révision distinct de `published_at`
-  * la visibilité normative d'un acteur, d'une raison ou d'un type d'événement associé à une révision
+* le contrat observable `audit.revision_history[]` est désormais fermé pour le runtime partagé :
+  * ordre croissant de `revision`
+  * append-only observable
+  * `created_at` distinct de `published_at`
+  * unicité de l'entrée `is_current=true`
+  * lien explicite entre l'entrée courante et `summary.revision_etag`
 
 Impact :
 
-* deux implémentations peuvent conserver le même historique en base mais exposer des vues différentes au runtime
-* `UI_WEB` peut afficher une chronologie, un badge "courant" ou un statut de publication différemment selon la forme retournée
-* `Agent` ou outils ops ne peuvent pas déduire de façon portable la sémantique exacte d'une révision
+* la persistance interne reste libre, mais la vue runtime partagée ne devrait plus diverger sur les invariants principaux
 
 À normer avant `v1.0.0` :
 
-* laisser la persistance libre, mais fermer le contrat observable :
-  * ordre de retour
-  * champs minimaux
-  * invariants append-only ou non
-  * relation à `revision_etag`
-  * relation entre `is_current`, `published_at` et `validation_status`
 * distinguer explicitement :
   * historique métier partagé et normatif
   * traces techniques internes non exposées
@@ -651,7 +637,6 @@ Action :
   * backoff
 * Fermer le registre canonique des feature keys `v1.0.0`.
 * Fermer le registre canonique des événements observabilité cross-app.
-* Fermer le contrat observable de `revision_history` et son lien avec `revision_etag`.
 * Rendre stricts les endpoints ops partagés : tri, validation, contraintes de payload.
 * Fermer les règles de visibilité ou de redaction des sous-sections sensibles de `AssetDetail`.
 * Fermer la lecture partagée de `notes` / `fields` et le registre typé des champs métier partagés.
