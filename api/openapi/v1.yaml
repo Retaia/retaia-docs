@@ -2255,7 +2255,7 @@ paths:
                   total:
                     type: integer
                     minimum: 0
-                    description: Total count after filters, before pagination.
+                    description: Total count after filters, before pagination. Items are returned by canonical default order `acquired_at DESC`.
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
           content:
@@ -2556,6 +2556,7 @@ paths:
                   total:
                     type: integer
                     minimum: 0
+                    description: Items are returned by canonical default order `last_seen_at DESC`.
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
           content:
@@ -2666,6 +2667,9 @@ paths:
               type: object
               additionalProperties: false
               required: [reason]
+              anyOf:
+                - required: [asset_uuid]
+                - required: [path]
               properties:
                 asset_uuid:
                   type: string

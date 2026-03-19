@@ -1662,7 +1662,7 @@ Règles pagination :
 
 * `items[]` correspond à la page demandée (`limit`/`offset`)
 * `total` représente le total filtré avant pagination (pas seulement la taille de page)
-* tri par défaut recommandé : `acquired_at DESC`
+* tri par défaut canonique : `acquired_at DESC`
 * authentification HTTP via `UserBearerAuth`, puis vérification du statut admin obligatoire
 
 ### POST `/ops/locks/recover`
@@ -1679,7 +1679,7 @@ Body :
 Validation attendue :
 
 * les clients DOIVENT envoyer `stale_lock_minutes` en entier >= 1
-* les implémentations peuvent coerce les types en v1; un durcissement explicite `400 VALIDATION_FAILED` est recommandé
+* tout type invalide ou valeur `< 1` DOIT être rejeté en `400 VALIDATION_FAILED`
 
 Response :
 
@@ -1781,7 +1781,7 @@ Règles :
 * `status=stale` si l'agent n'est plus vu actif au-delà de la fenêtre runtime serveur
 * `last_successful_job` représente le dernier job soumis avec succès et accepté par Core
 * `identity_conflict=true` si plusieurs agents actifs partagent le même `agent_id`
-* tri par défaut recommandé : `last_seen_at DESC`
+* tri par défaut canonique : `last_seen_at DESC`
 * l'authentification HTTP utilise `UserBearerAuth`, puis l'autorisation DOIT vérifier le statut admin de l'utilisateur
 
 ## 8.7) Ingest unmatched listing (ops)

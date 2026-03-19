@@ -387,23 +387,20 @@ Références :
 Constats :
 
 * plusieurs endpoints ops sont déjà consumables par une UI admin, donc ils font partie du contrat partagé et pas d'un simple détail backend
-* pourtant plusieurs comportements restent ouverts :
-  * `GET /ops/locks` : tri par défaut seulement "recommandé", pas normatif
-  * `GET /ops/agents` : tri par défaut seulement "recommandé", pas normatif
-  * `POST /ops/locks/recover` : la prose autorise encore une coercition de type en v1 alors qu'un schéma integer est déjà exposé
-  * `POST /ops/ingest/requeue` : la prose impose "au moins un de `asset_uuid` ou `path`", mais cette contrainte n'est pas fermée formellement dans OpenAPI
+* les points les plus ambigus sont désormais fermés :
+  * tri implicite canonique de `GET /ops/locks`
+  * tri implicite canonique de `GET /ops/agents`
+  * validation stricte de `stale_lock_minutes`
+  * contrainte formelle `asset_uuid` ou `path` sur `POST /ops/ingest/requeue`
 
 Impact :
 
-* deux implémentations Core peuvent être "conformes" tout en produisant des ordres d'affichage différents pour une même UI admin
-* la politique de validation réelle peut diverger entre rejet strict et coercition tolérante
-* les clients partagés ne savent pas si certaines erreurs relèvent d'un contrat dur ou d'une tolérance locale
+* le contrat ops partagé est beaucoup moins sujet à divergence sur tri et validation
+* le reliquat principal concerne maintenant surtout l'évolution future des payloads riches, pas leurs invariants actuels
 
 À normer avant `v1.0.0` :
 
-* rendre normatifs les tris par défaut des endpoints ops qui exposent des listes
-* interdire les règles de coercition implicites sur les payloads partagés si OpenAPI expose déjà des types stricts
-* encoder explicitement les contraintes de présence mutuelle ou alternative (`oneOf`, `anyOf`, règle équivalente) dans OpenAPI
+* garder ces invariants dans les payloads ops futurs et éviter toute réouverture implicite
 
 ### 6.8.g Matrice authz encore trop agrégée pour certaines données visibles
 
@@ -616,7 +613,6 @@ Action :
   * nonce anti-rejeu
   * polling
   * backoff
-* Rendre stricts les endpoints ops partagés : tri, validation, contraintes de payload.
 * Fermer les règles de visibilité ou de redaction des sous-sections sensibles de `AssetDetail`.
 * Fermer la lecture partagée de `notes` / `fields` et le registre typé des champs métier partagés.
 

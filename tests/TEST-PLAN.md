@@ -596,16 +596,18 @@ Tests obligatoires :
 * endpoint `GET /ops/locks` présent et conforme :
   * filtres `asset_uuid`, `lock_type`, pagination `limit`, `offset`
   * payload `items[]` + `total` (total avant pagination)
+  * tri implicite canonique `acquired_at DESC`
 * endpoint `POST /ops/locks/recover` présent et conforme :
   * body `stale_lock_minutes`, `dry_run`
   * payload `stale_examined`, `recovered`, `dry_run`
-  * `stale_lock_minutes` non entier ou < 1: comportement explicite documenté (coercion v1 ou `400 VALIDATION_FAILED`)
+  * `stale_lock_minutes` non entier ou < 1 => `400 VALIDATION_FAILED`
 * endpoint `GET /ops/jobs/queue` présent et conforme :
   * `summary.pending_total|claimed_total|failed_total`
   * `by_type[]` avec `job_type`, `pending`, `claimed`, `failed`, `oldest_pending_age_seconds`
 * endpoint `GET /ops/agents` présent et conforme :
   * filtres `status`, pagination `limit`, `offset`
   * payload `items[]` + `total`
+  * tri implicite canonique `last_seen_at DESC`
   * `items[]` expose `agent_id`, `client_id`, `agent_name`, `agent_version`, `os_name`, `os_version`, `arch`, `status`, `last_seen_at`, `effective_capabilities[]`
   * `agent_id` exposé correspond à l'identifiant public persistant d'instance, pas à une clé interne DB
   * `identity_conflict` booléen exposé si le même `agent_id` est vu sur plusieurs agents actifs
