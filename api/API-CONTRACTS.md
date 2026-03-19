@@ -1271,10 +1271,16 @@ Objectif :
 `preview_video` (obligatoire pour vidéo) :
 
 * conteneur : `MP4` (`video/mp4`)
-* codec vidéo : `H.264/AVC` (`yuv420p`, progressif, non interlacé)
-* codec audio (si piste audio présente) : `AAC-LC` (`audio/mp4`, 44.1kHz ou 48kHz)
+* codec vidéo obligatoire : `H.264/AVC`
+  * profil recommandé : `High`
+  * pixel format : `yuv420p`
+  * progressif, non interlacé
+* codec audio obligatoire si piste audio présente : `AAC-LC` (`audio/mp4`, 44.1kHz ou 48kHz)
 * DOIT être lisible via `HTMLVideoElement` natif dans un navigateur moderne
 * finalité : preview de review navigateur, pas master intermédiaire
+* choix codec v1 :
+  * `H.264/AVC + AAC-LC` est retenu comme compromis canonique compatibilité navigateur / poids / qualité
+  * `HEVC`, `VP9`, `AV1` ne font pas partie du contrat canonique v1 pour `preview_video`
 * framerate : DOIT conserver le framerate source (tolérance max ±0.01 fps)
 * cadence : DOIT rester en `CFR` (constant frame rate) pour stabilité seek/timeline
 * dimensions :
@@ -1293,16 +1299,24 @@ Objectif :
 
 `preview_audio` (obligatoire pour audio) :
 
-* conteneur : `M4A` (`audio/mp4`) ou `MP3` (`audio/mpeg`)
-* codec recommandé : `AAC-LC` (fallback `MP3` autorisé)
+* conteneur canonique : `M4A` (`audio/mp4`)
+* codec canonique : `AAC-LC`
+* fallback autorisé uniquement si contrainte forte d'encodage/lecture : `MP3` (`audio/mpeg`)
 * DOIT être lisible via `HTMLAudioElement` natif dans un navigateur moderne
+* choix codec v1 :
+  * `AAC-LC` est retenu comme compromis canonique compatibilité navigateur / poids / qualité
+  * `Opus` ne fait pas partie du contrat canonique v1 pour `preview_audio`
 * sample rate : conserver la source si standard navigateur, sinon normaliser en 44.1kHz ou 48kHz
 * canaux : conserver mono/stéréo source (downmix explicite autorisé si documenté)
 
 `preview_photo` (obligatoire pour image) :
 
-* format : `JPEG` (`image/jpeg`) ou `WEBP` (`image/webp`)
+* format canonique : `WEBP` (`image/webp`)
+* fallback autorisé : `JPEG` (`image/jpeg`)
 * DOIT être lisible via `HTMLImageElement` natif dans un navigateur moderne
+* choix format v1 :
+  * `WEBP` est retenu comme compromis canonique compatibilité navigateur / poids / qualité
+  * `AVIF` ne fait pas partie du contrat canonique v1 pour `preview_photo`
 * espace couleur : `sRGB`
 * orientation EXIF : normalisée (image visuellement orientée, pas de dépendance EXIF runtime)
 * dimensions : ratio d'aspect conservé, upscale interdit
@@ -1310,8 +1324,11 @@ Objectif :
 `thumb` :
 
 * réservé aux assets vidéo
-* format : `JPEG` (`image/jpeg`) ou `WEBP` (`image/webp`)
+* format canonique : `WEBP` (`image/webp`)
+* fallback autorisé : `JPEG` (`image/jpeg`)
 * DOIT être lisible via `HTMLImageElement` natif dans un navigateur moderne
+* choix format v1 :
+  * `WEBP` est retenu comme format canonique pour maximiser le ratio poids / qualité
 * espace couleur : `sRGB`
 * taille thumb par défaut : largeur `480px`
 * taille thumb secondaire optionnelle : largeur `320px`

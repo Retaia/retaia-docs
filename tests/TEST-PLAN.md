@@ -448,8 +448,11 @@ Tests obligatoires :
 * `preview_video` :
   * conteneur `video/mp4`
   * codec vidéo `H.264/AVC` lisible navigateur
+  * profil vidéo recommandé `High`
+  * pixel format `yuv420p`
   * piste audio (si présente) en `AAC-LC`
   * lecture valide via `HTMLVideoElement` standard, sans lecteur natif propriétaire ni transcodeur frontend spécifique
+  * aucun `HEVC`, `VP9` ou `AV1` requis ni attendu dans le contrat canonique v1
   * framerate dérivé = framerate source (tolérance max ±0.01 fps)
   * `CFR` requis (pas de VFR non contrôlé)
   * hauteur cible `720px` si la source est plus grande, sinon hauteur source conservée
@@ -459,18 +462,23 @@ Tests obligatoires :
   * MP4 faststart (`moov` en tête)
   * audio stéréo maximum, downmix multicanal autorisé
 * `preview_audio` :
-  * format `audio/mp4` (AAC-LC) ou `audio/mpeg`
+  * format canonique `audio/mp4` (`AAC-LC`)
+  * `audio/mpeg` (`MP3`) accepté seulement en fallback documenté
   * lecture valide via `HTMLAudioElement` standard
+  * aucun `Opus` requis ni attendu dans le contrat canonique v1
   * sample rate conforme (source conservée ou normalisée 44.1k/48k)
   * canaux cohérents avec policy de downmix
 * `preview_photo` :
-  * format `image/jpeg` ou `image/webp`
+  * format canonique `image/webp`
+  * `image/jpeg` accepté seulement en fallback documenté
   * lecture valide via `HTMLImageElement` standard
+  * aucun `AVIF` requis ni attendu dans le contrat canonique v1
   * `sRGB`
   * orientation EXIF normalisée
   * ratio d'aspect conservé, aucun upscale
 * `thumb` :
-  * format `image/jpeg` ou `image/webp`
+  * format canonique `image/webp`
+  * `image/jpeg` accepté seulement en fallback documenté
   * lecture valide via `HTMLImageElement` standard
   * `sRGB`
   * taille thumb par défaut largeur `480px`
