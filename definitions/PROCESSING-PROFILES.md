@@ -14,6 +14,37 @@ Le modèle courant distingue implicitement deux niveaux :
 
 En `v1`, cette distinction reste portée par un seul champ `processing_profile`. Le champ NE DOIT donc PAS être lu comme une taxonomie métier exhaustive de tous les contenus; il exprime seulement les variantes qui changent le processing requis.
 
+## Note d'évolution d'architecture
+
+Le champ `processing_profile` exposé en `v1` doit être lu comme un **champ composite de compatibilité**.
+
+En pratique, il agrège encore deux dimensions distinctes :
+
+* une `processing_baseline` technique, pilotée principalement par le `media_type`
+* une `content_profile` métier, utilisée seulement quand elle modifie les jobs requis ou les règles de complétude
+
+Ce choix est conservé en `v1` pour éviter une rupture de contrat inutile avant `v1.0.0`.
+
+Règles :
+
+* `processing_profile` reste le seul champ normatif exposé en `v1`
+* il NE DOIT PAS être interprété comme une taxonomie métier exhaustive des contenus
+* il exprime uniquement les variantes qui changent le processing requis
+
+Cible d'évolution post-`v1.0.0` :
+
+* introduire explicitement `processing_baseline`
+* introduire explicitement `content_profile`
+* conserver temporairement `processing_profile` comme champ dérivé ou de compatibilité durant la migration
+
+Exemples de décomposition cible :
+
+* `audio_voice` -> `processing_baseline=audio_standard` + `content_profile=voice`
+* `audio_music` -> `processing_baseline=audio_standard` + `content_profile=music`
+* `audio_undefined` -> `processing_baseline=audio_standard` + `content_profile=undefined`
+
+Cette séparation n'est pas retenue avant `v1.0.0`.
+
 Règles :
 
 * un asset DOIT avoir exactement un `processing_profile`

@@ -131,3 +131,21 @@ Cadre :
 
 * la purge reste unitaire côté Core
 * une éventuelle multi-sélection resterait un comportement UI, sans ressource batch dédiée
+
+### 6. Évolution future des processing profiles
+
+Statut :
+
+* à envisager après `v1.0.0`
+* hors périmètre `v1.0.0`
+
+Objectif :
+
+* séparer la baseline technique de processing (`processing_baseline`)
+* séparer la qualification métier du contenu (`content_profile`)
+
+Pourquoi :
+
+* éviter de mélanger taxonomie métier et mécanique technique dans un seul champ
+* permettre l'extension future des profils audio et vidéo sans refactor ambigu des jobs requis
+* garder une migration compatible avec les assets et clients `v1`
