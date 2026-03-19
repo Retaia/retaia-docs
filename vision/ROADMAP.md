@@ -40,7 +40,7 @@ Contenu prévu :
 Notes :
 
 * le MCP reste un client d’orchestration ; il ne traite pas les médias directement
-* `AGENT_UI` couvre les surfaces CLI et GUI de l’agent avec parité fonctionnelle
+* `AGENT_UI` couvre au minimum la surface CLI et, quand la GUI est livrée, la GUI suit la même parité fonctionnelle
 * cette étape correspond à un élargissement du produit livré, pas à un changement de philosophie
 
 
@@ -55,7 +55,7 @@ Contenu prévu :
 * `Core`
 * API v1
 * `UI_WEB`
-* `Agent`, incluant `AGENT_UI` en CLI et GUI
+* `Agent`, incluant `AGENT_UI` en CLI et, quand livrée, en GUI
 * processing review non-AI, décisions humaines, moves, purge, recherche full-text v1
 
 Contraintes produit :

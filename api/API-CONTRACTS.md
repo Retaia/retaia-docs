@@ -17,7 +17,7 @@ Objectif : fournir une surface stable consommée par :
 
 * client Agent (`AGENT`) — livré en v1 projet global
 * client UI web principal (`UI_WEB`, `client_kind=UI_WEB`) — livré en v1 projet global
-* client agent UI (`AGENT_UI`, `client_kind=AGENT`) — livré en v1 projet global
+* surface locale agent (`AGENT_UI`) — livrée en v1 projet global; elle pilote le daemon local mais ne porte pas d'auth humaine autonome
 * client MCP (`MCP`, `client_kind=MCP`) — livré en v1.1 projet global
 
 

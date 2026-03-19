@@ -107,13 +107,13 @@ Le scope initial livre :
 * `Core`
 * API v1
 * `UI_WEB`
-* `Agent`, incluant `AGENT_UI` en CLI et GUI
+* `Agent`, incluant `AGENT_UI` en CLI et, quand livré, en GUI
 
 Les fonctions dépendantes de l'AI et le client `MCP` arrivent en `v1.1+`.
 
 ### Retaia Agent
 
-Rôle : moteur de processing en arrière‑plan, avec surfaces `AGENT_UI` en CLI et GUI.
+Rôle : moteur de processing en arrière‑plan, avec surfaces `AGENT_UI` en CLI et, quand livré, en GUI.
 
 Règle d'architecture :
 
