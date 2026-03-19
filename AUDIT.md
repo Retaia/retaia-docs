@@ -88,8 +88,7 @@ Références :
 
 Constat :
 
-* le repo versionne désormais un workflow sécurité, un template PR, une config Dependabot et des permissions CI minimales explicites
-* `CODEOWNERS` reste absent
+* le repo versionne désormais un workflow sécurité, un template PR, une config Dependabot, un `CODEOWNERS` et des permissions CI minimales explicites
 * la branch protection effective reste un contrôle GitHub externe non prouvé par le repo
 
 Risque :
@@ -99,7 +98,6 @@ Risque :
 
 À normer / fermer avant `v1.0.0` :
 
-* ajouter `CODEOWNERS` avec owners réels
 * activer/prouver la branch protection et les checks requis côté GitHub
 * garder la distinction explicite entre contrôles versionnés et contrôles GitHub externes
 
@@ -1000,7 +998,7 @@ Tant que ces trois conditions ne sont pas remplies sur les domaines listés ci-d
 
 ### Findings
 
-* `P1` Le Secure SDLC normatif reste partiellement non prouvé. Le repo versionne désormais un workflow sécurité, une config Dependabot, un template PR et des permissions CI minimales explicites, mais `CODEOWNERS` et la branch protection effective restent à fermer côté GitHub. Tant que ces deux contrôles ne sont pas établis, la chaîne Secure SDLC reste incomplète avant `v1.0.0`.
+* `P1` Le Secure SDLC normatif reste partiellement non prouvé. Le repo versionne désormais un workflow sécurité, une config Dependabot, un template PR, un `CODEOWNERS` et des permissions CI minimales explicites, mais la branch protection effective reste à fermer côté GitHub. Tant qu’elle n’est pas établie, la chaîne Secure SDLC reste incomplète avant `v1.0.0`.
 
 
 ### Ce qui reste à normer avant `v1.0.0`
