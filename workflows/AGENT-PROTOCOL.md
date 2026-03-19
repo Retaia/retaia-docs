@@ -104,6 +104,15 @@ Chaîne canonique à signer :
 * timestamp de signature
 * nonce
 * SHA-256 hexadécimal du body HTTP brut
+* encodage UTF-8 obligatoire
+* exactement 6 lignes, dans cet ordre
+* méthode HTTP en majuscules
+* query string exclue du path signé
+* timestamp au format UTC RFC 3339
+* hash body en hex lowercase
+* si le body est vide, utiliser le SHA-256 de la chaîne vide
+* séparateur de lignes `\n`, sans ligne finale supplémentaire
+* `X-Retaia-Signature` DOIT contenir la signature OpenPGP détachée ASCII-armored de cette chaîne canonique
 
 Règles de vérification côté Core :
 

@@ -656,11 +656,32 @@ Signature MCP (normative) :
   * timestamp de signature
   * nonce unique
   * SHA-256 hexadécimal du body HTTP brut
-* la chaîne canonique DOIT utiliser `\\n` comme séparateur de lignes et rester stable entre implémentations
+* méthode canonique obligatoire :
+  * la chaîne canonique DOIT être encodée en UTF-8
+  * la chaîne canonique DOIT contenir exactement 6 lignes, dans l'ordre ci-dessus
+  * la méthode HTTP DOIT être en majuscules (`POST`, `PATCH`, ...)
+  * le path DOIT être le path HTTP exact reçu par Core, query string exclue
+  * `X-Retaia-Signature-Timestamp` DOIT être au format UTC RFC 3339, par exemple `2026-03-19T12:34:56Z`
+  * `X-Retaia-Signature-Nonce` DOIT être une chaîne opaque unique par requête signée
+  * le hash du body DOIT être le SHA-256 hexadécimal lowercase du body HTTP brut exact
+  * si le body est vide, le hash DOIT être le SHA-256 de la chaîne vide
+  * les 6 lignes DOIVENT être jointes avec le séparateur `\\n`, sans ligne finale supplémentaire
+* `X-Retaia-Signature` DOIT transporter la signature OpenPGP détachée ASCII-armored de cette chaîne canonique
 * Core DOIT vérifier la signature MCP via une librairie OpenPGP standard maintenue; aucune implémentation crypto maison n'est autorisée
 * Core DOIT rejeter toute écriture MCP signée si la signature est absente, invalide, expirée, rejouée ou si la clé active est révoquée/inconnue
 * Core DOIT contrôler une fenêtre de fraîcheur bornée pour `X-Retaia-Signature-Timestamp` et empêcher le rejeu via `X-Retaia-Signature-Nonce`
 * Core DOIT journaliser les échecs de vérification de signature MCP comme événements sécurité
+
+Exemple de chaîne canonique MCP :
+
+```text
+POST
+/mcp/prompts/execute
+cli_01JQ9M8Y8T9B3A2K6V0QF1N3R2
+2026-03-19T12:34:56Z
+1b6b9b74-91e0-4a57-9d37-0c9470d2fbe5
+5b7f9d8a4d24b6f1f2a7b1f9b83a0f9a430d4b7bce3f6e0c1c51e4c0fdb0d2f1
+```
 
 Matrice de migration v1 runtime (gelée) :
 
@@ -957,11 +978,32 @@ Signature agent (normative) :
   * timestamp de signature
   * nonce unique
   * SHA-256 hexadécimal du body HTTP brut
-* la chaîne canonique DOIT utiliser `\\n` comme séparateur de lignes et rester stable entre implémentations
+* méthode canonique obligatoire :
+  * la chaîne canonique DOIT être encodée en UTF-8
+  * la chaîne canonique DOIT contenir exactement 6 lignes, dans l'ordre ci-dessus
+  * la méthode HTTP DOIT être en majuscules (`POST`, `PATCH`, ...)
+  * le path DOIT être le path HTTP exact reçu par Core, query string exclue
+  * `X-Retaia-Signature-Timestamp` DOIT être au format UTC RFC 3339, par exemple `2026-03-19T12:34:56Z`
+  * `X-Retaia-Signature-Nonce` DOIT être une chaîne opaque unique par requête signée
+  * le hash du body DOIT être le SHA-256 hexadécimal lowercase du body HTTP brut exact
+  * si le body est vide, le hash DOIT être le SHA-256 de la chaîne vide
+  * les 6 lignes DOIVENT être jointes avec le séparateur `\\n`, sans ligne finale supplémentaire
+* `X-Retaia-Signature` DOIT transporter la signature OpenPGP détachée ASCII-armored de cette chaîne canonique
 * Core DOIT vérifier la signature via une librairie OpenPGP standard maintenue; aucune implémentation crypto maison n'est autorisée
 * Core DOIT rejeter toute écriture signée si la signature est absente, invalide, expirée, rejouée ou si la clé active est révoquée/inconnue
 * Core DOIT contrôler une fenêtre de fraîcheur bornée pour `X-Retaia-Signature-Timestamp` et empêcher le rejeu via `X-Retaia-Signature-Nonce`
 * Core DOIT journaliser les échecs de vérification de signature comme événements sécurité
+
+Exemple de chaîne canonique agent :
+
+```text
+POST
+/jobs/123/submit
+550e8400-e29b-41d4-a716-446655440000
+2026-03-19T12:34:56Z
+4f5b0f7d-9c15-4ed7-99d2-4d8d9f9b2a10
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+```
 
 Response :
 

@@ -2579,12 +2579,14 @@ components:
       name: X-Retaia-Client-Id
       in: header
       required: true
+      description: Technical MCP client identifier included in the signed canonical string.
       schema:
         type: string
     AgentSignatureAgentId:
       name: X-Retaia-Agent-Id
       in: header
       required: true
+      description: Stable agent UUID included in the signed canonical string.
       schema:
         type: string
         format: uuid
@@ -2592,18 +2594,21 @@ components:
       name: X-Retaia-OpenPGP-Fingerprint
       in: header
       required: true
+      description: OpenPGP fingerprint of the active public key used to verify the detached signature.
       schema:
         type: string
     AgentSignatureValue:
       name: X-Retaia-Signature
       in: header
       required: true
+      description: ASCII-armored detached OpenPGP signature of the canonical UTF-8 string built from method, path, technical identifier, timestamp, nonce, and raw body SHA-256.
       schema:
         type: string
     AgentSignatureTimestamp:
       name: X-Retaia-Signature-Timestamp
       in: header
       required: true
+      description: Signature timestamp in UTC RFC 3339 format; included in the canonical string and checked for freshness.
       schema:
         type: string
         format: date-time
@@ -2611,6 +2616,7 @@ components:
       name: X-Retaia-Signature-Nonce
       in: header
       required: true
+      description: Unique opaque nonce included in the canonical string and checked for replay protection.
       schema:
         type: string
 
