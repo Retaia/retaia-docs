@@ -1,11 +1,12 @@
 # UI Global Spec
 
-Ce document fixe les regles globales UI qui doivent etre partagees par tous les clients Retaia.
+Ce document fixe les regles globales UI partagees par `UI_WEB`.
 
 Statut :
 
 * normatif pour les parcours UI, le vocabulaire visible, la navigation et les comportements d'interface
 * non substituable par une recommandation locale de `retaia-ui`
+* hors portee directe pour `AGENT_UI` sauf mention normative explicite dans un autre document partage
 
 ## 1) Routes UI canoniques
 

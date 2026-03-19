@@ -109,29 +109,7 @@ Statut avant `v1.0.0` :
 * la gouvernance repo/CI est fermée
 * des écarts contractuels et de périmètre documentaire restent encore à corriger
 
-### 4.2 Portée normative UI encore ambiguë
-
-Références :
-
-* [ui/UI-GLOBAL-SPEC.md](ui/UI-GLOBAL-SPEC.md)
-* [DOCUMENT-INDEX.md](DOCUMENT-INDEX.md)
-
-Constat :
-
-* [ui/UI-GLOBAL-SPEC.md](ui/UI-GLOBAL-SPEC.md) s'annonce comme un document partageant des règles UI "par tous les clients Retaia"
-* [DOCUMENT-INDEX.md](DOCUMENT-INDEX.md) classe pourtant ce document comme contrat `UI_WEB` uniquement
-
-Risque :
-
-* `AGENT_UI` ou d'autres clients peuvent se croire contraints par des règles de navigation/shell qui ne leur sont pas destinées
-* inversement, un lecteur de l'index peut sous-estimer la portée revendiquée dans le document lui-même
-
-À normer / fermer avant `v1.0.0` :
-
-* borner explicitement `UI-GLOBAL-SPEC.md` à `UI_WEB`
-* ou élargir formellement ses consommateurs dans l'index si cette portée plus large est réellement voulue
-
-### 4.3 Règles d'implémentation interne encore portées par des docs normatives partagées
+### 4.2 Règles d'implémentation interne encore portées par des docs normatives partagées
 
 Références :
 
@@ -467,7 +445,6 @@ Le repo est proche d'un état `v1.0.0` fermable, mais cette nouvelle passe montr
 
 Les reliquats principaux portent désormais sur :
 
-* la portée exacte des docs UI normatives
 * la séparation entre contrat partagé et règles d'implémentation interne
 
 Le point central à retenir avant `v1.0.0` est désormais simple :
@@ -480,13 +457,11 @@ Le point central à retenir avant `v1.0.0` est désormais simple :
 
 ### Findings
 
-* `P2` [ui/UI-GLOBAL-SPEC.md](ui/UI-GLOBAL-SPEC.md) revendique une portée "tous les clients Retaia" alors que [DOCUMENT-INDEX.md](DOCUMENT-INDEX.md) le borne à `UI_WEB`.
 * `P2` Des docs normatives partagées portent encore des règles d'implémentation interne enfant : contrainte `Rust` et librairies dans [workflows/AGENT-PROTOCOL.md](workflows/AGENT-PROTOCOL.md), chemins `src/...` dans [ui/KEYBOARD-SHORTCUTS-REGISTRY.md](ui/KEYBOARD-SHORTCUTS-REGISTRY.md).
 
 
 ### Ce qui reste à normer avant `v1.0.0`
 
-* Clarifier la portée exacte des docs UI normatives pour éviter toute contrainte implicite sur `AGENT_UI` ou d'autres clients.
 * Retirer des docs normatives partagées les règles d'implémentation interne qui n'appartiennent pas au contrat inter-repos.
 
 ### Vérifications faites
