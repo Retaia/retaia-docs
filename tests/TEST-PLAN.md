@@ -456,11 +456,14 @@ Tests obligatoires :
   * framerate dérivé = framerate source (tolérance max ±0.01 fps)
   * `CFR` requis (pas de VFR non contrôlé)
   * hauteur cible `720px` si la source est plus grande, sinon hauteur source conservée
+  * `CRF` recommandé `23`, plage tolérée `21..28`
+  * preset recommandé `medium`
   * bitrate vidéo dans la plage normative `1.5 Mbps` à `4 Mbps`
   * ratio d'aspect conservé, aucun upscale
   * keyframe interval <= 2 secondes
   * MP4 faststart (`moov` en tête)
   * audio stéréo maximum, downmix multicanal autorisé
+  * bitrate audio dans la plage `96..160 kbps`, cible recommandée `128 kbps`
 * `preview_audio` :
   * format canonique `audio/mp4` (`AAC-LC`)
   * `audio/mpeg` (`MP3`) accepté seulement en fallback documenté
@@ -468,6 +471,7 @@ Tests obligatoires :
   * aucun `Opus` requis ni attendu dans le contrat canonique v1
   * sample rate conforme (source conservée ou normalisée 44.1k/48k)
   * canaux cohérents avec policy de downmix
+  * bitrate audio dans la plage `96..160 kbps`, cible recommandée `128 kbps`
 * `preview_photo` :
   * format canonique `image/webp`
   * `image/jpeg` accepté seulement en fallback documenté
@@ -476,12 +480,16 @@ Tests obligatoires :
   * `sRGB`
   * orientation EXIF normalisée
   * ratio d'aspect conservé, aucun upscale
+  * qualité `WEBP` recommandée `75`, plage tolérée `68..82`
+  * fallback `JPEG` : qualité recommandée `80`, plage tolérée `72..86`
 * `thumb` :
   * format canonique `image/webp`
   * `image/jpeg` accepté seulement en fallback documenté
   * lecture valide via `HTMLImageElement` standard
   * `sRGB`
   * taille thumb par défaut largeur `480px`
+  * qualité `WEBP` recommandée `75`, plage tolérée `68..82`
+  * fallback `JPEG` : qualité recommandée `80`, plage tolérée `72..86`
   * vidéo courte (`< 120s`) : thumb principal extrait à `max(1s, 10% de la durée)`
   * vidéo longue (`>= 120s`) : thumb principal extrait à `5% de la durée`, avec fallback à `20s` si `5% > 20s`
   * si la frame cible est noire ou de fondu et qu'une heuristique légère est active, une frame voisine plus représentative est choisie

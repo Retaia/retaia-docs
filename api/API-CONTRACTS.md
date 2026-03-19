@@ -1287,6 +1287,11 @@ Objectif :
   * ratio d'aspect conservé, upscale interdit
   * hauteur cible recommandée `720px`
   * si la source est plus petite, conserver la hauteur source
+* encodage vidéo recommandé :
+  * mode cible : `CRF`
+  * `CRF` recommandé : `23`
+  * plage tolérée : `21` à `28`
+  * preset recommandé : `medium`
 * bitrate vidéo :
   * cible recommandée `2.5 Mbps`
   * plage tolérée `1.5 Mbps` à `4 Mbps`
@@ -1296,6 +1301,7 @@ Objectif :
   * stéréo maximum
   * downmix multicanal autorisé pour compatibilité navigateur
   * bitrate audio recommandé `128 kbps`
+  * plage tolérée : `96 kbps` à `160 kbps`
 
 `preview_audio` (obligatoire pour audio) :
 
@@ -1308,6 +1314,10 @@ Objectif :
   * `Opus` ne fait pas partie du contrat canonique v1 pour `preview_audio`
 * sample rate : conserver la source si standard navigateur, sinon normaliser en 44.1kHz ou 48kHz
 * canaux : conserver mono/stéréo source (downmix explicite autorisé si documenté)
+* encodage recommandé :
+  * VBR AAC recommandé
+  * bitrate cible recommandé : `128 kbps`
+  * plage tolérée : `96 kbps` à `160 kbps`
 
 `preview_photo` (obligatoire pour image) :
 
@@ -1320,6 +1330,10 @@ Objectif :
 * espace couleur : `sRGB`
 * orientation EXIF : normalisée (image visuellement orientée, pas de dépendance EXIF runtime)
 * dimensions : ratio d'aspect conservé, upscale interdit
+* encodage recommandé :
+  * qualité WebP recommandée : `75`
+  * plage tolérée : `68` à `82`
+  * si fallback `JPEG` : qualité recommandée `80`, plage tolérée `72` à `86`
 
 `thumb` :
 
@@ -1334,8 +1348,8 @@ Objectif :
 * taille thumb secondaire optionnelle : largeur `320px`
 * ratio d'aspect conservé, upscale interdit
 * qualité cible :
-  * `JPEG` qualité recommandée `80`
-  * `WEBP` qualité recommandée `75`
+  * `JPEG` qualité recommandée `80`, plage tolérée `72` à `86`
+  * `WEBP` qualité recommandée `75`, plage tolérée `68` à `82`
 * pour une vidéo, le thumb principal DOIT provenir d'une frame représentative déterminée par `thumbnail_profile`
   * vidéo courte = durée `< 120s` ; thumb principal à `max(1s, 10% de la durée)`
   * vidéo longue = durée `>= 120s` ; thumb principal à `5% de la durée`, avec fallback à `20s` si `5% > 20s`
