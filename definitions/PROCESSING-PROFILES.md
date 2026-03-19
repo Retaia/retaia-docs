@@ -23,6 +23,12 @@ Règles :
 
 Usage : rush vidéo standard.
 
+Règle d'évolution :
+
+* `video_standard` est le profil vidéo canonique en `v1`
+* il PEUT être scindé dans une phase ultérieure si des besoins métier distincts apparaissent (ex: interview/parole, musique/performance, ambiance/B-roll)
+* une telle scission future ne remet pas en cause la baseline jobs vidéo déjà définie
+
 Jobs required :
 
 * `extract_facts`

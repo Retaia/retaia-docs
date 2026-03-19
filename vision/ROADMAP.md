@@ -63,6 +63,8 @@ Contraintes produit :
 * aucune IA ne prend de décision KEEP / REJECT
 * les enrichissements dépendants de l'AI restent hors conformité v1
 * `AGENT_UI` fait partie de la release initiale et n'est pas un scope différé
+* `video_standard` reste le profil vidéo canonique en `v1`
+* une scission future de `video_standard` reste possible, mais n'est pas retenue avant la release `v1.0.0`
 
 
 ## Exploratoire
