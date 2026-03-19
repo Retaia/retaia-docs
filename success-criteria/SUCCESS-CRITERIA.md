@@ -30,7 +30,7 @@ Le projet est considéré comme réussi si :
 * Les jobs sont repris automatiquement après échec.
 
 
-### 3) Review fluide via proxies
+### 3) Review fluide via previews
 
 * La review est possible **uniquement après processing**.
 * Les vidéos et audios sont lisibles via l’UI sans accès SMB.

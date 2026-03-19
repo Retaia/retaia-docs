@@ -78,7 +78,7 @@ Objectif: en cas d'exfiltration partielle (DB, logs, token, backup), les donnée
 
 * minimisation: ne collecter et ne stocker que les données nécessaires au service
 * chiffrement au repos pour données sensibles et backups
-* standard crypto applicatif cross-client: GPG/OpenPGP selon [`GPG-OPENPGP-STANDARD.md`](GPG-OPENPGP-STANDARD.md)
+* standard crypto applicatif cross-client: OpenPGP selon [`GPG-OPENPGP-STANDARD.md`](GPG-OPENPGP-STANDARD.md)
 * chiffrement applicatif (field-level/envelope) obligatoire pour adresse, GPS et transcription
 * séparation logique des données opérationnelles et des secrets
 * exports/dumps de prod DOIVENT être chiffrés et tracés

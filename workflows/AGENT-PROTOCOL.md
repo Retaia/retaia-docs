@@ -82,8 +82,10 @@ Preuve cryptographique d'instance :
 
 * `agent_id` reste l'identifiant public stable et lisible pour les usages ops
 * la clé `OpenPGP` fournit la preuve cryptographique que la requête émane bien de cette instance d'agent
+* `Core` reçoit et enregistre la clé publique active de l'agent lors de `POST /agents/register`, après approval humain du device flow et avant toute écriture mutatrice
 * `POST /agents/register` DOIT déclarer la clé publique OpenPGP active (`openpgp_public_key`) et son `openpgp_fingerprint`
 * `POST /agents/register` DOIT aussi être signé avec la clé privée correspondante pour prouver la possession de la clé
+* cette preuve de possession signifie que l'agent signe la requête de register avec la clé privée correspondant à la clé publique déclarée, et que `Core` vérifie cette signature avant d'accepter l'enregistrement
 * toutes les écritures agent -> Core DOIVENT ensuite être signées avec cette même clé active jusqu'à rotation explicite
 
 Headers de signature agent (obligatoires sur les écritures agent -> Core) :
@@ -102,6 +104,15 @@ Chaîne canonique à signer :
 * timestamp de signature
 * nonce
 * SHA-256 hexadécimal du body HTTP brut
+* encodage UTF-8 obligatoire
+* exactement 6 lignes, dans cet ordre
+* méthode HTTP en majuscules
+* query string exclue du path signé
+* timestamp au format UTC RFC 3339
+* hash body en hex lowercase
+* si le body est vide, utiliser le SHA-256 de la chaîne vide
+* séparateur de lignes `\n`, sans ligne finale supplémentaire
+* `X-Retaia-Signature` DOIT contenir la signature OpenPGP détachée ASCII-armored de cette chaîne canonique
 
 Règles de vérification côté Core :
 
@@ -145,6 +156,7 @@ Pour éviter le code local à maintenir, cette règle s'applique à toute implé
 ### 3.3 Modes d’auth agent (normatif)
 
 * mode non-interactif (service/daemon): `client_id + secret_key -> POST /auth/clients/token` après approval humain via `UI_WEB`
+* en `v1`, la preuve de possession de `secret_key` consiste uniquement en sa présentation directe sur `POST /auth/clients/token` via TLS; aucun schéma HMAC ou signature symétrique local supplémentaire n'est autorisé
 * `AGENT_UI` est une surface locale de setup/contrôle/debug; il NE DOIT PAS implémenter de login humain direct
 * `AGENT_UI` DOIT ouvrir le browser vers `UI_WEB` pour toute authentification ou approval humaine liée au daemon
 * `UI_WEB` reste la seule UI autorisée à porter l'identité humaine (`login + bearer + refresh`)
@@ -152,6 +164,7 @@ Pour éviter le code local à maintenir, cette règle s'applique à toute implé
 * le bearer utilisateur appartient exclusivement à `UI_WEB`; il NE DOIT JAMAIS être exposé ni réutilisé par `AGENT_UI` ou `AGENT_TECHNICAL`
 * le daemon `AGENT_TECHNICAL` agit toujours sous sa propre identité technique (`agent_id` + clé OpenPGP + auth technique), jamais au nom implicite de l'utilisateur connecté dans `UI_WEB`
 * `client_id + secret_key` autorise le client technique et permet de mint le bearer technique; une écriture mutatrice agent NE DOIT JAMAIS être acceptée sur cette seule base sans preuve `agent_id + OpenPGP + signature`
+* `Core` DOIT vérifier `secret_key` en temps constant, ne jamais la logguer et ne jamais l'exposer après émission initiale ou rotation explicite
 * `AGENT_TECHNICAL` N'UTILISE JAMAIS `WebAuthn` au runtime
 
 Extension future user-scoped (réservée) :

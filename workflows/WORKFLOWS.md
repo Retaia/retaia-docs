@@ -22,13 +22,13 @@ Retaia Core Server
 3. Détection des fichiers vidéo, photo et audio supportés.
 4. Enregistrement ou mise à jour de l’asset (UUID, path, size, mtime).
 5. Association des sidecars connus (même dossier, même base name).
-6. Sidecars/proxies non rattachables : marquer `UNMATCHED_SIDECAR` + raison (`missing_parent|ambiguous_parent|disabled_by_policy`).
+6. Sidecars/previews non rattachables : marquer `UNMATCHED_SIDECAR` + raison (`missing_parent|ambiguous_parent|disabled_by_policy`).
 7. Vérification de stabilité :
 
    * taille identique sur **2 scans consécutifs**
    * `mtime` plus ancien que **5–6 minutes**
 8. Passage de l’état `DISCOVERED` à `READY` si conditions remplies.
-9. Attribution d'un `processing_profile` (auto par défaut, modifiable manuellement avant claim).
+9. Attribution d'un `processing_profile` (auto par défaut, modifiable manuellement avant claim; `AUDIO` démarre en `audio_undefined` tant qu'un humain n'a pas qualifié le média).
 
 ### Règles
 
@@ -38,7 +38,7 @@ Retaia Core Server
 * Si la migration `/.retaia` échoue (create/update atomique ou upgrade requis du champ JSON `version` dans `/.retaia`), Core DOIT échouer explicitement au boot/update (pas de mode dégradé implicite).
 * En mode multi-mount, un échec sur un seul `storage_id` DOIT faire échouer tout le startup (fail-fast global).
 * `APP_STORAGE_ID` DOIT matcher strictement `/.retaia.storage_id` pour chaque mount ciblé; sinon boot refusé.
-* Les sidecars/proxies `UNMATCHED_SIDECAR` n'engendrent pas d'asset autonome.
+* Les sidecars/dérivés de review `UNMATCHED_SIDECAR` n'engendrent pas d'asset autonome.
 * L'observabilité ingest expose au minimum `queued`, `missing`, `unmatched_sidecars`.
 
 
@@ -55,7 +55,7 @@ Retaia Agent, Retaia Core Server
 ### Étapes
 
 1. L’agent se déclare auprès du serveur (`agent_id`, `agent_name`, `agent_version`, `os_name`, `os_version`, `arch`).
-2. L’agent annonce ses capabilities déclaratives (ex: `media.proxies.video@1`, `speech.transcription@1`).
+2. L’agent annonce ses capabilities déclaratives (ex: `media.previews.video@1`, `speech.transcription@1`).
 3. Le serveur enregistre l’agent et lui attribue des paramètres (quota, priorités).
 
 ### Règles
@@ -110,14 +110,15 @@ Retaia Agent
 4. Extraire les facts (métadonnées techniques) et les envoyer au serveur.
 5. Générer les dérivés en local temporaire côté agent :
 
-   * VIDEO : proxy (obligatoire), thumbs
-   * AUDIO : proxy (obligatoire), waveform (obligatoire)
-   * PHOTO : proxy (obligatoire), thumbs
+   * VIDEO : preview (obligatoire), thumbs, waveform si piste audio exploitable
+   * AUDIO : preview (obligatoire), waveform (obligatoire)
+   * PHOTO : preview (obligatoire)
 6. Uploader les dérivés via l'API (`/assets/{uuid}/derived/upload/*`).
 7. Enregistrer les références de dérivés côté serveur.
 8. En cas de job long : envoyer des heartbeats pour prolonger le TTL.
 9. Soumettre le résultat final, libérer le lock.
-10. Le serveur passe l’asset à `PROCESSED` quand tous les jobs requis par le `processing_profile` sont terminés.
+10. Si le `processing_profile=audio_undefined` et que les dérivés minimaux sont prêts, le serveur passe l’asset à `REVIEW_PENDING_PROFILE`.
+11. Sinon, le serveur passe l’asset à `PROCESSED` quand tous les jobs requis par le `processing_profile` sont terminés.
 
 ### Règles
 
@@ -125,6 +126,9 @@ Retaia Agent
 * L’agent ne prend jamais de décision KEEP/REJECT.
 * Les agents n'écrivent jamais directement dans `RUSHES_DB/.derived`.
 * `PROCESSED` dépend du `processing_profile` de l'asset.
+* `audio_undefined` mène à `REVIEW_PENDING_PROFILE` dans la même surface UI de review.
+* si ce choix fixe `audio_voice` et que la phase active exige la transcription, Core crée automatiquement le job `transcribe_audio` et repasse l’asset en `READY`.
+* si ce choix fixe un profil déjà complet, l’asset passe à `PROCESSED`.
 * Le fichier `/.retaia` est créé et maintenu par Retaia Core uniquement.
 
 
@@ -132,7 +136,7 @@ Retaia Agent
 
 ### Objectif
 
-Produire des enrichissements non bloquants : transcription et suggestions de tags.
+Produire des enrichissements AI selon la phase de rollout active.
 
 ### Acteurs
 
@@ -140,19 +144,23 @@ Retaia Core Server, Retaia Agent (ou autres clients), éventuellement MCP
 
 ### Étapes
 
-1. Après `PROCESSED`, le serveur rend éligible des jobs secondaires (si activés) :
+1. Avant validation `v1.1+`, le serveur PEUT rendre éligibles des jobs AI secondaires en pré-release via `feature_flags` :
 
    * transcription
    * suggestions de tags (LLM)
-2. Un agent claim le job, traite et soumet.
-3. Le serveur met à jour :
+2. À partir de la phase `v1.1+` validée, la transcription devient un prérequis de `PROCESSED` pour tout média dont le profil l'exige.
+3. Les suggestions de tags restent, elles, des enrichissements secondaires non bloquants quand activées.
+4. Un agent claim le job, traite et soumet.
+5. Le serveur met à jour :
 
    * `transcript_status`
    * `suggestions_status`
 
 ### Règles
 
-* Ces jobs ne modifient pas l’état principal (pas de transition).
+* avant validation `v1.1+`, transcription et suggestions PEUVENT rester des jobs secondaires non bloquants sous `feature_flags`
+* dès validation `v1.1+`, la transcription n'est plus un job secondaire post-review pour un média dont le profil l'exige : elle devient un prérequis de `PROCESSED`
+* les suggestions de tags ne modifient jamais l’état principal (pas de transition)
 * Les suggestions ne sont jamais appliquées automatiquement comme décision.
 * Les suggestions peuvent être recalculées et remplacées.
 
@@ -169,16 +177,18 @@ Utilisateur via l’interface Retaia Core
 
 ### Étapes
 
-1. Consultation des assets (proxy vidéo/audio, thumbs, waveform, facts, transcript si dispo).
-2. Ajout/modification de tags libres et champs structurés.
-3. (Optionnel) acceptation manuelle de suggestions de tags.
-4. Prise de décision : `DECIDED_KEEP` ou `DECIDED_REJECT`.
+1. Consultation des assets en `REVIEW_PENDING_PROFILE` ou `PROCESSED` (previews, thumbs vidéo si présents, waveform, facts, transcript si dispo).
+2. Si l'asset est en `REVIEW_PENDING_PROFILE`, choix explicite du `processing_profile` requis dans la même surface UI.
+3. Ajout/modification de tags libres et champs structurés.
+4. (Optionnel) acceptation manuelle de suggestions de tags.
+5. Prise de décision : `DECIDED_KEEP` ou `DECIDED_REJECT` uniquement pour les assets déjà `PROCESSED`.
 
 ### Règles
 
 * Les décisions sont **humaines uniquement**.
 * Aucun move n’est déclenché à ce stade.
 * Une décision peut être annulée (retour `DECISION_PENDING`).
+* Un asset en `REVIEW_PENDING_PROFILE` est visible dans la même surface de review, mais aucune décision KEEP/REJECT n'y est autorisée.
 * L'UI peut appliquer une même action sur une sélection multiple d'assets (ex: ajout d'un keyword, KEEP, REJECT) via appels unitaires Core.
 * Pour une mutation metadata (ex: ajout de keyword), la confirmation UI précède immédiatement l'envoi des `PATCH` unitaires; il n'existe pas d'état Core "metadata modifiée mais non appliquée".
 * Chaque mutation d'asset alimente l'historique de révisions; la révision courante peut rester en attente de validation sans invalider une révision précédente déjà validée/publiée.
@@ -351,7 +361,7 @@ Appliquer le même lifecycle aux photos qu’aux vidéos.
 
 1. Discovery des photos sur le NAS.
 2. Passage `DISCOVERED → READY`.
-3. Processing review (EXIF + proxy + thumbs).
+3. Processing review (EXIF + preview).
 4. Décision humaine KEEP/REJECT.
 5. Apply decision.
 
@@ -370,7 +380,7 @@ Gérer musique et prises son comme des assets de production.
 ### Étapes
 
 1. Discovery des fichiers audio.
-2. Processing review (facts + proxy + waveform).
+2. Processing review (facts + preview + waveform).
 3. Décision humaine KEEP/REJECT.
 4. Apply decision.
 

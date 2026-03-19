@@ -97,7 +97,7 @@ Rôle : **interface humaine**.
 
 Responsabilités :
 
-* revue des médias (via proxies)
+* revue des médias (via previews)
 * décisions KEEP / REJECT
 * déclenchement d’actions explicites (reprocess, apply decision, purge)
 

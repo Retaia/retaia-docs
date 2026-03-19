@@ -59,6 +59,30 @@ Extraire les métadonnées techniques minimales (durée, codec, format, dimensio
 
 * facts (JSON)
 
+Contrat minimal `facts` (normatif) :
+
+* pour `PHOTO` :
+  * `media_format`
+  * `width`
+  * `height`
+* pour `AUDIO` :
+  * `duration_ms`
+  * `media_format`
+  * `audio_codec`
+* pour `VIDEO` :
+  * `duration_ms`
+  * `media_format`
+  * `video_codec`
+  * `width`
+  * `height`
+  * `fps`
+  * `audio_codec` si une piste audio exploitable est détectée
+
+Règles :
+
+* `extract_facts` PEUT produire des champs supplémentaires, mais NE DOIT PAS omettre les champs minimaux applicables au `media_type`
+* l'absence d'un champ minimal applicable rend le résultat de facts incomplet
+
 **Invariants**
 
 * aucune modification du média original
@@ -70,33 +94,65 @@ Extraire les métadonnées techniques minimales (durée, codec, format, dimensio
 * timeout/OOM → retryable
 
 
-### 3.2 `generate_proxy`
+### 3.2 `generate_preview`
 
 **Objectif**  
-Générer un proxy de review (video, audio ou image) selon le type média.
+Générer le dérivé principal de consultation selon le type média.
+
+Règle normative :
+
+* la preview produite DOIT être directement exploitable par l'UI web via les Web APIs HTML standards du navigateur :
+  * `HTMLVideoElement` pour `preview_video`
+  * `HTMLAudioElement` pour `preview_audio`
+  * `HTMLImageElement` pour `preview_photo`
 
 **Required capabilities**
 
-* `media.proxies.video@1` (VIDEO)
-* `media.proxies.audio@1` (AUDIO)
-* `media.proxies.photo@1` (PHOTO)
+* `media.previews.video@1` (VIDEO)
+* `media.previews.audio@1` (AUDIO)
+* `media.previews.photo@1` (PHOTO)
 
 **Inputs**
 
 * asset_uuid
 * source_locator (read-only: `storage_id`, `original_relative`, `sidecars_relative[]`)
 * media_type
-* proxy_profile
+* preview_profile
+
+`preview_profile` (normatif) :
+
+* `video_review_default_v1`
+  * profil canonique pour `VIDEO`
+  * produit `preview_video`
+* `audio_review_default_v1`
+  * profil canonique pour `AUDIO`
+  * produit `preview_audio`
+* `photo_review_default_v1`
+  * profil canonique pour `PHOTO`
+  * produit `preview_photo`
+
+Règles :
+
+* un job `generate_preview` DOIT utiliser exactement un `preview_profile` canonique
+* le suffixe `_v1` fait partie du contrat de rendu ; tout changement non rétrocompatible DOIT créer un nouveau `preview_profile`
+* un `preview_profile` ne DOIT PAS changer le type de dérivé produit ; il change seulement le contrat de rendu de ce type
 
 **Expected outputs**
 
 * derived_manifest[] (kind + référence upload)
+
+Sortie attendue par `preview_profile` :
+
+* `video_review_default_v1` -> exactement un `preview_video`
+* `audio_review_default_v1` -> exactement un `preview_audio`
+* `photo_review_default_v1` -> exactement un `preview_photo`
 
 **Invariants**
 
 * aucune modification du média original
 * aucun déplacement de fichier
 * outputs entièrement recréables
+* la preview DOIT rester lisible sans codec/plugin propriétaire ou dépendance hors Web platform standard
 
 **Failure modes**
 
@@ -107,7 +163,7 @@ Générer un proxy de review (video, audio ou image) selon le type média.
 ### 3.3 `generate_thumbnails`
 
 **Objectif**  
-Générer des vignettes à partir d’un média.
+Générer des vignettes à partir d’un média vidéo.
 
 **Required capabilities**
 
@@ -119,20 +175,35 @@ Générer des vignettes à partir d’un média.
 * source_locator (read-only: `storage_id`, `original_relative`, `sidecars_relative[]`)
 * thumbnail_profile
 
+Précondition normative :
+
+* `generate_thumbnails` NE DOIT être créé que pour un asset `VIDEO`
+
 `thumbnail_profile` (normatif) :
 
-* mode par défaut vidéo : `representative_frame`
-* mode optionnel : `storyboard`
+* `video_representative_v1`
+  * produit au moins un thumb `representative`
+* `video_storyboard_v1`
+  * produit exactement `10` thumbs vidéo répartis régulièrement sur la durée utile, incluant le thumb principal
+
+Règles :
+
+* un job `generate_thumbnails` DOIT utiliser exactement un `thumbnail_profile` canonique
+* le suffixe `_v1` fait partie du contrat de sélection temporelle ; tout changement non rétrocompatible DOIT créer un nouveau `thumbnail_profile`
+* `video_representative_v1` est le profil par défaut
+* `video_storyboard_v1` est optionnel
+
+Règles temporelles associées à `video_representative_v1` et `video_storyboard_v1` :
+
 * vidéo courte : durée strictement inférieure à `120s`
 * vidéo longue : durée supérieure ou égale à `120s`
 * vidéo courte : frame de référence à `max(1s, 10% de la durée)`
 * vidéo longue : frame de référence à `5% de la durée`, avec fallback à `20s` si `5% > 20s`
 * le moteur DOIT éviter les frames noires ou de fondu si une heuristique légère permet d'en sélectionner une voisine plus représentative
-* mode `storyboard` : produire `10` thumbs répartis de manière régulière sur la durée utile, incluant la frame représentative principale
-* les thumbs storyboard DOIVENT être triés chronologiquement
+* les thumbs de `video_storyboard_v1` DOIVENT être triés chronologiquement
 * une légère marge de sécurité aux extrémités du média est autorisée pour éviter des frames d'ouverture/fermeture non représentatives
-* pour une image fixe, le thumb est dérivé directement de l'image source
-* pour un audio sans image, aucun thumb temporel n'est requis; seul le proxy/waveform couvre la review
+* pour une image fixe, aucun job `generate_thumbnails` distinct n'est requis en v1; la preview image couvre la consultation
+* pour un audio sans image, aucun thumb temporel n'est requis; seule la preview/waveform couvre la review
 
 **Expected outputs**
 
@@ -140,8 +211,8 @@ Générer des vignettes à partir d’un média.
 
 `thumbnails[]` (minimum normatif) :
 
-* en mode vidéo par défaut : au moins un thumb `representative`
-* en mode `storyboard` : exactement `10` thumbs vidéo DOIVENT être produits
+* avec `video_representative_v1` : au moins un thumb `representative`
+* avec `video_storyboard_v1` : exactement `10` thumbs vidéo DOIVENT être produits
 * chaque thumb DOIT rester dérivable de manière déterministe à partir du `thumbnail_profile`
 * chaque thumb DOIT exposer un ordre stable dans le manifest dérivé
 
@@ -201,7 +272,7 @@ Disponibilité : **v1.1+** (activable plus tôt sous `feature_flags` pendant le 
 Ce job peut rester indéfiniment en statut pending tant qu’aucun agent ne déclare la capability requise.
 
 **Objectif**  
-Produire une transcription (et éventuellement des timecodes) à partir de l’audio d’un média. À partir de la phase `v1.1+` validée, ce job devient requis pour tout média avec piste audio exploitable afin d'atteindre `PROCESSED`.
+Produire une transcription (et éventuellement des timecodes) à partir de l’audio d’un média. À partir de la phase `v1.1+` validée, ce job devient requis pour tout média dont le `processing_profile` l'exige afin d'atteindre `PROCESSED`.
 
 **Required capabilities**
 
@@ -256,9 +327,24 @@ Produire des suggestions de tags à partir des facts/transcript/metadata.
 * asset_uuid
 * facts_ref
 * transcript_ref (optionnel)
+* human_tags_ref (optionnel)
+* human_fields_ref (optionnel)
+* notes_ref (optionnel)
 * suggestion_profile (optionnel)
 * llm_provider (optionnel, runtime policy; valeurs: `ollama|chatgpt|claude`)
 * llm_model (recommandé; valeur issue du catalogue runtime choisi par l'utilisateur)
+
+Priorité des inputs (normative) :
+
+1. `facts_ref` : base structurée obligatoire
+2. `transcript_ref` : enrichissement sémantique préféré quand présent
+3. `human_tags_ref`, `human_fields_ref`, `notes_ref` : contexte humain prioritaire pour contraindre les suggestions, éviter les doublons et préserver la terminologie métier validée
+
+Règles :
+
+* `suggest_tags` DOIT refuser de tourner si `facts_ref` est absent
+* l'absence de `transcript_ref` NE DOIT PAS bloquer le job
+* les métadonnées humaines existantes DOIVENT être traitées comme contexte faisant autorité, jamais comme une cible à réécrire automatiquement
 
 **Expected outputs**
 

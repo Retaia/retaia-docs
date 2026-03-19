@@ -24,7 +24,7 @@ Les systèmes automatiques peuvent produire des **suggestions**, jamais des déc
 ❌ Exécuter sur le NAS :
 
 * ffmpeg
-* génération de proxies
+* génération de previews
 * transcription
 * analyse ML / LLM
 
@@ -35,7 +35,7 @@ Le NAS est un **centre logistique**, pas un moteur de calcul.
 
 ❌ Lire les fichiers originaux via SMB/NFS dans une UI web.
 
-La review se fait **exclusivement via proxies/dérivés** exposés par l’API.
+La review se fait **exclusivement via previews/dérivés** exposés par l’API.
 
 
 ### 4) Move automatique au fil de l’eau
@@ -151,7 +151,7 @@ Les définitions de champs sont versionnées.
 
 ### 17) Binaires stockés en base de données
 
-❌ Stocker proxies, thumbnails ou waveforms en DB.
+❌ Stocker previews, thumbnails ou waveforms en DB.
 
 La DB stocke des métadonnées et des références, jamais des binaires.
 

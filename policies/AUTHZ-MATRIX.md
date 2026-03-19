@@ -93,6 +93,7 @@ Acteurs normatifs :
 
 * acteur: `MCP_TECHNICAL`
 * scope: aucun (challenge/réponse asymétrique)
+* règle forte: le bearer technique minté autorise le client MCP; la preuve forte d'instance pour les écritures reste `client_id + OpenPGP + signature`
 
 `POST /auth/clients/token`
 

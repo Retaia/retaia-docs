@@ -210,7 +210,7 @@ Comportement :
 
 ### États (doit matcher [STATE-MACHINE.md](../state-machine/STATE-MACHINE.md))
 
-`DISCOVERED, READY, PROCESSING_REVIEW, PROCESSED, DECISION_PENDING, DECIDED_KEEP, DECIDED_REJECT, ARCHIVED, REJECTED, PURGED`
+`DISCOVERED, READY, PROCESSING_REVIEW, REVIEW_PENDING_PROFILE, PROCESSED, DECISION_PENDING, DECIDED_KEEP, DECIDED_REJECT, ARCHIVED, REJECTED, PURGED`
 
 Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`).
 
@@ -256,6 +256,7 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
 * `client_id + secret_key` servent au bootstrap et à l'autorisation technique de `AGENT_TECHNICAL`; ils NE SUFFISENT JAMAIS à eux seuls à prouver l'instance pour une écriture mutatrice
 * toute écriture mutatrice `AGENT_TECHNICAL` DOIT présenter à la fois un bearer technique valide et une preuve d'instance valide (`agent_id` + signature `OpenPGP`)
 * mode `MCP_TECHNICAL` : identité asymétrique standard avec clé publique enregistrée côté Core, clé privée locale côté client et signatures obligatoires sur les écritures sensibles
+* pour `MCP_TECHNICAL`, le bearer technique minté via challenge/réponse autorise le client; la preuve forte d'instance pour les écritures mutatrices reste `client_id + OpenPGP + signature`
 * toute lecture runtime technique PEUT utiliser le bearer technique seul quand le contrat endpoint l'autorise; toute écriture mutatrice technique DOIT exiger la preuve asymétrique d'instance associée
 * seul `AGENT_TECHNICAL` exécute les jobs de processing; `AGENT_UI` ne claim pas de job et ne traite pas de média
 * `AGENT_UI` pilote localement le daemon (setup, status, start/stop, configuration, debug) sans porter d'identité humaine autonome
@@ -270,6 +271,7 @@ Dans `openapi/v1.yaml`, les états sont typés via un enum strict (`AssetState`)
   * standard existant
   * clé publique enregistrée côté Core
   * clé privée uniquement côté client
+  * mêmes garanties de signature détachée, timestamp borné et nonce anti-rejeu
 * les capacités IA (providers, modèles, transcription, suggestions) sont planifiées en v1.1+
 * l’agent reste propriétaire du runtime provider/model (découverte locale, disponibilité, installation) dans le paquet normatif v1.1
 * Core NE DOIT PAS exposer de catalogue runtime global de modèles
@@ -364,6 +366,12 @@ Normalisation des timestamps (normatif) :
 * body requis: `{ refresh_token }`
 * body optionnel: `client_id`, `client_kind`
 * effet: renouvelle un bearer token interactif sans repasser par le mot de passe
+* règle normative:
+  * chaque succès DOIT émettre un nouveau `access_token` et un nouveau `refresh_token`
+  * le `refresh_token` utilisé DOIT être immédiatement invalidé après succès
+  * un `refresh_token` expiré, révoqué, déjà consommé ou rejoué DOIT être refusé avec `401 UNAUTHORIZED`
+  * un `refresh_token` interactif appartient exclusivement à `UI_WEB`
+  * aucun client technique NE DOIT utiliser de `refresh_token`
 * réponses:
   * `200` succès + bearer token (`access_token`, `token_type=Bearer`, `expires_in?`, `refresh_token?`, `client_id`, `client_kind`)
   * `401 UNAUTHORIZED`
@@ -562,6 +570,12 @@ Normalisation des timestamps (normatif) :
 * `client_kind` autorisé: `AGENT` (`UI_WEB` et `MCP` exclus)
 * effet: émet un bearer token technique pour `AGENT_TECHNICAL`
 * règle stricte: **1 token actif par client_id** (mint d’un nouveau token => révocation de l’ancien token pour ce client)
+* preuve normative de possession `secret_key`:
+  * en `v1`, la possession de `secret_key` est prouvée par sa présentation directe dans `POST /auth/clients/token` via TLS
+  * `Core` DOIT comparer `secret_key` au credential technique actif correspondant en temps constant
+  * `secret_key` NE DOIT JAMAIS être utilisée comme base d'une signature ou d'un schéma crypto local additionnel en `v1`
+  * `secret_key` est un secret one-shot de bootstrap/mint technique; elle NE DOIT PAS être renvoyée par un autre endpoint hors émission initiale ou rotation explicite
+  * `secret_key` NE DOIT JAMAIS être loggée, persistée en clair côté Core ni exposée après la réponse initiale
 * réponses:
   * `200` token client (`access_token`, `token_type=Bearer`, `expires_in?`, `client_id`, `client_kind`)
   * `401 UNAUTHORIZED` (credentials client invalides)
@@ -610,7 +624,12 @@ Séquence normative bootstrap `AGENT_TECHNICAL` (obligatoire) :
 4. si 2FA est activée sur le compte, validation OTP obligatoire
 5. utilisateur approuve explicitement la création de credential technique
 6. client technique poll `POST /auth/clients/device/poll` jusqu’à `APPROVED`/`DENIED`/`EXPIRED`
-7. en cas `APPROVED`, `secret_key` est retournée une seule fois, puis utilisée sur `POST /auth/clients/token`
+7. en cas `APPROVED`, `secret_key` est retournée une seule fois
+8. l'agent appelle ensuite `POST /agents/register` avec `agent_id`, `openpgp_public_key` et `openpgp_fingerprint`
+9. Core enregistre alors la clé publique OpenPGP active de l'agent et l'associe au `client_id` approuvé
+10. `POST /agents/register` DOIT prouver la possession de la clé privée correspondante en signant la requête de register avec cette clé
+11. le bearer technique est ensuite obtenu via `POST /auth/clients/token`
+12. aucune écriture mutatrice agent NE DOIT être acceptée tant que `POST /agents/register` n'a pas enregistré la clé publique active côté Core
 
 Séquence normative bootstrap `MCP_TECHNICAL` (`v1.1+`, obligatoire) :
 
@@ -623,6 +642,52 @@ Séquence normative bootstrap `MCP_TECHNICAL` (`v1.1+`, obligatoire) :
 7. le client MCP signe le challenge puis échange la preuve via `POST /auth/mcp/token` (`v1.1+`)
 8. le client MCP signe ensuite ses écritures sensibles avec sa clé privée locale
 9. le client MCP (v1.1+) NE DOIT PAS initier `POST /auth/login` ni `POST /auth/clients/device/*`
+
+Signature MCP (normative) :
+
+* les écritures MCP -> Core DOIVENT utiliser le même modèle de signature que l'agent, adapté à l'identifiant `client_id`
+* les écritures MCP -> Core DOIVENT être signées avec une signature **OpenPGP détachée** produite par une librairie standard
+* chaque requête MCP signée DOIT porter :
+  * `X-Retaia-Client-Id`
+  * `X-Retaia-OpenPGP-Fingerprint`
+  * `X-Retaia-Signature`
+  * `X-Retaia-Signature-Timestamp`
+  * `X-Retaia-Signature-Nonce`
+* `X-Retaia-Client-Id` DOIT correspondre au `client_id` du bearer technique MCP
+* `X-Retaia-OpenPGP-Fingerprint` DOIT référencer la clé publique OpenPGP active enregistrée pour ce client MCP
+* `X-Retaia-Signature` DOIT être une signature **OpenPGP détachée** valide de la chaîne canonique suivante :
+  * méthode HTTP
+  * path HTTP exact
+  * `client_id`
+  * timestamp de signature
+  * nonce unique
+  * SHA-256 hexadécimal du body HTTP brut
+* méthode canonique obligatoire :
+  * la chaîne canonique DOIT être encodée en UTF-8
+  * la chaîne canonique DOIT contenir exactement 6 lignes, dans l'ordre ci-dessus
+  * la méthode HTTP DOIT être en majuscules (`POST`, `PATCH`, ...)
+  * le path DOIT être le path HTTP exact reçu par Core, query string exclue
+  * `X-Retaia-Signature-Timestamp` DOIT être au format UTC RFC 3339, par exemple `2026-03-19T12:34:56Z`
+  * `X-Retaia-Signature-Nonce` DOIT être une chaîne opaque unique par requête signée
+  * le hash du body DOIT être le SHA-256 hexadécimal lowercase du body HTTP brut exact
+  * si le body est vide, le hash DOIT être le SHA-256 de la chaîne vide
+  * les 6 lignes DOIVENT être jointes avec le séparateur `\\n`, sans ligne finale supplémentaire
+* `X-Retaia-Signature` DOIT transporter la signature OpenPGP détachée ASCII-armored de cette chaîne canonique
+* Core DOIT vérifier la signature MCP via une librairie OpenPGP standard maintenue; aucune implémentation crypto maison n'est autorisée
+* Core DOIT rejeter toute écriture MCP signée si la signature est absente, invalide, expirée, rejouée ou si la clé active est révoquée/inconnue
+* Core DOIT contrôler une fenêtre de fraîcheur bornée pour `X-Retaia-Signature-Timestamp` et empêcher le rejeu via `X-Retaia-Signature-Nonce`
+* Core DOIT journaliser les échecs de vérification de signature MCP comme événements sécurité
+
+Exemple de chaîne canonique MCP :
+
+```text
+POST
+/mcp/prompts/execute
+cli_01JQ9M8Y8T9B3A2K6V0QF1N3R2
+2026-03-19T12:34:56Z
+1b6b9b74-91e0-4a57-9d37-0c9470d2fbe5
+5b7f9d8a4d24b6f1f2a7b1f9b83a0f9a430d4b7bce3f6e0c1c51e4c0fdb0d2f1
+```
 
 Matrice de migration v1 runtime (gelée) :
 
@@ -724,7 +789,7 @@ Query params (exemples) :
 
 * `state=DECISION_PENDING` (multi)
 * `media_type=VIDEO|PHOTO|AUDIO`
-* `has_proxy=true`
+* `has_preview=true`
 * `tags=foo,bar` (tags **humains** uniquement)
 * `tags_mode=AND|OR` (défaut: AND)
 * `suggested_tags=foo,bar` (**v1.1+**, suggestions uniquement)
@@ -785,6 +850,7 @@ Body (exemple) :
 * `tags: string[]`
 * `notes: string`
 * `fields: Record<string, any>`
+* `processing_profile: video_standard | audio_undefined | audio_music | audio_voice | photo_standard`
 * `state: DECISION_PENDING | DECIDED_KEEP | DECIDED_REJECT | ARCHIVED | REJECTED` (transition explicite)
 
 Règles :
@@ -796,11 +862,27 @@ Règles :
 * si `If-Match` ne correspond plus au `revision_etag` courant de l'asset, Core DOIT refuser avec `412 PRECONDITION_FAILED`
 * la réponse d'erreur `412 PRECONDITION_FAILED` DOIT inclure au minimum `details.current_revision_etag` et `details.current_state` pour permettre un rechargement propre côté client
 * la multi-sélection UI (ex: ajout d'un keyword) DOIT envoyer des appels unitaires `PATCH /assets/{uuid}` (un par asset)
+* mutation `processing_profile` :
+  * autorisée uniquement pour un acteur humain via `UI_WEB`
+  * autorisée uniquement si `state in {READY, PROCESSING_REVIEW, REVIEW_PENDING_PROFILE}`
+  * la liste canonique des profils reste `video_standard | audio_undefined | audio_music | audio_voice | photo_standard`
+  * la matrice canonique `processing_profile -> jobs` est définie dans `definitions/PROCESSING-PROFILES.md` et fait foi pour la complétude de `PROCESSED`
+  * `video_standard`, `audio_music`, `audio_voice`, `photo_standard` sont des profils effectifs de processing
+  * `audio_undefined` est un profil transitoire de qualification, jamais un profil final de processing complet
+* `processing_profile=audio_undefined` est autorisé comme état transitoire de qualification audio, mais NE DOIT JAMAIS permettre de conclure le processing complet
+  * si la mutation fixe un profil qui exige `transcribe_audio` dans la phase active, Core DOIT créer automatiquement le job `transcribe_audio` puis faire repasser l'asset en `READY`
+  * si la mutation fixe un profil déjà complet avec les jobs disponibles, Core PEUT faire passer l'asset à `PROCESSED`
+  * `suggest_tags` reste hors logique structurante du `processing_profile`; son éligibilité dépend de la phase active, des `feature_flags`, des capabilities agent et des inputs disponibles
 * transitions via `state` :
   * `DECISION_PENDING -> DECIDED_KEEP | DECIDED_REJECT`
   * `DECIDED_KEEP -> DECISION_PENDING | DECIDED_REJECT | ARCHIVED`
   * `DECIDED_REJECT -> DECISION_PENDING | DECIDED_KEEP | REJECTED`
 * toute transition non listée DOIT être refusée (`409 STATE_CONFLICT`)
+* refus obligatoire de décision `KEEP` incompatible :
+  * tout asset en `REVIEW_PENDING_PROFILE` DOIT refuser toute demande de `DECIDED_KEEP`, `DECIDED_REJECT`, `ARCHIVED` ou `REJECTED` avec `409 STATE_CONFLICT`
+  * si le `processing_profile` effectif après patch exige `transcribe_audio` dans la phase active
+  * et si `transcript.status != DONE`
+  * alors toute demande qui fait aboutir l'asset en `DECIDED_KEEP` ou `ARCHIVED` DOIT être refusée avec `409 STATE_CONFLICT`
 * mise à jour metadata (`tags/notes/fields`) et transition `state` peuvent être combinées dans un même `PATCH`
 * `If-Match` est obligatoire
 * toute mutation validée DOIT mettre à jour `updated_at` et `revision_etag`
@@ -887,6 +969,7 @@ Règles :
 * l'agent DOIT générer une identité de clé `OpenPGP` lors de sa première initialisation et persister la clé privée localement
 * la clé privée agent NE DOIT JAMAIS quitter l'agent ni être exposée par l'API
 * `openpgp_public_key` et `openpgp_fingerprint` représentent la clé OpenPGP active enregistrée côté Core
+* Core reçoit cette clé publique active lors de `POST /agents/register`, après approval humain du device flow et avant toute écriture mutatrice agent
 * la clé OpenPGP agent DOIT utiliser des algorithmes conformes à [`GPG-OPENPGP-STANDARD.md`](../policies/GPG-OPENPGP-STANDARD.md)
 * la rotation de clé DOIT être explicite; l'agent NE DOIT PAS régénérer silencieusement sa clé de signature
 * `POST /agents/register` DOIT prouver la possession de la clé privée correspondant à la clé publique OpenPGP déclarée
@@ -918,11 +1001,32 @@ Signature agent (normative) :
   * timestamp de signature
   * nonce unique
   * SHA-256 hexadécimal du body HTTP brut
-* la chaîne canonique DOIT utiliser `\\n` comme séparateur de lignes et rester stable entre implémentations
+* méthode canonique obligatoire :
+  * la chaîne canonique DOIT être encodée en UTF-8
+  * la chaîne canonique DOIT contenir exactement 6 lignes, dans l'ordre ci-dessus
+  * la méthode HTTP DOIT être en majuscules (`POST`, `PATCH`, ...)
+  * le path DOIT être le path HTTP exact reçu par Core, query string exclue
+  * `X-Retaia-Signature-Timestamp` DOIT être au format UTC RFC 3339, par exemple `2026-03-19T12:34:56Z`
+  * `X-Retaia-Signature-Nonce` DOIT être une chaîne opaque unique par requête signée
+  * le hash du body DOIT être le SHA-256 hexadécimal lowercase du body HTTP brut exact
+  * si le body est vide, le hash DOIT être le SHA-256 de la chaîne vide
+  * les 6 lignes DOIVENT être jointes avec le séparateur `\\n`, sans ligne finale supplémentaire
+* `X-Retaia-Signature` DOIT transporter la signature OpenPGP détachée ASCII-armored de cette chaîne canonique
 * Core DOIT vérifier la signature via une librairie OpenPGP standard maintenue; aucune implémentation crypto maison n'est autorisée
 * Core DOIT rejeter toute écriture signée si la signature est absente, invalide, expirée, rejouée ou si la clé active est révoquée/inconnue
 * Core DOIT contrôler une fenêtre de fraîcheur bornée pour `X-Retaia-Signature-Timestamp` et empêcher le rejeu via `X-Retaia-Signature-Nonce`
 * Core DOIT journaliser les échecs de vérification de signature comme événements sécurité
+
+Exemple de chaîne canonique agent :
+
+```text
+POST
+/jobs/123/submit
+550e8400-e29b-41d4-a716-446655440000
+2026-03-19T12:34:56Z
+4f5b0f7d-9c15-4ed7-99d2-4d8d9f9b2a10
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+```
 
 Response :
 
@@ -1038,19 +1142,19 @@ Headers obligatoires :
 
 Effets :
 
-* `extract_facts | generate_proxy | generate_thumbnails | generate_audio_waveform` :
-  mise à jour des domaines `facts/derived`, puis `PROCESSING_REVIEW → PROCESSED → DECISION_PENDING` quand le profil est complet
+* `extract_facts | generate_preview | generate_thumbnails | generate_audio_waveform` :
+  mise à jour des domaines `facts/derived`, puis `PROCESSING_REVIEW → REVIEW_PENDING_PROFILE|PROCESSED → DECISION_PENDING` selon le profil effectif et sa complétude
 
 Note v1 (important) :
 
 * `ProcessingResultPatch` ne transporte pas les binaires.
-* Les binaires (proxies/thumbs/waveforms) sont uploadés via l’API Derived.
+* Les binaires (previews/thumbs/waveforms) sont uploadés via l’API Derived.
 * `submit` référence les dérivés déjà uploadés.
 * Le serveur applique un merge partiel par domaine ; un job ne peut pas écraser les domaines qu'il ne possède pas.
 * `generate_audio_waveform` est obligatoire pour les profils audio qui l'exigent ; l’absence de `waveform` dérivée rend le résultat de processing incomplet.
 * ownership de patch par `job_type` :
   * `extract_facts` -> `facts_patch`
-  * `generate_proxy|generate_thumbnails|generate_audio_waveform` -> `derived_patch`
+  * `generate_preview|generate_thumbnails|generate_audio_waveform` -> `derived_patch`
 
 Règle d'extension:
 
@@ -1074,7 +1178,7 @@ Headers obligatoires :
 * `X-Retaia-Signature-Nonce`
 
 
-## 6) Derived (proxies/dérivés)
+## 6) Derived (previews/dérivés)
 
 Principe v1 :
 
@@ -1091,7 +1195,7 @@ Initialise un upload (permet chunking / reprise).
 
 Body (exemple) :
 
-* `kind: proxy_video | proxy_audio | proxy_photo | thumb | waveform`
+* `kind: preview_video | preview_audio | preview_photo | thumb | waveform`
 * `content_type`
 * `size_bytes`
 * `sha256?` (optionnel)
@@ -1130,38 +1234,64 @@ Effet :
 * le serveur stocke le dérivé dans `RUSHES_DB/.derived/{uuid}/...`
 * référence interne mise à jour
 
+Politique normative de remplacement des dérivés :
+
+* `derived/upload/complete` rend un dérivé éligible, mais NE DOIT PAS à lui seul le publier comme dérivé courant de l'asset
+* la publication du dérivé courant est actée seulement lors du `submit` du job propriétaire via `derived_patch`
+* pour un même `asset_uuid`, une même révision métier et un même `kind`, la dernière référence acceptée dans le `derived_patch` courant remplace atomiquement la précédente
+* un dérivé antérieur PEUT rester stocké pour garbage collection, audit technique ou retry, mais NE DOIT plus être servi comme dérivé courant une fois remplacé
+* un upload incomplet ou non référencé par un `submit` valide NE DOIT JAMAIS devenir visible comme dérivé courant
+
 ### GET `/assets/{uuid}/derived`
 
 Retourne les dérivés disponibles et leurs URLs.
 
 ### GET `/assets/{uuid}/derived/{kind}`
 
-`kind = proxy_video | proxy_audio | proxy_photo | thumb | waveform`
+`kind = preview_video | preview_audio | preview_photo | thumb | waveform`
 
 Règles :
 
-* support Range requests pour proxies
+* support Range requests pour previews audio/vidéo
 * 404 si `state == PURGED`
+* `thumb` est réservé aux dérivés vidéo; une image fixe utilise `preview_photo` comme dérivé principal de consultation
 
 ### Profils de formats dérivés (normatif)
 
 Objectif :
 
 * tous les dérivés consommés par l'UI DOIVENT être lisibles par un navigateur moderne (desktop/mobile)
-* les proxies DOIVENT privilégier la compatibilité de lecture plutôt que l'optimisation codec agressive
+* les previews DOIVENT privilégier la compatibilité de lecture plutôt que l'optimisation codec agressive
+* la lecture DOIT reposer uniquement sur les Web APIs HTML standards :
+  * `HTMLVideoElement` pour `preview_video`
+  * `HTMLAudioElement` pour `preview_audio`
+  * `HTMLImageElement` pour `preview_photo` et `thumb`
+* aucun plugin propriétaire, transcodeur frontend spécifique ou runtime natif embarqué ne DOIT être requis pour la lecture standard côté `UI_WEB`
 
-`proxy_video` (obligatoire pour vidéo) :
+`preview_video` (obligatoire pour vidéo) :
 
 * conteneur : `MP4` (`video/mp4`)
-* codec vidéo : `H.264/AVC` (`yuv420p`, progressif, non interlacé)
-* codec audio (si piste audio présente) : `AAC-LC` (`audio/mp4`, 44.1kHz ou 48kHz)
-* finalité : proxy de review navigateur, pas master intermédiaire
+* codec vidéo obligatoire : `H.264/AVC`
+  * profil recommandé : `High`
+  * pixel format : `yuv420p`
+  * progressif, non interlacé
+* codec audio obligatoire si piste audio présente : `AAC-LC` (`audio/mp4`, 44.1kHz ou 48kHz)
+* DOIT être lisible via `HTMLVideoElement` natif dans un navigateur moderne
+* finalité : preview de review navigateur, pas master intermédiaire
+* choix codec v1 :
+  * `H.264/AVC + AAC-LC` est retenu comme compromis canonique compatibilité navigateur / poids / qualité
+  * `HEVC`, `VP9`, `AV1` ne font pas partie du contrat canonique v1 pour `preview_video`
 * framerate : DOIT conserver le framerate source (tolérance max ±0.01 fps)
 * cadence : DOIT rester en `CFR` (constant frame rate) pour stabilité seek/timeline
 * dimensions :
   * ratio d'aspect conservé, upscale interdit
   * hauteur cible recommandée `720px`
   * si la source est plus petite, conserver la hauteur source
+* encodage vidéo recommandé :
+  * mode cible : `CRF`
+  * `CRF` recommandé : `23`
+  * plage tolérée : `21` à `28`
+  * preset recommandé : `medium`
 * bitrate vidéo :
   * cible recommandée `2.5 Mbps`
   * plage tolérée `1.5 Mbps` à `4 Mbps`
@@ -1171,31 +1301,55 @@ Objectif :
   * stéréo maximum
   * downmix multicanal autorisé pour compatibilité navigateur
   * bitrate audio recommandé `128 kbps`
+  * plage tolérée : `96 kbps` à `160 kbps`
 
-`proxy_audio` (obligatoire pour audio) :
+`preview_audio` (obligatoire pour audio) :
 
-* conteneur : `M4A` (`audio/mp4`) ou `MP3` (`audio/mpeg`)
-* codec recommandé : `AAC-LC` (fallback `MP3` autorisé)
+* conteneur canonique : `M4A` (`audio/mp4`)
+* codec canonique : `AAC-LC`
+* fallback autorisé uniquement si contrainte forte d'encodage/lecture : `MP3` (`audio/mpeg`)
+* DOIT être lisible via `HTMLAudioElement` natif dans un navigateur moderne
+* choix codec v1 :
+  * `AAC-LC` est retenu comme compromis canonique compatibilité navigateur / poids / qualité
+  * `Opus` ne fait pas partie du contrat canonique v1 pour `preview_audio`
 * sample rate : conserver la source si standard navigateur, sinon normaliser en 44.1kHz ou 48kHz
 * canaux : conserver mono/stéréo source (downmix explicite autorisé si documenté)
+* encodage recommandé :
+  * VBR AAC recommandé
+  * bitrate cible recommandé : `128 kbps`
+  * plage tolérée : `96 kbps` à `160 kbps`
 
-`proxy_photo` (obligatoire pour image) :
+`preview_photo` (obligatoire pour image) :
 
-* format : `JPEG` (`image/jpeg`) ou `WEBP` (`image/webp`)
+* format canonique : `WEBP` (`image/webp`)
+* fallback autorisé : `JPEG` (`image/jpeg`)
+* DOIT être lisible via `HTMLImageElement` natif dans un navigateur moderne
+* choix format v1 :
+  * `WEBP` est retenu comme compromis canonique compatibilité navigateur / poids / qualité
+  * `AVIF` ne fait pas partie du contrat canonique v1 pour `preview_photo`
 * espace couleur : `sRGB`
 * orientation EXIF : normalisée (image visuellement orientée, pas de dépendance EXIF runtime)
 * dimensions : ratio d'aspect conservé, upscale interdit
+* encodage recommandé :
+  * qualité WebP recommandée : `75`
+  * plage tolérée : `68` à `82`
+  * si fallback `JPEG` : qualité recommandée `80`, plage tolérée `72` à `86`
 
 `thumb` :
 
-* format : `JPEG` (`image/jpeg`) ou `WEBP` (`image/webp`)
+* réservé aux assets vidéo
+* format canonique : `WEBP` (`image/webp`)
+* fallback autorisé : `JPEG` (`image/jpeg`)
+* DOIT être lisible via `HTMLImageElement` natif dans un navigateur moderne
+* choix format v1 :
+  * `WEBP` est retenu comme format canonique pour maximiser le ratio poids / qualité
 * espace couleur : `sRGB`
-* taille preview par défaut : largeur `480px`
-* taille preview secondaire optionnelle : largeur `320px`
+* taille thumb par défaut : largeur `480px`
+* taille thumb secondaire optionnelle : largeur `320px`
 * ratio d'aspect conservé, upscale interdit
 * qualité cible :
-  * `JPEG` qualité recommandée `80`
-  * `WEBP` qualité recommandée `75`
+  * `JPEG` qualité recommandée `80`, plage tolérée `72` à `86`
+  * `WEBP` qualité recommandée `75`, plage tolérée `68` à `82`
 * pour une vidéo, le thumb principal DOIT provenir d'une frame représentative déterminée par `thumbnail_profile`
   * vidéo courte = durée `< 120s` ; thumb principal à `max(1s, 10% de la durée)`
   * vidéo longue = durée `>= 120s` ; thumb principal à `5% de la durée`, avec fallback à `20s` si `5% > 20s`
@@ -1293,7 +1447,7 @@ Effet :
 Objectif :
 
 * exposer les compteurs ingest sans dépendre des logs CLI
-* fournir les derniers sidecars/proxies non rattachés pour debug ops
+* fournir les derniers sidecars/dérivés de review non rattachés pour debug ops
 
 Response :
 
@@ -1497,7 +1651,7 @@ Règles :
 
 Objectif :
 
-* exposer la liste paginée des sidecars/proxies non rattachés
+* exposer la liste paginée des sidecars/dérivés de review non rattachés
 
 Query params :
 
@@ -1568,15 +1722,15 @@ Response (`202 Accepted`) :
 * `captured_at?`
 * `duration?`
 * `tags[]`
-* `has_proxy`
+* `has_preview`
 * `thumb_url?`
 
 ### AssetDetail
 
 * `summary: AssetSummary`
 * `paths: { storage_id, original_relative, sidecars_relative[] }`
-* `processing: { facts_done, thumbs_done, proxy_done, waveform_done, review_processing_version }`
-* `derived: { proxy_video_url?, proxy_audio_url?, waveform_url?, thumbs[] }`
+* `processing: { facts_done, thumbs_done, preview_done, waveform_done, review_processing_version }`
+* `derived: { preview_video_url?, preview_audio_url?, preview_photo_url?, waveform_url?, thumbs[] }`
 * `transcript: { status, text_preview?, updated_at? }`
 * `decisions: { current?, history[] }`
 * `audit: { path_history[], revision_history[] }`
@@ -1595,7 +1749,7 @@ Règle :
 ### Job
 
 * `job_id`
-* `job_type` (`extract_facts | generate_proxy | generate_thumbnails | generate_audio_waveform`)
+* `job_type` (`extract_facts | generate_preview | generate_thumbnails | generate_audio_waveform`)
 * `asset_uuid`
 * `lock_token`
 * `locked_until`
@@ -1613,6 +1767,14 @@ Règles :
 * merge par domaine uniquement (pas de replace global)
 * un job ne peut mettre à jour que son domaine autorisé
 * toute clé hors domaine autorisé renvoie `422 VALIDATION_FAILED`
+
+Contrat minimal `facts_patch` :
+
+* pour `PHOTO` : `media_format`, `width`, `height`
+* pour `AUDIO` : `duration_ms`, `media_format`, `audio_codec`
+* pour `VIDEO` : `duration_ms`, `media_format`, `video_codec`, `width`, `height`, `fps`
+* si une piste audio exploitable est détectée sur `VIDEO`, `audio_codec` devient requis
+* des champs supplémentaires sont autorisés, mais les champs minimaux applicables au `media_type` NE DOIVENT PAS manquer
 
 
 ## 10) Codes d’erreur (normatifs)

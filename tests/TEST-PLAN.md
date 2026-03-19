@@ -155,6 +155,9 @@ Tests obligatoires :
   * rate limit => `429 TOO_MANY_ATTEMPTS`
   * invariant: nouveau token minté pour un client révoque l’ancien token (1 token actif / client)
   * `client_kind in {UI_WEB, MCP}` refusé (`403 FORBIDDEN_ACTOR`)
+  * la possession de `secret_key` est prouvée par sa présentation directe sur cet endpoint via TLS; aucun schéma symétrique supplémentaire n'est attendu en `v1`
+  * comparaison `secret_key` côté Core en temps constant
+  * `secret_key` jamais loggée ni réexposée après émission initiale ou rotation explicite
 * `POST /auth/clients/device/start`:
   * `client_kind=AGENT` => `200` + `device_code`, `user_code`, `verification_uri`, `verification_uri_complete`
   * `client_kind=MCP` => `403 FORBIDDEN_ACTOR`
@@ -300,6 +303,8 @@ Tests obligatoires :
   * `openpgp_public_key` requis
   * `openpgp_fingerprint` requis
   * register signé avec la clé privée correspondant à la clé OpenPGP déclarée
+  * la clé publique OpenPGP active est enregistrée côté Core à cette étape, après approval humain du device flow
+  * aucune écriture mutatrice agent n'est acceptée tant que ce register n'a pas associé la clé publique active au client approuvé
   * `os_name`, `os_version`, `arch` requis
   * reconnexion avec le même `agent_id` => même instance corrélable côté Core
   * deux agents actifs avec le même `agent_id` : register autorisé, conflit journalisé et visible en ops
@@ -346,6 +351,10 @@ Tests obligatoires :
 * client `AGENT_TECHNICAL` validé via `/auth/clients/token` après approval humain dans `UI_WEB`
 * client `MCP` validé en mode technique asymétrique standard, sans login interactif ni device flow (gate `v1.1` global)
 * client `MCP` obtient son bearer technique via `POST /auth/mcp/challenge` + `POST /auth/mcp/token`
+* toute écriture MCP sensible exige bearer technique + `client_id` + signature `OpenPGP` + fingerprint + timestamp + nonce
+* rejeu d'un `X-Retaia-Signature-Nonce` MCP déjà vu => refus explicite
+* skew temps hors fenêtre autorisée sur `X-Retaia-Signature-Timestamp` MCP => refus explicite
+* écriture MCP sensible refusée si `X-Retaia-Client-Id` ne correspond pas au `client_id` du bearer technique
 * client `MCP` peut piloter/orchestrer l'agent sans exécuter de processing (gate `v1.1` global)
 * client `MCP` ne peut pas `claim/heartbeat/submit` de job (`/jobs/*` => `403 FORBIDDEN_ACTOR`) (gate `v1.1` global)
 * mode service non-interactif redémarre sans login humain sur Linux/macOS/Windows
@@ -394,11 +403,25 @@ Tests obligatoires :
 Tests obligatoires :
 
 * `PROCESSED` atteint uniquement quand jobs `required` du profil sont complets
+* le `processing_profile` combine en v1 une baseline technique par `media_type` et, seulement si nécessaire, une qualification métier qui change réellement les jobs requis
+* `video_standard`, `audio_music`, `audio_voice`, `photo_standard` sont des profils effectifs de processing
+* `audio_undefined` est un profil transitoire de qualification, pas un profil final de processing complet
+* `suggest_tags` est un enrichissement AI transversal; il ne définit pas les profils et ne fait pas partie des prérequis de `PROCESSED`
+* la matrice canonique `processing_profile -> jobs` définie dans `PROCESSING-PROFILES.md` est respectée sans variante implicite runtime
 * avant validation `v1.1+`, `transcribe_audio` peut être activé plus tôt sous `feature_flags` et exposer un `transcript` pré-release hors conformité v1
-* dès validation `v1.1+`, tout média avec piste audio exploitable exige `transcribe_audio` pour atteindre `PROCESSED`
+* dès validation `v1.1+`, tout média avec piste audio exploitable dont le profil l'exige (`video_standard`, `audio_voice`) exige `transcribe_audio` pour atteindre `PROCESSED`
 * changement de profil après claim exige reprocess
 * pour un profil audio qui exige `generate_audio_waveform`, son absence rend le flux processing non conforme
 * pour tout média avec piste audio exploitable, l'absence de `generate_audio_waveform` rend le flux processing non conforme
+* `AUDIO` découvert sans qualification humaine démarre en `audio_undefined`
+* `audio_undefined` mène à `REVIEW_PENDING_PROFILE` quand les dérivés minimaux sont prêts
+* `REVIEW_PENDING_PROFILE` est visible dans la même surface UI de review mais n'autorise aucune décision KEEP/REJECT
+* si le choix humain fixe un profil qui exige `transcribe_audio` dans la phase active, Core crée automatiquement ce job puis repasse l'asset en `READY`
+* si le choix humain fixe un profil déjà complet, l'asset passe à `PROCESSED`
+* `PATCH /assets/{uuid}` avec `processing_profile` est refusé hors `READY|PROCESSING_REVIEW|REVIEW_PENDING_PROFILE`
+* `PATCH /assets/{uuid}` avec `processing_profile=audio_voice` DOIT être accepté comme mutation humaine explicite via `UI_WEB`
+* si le profil effectif après patch exige `transcribe_audio` dans la phase active et que `transcript.status != DONE`, toute tentative de faire aboutir l'asset en `DECIDED_KEEP` ou `ARCHIVED` DOIT être refusée avec `409 STATE_CONFLICT`
+* `PATCH /assets/{uuid}` combinant choix de profil + décision `DECIDED_KEEP` DOIT donc être refusé tant que le transcript requis n'est pas produit
 
 ## 3.1) Audio waveform UX (client)
 
@@ -413,31 +436,60 @@ Tests obligatoires :
 
 Tests obligatoires :
 
-* `proxy_video` :
+* `generate_preview` utilise un `preview_profile` canonique :
+  * `video_review_default_v1`
+  * `audio_review_default_v1`
+  * `photo_review_default_v1`
+* un changement non rétrocompatible de rendu preview impose un nouveau `preview_profile`
+* `generate_thumbnails` utilise un `thumbnail_profile` canonique :
+  * `video_representative_v1`
+  * `video_storyboard_v1`
+* un changement non rétrocompatible de sélection temporelle impose un nouveau `thumbnail_profile`
+* `preview_video` :
   * conteneur `video/mp4`
   * codec vidéo `H.264/AVC` lisible navigateur
+  * profil vidéo recommandé `High`
+  * pixel format `yuv420p`
   * piste audio (si présente) en `AAC-LC`
+  * lecture valide via `HTMLVideoElement` standard, sans lecteur natif propriétaire ni transcodeur frontend spécifique
+  * aucun `HEVC`, `VP9` ou `AV1` requis ni attendu dans le contrat canonique v1
   * framerate dérivé = framerate source (tolérance max ±0.01 fps)
   * `CFR` requis (pas de VFR non contrôlé)
   * hauteur cible `720px` si la source est plus grande, sinon hauteur source conservée
+  * `CRF` recommandé `23`, plage tolérée `21..28`
+  * preset recommandé `medium`
   * bitrate vidéo dans la plage normative `1.5 Mbps` à `4 Mbps`
   * ratio d'aspect conservé, aucun upscale
   * keyframe interval <= 2 secondes
   * MP4 faststart (`moov` en tête)
   * audio stéréo maximum, downmix multicanal autorisé
-* `proxy_audio` :
-  * format `audio/mp4` (AAC-LC) ou `audio/mpeg`
+  * bitrate audio dans la plage `96..160 kbps`, cible recommandée `128 kbps`
+* `preview_audio` :
+  * format canonique `audio/mp4` (`AAC-LC`)
+  * `audio/mpeg` (`MP3`) accepté seulement en fallback documenté
+  * lecture valide via `HTMLAudioElement` standard
+  * aucun `Opus` requis ni attendu dans le contrat canonique v1
   * sample rate conforme (source conservée ou normalisée 44.1k/48k)
   * canaux cohérents avec policy de downmix
-* `proxy_photo` :
-  * format `image/jpeg` ou `image/webp`
+  * bitrate audio dans la plage `96..160 kbps`, cible recommandée `128 kbps`
+* `preview_photo` :
+  * format canonique `image/webp`
+  * `image/jpeg` accepté seulement en fallback documenté
+  * lecture valide via `HTMLImageElement` standard
+  * aucun `AVIF` requis ni attendu dans le contrat canonique v1
   * `sRGB`
   * orientation EXIF normalisée
   * ratio d'aspect conservé, aucun upscale
+  * qualité `WEBP` recommandée `75`, plage tolérée `68..82`
+  * fallback `JPEG` : qualité recommandée `80`, plage tolérée `72..86`
 * `thumb` :
-  * format `image/jpeg` ou `image/webp`
+  * format canonique `image/webp`
+  * `image/jpeg` accepté seulement en fallback documenté
+  * lecture valide via `HTMLImageElement` standard
   * `sRGB`
-  * taille preview par défaut largeur `480px`
+  * taille thumb par défaut largeur `480px`
+  * qualité `WEBP` recommandée `75`, plage tolérée `68..82`
+  * fallback `JPEG` : qualité recommandée `80`, plage tolérée `72..86`
   * vidéo courte (`< 120s`) : thumb principal extrait à `max(1s, 10% de la durée)`
   * vidéo longue (`>= 120s`) : thumb principal extrait à `5% de la durée`, avec fallback à `20s` si `5% > 20s`
   * si la frame cible est noire ou de fondu et qu'une heuristique légère est active, une frame voisine plus représentative est choisie
@@ -451,6 +503,20 @@ Tests obligatoires :
 * cohérence globale :
   * `duration`/`fps`/dimensions exposés cohérents avec le fichier dérivé livré
   * aucun dérivé ne modifie implicitement le sens temporel du média
+* politique de remplacement :
+  * `derived/upload/complete` seul ne publie jamais un dérivé courant
+  * seul un `submit` valide publiant le `derived_patch` rend le dérivé courant visible
+  * pour un même `asset_uuid`, une même révision et un même `kind`, la dernière référence acceptée remplace atomiquement la précédente
+
+## 3.3) Facts contract (obligatoire)
+
+Tests obligatoires :
+
+* `PHOTO` : `facts_patch` contient au minimum `media_format`, `width`, `height`
+* `AUDIO` : `facts_patch` contient au minimum `duration_ms`, `media_format`, `audio_codec`
+* `VIDEO` : `facts_patch` contient au minimum `duration_ms`, `media_format`, `video_codec`, `width`, `height`, `fps`
+* `VIDEO` avec piste audio exploitable : `audio_codec` est aussi présent
+* absence d'un champ minimal applicable => résultat facts incomplet, l'asset ne peut pas être considéré `PROCESSED`
 
 ## 4) Merge patch par domaine
 
@@ -494,7 +560,7 @@ Tests obligatoires :
 
 Tests obligatoires :
 
-* sidecar/proxy orphelin (ex: `.lrf` sans parent) :
+* sidecar/dérivé orphelin (ex: `.lrf` sans parent) :
   * ne crée pas d'asset standalone
   * est marqué `queued` dans l'état de scan
   * incrémente `unmatched_sidecars` dans la sortie ingest
@@ -533,6 +599,7 @@ Tests obligatoires :
 * détection de drift `API-CONTRACTS.md` vs OpenAPI en CI
 * payload erreur conforme à `api/ERROR-MODEL.md`
 * enum d’état `AssetState` strict sur les payloads d’assets
+* enum `AssetState` inclut `REVIEW_PENDING_PROFILE`
 * exigences de sécurité/scopes OpenAPI présentes sur chaque endpoint mutateur
 * schéma `SessionCookieAuth` absent de la spec OpenAPI
 * endpoint `GET /ops/ingest/diagnostics` présent et conforme :
@@ -591,8 +658,12 @@ Tests obligatoires :
 
 * `q` (full-text) fonctionne en `v1`
 * `transcribe_audio`, `suggest_tags` et `suggested_tags*` sont hors périmètre v1 et planifiés en `v1.1+`
-* `transcribe_audio` devient obligatoire à partir de la phase `v1.1+` validée pour tout média avec piste audio exploitable
+* `transcribe_audio` devient obligatoire à partir de la phase `v1.1+` validée pour tout média dont le `processing_profile` l'exige
 * avant cette phase validée, `transcribe_audio` PEUT être exercé en pré-release uniquement via `feature_flags`
+* `suggest_tags` refuse de tourner si `facts_ref` est absent
+* `suggest_tags` accepte l'absence de `transcript_ref`
+* si `transcript_ref` est présent, il est utilisé comme enrichissement sémantique préféré
+* les tags/champs/notes humains existants sont traités comme contexte faisant autorité pour éviter doublons et contradictions, jamais comme cible à réécrire automatiquement
 
 ## 8.3) Feature flags (général)
 

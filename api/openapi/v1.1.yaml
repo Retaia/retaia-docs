@@ -12,6 +12,10 @@ info:
     Product maturity labels such as beta or release candidate are independent from this API major version.
     AI-powered features validated in v1.1+ extend the v1 baseline.
 
+externalDocs:
+  description: Normative API contracts and related specifications
+  url: https://github.com/Retaia/retaia-docs/blob/master/api/API-CONTRACTS.md
+
 servers:
   - url: /api/v1
 
@@ -354,12 +358,7 @@ paths:
       tags: [Auth]
       summary: Get effective app feature switches
       description: |
-        Returns global app switches (`app_feature_enabled`).
-        Also returns dependency/escalation metadata for deterministic client behavior.
-        Effective global availability requires Core `feature_flags` AND `app_feature_enabled`.
-        Normative gate: when `app_feature_enabled.features.ai=false`, only MCP functions that depend on AI are disabled at runtime.
-        Admin-only endpoint.
-        Runtime payload contract is stable: `app_feature_enabled`, `feature_governance`, `core_v1_global_features`.
+        Returns effective app feature switches. Admin-only endpoint.
       security:
         - UserBearerAuth: []
       responses:
@@ -426,9 +425,7 @@ paths:
       tags: [Auth]
       summary: Get runtime app policy
       description: |
-        Returns runtime `server_policy` including `feature_flags`.
-        This endpoint is the canonical runtime policy transport for UI_WEB, AGENT, and MCP clients in v1.1+.
-        Clients may optionally send their supported feature-flags contract version for compatibility negotiation.
+        Returns runtime app policy, including `server_policy.feature_flags`. Clients may optionally send their supported feature-flags contract version.
       security:
         - UserBearerAuth: []
         - TechnicalBearerAuth: []
@@ -464,10 +461,7 @@ paths:
       tags: [Auth]
       summary: Update runtime app policy
       description: |
-        Updates runtime `feature_flags` when they are persisted in a mutable backend controlled by Core.
-        Requires `UserBearerAuth` and an authenticated admin actor, per AUTHZ matrix.
-        Flags still in `code-backed` introduction/validation phase are visible in `GET /app/policy`
-        but MUST be rejected by this endpoint with `409 STATE_CONFLICT`.
+        Updates runtime app policy. Admin-only operation.
       security:
         - UserBearerAuth: []
       requestBody:
@@ -699,9 +693,7 @@ paths:
       tags: [Auth]
       summary: Mint client bearer token from secret key
       description: |
-        Exchanges `(client_id, secret_key)` for a bearer token.
-        Normative rule: one active token per AGENT technical client_id; minting a new token revokes the previous one.
-        This endpoint is for `AGENT_TECHNICAL` only.
+        Exchanges `(client_id, secret_key)` for an AGENT technical bearer token.
       security: []
       requestBody:
         required: true
@@ -746,8 +738,7 @@ paths:
       tags: [Auth]
       summary: Start device authorization flow for technical client bootstrap
       description: |
-        Starts a browser-assisted authorization flow (GitHub-style) for `AGENT_TECHNICAL`.
-        User validation (and optional 2FA) happens via `verification_uri`, which MUST open the human approval flow in `UI_WEB`.
+        Starts a browser-assisted device authorization flow for `AGENT_TECHNICAL`. Human approval happens in `UI_WEB`.
       security: []
       requestBody:
         required: true
@@ -786,8 +777,7 @@ paths:
       tags: [Auth]
       summary: Poll device authorization status
       description: |
-        Polls authorization status for a previously started device flow.
-        On approval, returns one-shot `secret_key`.
+        Polls authorization status for a previously started device flow. On approval, returns one-shot `secret_key`.
       security: []
       requestBody:
         required: true
@@ -1086,7 +1076,7 @@ paths:
           in: query
           schema:
             type: string
-        - name: has_proxy
+        - name: has_preview
           in: query
           schema:
             type: boolean
@@ -1197,6 +1187,8 @@ paths:
     patch:
       tags: [Assets]
       summary: Update one asset (metadata and lifecycle transitions)
+      description: |
+        Partial human mutation. Only the provided fields are updated; omitted fields stay unchanged.
       security:
         - UserBearerAuth: []
       parameters:
@@ -1218,6 +1210,9 @@ paths:
                 fields:
                   type: object
                   additionalProperties: true
+                processing_profile:
+                  type: string
+                  enum: [video_standard, audio_undefined, audio_music, audio_voice, photo_standard]
                 state:
                   type: string
                   enum: [DECISION_PENDING, DECIDED_KEEP, DECIDED_REJECT, ARCHIVED, REJECTED]
@@ -1635,11 +1630,8 @@ paths:
       summary: Initialize derived upload
       description: |
         Initializes upload for one derived file.
-        Normative media profile constraints:
-        - `proxy_video`: `video/mp4` (H.264/AVC, browser-compatible), source framerate preserved.
-        - `proxy_audio`: `audio/mp4` (AAC-LC) or `audio/mpeg`.
-        - `proxy_photo` / `thumb`: `image/jpeg` or `image/webp`.
-        - `waveform`: `application/json` (preferred) or `application/octet-stream`.
+        Supported kinds: `preview_video`, `preview_audio`, `preview_photo`, `thumb`, `waveform`.
+        Media format details are defined in the Markdown specifications.
       security:
         - TechnicalBearerAuth: []
       parameters:
@@ -1661,7 +1653,7 @@ paths:
               properties:
                 kind:
                   type: string
-                  enum: [proxy_video, proxy_audio, proxy_photo, thumb, waveform]
+                  enum: [preview_video, preview_audio, preview_photo, thumb, waveform]
                 content_type:
                   type: string
                   description: |
@@ -1793,7 +1785,7 @@ paths:
           required: true
           schema:
             type: string
-            enum: [proxy_video, proxy_audio, proxy_photo, thumb, waveform]
+            enum: [preview_video, preview_audio, preview_photo, thumb, waveform]
       responses:
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
@@ -2482,7 +2474,7 @@ paths:
                   path: "DJI/DCIM/100MEDIA/DJI_0123.MP4"
                   include_sidecars: true
                   include_derived: true
-                  reason: "proxy_backfill"
+                  reason: "preview_backfill"
       responses:
         "202":
           description: Target accepted for requeue processing
@@ -2548,6 +2540,7 @@ components:
         Technical bearer credential for non-human clients.
         `AGENT_TECHNICAL` uses a bearer token minted from `(client_id, secret_key)`.
         `MCP_TECHNICAL` uses a bearer token minted from an OpenPGP-backed challenge/response flow after UI key enrollment.
+        Sensitive MCP writes also require `client_id` + detached OpenPGP signature proof.
 
   parameters:
     UuidPath:
@@ -2574,10 +2567,18 @@ components:
       required: true
       schema:
         type: string
+    MpcSignatureClientId:
+      name: X-Retaia-Client-Id
+      in: header
+      required: true
+      description: Technical MCP client identifier included in the signed canonical string.
+      schema:
+        type: string
     AgentSignatureAgentId:
       name: X-Retaia-Agent-Id
       in: header
       required: true
+      description: Stable agent UUID included in the signed canonical string.
       schema:
         type: string
         format: uuid
@@ -2585,18 +2586,21 @@ components:
       name: X-Retaia-OpenPGP-Fingerprint
       in: header
       required: true
+      description: OpenPGP fingerprint of the active public key used to verify the detached signature.
       schema:
         type: string
     AgentSignatureValue:
       name: X-Retaia-Signature
       in: header
       required: true
+      description: ASCII-armored detached OpenPGP signature of the canonical UTF-8 string built from method, path, technical identifier, timestamp, nonce, and raw body SHA-256.
       schema:
         type: string
     AgentSignatureTimestamp:
       name: X-Retaia-Signature-Timestamp
       in: header
       required: true
+      description: Signature timestamp in UTC RFC 3339 format; included in the canonical string and checked for freshness.
       schema:
         type: string
         format: date-time
@@ -2604,6 +2608,7 @@ components:
       name: X-Retaia-Signature-Nonce
       in: header
       required: true
+      description: Unique opaque nonce included in the canonical string and checked for replay protection.
       schema:
         type: string
 
@@ -3222,6 +3227,7 @@ components:
         - DISCOVERED
         - READY
         - PROCESSING_REVIEW
+        - REVIEW_PENDING_PROFILE
         - PROCESSED
         - DECISION_PENDING
         - DECIDED_KEEP
@@ -3255,7 +3261,7 @@ components:
         revision_etag:
           type: string
           nullable: true
-          description: Strong opaque asset revision tag to be reused in `If-Match` for the next mutation. Changes on any accepted human-visible business mutation and stays stable for purely technical noise with no review/operator impact.
+          description: Opaque asset revision tag to be reused in `If-Match` for the next mutation.
         captured_at:
           type: string
           format: date-time
@@ -3267,7 +3273,7 @@ components:
           type: array
           items:
             type: string
-        has_proxy:
+        has_preview:
           type: boolean
         thumb_url:
           type: string
@@ -3332,7 +3338,7 @@ components:
           type: boolean
         thumbs_done:
           type: boolean
-        proxy_done:
+        preview_done:
           type: boolean
         waveform_done:
           type: boolean
@@ -3345,24 +3351,22 @@ components:
       type: object
       additionalProperties: false
       properties:
-        proxy_video_url:
+        preview_video_url:
           type: string
           nullable: true
-        proxy_audio_url:
+        preview_audio_url:
           type: string
           nullable: true
-        proxy_photo_url:
+        preview_photo_url:
           type: string
           nullable: true
         waveform_url:
           type: string
           nullable: true
-          description: |
-            Required for any asset with an exploitable audio track once state progresses beyond READY.
-            If `media_type=AUDIO` or facts reveal an exploitable audio track, this field MUST be present in all business states beyond READY.
-            UI local fallback may exist for degraded playback UX but never replaces the required server/agent-derived waveform.
+          description: Required when the effective processing profile requires waveform data beyond READY.
         thumbs:
           type: array
+          description: Video-only thumbnails.
           items:
             type: string
 
@@ -3454,7 +3458,7 @@ components:
           type: string
           enum:
             - extract_facts
-            - generate_proxy
+            - generate_preview
             - generate_thumbnails
             - generate_audio_waveform
         status:
@@ -3521,7 +3525,7 @@ components:
           type: string
         job_type:
           type: string
-          enum: [generate_proxy, generate_thumbnails, generate_audio_waveform]
+          enum: [generate_preview, generate_thumbnails, generate_audio_waveform]
         result:
           type: object
           additionalProperties: false
@@ -3585,7 +3589,7 @@ components:
             properties:
               kind:
                 type: string
-                enum: [proxy_video, proxy_audio, proxy_photo, thumb, waveform]
+                enum: [preview_video, preview_audio, preview_photo, thumb, waveform]
               ref:
                 type: string
               size_bytes:
