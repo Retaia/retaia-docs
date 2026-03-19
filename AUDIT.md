@@ -919,10 +919,8 @@ Constats :
 * la prose pose plusieurs règles HTTP partagées fortes
 * OpenAPI n'en ferme qu'une partie
 * écarts avérés :
-  * `GET /assets/{uuid}` ne déclare pas de réponse `200`, donc ni `AssetDetail` ni le header `ETag` promis par la prose ne sont contractuellement exposés
   * `Accept-Language` est normé en policy, mais absent d'OpenAPI
   * `If-Match` est défini comme simple string, sans règle machine sur format quoted/unquoted
-  * `GET /assets/{uuid}/derived/{kind}` ne ferme ni `Range`, ni `Accept-Ranges`, ni `Content-Range`, ni les `content-type`
   * aucune règle OpenAPI n'indique si les URLs de dérivés peuvent être redirigées, signées, éphémères ou si la route Core doit toujours servir le contenu directement
   * les politiques de cache HTTP ne sont pas fermées sur les ressources dérivées ou l'asset detail
 
@@ -934,12 +932,10 @@ Impact :
 
 À normer avant `v1.0.0` :
 
-* corriger `GET /assets/{uuid}` dans OpenAPI avec réponse `200`, schéma `AssetDetail` et header `ETag`
-* déclarer les headers cross-project normatifs :
+ * déclarer les headers cross-project normatifs :
   * `Accept-Language`
   * `If-Match`
   * `ETag`
-  * `Range` / `Accept-Ranges` / `Content-Range` si supportés
 * fermer la politique de cache et de redirection des dérivés
 * décider si les URLs de dérivés sont :
   * des URLs Core stables

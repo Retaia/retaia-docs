@@ -1001,7 +1001,19 @@ paths:
         - TechnicalBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
+        - $ref: "#/components/parameters/AcceptLanguage"
       responses:
+        "200":
+          description: Asset detail
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: Strong asset revision tag for the current asset revision.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetDetail"
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
           content:
@@ -1604,6 +1616,7 @@ paths:
         - TechnicalBearerAuth: []
       parameters:
         - $ref: "#/components/parameters/UuidPath"
+        - $ref: "#/components/parameters/Range"
         - name: kind
           in: path
           required: true
@@ -1619,8 +1632,35 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Derived content
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: Media type of the returned derived content.
+            Accept-Ranges:
+              schema:
+                type: string
+                enum: [bytes]
+              description: Present for range-capable derived resources.
+        "206":
+          description: Partial derived content
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: Media type of the returned derived content.
+            Accept-Ranges:
+              schema:
+                type: string
+                enum: [bytes]
+            Content-Range:
+              schema:
+                type: string
+              description: Byte range actually returned when serving a partial response.
         "404":
           description: Not found
+        "416":
+          description: Requested range not satisfiable
 
   /assets/purge:
     post:
@@ -2446,6 +2486,21 @@ components:
       name: If-Match
       in: header
       required: true
+      description: Strong opaque asset revision tag previously read from the asset `ETag` response header.
+      schema:
+        type: string
+    AcceptLanguage:
+      name: Accept-Language
+      in: header
+      required: false
+      description: Optional locale preference for localized human-readable messages. Business payload semantics remain locale-independent.
+      schema:
+        type: string
+    Range:
+      name: Range
+      in: header
+      required: false
+      description: Optional byte range request. Supported for audio/video preview delivery.
       schema:
         type: string
     ClientIdPath:
