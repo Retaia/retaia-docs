@@ -45,7 +45,7 @@ Statuts autorisés :
 | `change-management/FEATURE-FLAG-REGISTRY.md` | `NORMATIVE` | Feature governance | `CORE,UI_WEB,AGENT,MCP,OPS` | `v1` |
 | `change-management/HTTP-STATUS-IMPLEMENTATION-TICKETS.md` | `PREPARATORY` | Migration planning | `CORE,UI_WEB,AGENT` | `v1` |
 | `change-management/ROLLOUT-PLAN-HTTP-STATUS-V1.md` | `PREPARATORY` | Migration planning | `CORE,UI_WEB,AGENT` | `v1` |
-| `definitions/CAPABILITIES.md` | `NORMATIVE` | Domain definitions | `CORE,AGENT,MCP` | `v1.1+` |
+| `definitions/CAPABILITIES.md` | `NORMATIVE` | Domain definitions | `CORE,AGENT,MCP` | `v1 + v1.1+` |
 | `definitions/DEFINITIONS.md` | `NORMATIVE` | Domain definitions | `CORE,UI_WEB,AGENT,MCP` | `v1` |
 | `definitions/JOB-TYPES.md` | `NORMATIVE` | Domain definitions | `CORE,AGENT` | `v1` |
 | `definitions/PROCESSING-PROFILES.md` | `NORMATIVE` | Domain definitions | `CORE,UI_WEB,AGENT` | `v1` |

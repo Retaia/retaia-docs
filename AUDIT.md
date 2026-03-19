@@ -101,37 +101,9 @@ Risque :
 * activer/prouver la branch protection et les checks requis côté GitHub
 * garder la distinction explicite entre contrôles versionnés et contrôles GitHub externes
 
-## 5. Incohérences documentaires avérées
+## 5. Domaines partagés bien couverts, mais encore insuffisamment fermés
 
-### 5.1 Index canonique des documents encore faux sur au moins un fichier critique
-
-Références :
-
-* [DOCUMENT-INDEX.md](DOCUMENT-INDEX.md)
-* [definitions/CAPABILITIES.md](definitions/CAPABILITIES.md)
-
-Constat :
-
-* [DOCUMENT-INDEX.md](DOCUMENT-INDEX.md) classe [definitions/CAPABILITIES.md](definitions/CAPABILITIES.md) en version `v1.1+`
-* pourtant le document définit aussi des capacités socle `v1` utilisées dès le pipeline courant :
-  * `media.facts@1`
-  * `media.previews.*@1`
-  * `media.thumbnails@1`
-  * `audio.waveform@1`
-
-Risque :
-
-* un repo consommateur qui s'appuie sur l'index canonique peut croire à tort que `CAPABILITIES.md` n'est pas opposable pour `v1`
-* cela affaiblit précisément l'objectif du `DOCUMENT-INDEX.md` comme carte normative unique
-
-À normer / fermer avant `v1.0.0` :
-
-* corriger la colonne `Version` de [definitions/CAPABILITIES.md](definitions/CAPABILITIES.md) dans l'index
-* ou introduire une notation explicite du type `v1 + v1.1+`
-
-## 6. Domaines partagés bien couverts, mais encore insuffisamment fermés
-
-### 6.1 Machine à états et transitions
+### 5.1 Machine à états et transitions
 
 Couverture existante :
 
@@ -152,7 +124,7 @@ Points forts :
 * `PROCESSED -> DECISION_PENDING` est explicitement réservé à Core
 * visibilité UI minimale par état désormais fermée
 
-### 6.2 Contrat de précondition optimiste (`ETag` / `If-Match`)
+### 5.2 Contrat de précondition optimiste (`ETag` / `If-Match`)
 
 Couverture existante :
 
@@ -171,7 +143,7 @@ Points forts :
 * transport `ETag` / `If-Match` désormais fermé côté liste et détail
 * primauté du détail pour les préconditions d'écriture explicitement normée
 
-### 6.3 Feature flags et résolution d'effectivité
+### 5.3 Feature flags et résolution d'effectivité
 
 Couverture existante :
 
@@ -190,7 +162,7 @@ Points forts :
 
 * payload canonique d'explication d'un `OFF` désormais exposé via `app_feature_explanations` / `effective_feature_explanations`
 
-### 6.4 Auth technique et signature OpenPGP
+### 5.4 Auth technique et signature OpenPGP
 
 Couverture existante :
 
@@ -212,7 +184,7 @@ Points forts :
 * rejet canonique `401 UNAUTHORIZED` pour skew/rejeu
 * règle explicite : la signature porte toujours sur les octets HTTP bruts réellement envoyés
 
-### 6.4.b Claims, rotation et vérification des tokens encore insuffisamment fermées
+### 5.4.b Claims, rotation et vérification des tokens encore insuffisamment fermées
 
 Couverture existante :
 
@@ -231,7 +203,7 @@ Points forts :
   * `UI_WEB.refresh_token` = `30 jours`
   * `TechnicalBearerAuth.access_token` = `24 heures`
 
-### 6.5 Polling, retry, backoff, jitter
+### 5.5 Polling, retry, backoff, jitter
 
 Couverture existante :
 
@@ -251,7 +223,7 @@ Points forts :
 * cadence canonique `GET /jobs` = `5s`, bornée par `server_policy.min_poll_interval_seconds`
 * stratégie de `429` fermée : base `2s`, facteur `x2`, plafond `60s`, full jitter, reset après succès
 
-### 6.6 Verrous, TTL, fencing token
+### 5.6 Verrous, TTL, fencing token
 
 Couverture existante :
 
@@ -272,7 +244,7 @@ Points forts :
 * matrice de recovery crash FS/DB désormais définie
 * invariants de reprise idempotente désormais fermés
 
-### 6.7 Jobs, capabilities et processing profiles
+### 5.7 Jobs, capabilities et processing profiles
 
 Couverture existante :
 
@@ -293,7 +265,7 @@ Points forts :
 * outputs structurants rattachés explicitement à leur job canonique
 * projections runtime `facts`, `thumbnails`, `waveform`, `transcript` explicitées
 
-### 6.7.c Contrat des hooks trop ouvert pour rester cross-project sûr
+### 5.7.c Contrat des hooks trop ouvert pour rester cross-project sûr
 
 Références :
 
@@ -316,7 +288,7 @@ Points forts :
 
 * timeout max hook v1 désormais fermé à `2s`
 
-### 6.8.d Contrats visibles UI encore décrits en prose, mais pas toujours reflétés dans OpenAPI
+### 5.8.d Contrats visibles UI encore décrits en prose, mais pas toujours reflétés dans OpenAPI
 
 Constats :
 
@@ -328,7 +300,7 @@ Règle à poser :
 * toute surface HTTP consommée par `UI_WEB` ou `Agent` doit être fermée d'abord dans OpenAPI
 * la prose peut expliquer, jamais porter seule le détail de transport
 
-### 6.8.e Historique observable et révisions encore trop peu normés
+### 5.8.e Historique observable et révisions encore trop peu normés
 
 Références :
 
@@ -356,7 +328,7 @@ Points forts :
 
 * distinction entre historique métier exposé et traces techniques internes désormais explicite
 
-### 6.8.f Endpoints ops/admin encore partiellement ouverts alors qu'ils sont partagés
+### 5.8.f Endpoints ops/admin encore partiellement ouverts alors qu'ils sont partagés
 
 Références :
 
@@ -383,7 +355,7 @@ Impact :
 
 * garder ces invariants dans les payloads ops futurs et éviter toute réouverture implicite
 
-### 6.9 Observabilité partagée
+### 5.9 Observabilité partagée
 
 Couverture existante :
 
@@ -402,7 +374,7 @@ Points forts :
 * présentation UI/Ops classée non normative en `v1`
 * surface minimale obligatoire des événements affichés désormais fermée
 
-### 6.9.b Observabilité de gouvernance de feature encore partiellement implicite
+### 5.9.b Observabilité de gouvernance de feature encore partiellement implicite
 
 Références :
 
