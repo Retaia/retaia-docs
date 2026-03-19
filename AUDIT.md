@@ -158,22 +158,16 @@ Points forts :
 * distinction `feature_flags` / `app_feature_enabled` / `user_feature_enabled` / `capabilities`
 * ordre d'évaluation explicite
 * contrat de version du feature flags payload déjà posé
+* registre canonique des clés partagées `v1.0.0` désormais publié
 
 Reste à normer :
 
-* registre canonique complet des clés de feature attendues en `v1.0.0`
-* statut de chaque clé :
-  * `CORE_V1_GLOBAL`
-  * mutable admin
-  * mutable user
-  * dépendances
-  * kill-switch autorisé ou non
 * payload d'audit expliquant pourquoi une feature est `OFF`
 
 Sans cela :
 
 * `Core` peut calculer correctement l'effectif
-* `UI_WEB` et `Agent` peuvent néanmoins diverger sur l'explication utilisateur et les surfaces masquées
+* `UI_WEB` et `Agent` peuvent encore diverger sur l'explication utilisateur d'un `OFF`, mais plus sur le registre canonique des clés partagées
 
 ### 6.4 Auth technique et signature OpenPGP
 
@@ -629,7 +623,6 @@ Action :
   * nonce anti-rejeu
   * polling
   * backoff
-* Fermer le registre canonique des feature keys `v1.0.0`.
 * Fermer le registre canonique des événements observabilité cross-app.
 * Rendre stricts les endpoints ops partagés : tri, validation, contraintes de payload.
 * Fermer les règles de visibilité ou de redaction des sous-sections sensibles de `AssetDetail`.

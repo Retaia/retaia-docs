@@ -706,6 +706,9 @@ Tests obligatoires :
 * continuous development validé: suppression d’un flag n’interrompt pas UI/Agent/MCP déjà déployés dans la fenêtre d’acceptance
 * continuous deployment validé: une release Core avec retrait de flag passe les gates CD sans exiger upgrade client synchronisée
 * chaque kill-switch permanent a une entrée dans `change-management/FEATURE-FLAG-KILLSWITCH-REGISTRY.md`
+* chaque clé partagée `v1.0.0` existe dans `change-management/FEATURE-FLAG-REGISTRY.md`
+* `core_v1_global_features[]` correspond exactement aux clés `Tier = CORE_V1_GLOBAL` du registre
+* `feature_governance[]` reste aligné avec `FEATURE-FLAG-REGISTRY.md` pour `tier`, `dependencies[]`, `disable_escalation[]` et `user_can_disable`
 
 ## 8.4.b) Matrice de vérité feature governance
 

@@ -9,6 +9,7 @@ Ce document définit l'algorithme opposable de calcul `effective_feature_enabled
 * `user_feature_enabled` (préférence utilisateur)
 * `feature_governance[]` (`dependencies[]`, `disable_escalation[]`, `tier`, `user_can_disable`)
 * `core_v1_global_features[]`
+* [`FEATURE-FLAG-REGISTRY.md`](../change-management/FEATURE-FLAG-REGISTRY.md) comme registre canonique des clés partagées
 
 ## 2) Ordre strict d'évaluation
 
@@ -58,3 +59,4 @@ for each core_key in core_v1_global_features:
 * sans état caché côté serveur
 * stable pour UI/Agent/MCP (pas de heuristique client)
 * auditable (trace de la gate qui force OFF)
+* `feature_governance[]` et `core_v1_global_features[]` DOIVENT rester strictement alignés avec le registre canonique

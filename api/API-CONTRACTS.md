@@ -96,6 +96,7 @@ Objectif : fournir une surface stable consommée par :
 * Ce cycle DOIT permettre le continuous development sans casse des clients encore dans la fenêtre d'acceptance.
 * Ownership runtime: `accepted_feature_flags_contract_versions` est piloté par release/config Core (pas modifiable via endpoint admin runtime).
 * Les kill-switches permanents autorisés DOIVENT être listés dans [`FEATURE-FLAG-KILLSWITCH-REGISTRY.md`](../change-management/FEATURE-FLAG-KILLSWITCH-REGISTRY.md).
+* Le registre canonique des clés partagées `v1.0.0`, de leur tier, mutabilité et dépendances est défini dans [`FEATURE-FLAG-REGISTRY.md`](../change-management/FEATURE-FLAG-REGISTRY.md).
 
 ### Orchestration runtime (normatif)
 
@@ -159,16 +160,7 @@ Catalogue de dépendances et escalade (opposable) :
 * règle de sûreté v1 globale : les features socle v1 (`CORE_V1_GLOBAL`) restent disponibles et ne sont pas impactées par des opt-out utilisateur
 * registre explicite obligatoire : Core DOIT exposer `core_v1_global_features[]` (liste canonique des clés non désactivables)
 * toute entrée `feature_governance` dont `key` appartient à `core_v1_global_features[]` DOIT avoir `tier=CORE_V1_GLOBAL` et `user_can_disable=false`
-
-Registre canonique `CORE_V1_GLOBAL` (v1) :
-
-* `features.core.auth`
-* `features.core.assets.lifecycle`
-* `features.core.jobs.runtime`
-* `features.core.search.query`
-* `features.core.policy.runtime`
-* `features.core.derived.access`
-* `features.core.clients.bootstrap`
+* `core_v1_global_features[]` DOIT correspondre exactement aux clés `Tier = CORE_V1_GLOBAL` du registre [`FEATURE-FLAG-REGISTRY.md`](../change-management/FEATURE-FLAG-REGISTRY.md)
 
 Arbitrage admin/user (opposable) :
 
