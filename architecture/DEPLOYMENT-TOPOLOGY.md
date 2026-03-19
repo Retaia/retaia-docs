@@ -147,7 +147,91 @@ Certificate note:
 - The shared runtime name MAY be a LAN DNS name, mDNS name, split-horizon name or equivalent routable host name.
 - The certificate MAY be public or signed by a local CA installed on participating clients.
 
-## 6. API request flow
+## 6. Derived upload sizing (normative)
+
+Large derived files such as video previews MAY be several hundreds of MiB, but the shared runtime profile MUST handle them through chunked uploads only.
+
+Rules:
+
+- `POST /assets/{uuid}/derived/upload/part` MUST be dimensioned for one part, never for the whole derived file.
+- Core MUST publish a `max_part_size_bytes` value low enough to fit under every effective request-body limit on the exposed path.
+- The effective limit is the minimum of:
+  - front proxy request-body limit
+  - PHP `upload_max_filesize`
+  - PHP `post_max_size`
+  - any app/server middleware limit on multipart bodies
+- `post_max_size` MUST be greater than or equal to `upload_max_filesize`.
+- Core MUST process each uploaded part from the PHP temporary file and persist it immediately; rebuilding the whole derived file in RAM is forbidden.
+- Temporary upload storage MUST be distinct from the published current derived file.
+- Expired or incomplete multipart uploads MUST be garbage-collected.
+
+Recommended baseline:
+
+- `max_part_size_bytes`: `8 MiB` to `32 MiB`
+- request timeout budget per part: `60s` to `120s`
+- enough temporary disk space for several concurrent parts
+
+Operational consequence:
+
+- if one of these limits is lower than `max_part_size_bytes`, the deployment is non-conforming until the published limit or infra settings are adjusted
+
+Example `php.ini` profile:
+
+```ini
+file_uploads = On
+upload_max_filesize = 32M
+post_max_size = 40M
+max_file_uploads = 20
+max_execution_time = 120
+max_input_time = 120
+memory_limit = 256M
+; optional explicit temp dir if the default tmp volume is too small
+; upload_tmp_dir = /var/www/html/var/tmp/uploads
+```
+
+Example NGINX front limit:
+
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name retaia.local;
+
+    client_max_body_size 40m;
+
+    location /api/ {
+        root /var/www/html/public;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME /var/www/html/public/index.php;
+        fastcgi_pass core:9000;
+        fastcgi_read_timeout 120s;
+    }
+}
+```
+
+Example Traefik static/dynamic intent:
+
+```yaml
+http:
+  middlewares:
+    retaia-upload-limit:
+      buffering:
+        maxRequestBodyBytes: 41943040
+
+  routers:
+    retaia-api:
+      rule: Host(`retaia.local`) && PathPrefix(`/api/`)
+      middlewares:
+        - retaia-upload-limit
+      service: retaia-core
+```
+
+Sizing rule for operators:
+
+- choose the proxy/PHP limits first
+- then publish a `max_part_size_bytes` that stays strictly below them with multipart overhead margin
+- never increase `max_part_size_bytes` above the lowest effective limit in the chain
+
+## 7. API request flow
 
 1. Browser/UI and workstation agents call `https://<shared-host>/api/v1/...`.
 2. The exposed TLS entrypoint terminates TLS directly or forwards through an optional front reverse proxy.
