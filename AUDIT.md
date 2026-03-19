@@ -375,45 +375,6 @@ Impact :
 * effet runtime exact d'un hook bloquant en échec
 * exposition observabilité/audit correspondante
 
-### 6.8.b Recherche, filtres et pagination assets encore insuffisamment fermés
-
-Couverture existante :
-
-* [api/API-CONTRACTS.md](api/API-CONTRACTS.md)
-* [api/openapi/v1.yaml](api/openapi/v1.yaml)
-* [policies/SEARCH-PRIVACY-INDEX.md](policies/SEARCH-PRIVACY-INDEX.md)
-* [tests/TEST-PLAN.md](tests/TEST-PLAN.md)
-
-Constats :
-
-* le contrat prose dit `state=DECISION_PENDING (multi)`, mais OpenAPI déclare un unique paramètre `state` scalaire
-* `tags=foo,bar` est décrit en prose, mais le mode d'encodage n'est pas normé :
-  * CSV unique
-  * répétition du paramètre
-  * ordre significatif ou non
-* `cursor` existe, mais sa sémantique n'est pas fermée :
-  * opaque ou décodable
-  * stable ou non en cas de mutations concurrentes
-  * couplé ou non au tri courant
-* le contrat mentionne que le tri par défaut est "conservé", mais sa valeur canonique n'est pas définie pour `GET /assets`
-* `geo_bbox` est décrit comme string `min_lon,min_lat,max_lon,max_lat`, mais sans contrat de validation exact :
-  * bornes numériques
-  * ordre invalide
-  * bbox traversant l'antiméridien
-
-Impact :
-
-* `Core` et `UI_WEB` peuvent diverger sur la construction des URLs, la pagination et la reprise de navigation
-* deux implémentations peuvent être chacune "raisonnables" mais incompatibles
-
-À normer avant `v1.0.0` :
-
-* encodage canonique de chaque filtre multi-valeur
-* valeur par défaut exacte de `sort`
-* contrat formel de `cursor`
-* validation exacte de `geo_bbox`
-* relation normative entre pagination et stabilité d'ordre
-
 ### 6.8.d Contrats visibles UI encore décrits en prose, mais pas toujours reflétés dans OpenAPI
 
 Constats :
@@ -796,7 +757,6 @@ Action :
 * Fermer la table canonique des `ErrorResponse.code`.
 * Fermer le registre canonique des feature keys `v1.0.0`.
 * Fermer le registre canonique des événements observabilité cross-app.
-* Fermer l'encodage, la pagination et le tri de `GET /assets`.
 * Fermer le contrat observable de `revision_history` et son lien avec `revision_etag`.
 * Rendre stricts les endpoints ops partagés : tri, validation, contraintes de payload.
 * Fermer les règles de visibilité ou de redaction des sous-sections sensibles de `AssetDetail`.

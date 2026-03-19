@@ -837,10 +837,10 @@ Liste filtrable/paginée des assets.
 
 Query params (exemples) :
 
-* `state=DECISION_PENDING` (multi)
+* `state=DECISION_PENDING,READY` (multi CSV)
 * `media_type=VIDEO|PHOTO|AUDIO`
 * `has_preview=true`
-* `tags=foo,bar` (tags **humains** uniquement)
+* `tags=foo,bar` (tags **humains** uniquement, CSV)
 * `tags_mode=AND|OR` (défaut: AND)
 * `suggested_tags=foo,bar` (**v1.1+**, suggestions uniquement)
 * `suggested_tags_mode=AND|OR` (**v1.1+**, défaut: AND)
@@ -860,6 +860,23 @@ Règles `q=` :
 * tri par défaut conservé (`sort`) ; pas de score implicite exposé en v1
 * `q` DOIT utiliser un index de recherche dérivé compatible chiffrement (pas de plaintext de transcription en index)
 * filtres localisation DOIVENT reposer sur index spatial dérivé; les valeurs GPS source restent chiffrées
+
+Règles de transport et pagination (normatives) :
+
+* `state` et `tags` DOIVENT utiliser un encodage CSV dans une occurrence unique du paramètre (`explode=false`)
+* les clients NE DOIVENT PAS répéter `state=` ou `tags=` plusieurs fois dans la même requête
+* l'ordre des valeurs CSV n'a pas de sémantique métier; Core DOIT dédupliquer les doublons avant évaluation
+* le tri par défaut canonique est `sort=-created_at`
+* à égalité sur la clé de tri demandée, l'ordre DOIT être stabilisé par `uuid` croissant
+* `cursor` est opaque, émis par Core, et NE DOIT PAS être décodé, modifié ni reconstruit côté client
+* un `cursor` DOIT être réutilisé strictement avec le même tuple `(filtres, sort, limit)`; tout changement de ce tuple avec un `cursor` fourni DOIT être rejeté en `400 VALIDATION_FAILED`
+* `geo_bbox` DOIT être fourni au format exact `min_lon,min_lat,max_lon,max_lat`
+* chaque coordonnée DOIT être un nombre décimal valide avec :
+  * longitude dans `[-180,180]`
+  * latitude dans `[-90,90]`
+* `min_lon` DOIT être strictement inférieur à `max_lon`
+* `min_lat` DOIT être strictement inférieur à `max_lat`
+* une bbox traversant l'antiméridien n'est pas autorisée en `v1` et DOIT être refusée en `400 VALIDATION_FAILED`
 
 Response :
 

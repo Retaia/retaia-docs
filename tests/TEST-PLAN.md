@@ -230,6 +230,12 @@ Tests obligatoires :
   * retourne `Cache-Control: private, no-store`
 * `GET /assets`:
   * retourne `Cache-Control: private, no-store`
+  * `state` et `tags` utilisent un encodage CSV sur une occurrence unique du paramètre
+  * ordre des valeurs CSV non significatif, doublons ignorés
+  * `sort` par défaut = `-created_at`
+  * tie-break déterministe par `uuid` croissant
+  * `cursor` est opaque et rejeté si réutilisé avec un tuple `(filtres, sort, limit)` différent
+  * `geo_bbox` invalide, hors bornes, avec min/max inversés ou traversant l'antiméridien => `400 VALIDATION_FAILED`
 * `PATCH /assets/{uuid}`, `POST /assets/{uuid}/reprocess`, `POST /assets/{uuid}/reopen`:
   * `If-Match` obligatoire
   * `If-Match` reprend exactement le strong validator HTTP quoté lu dans `ETag` / `summary.revision_etag`

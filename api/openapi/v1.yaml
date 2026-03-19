@@ -1029,7 +1029,12 @@ paths:
         - name: state
           in: query
           schema:
-            $ref: "#/components/schemas/AssetState"
+            type: array
+            items:
+              $ref: "#/components/schemas/AssetState"
+          style: form
+          explode: false
+          description: Comma-separated asset states. Ordering is not significant; duplicates are ignored.
         - name: media_type
           in: query
           schema:
@@ -1038,7 +1043,12 @@ paths:
         - name: tags
           in: query
           schema:
-            type: string
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+          description: Comma-separated human tags. Ordering is not significant; duplicates are ignored.
         - name: has_preview
           in: query
           schema:
@@ -1068,11 +1078,13 @@ paths:
           schema:
             type: string
             example: "4.30,50.80,4.45,50.92"
-          description: Bounding box filter `min_lon,min_lat,max_lon,max_lat` (uses secure derived spatial index).
+            pattern: '^-?[0-9]+(?:\.[0-9]+)?,-?[0-9]+(?:\.[0-9]+)?,-?[0-9]+(?:\.[0-9]+)?,-?[0-9]+(?:\.[0-9]+)?$'
+          description: Bounding box filter `min_lon,min_lat,max_lon,max_lat` with lon in `[-180,180]`, lat in `[-90,90]`, strict `min < max`, and no antimeridian crossing in v1.
         - name: sort
           in: query
           schema:
             type: string
+            default: -created_at
             enum:
               - name
               - -name
@@ -1089,6 +1101,7 @@ paths:
               - state
               - -state
             example: -created_at
+          description: Primary sort key. Ties are stabilized by `uuid` ascending.
         - name: captured_at_from
           in: query
           schema:
@@ -1109,6 +1122,7 @@ paths:
           in: query
           schema:
             type: string
+          description: Opaque server-issued cursor bound to the exact `(filters, sort, limit)` tuple of the previous page.
       responses:
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
