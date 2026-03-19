@@ -354,12 +354,7 @@ paths:
       tags: [Auth]
       summary: Get effective app feature switches
       description: |
-        Returns global app switches (`app_feature_enabled`).
-        Also returns dependency/escalation metadata for deterministic client behavior.
-        Effective global availability requires Core `feature_flags` AND `app_feature_enabled`.
-        Normative gate: dépendantes de l'AI functions remain disabled in v1 unless explicitly enabled as pre-release feature-flagged behavior ahead of v1.1+ validation.
-        Admin-only endpoint.
-        Runtime payload contract is stable: `app_feature_enabled`, `feature_governance`, `core_v1_global_features`.
+        Returns effective app feature switches. Admin-only endpoint.
       security:
         - UserBearerAuth: []
       responses:
@@ -426,9 +421,7 @@ paths:
       tags: [Auth]
       summary: Get runtime app policy
       description: |
-        Returns runtime `server_policy` including `feature_flags`.
-        This endpoint is the canonical runtime policy transport for UI_WEB and AGENT clients in v1. MCP rejoint ce contrat en v1.1+.
-        Clients may optionally send their supported feature-flags contract version for compatibility negotiation.
+        Returns runtime app policy, including `server_policy.feature_flags`. Clients may optionally send their supported feature-flags contract version.
       security:
         - UserBearerAuth: []
         - TechnicalBearerAuth: []
@@ -464,10 +457,7 @@ paths:
       tags: [Auth]
       summary: Update runtime app policy
       description: |
-        Updates runtime `feature_flags` when they are persisted in a mutable backend controlled by Core.
-        Requires `UserBearerAuth` and an authenticated admin actor, per AUTHZ matrix.
-        Flags still in `code-backed` introduction/validation phase are visible in `GET /app/policy`
-        but MUST be rejected by this endpoint with `409 STATE_CONFLICT`.
+        Updates runtime app policy. Admin-only operation.
       security:
         - UserBearerAuth: []
       requestBody:
@@ -699,9 +689,7 @@ paths:
       tags: [Auth]
       summary: Mint client bearer token from secret key
       description: |
-        Exchanges `(client_id, secret_key)` for a bearer token.
-        Normative rule: one active token per AGENT technical client_id; minting a new token revokes the previous one.
-        This endpoint is for `AGENT_TECHNICAL` only.
+        Exchanges `(client_id, secret_key)` for an AGENT technical bearer token.
       security: []
       requestBody:
         required: true
@@ -746,8 +734,7 @@ paths:
       tags: [Auth]
       summary: Start device authorization flow for technical client bootstrap
       description: |
-        Starts a browser-assisted authorization flow (GitHub-style) for `AGENT_TECHNICAL`.
-        User validation (and optional 2FA) happens via `verification_uri`, which MUST open the human approval flow in `UI_WEB`.
+        Starts a browser-assisted device authorization flow for `AGENT_TECHNICAL`. Human approval happens in `UI_WEB`.
       security: []
       requestBody:
         required: true
@@ -786,8 +773,7 @@ paths:
       tags: [Auth]
       summary: Poll device authorization status
       description: |
-        Polls authorization status for a previously started device flow.
-        On approval, returns one-shot `secret_key`.
+        Polls authorization status for a previously started device flow. On approval, returns one-shot `secret_key`.
       security: []
       requestBody:
         required: true
@@ -1464,13 +1450,8 @@ paths:
       summary: Initialize derived upload
       description: |
         Initializes upload for one derived file.
-        Every preview consumed by `UI_WEB` MUST remain readable via standard browser HTML media APIs only (`HTMLVideoElement`, `HTMLAudioElement`, `HTMLImageElement`).
-        Normative media profile constraints:
-        - `preview_video`: `video/mp4` with `H.264/AVC` video (recommended `High` profile, `yuv420p`) and `AAC-LC` audio when present; canonical v1 browser format via `HTMLVideoElement`.
-        - `preview_audio`: canonical `audio/mp4` with `AAC-LC`; `audio/mpeg` (`MP3`) fallback only; browser-compatible via `HTMLAudioElement`.
-        - `preview_photo`: canonical `image/webp`; `image/jpeg` fallback only; browser-compatible via `HTMLImageElement`.
-        - `thumb`: canonical `image/webp`; `image/jpeg` fallback only; video-only, browser-compatible via `HTMLImageElement`.
-        - `waveform`: `application/json` (preferred) or `application/octet-stream`.
+        Supported kinds: `preview_video`, `preview_audio`, `preview_photo`, `thumb`, `waveform`.
+        Media format details are defined in the Markdown specifications.
       security:
         - TechnicalBearerAuth: []
       parameters:
@@ -2375,9 +2356,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: opaque
-      description: |
-        Technical bearer credential for non-human clients in v1.
-        `AGENT_TECHNICAL` uses a bearer token minted from `(client_id, secret_key)`.
+      description: Technical bearer credential for non-human clients.
 
   parameters:
     UuidPath:
@@ -3024,7 +3003,7 @@ components:
         revision_etag:
           type: string
           nullable: true
-          description: Strong opaque asset revision tag to be reused in `If-Match` for the next mutation. Changes on any accepted human-visible business mutation and stays stable for purely technical noise with no review/operator impact.
+          description: Opaque asset revision tag to be reused in `If-Match` for the next mutation.
         captured_at:
           type: string
           format: date-time
@@ -3125,13 +3104,10 @@ components:
         waveform_url:
           type: string
           nullable: true
-          description: |
-            Required for any asset with an exploitable audio track once state progresses beyond READY.
-            If the effective processing profile requires a waveform, this field MUST be present in all business states beyond READY. For audio assets and for videos with an exploitable audio track, the active profile normally requires it.
-            UI local fallback may exist for degraded playback UX but never replaces the required server/agent-derived waveform.
+          description: Required when the effective processing profile requires waveform data beyond READY.
         thumbs:
           type: array
-          description: Video-only thumbnails. Photo assets rely on `preview_photo` as their primary review derivative.
+          description: Video-only thumbnails.
           items:
             type: string
 
