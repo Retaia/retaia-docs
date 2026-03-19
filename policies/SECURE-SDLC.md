@@ -38,6 +38,11 @@ Artefacts versionnes minimum attendus dans le repo :
 * configuration Dependabot
 * template PR avec checklist securite
 
+Contraintes d'implementation de ces gates pour tous les repos enfants :
+
+* un scan secrets bloqueur NE DOIT PAS dependre implicitement d'une licence payante ou d'un secret d'organisation non garanti ; si un outil necessite une licence, le repo DOIT soit versionner une alternative libre equivalente, soit documenter explicitement le prerequis externe avant de le rendre bloqueur
+* la configuration CodeQL DOIT etre limitee aux langages reellement presents dans le repo ; declarer un langage absent et faire echouer la PR pour "no source code seen during build" est non conforme
+
 Controles GitHub externes obligatoires (hors repo, mais requis) :
 
 * branch protection sur `master`
