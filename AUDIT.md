@@ -403,14 +403,6 @@ Points forts :
 
 * Matérialiser ou requalifier les exigences Secure SDLC.
 
-### Priorité P1
-
-* Fermer le tableau canonique `transition x endpoint x préconditions x code d'erreur`.
-* Fermer la complétude `job_type -> required_capabilities -> outputs` pour `facts`, `waveform`, `thumbnails` et `transcript`.
-
-### Priorité P2
-
-* Uniformiser le vocabulaire `v1`, `v1.1+`, `phase validée`, `pre-release`.
 ## 9. Ce qui est déjà suffisamment bien normé
 
 Les points suivants sont globalement solides et réutilisables tels quels comme socle `v1` :
@@ -426,19 +418,18 @@ Les points suivants sont globalement solides et réutilisables tels quels comme 
 
 ## 10. Conclusion
 
-Le repo est déjà un bon socle de spécification produit et runtime.
+Le repo est désormais proche d'un état `v1.0.0` fermable sur le plan documentaire partagé.
 
-Il n'est pas en échec de conception.
+Le reliquat principal n'est plus un trou de contrat entre `Core`, `UI_WEB` et `Agent`, mais un contrôle externe GitHub :
 
-En revanche, il lui manque encore plusieurs fermetures de contrat pour qu'aucune implémentation `Core`, `UI_WEB` ou `Agent` ne puisse dériver tout en se croyant conforme.
+* branch protection effective
+* preuve des checks requis côté dépôt GitHub
 
-Le point central à retenir avant `v1.0.0` est simple :
+Le point central à retenir avant `v1.0.0` est désormais simple :
 
-* tout comportement partagé doit avoir une source unique
-* toute source unique doit être explicitement normative
-* toute règle normative critique doit être soit testée, soit outillée, soit impossible à interpréter autrement
-
-Tant que ces trois conditions ne sont pas remplies sur les domaines listés ci-dessus, la promesse "single source of truth" reste partiellement déclarative.
+* le comportement partagé est documenté ici
+* le repo outille désormais une partie significative de sa propre cohérence
+* le dernier verrou critique restant est hors repo, côté configuration GitHub
 
 ## 11. Findings additionnels verbatim
 
@@ -450,8 +441,6 @@ Tant que ces trois conditions ne sont pas remplies sur les domaines listés ci-d
 ### Ce qui reste à normer avant `v1.0.0`
 
 * Transformer les exigences Secure SDLC en contrôles réellement versionnés ou expliciter ce qui relève d’un réglage GitHub externe obligatoire.
-* Clarifier la taxonomie de versions: `v1` runtime actuel, `v1.1+` extensions futures et pré-release sous feature flags.
-* Fermer le tableau canonique des transitions et la complétude `job_type -> outputs`.
 
 ### Vérifications faites
 

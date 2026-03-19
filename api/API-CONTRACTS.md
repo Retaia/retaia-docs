@@ -38,6 +38,13 @@ Objectif : fournir une surface stable consommée par :
 * `v1.1` = extensions compatibles, incluant les fonctionnalités dépendantes de l'AI et le client MCP.
 * Toute fonctionnalité dépendant de l'AI (ex: `transcribe_audio`, `suggest_tags`, filtres `suggested_tags*`) est hors périmètre de conformité v1 et planifiée en `v1.1+`.
 
+Glossaire de lecture (opposable) :
+
+* `v1` = surface actuellement publiée et opposable en OpenAPI (`api/openapi/v1.yaml`) + baseline projet global validée
+* `v1.1+` = famille d'extensions futures compatibles, pas encore publiées en OpenAPI tant qu'elles ne sont pas stabilisées
+* `pre-release sous feature_flags` = fonctionnalité pouvant être exposée avant validation officielle de `v1.1+`, mais restant hors conformité `v1`
+* `validation v1.1+` = moment où une fonctionnalité quitte le statut pré-release et rejoint la baseline validée `v1.1+`
+
 ### Versioning projet global (rollout)
 
 * `v1` (projet global) :
