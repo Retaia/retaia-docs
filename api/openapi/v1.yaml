@@ -1464,11 +1464,12 @@ paths:
       summary: Initialize derived upload
       description: |
         Initializes upload for one derived file.
+        Every preview consumed by `UI_WEB` MUST remain readable via standard browser HTML media APIs only (`HTMLVideoElement`, `HTMLAudioElement`, `HTMLImageElement`).
         Normative media profile constraints:
-        - `preview_video`: `video/mp4` (H.264/AVC, browser-compatible), source framerate preserved.
-        - `preview_audio`: `audio/mp4` (AAC-LC) or `audio/mpeg`.
-        - `preview_photo`: `image/jpeg` or `image/webp`.
-        - `thumb`: `image/jpeg` or `image/webp`, video-only.
+        - `preview_video`: `video/mp4` (H.264/AVC, browser-compatible via `HTMLVideoElement`), source framerate preserved.
+        - `preview_audio`: `audio/mp4` (AAC-LC) or `audio/mpeg`, browser-compatible via `HTMLAudioElement`.
+        - `preview_photo`: `image/jpeg` or `image/webp`, browser-compatible via `HTMLImageElement`.
+        - `thumb`: `image/jpeg` or `image/webp`, video-only, browser-compatible via `HTMLImageElement`.
         - `waveform`: `application/json` (preferred) or `application/octet-stream`.
       security:
         - TechnicalBearerAuth: []

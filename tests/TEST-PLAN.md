@@ -435,6 +435,7 @@ Tests obligatoires :
   * conteneur `video/mp4`
   * codec vidéo `H.264/AVC` lisible navigateur
   * piste audio (si présente) en `AAC-LC`
+  * lecture valide via `HTMLVideoElement` standard, sans lecteur natif propriétaire ni transcodeur frontend spécifique
   * framerate dérivé = framerate source (tolérance max ±0.01 fps)
   * `CFR` requis (pas de VFR non contrôlé)
   * hauteur cible `720px` si la source est plus grande, sinon hauteur source conservée
@@ -445,15 +446,18 @@ Tests obligatoires :
   * audio stéréo maximum, downmix multicanal autorisé
 * `preview_audio` :
   * format `audio/mp4` (AAC-LC) ou `audio/mpeg`
+  * lecture valide via `HTMLAudioElement` standard
   * sample rate conforme (source conservée ou normalisée 44.1k/48k)
   * canaux cohérents avec policy de downmix
 * `preview_photo` :
   * format `image/jpeg` ou `image/webp`
+  * lecture valide via `HTMLImageElement` standard
   * `sRGB`
   * orientation EXIF normalisée
   * ratio d'aspect conservé, aucun upscale
 * `thumb` :
   * format `image/jpeg` ou `image/webp`
+  * lecture valide via `HTMLImageElement` standard
   * `sRGB`
   * taille thumb par défaut largeur `480px`
   * vidéo courte (`< 120s`) : thumb principal extrait à `max(1s, 10% de la durée)`

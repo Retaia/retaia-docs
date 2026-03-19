@@ -75,6 +75,13 @@ Extraire les métadonnées techniques minimales (durée, codec, format, dimensio
 **Objectif**  
 Générer le dérivé principal de consultation selon le type média.
 
+Règle normative :
+
+* la preview produite DOIT être directement exploitable par l'UI web via les Web APIs HTML standards du navigateur :
+  * `HTMLVideoElement` pour `preview_video`
+  * `HTMLAudioElement` pour `preview_audio`
+  * `HTMLImageElement` pour `preview_photo`
+
 **Required capabilities**
 
 * `media.previews.video@1` (VIDEO)
@@ -97,6 +104,7 @@ Générer le dérivé principal de consultation selon le type média.
 * aucune modification du média original
 * aucun déplacement de fichier
 * outputs entièrement recréables
+* la preview DOIT rester lisible sans codec/plugin propriétaire ou dépendance hors Web platform standard
 
 **Failure modes**
 

@@ -1249,12 +1249,18 @@ Objectif :
 
 * tous les dérivés consommés par l'UI DOIVENT être lisibles par un navigateur moderne (desktop/mobile)
 * les previews DOIVENT privilégier la compatibilité de lecture plutôt que l'optimisation codec agressive
+* la lecture DOIT reposer uniquement sur les Web APIs HTML standards :
+  * `HTMLVideoElement` pour `preview_video`
+  * `HTMLAudioElement` pour `preview_audio`
+  * `HTMLImageElement` pour `preview_photo` et `thumb`
+* aucun plugin propriétaire, transcodeur frontend spécifique ou runtime natif embarqué ne DOIT être requis pour la lecture standard côté `UI_WEB`
 
 `preview_video` (obligatoire pour vidéo) :
 
 * conteneur : `MP4` (`video/mp4`)
 * codec vidéo : `H.264/AVC` (`yuv420p`, progressif, non interlacé)
 * codec audio (si piste audio présente) : `AAC-LC` (`audio/mp4`, 44.1kHz ou 48kHz)
+* DOIT être lisible via `HTMLVideoElement` natif dans un navigateur moderne
 * finalité : preview de review navigateur, pas master intermédiaire
 * framerate : DOIT conserver le framerate source (tolérance max ±0.01 fps)
 * cadence : DOIT rester en `CFR` (constant frame rate) pour stabilité seek/timeline
@@ -1276,12 +1282,14 @@ Objectif :
 
 * conteneur : `M4A` (`audio/mp4`) ou `MP3` (`audio/mpeg`)
 * codec recommandé : `AAC-LC` (fallback `MP3` autorisé)
+* DOIT être lisible via `HTMLAudioElement` natif dans un navigateur moderne
 * sample rate : conserver la source si standard navigateur, sinon normaliser en 44.1kHz ou 48kHz
 * canaux : conserver mono/stéréo source (downmix explicite autorisé si documenté)
 
 `preview_photo` (obligatoire pour image) :
 
 * format : `JPEG` (`image/jpeg`) ou `WEBP` (`image/webp`)
+* DOIT être lisible via `HTMLImageElement` natif dans un navigateur moderne
 * espace couleur : `sRGB`
 * orientation EXIF : normalisée (image visuellement orientée, pas de dépendance EXIF runtime)
 * dimensions : ratio d'aspect conservé, upscale interdit
@@ -1290,6 +1298,7 @@ Objectif :
 
 * réservé aux assets vidéo
 * format : `JPEG` (`image/jpeg`) ou `WEBP` (`image/webp`)
+* DOIT être lisible via `HTMLImageElement` natif dans un navigateur moderne
 * espace couleur : `sRGB`
 * taille thumb par défaut : largeur `480px`
 * taille thumb secondaire optionnelle : largeur `320px`
