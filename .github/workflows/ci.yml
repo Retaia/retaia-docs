@@ -38,6 +38,15 @@ jobs:
 
       - name: Verify OpenAPI contract snapshots
         run: bash scripts/check-contract-drift.sh
+
+  doc-governance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify documentation index and statuses
+        run: bash scripts/check-doc-governance.sh
   openapi-validate:
     runs-on: ubuntu-latest
     steps:

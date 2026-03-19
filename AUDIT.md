@@ -426,40 +426,6 @@ Points forts :
 
 ## 7. Zones de flou qui peuvent produire des divergences réelles
 
-### 7.2 Statuts normatifs mélangés avec des documents de cadrage
-
-Constat :
-
-* le repo alterne documents explicitement normatifs, non normatifs, et "préparation technique" sans index global unique
-
-Risque :
-
-* un repo consommateur peut s'aligner sur le mauvais document
-
-Action :
-
-* produire un index canonique de tous les documents avec :
-  * statut
-  * domaine
-  * consommateur concerné
-  * version concernée (`v1`, `v1.1+`, `reserved`)
-
-### 7.3 Outillage de cohérence inter-docs insuffisant
-
-Constat :
-
-* il existe un drift check OpenAPI
-* il n'existe pas de check similaire pour :
-  * statut normatif des docs
-  * registres de states
-  * registres d'error codes
-  * registres de feature keys
-  * registres de routes UI
-
-Risque :
-
-* la cohérence repose sur revue humaine seule
-
 ### 7.4 Trop de "configurable" sur des comportements cross-project
 
 Constat :
@@ -495,7 +461,6 @@ Action :
 
 * Dédupliquer [tests/TEST-PLAN.md](tests/TEST-PLAN.md).
 * Matérialiser ou requalifier les exigences Secure SDLC.
-* Ajouter un index canonique des documents avec statut normatif.
 
 ### Priorité P1
 
@@ -503,9 +468,6 @@ Action :
 
 ### Priorité P2
 
-* Ajouter un lint docs pour les liens relatifs et le statut normatif.
-* Remplacer les liens absolus locaux.
-* Ajouter des checks de cohérence inter-docs simples.
 * Uniformiser le vocabulaire `v1`, `v1.1+`, `phase validée`, `pre-release`.
 ## 9. Ce qui est déjà suffisamment bien normé
 

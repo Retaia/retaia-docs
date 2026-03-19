@@ -50,6 +50,7 @@ The following consumer repositories must align with these specs:
 - Product vision: [`vision/PROJECT-BRIEF.md`](vision/PROJECT-BRIEF.md)
 - Golden rules: [`GOLDEN-RULES.md`](GOLDEN-RULES.md)
 - Product roadmap: [`vision/ROADMAP.md`](vision/ROADMAP.md)
+- Document index: [`DOCUMENT-INDEX.md`](DOCUMENT-INDEX.md)
 - UI recommendations: [`ui/README.md`](ui/README.md)
 - Agent client docs: [`agent/README.md`](agent/README.md)
 - Operations runbooks: [`ops/README.md`](ops/README.md)
