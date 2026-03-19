@@ -757,7 +757,7 @@ Tests obligatoires :
 * la commande dédiée de refresh met à jour explicitement `contracts/openapi-v1.sha256`
 * toute mise à jour de snapshot est visible dans la PR (pas de mutation implicite en post-merge)
 * non-régression v1 : un refresh de snapshot ne modifie pas la sémantique des comportements `v1` existants
-* gate de cohérence contrat/docs : CI échoue si un endpoint/champ mentionné dans `api/API-CONTRACTS.md` n'existe pas dans `api/openapi/v1.yaml`
+* gate de cohérence contrat/docs : CI échoue si un endpoint/champ contractuel listé dans `contracts/api-contracts-v1.required.json` n'existe pas dans `api/openapi/v1.yaml`
 
 ## 8.6) Workflow Git (historique linéaire)
 

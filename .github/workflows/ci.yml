@@ -39,6 +39,15 @@ jobs:
       - name: Verify OpenAPI contract snapshots
         run: bash scripts/check-contract-drift.sh
 
+  contract-docs-consistency:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify API contracts vs OpenAPI required surface
+        run: node scripts/check-contract-docs-consistency.mjs
+
   doc-governance:
     runs-on: ubuntu-latest
     steps:

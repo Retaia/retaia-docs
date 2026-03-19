@@ -21,4 +21,5 @@ if [ -n "$VERSIONS" ]; then
 fi
 
 npm run -s check:contract-drift
+npm run -s check:contract-docs-consistency
 npm run -s check:doc-governance

@@ -2074,7 +2074,7 @@ Règles normatives (tous les repos consommateurs : UI, core, agents, MCP, toolin
 * la valeur DOIT être le hash SHA-256 calculé depuis `api/openapi/v1.yaml` de `retaia-docs`
 * la CI DOIT échouer si le hash versionné localement ne correspond plus au hash de la spec courante (drift détecté)
 * la mise à jour du hash DOIT être explicite dans une PR, via une commande dédiée (pas d’update implicite en pipeline)
-* la CI DOIT aussi échouer si un endpoint/champ documenté dans `API-CONTRACTS.md` n'existe plus dans `openapi/v1.yaml` (gate de cohérence contrat/docs)
+* la CI DOIT aussi échouer si un endpoint/champ contractuel listé dans `contracts/api-contracts-v1.required.json` n'existe plus dans `openapi/v1.yaml` (gate de cohérence contrat/docs)
 
 Notes d'interprétation :
 

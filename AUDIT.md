@@ -103,36 +103,7 @@ Risque :
 
 ## 5. Incohérences documentaires avérées
 
-### 5.1 Gate contrat/docs annoncée, mais non matérialisée
-
-Références :
-
-* [tests/TEST-PLAN.md](tests/TEST-PLAN.md)
-* [api/API-CONTRACTS.md](api/API-CONTRACTS.md)
-* [scripts/check-contract-drift.sh](scripts/check-contract-drift.sh)
-* [scripts/check-doc-governance.sh](scripts/check-doc-governance.sh)
-* [.github/workflows/ci.yml](.github/workflows/ci.yml)
-
-Constat :
-
-* [tests/TEST-PLAN.md](tests/TEST-PLAN.md) et [api/API-CONTRACTS.md](api/API-CONTRACTS.md) affirment qu'une gate CI de cohérence contrat/docs doit casser si un endpoint ou un champ documenté n'existe plus dans `openapi/v1.yaml`
-* le repo matérialise aujourd'hui :
-  * `contract-drift`
-  * `doc-governance`
-  * validation OpenAPI
-* aucun script ni workflow versionné ne réalise réellement cette vérification de cohérence sémantique `API-CONTRACTS.md <-> openapi/v1.yaml`
-
-Risque :
-
-* la spec dit qu'un garde-fou existe, alors qu'il n'existe pas
-* une divergence prose/OpenAPI peut donc repasser en review tant qu'elle ne casse ni le hash ni le parse OpenAPI
-
-À normer / fermer avant `v1.0.0` :
-
-* soit implémenter réellement cette gate
-* soit requalifier la phrase actuelle en objectif de gouvernance non encore outillé
-
-### 5.2 Index canonique des documents encore faux sur au moins un fichier critique
+### 5.1 Index canonique des documents encore faux sur au moins un fichier critique
 
 Références :
 
