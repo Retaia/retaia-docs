@@ -70,23 +70,23 @@ Extraire les métadonnées techniques minimales (durée, codec, format, dimensio
 * timeout/OOM → retryable
 
 
-### 3.2 `generate_proxy`
+### 3.2 `generate_preview`
 
 **Objectif**  
-Générer un proxy de review (video, audio ou image) selon le type média.
+Générer le dérivé principal de consultation selon le type média.
 
 **Required capabilities**
 
-* `media.proxies.video@1` (VIDEO)
-* `media.proxies.audio@1` (AUDIO)
-* `media.proxies.photo@1` (PHOTO)
+* `media.previews.video@1` (VIDEO)
+* `media.previews.audio@1` (AUDIO)
+* `media.previews.photo@1` (PHOTO)
 
 **Inputs**
 
 * asset_uuid
 * source_locator (read-only: `storage_id`, `original_relative`, `sidecars_relative[]`)
 * media_type
-* proxy_profile
+* preview_profile
 
 **Expected outputs**
 
@@ -107,7 +107,7 @@ Générer un proxy de review (video, audio ou image) selon le type média.
 ### 3.3 `generate_thumbnails`
 
 **Objectif**  
-Générer des vignettes à partir d’un média.
+Générer des vignettes à partir d’un média vidéo.
 
 **Required capabilities**
 
@@ -118,6 +118,10 @@ Générer des vignettes à partir d’un média.
 * asset_uuid
 * source_locator (read-only: `storage_id`, `original_relative`, `sidecars_relative[]`)
 * thumbnail_profile
+
+Précondition normative :
+
+* `generate_thumbnails` NE DOIT être créé que pour un asset `VIDEO`
 
 `thumbnail_profile` (normatif) :
 
@@ -131,8 +135,8 @@ Générer des vignettes à partir d’un média.
 * mode `storyboard` : produire `10` thumbs répartis de manière régulière sur la durée utile, incluant la frame représentative principale
 * les thumbs storyboard DOIVENT être triés chronologiquement
 * une légère marge de sécurité aux extrémités du média est autorisée pour éviter des frames d'ouverture/fermeture non représentatives
-* pour une image fixe, le thumb est dérivé directement de l'image source
-* pour un audio sans image, aucun thumb temporel n'est requis; seul le proxy/waveform couvre la review
+* pour une image fixe, aucun job `generate_thumbnails` distinct n'est requis en v1; la preview image couvre la consultation
+* pour un audio sans image, aucun thumb temporel n'est requis; seule la preview/waveform couvre la review
 
 **Expected outputs**
 
@@ -201,7 +205,7 @@ Disponibilité : **v1.1+** (activable plus tôt sous `feature_flags` pendant le 
 Ce job peut rester indéfiniment en statut pending tant qu’aucun agent ne déclare la capability requise.
 
 **Objectif**  
-Produire une transcription (et éventuellement des timecodes) à partir de l’audio d’un média. À partir de la phase `v1.1+` validée, ce job devient requis pour tout média avec piste audio exploitable afin d'atteindre `PROCESSED`.
+Produire une transcription (et éventuellement des timecodes) à partir de l’audio d’un média. À partir de la phase `v1.1+` validée, ce job devient requis pour tout média dont le `processing_profile` l'exige afin d'atteindre `PROCESSED`.
 
 **Required capabilities**
 

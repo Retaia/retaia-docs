@@ -22,7 +22,7 @@ Retaia Core Server
 3. Détection des fichiers vidéo, photo et audio supportés.
 4. Enregistrement ou mise à jour de l’asset (UUID, path, size, mtime).
 5. Association des sidecars connus (même dossier, même base name).
-6. Sidecars/proxies non rattachables : marquer `UNMATCHED_SIDECAR` + raison (`missing_parent|ambiguous_parent|disabled_by_policy`).
+6. Sidecars/previews non rattachables : marquer `UNMATCHED_SIDECAR` + raison (`missing_parent|ambiguous_parent|disabled_by_policy`).
 7. Vérification de stabilité :
 
    * taille identique sur **2 scans consécutifs**
@@ -38,7 +38,7 @@ Retaia Core Server
 * Si la migration `/.retaia` échoue (create/update atomique ou upgrade requis du champ JSON `version` dans `/.retaia`), Core DOIT échouer explicitement au boot/update (pas de mode dégradé implicite).
 * En mode multi-mount, un échec sur un seul `storage_id` DOIT faire échouer tout le startup (fail-fast global).
 * `APP_STORAGE_ID` DOIT matcher strictement `/.retaia.storage_id` pour chaque mount ciblé; sinon boot refusé.
-* Les sidecars/proxies `UNMATCHED_SIDECAR` n'engendrent pas d'asset autonome.
+* Les sidecars/dérivés de review `UNMATCHED_SIDECAR` n'engendrent pas d'asset autonome.
 * L'observabilité ingest expose au minimum `queued`, `missing`, `unmatched_sidecars`.
 
 
@@ -55,7 +55,7 @@ Retaia Agent, Retaia Core Server
 ### Étapes
 
 1. L’agent se déclare auprès du serveur (`agent_id`, `agent_name`, `agent_version`, `os_name`, `os_version`, `arch`).
-2. L’agent annonce ses capabilities déclaratives (ex: `media.proxies.video@1`, `speech.transcription@1`).
+2. L’agent annonce ses capabilities déclaratives (ex: `media.previews.video@1`, `speech.transcription@1`).
 3. Le serveur enregistre l’agent et lui attribue des paramètres (quota, priorités).
 
 ### Règles
@@ -110,9 +110,9 @@ Retaia Agent
 4. Extraire les facts (métadonnées techniques) et les envoyer au serveur.
 5. Générer les dérivés en local temporaire côté agent :
 
-   * VIDEO : proxy (obligatoire), thumbs
-   * AUDIO : proxy (obligatoire), waveform (obligatoire)
-   * PHOTO : proxy (obligatoire), thumbs
+   * VIDEO : preview (obligatoire), thumbs, waveform si piste audio exploitable
+   * AUDIO : preview (obligatoire), waveform (obligatoire)
+   * PHOTO : preview (obligatoire)
 6. Uploader les dérivés via l'API (`/assets/{uuid}/derived/upload/*`).
 7. Enregistrer les références de dérivés côté serveur.
 8. En cas de job long : envoyer des heartbeats pour prolonger le TTL.
@@ -177,7 +177,7 @@ Utilisateur via l’interface Retaia Core
 
 ### Étapes
 
-1. Consultation des assets en `REVIEW_PENDING_PROFILE` ou `PROCESSED` (proxy vidéo/audio, thumbs, waveform, facts, transcript si dispo).
+1. Consultation des assets en `REVIEW_PENDING_PROFILE` ou `PROCESSED` (previews, thumbs vidéo si présents, waveform, facts, transcript si dispo).
 2. Si l'asset est en `REVIEW_PENDING_PROFILE`, choix explicite du `processing_profile` requis dans la même surface UI.
 3. Ajout/modification de tags libres et champs structurés.
 4. (Optionnel) acceptation manuelle de suggestions de tags.
@@ -361,7 +361,7 @@ Appliquer le même lifecycle aux photos qu’aux vidéos.
 
 1. Discovery des photos sur le NAS.
 2. Passage `DISCOVERED → READY`.
-3. Processing review (EXIF + proxy + thumbs).
+3. Processing review (EXIF + preview).
 4. Décision humaine KEEP/REJECT.
 5. Apply decision.
 
@@ -380,7 +380,7 @@ Gérer musique et prises son comme des assets de production.
 ### Étapes
 
 1. Discovery des fichiers audio.
-2. Processing review (facts + proxy + waveform).
+2. Processing review (facts + preview + waveform).
 3. Décision humaine KEEP/REJECT.
 4. Apply decision.
 

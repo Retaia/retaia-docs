@@ -41,9 +41,9 @@ Une capability est identifiée par :
 Exemples valides :
 
 * `media.facts@1`
-* `media.proxies.video@1`
-* `media.proxies.audio@1`
-* `media.proxies.photo@1`
+* `media.previews.video@1`
+* `media.previews.audio@1`
+* `media.previews.photo@1`
 * `media.thumbnails@1`
 * `audio.waveform@1`
 * `speech.transcription@1` (**validé en v1.1+**, dépendant de l'AI; activable plus tôt sous `feature_flags`)

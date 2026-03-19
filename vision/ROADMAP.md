@@ -14,7 +14,7 @@ Règles :
 
 Toute évolution future DOIT respecter :
 
-* review proxy-first
+* review preview-first
 * décision humaine explicite
 * aucune action destructive implicite
 * comportements stables et lisibles
@@ -80,7 +80,7 @@ Statut :
 
 Pourquoi ce n’est pas retenu immédiatement :
 
-* une solution reposant seulement sur le proxy vidéo courant côté frontend serait trop fragile
+* une solution reposant seulement sur le preview vidéo actuelle côté frontend serait trop fragile
 * le résultat dépendrait trop des codecs, GOP, performances client et conditions de seeking
 * cette interaction doit être rapide, stable et cohérente sur l’ensemble du produit
 
@@ -94,7 +94,7 @@ Exigences minimales avant implémentation :
 
 Non-objectif :
 
-* ne pas implémenter cette fonctionnalité comme une astuce purement frontend sur le lecteur proxy actuel
+* ne pas implémenter cette fonctionnalité comme une astuce purement frontend sur le lecteur preview actuel
 
 
 ## Non Planifié

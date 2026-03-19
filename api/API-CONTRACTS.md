@@ -789,7 +789,7 @@ Query params (exemples) :
 
 * `state=DECISION_PENDING` (multi)
 * `media_type=VIDEO|PHOTO|AUDIO`
-* `has_proxy=true`
+* `has_preview=true`
 * `tags=foo,bar` (tags **humains** uniquement)
 * `tags_mode=AND|OR` (défaut: AND)
 * `suggested_tags=foo,bar` (**v1.1+**, suggestions uniquement)
@@ -1137,19 +1137,19 @@ Headers obligatoires :
 
 Effets :
 
-* `extract_facts | generate_proxy | generate_thumbnails | generate_audio_waveform` :
+* `extract_facts | generate_preview | generate_thumbnails | generate_audio_waveform` :
   mise à jour des domaines `facts/derived`, puis `PROCESSING_REVIEW → REVIEW_PENDING_PROFILE|PROCESSED → DECISION_PENDING` selon le profil effectif et sa complétude
 
 Note v1 (important) :
 
 * `ProcessingResultPatch` ne transporte pas les binaires.
-* Les binaires (proxies/thumbs/waveforms) sont uploadés via l’API Derived.
+* Les binaires (previews/thumbs/waveforms) sont uploadés via l’API Derived.
 * `submit` référence les dérivés déjà uploadés.
 * Le serveur applique un merge partiel par domaine ; un job ne peut pas écraser les domaines qu'il ne possède pas.
 * `generate_audio_waveform` est obligatoire pour les profils audio qui l'exigent ; l’absence de `waveform` dérivée rend le résultat de processing incomplet.
 * ownership de patch par `job_type` :
   * `extract_facts` -> `facts_patch`
-  * `generate_proxy|generate_thumbnails|generate_audio_waveform` -> `derived_patch`
+  * `generate_preview|generate_thumbnails|generate_audio_waveform` -> `derived_patch`
 
 Règle d'extension:
 
@@ -1173,7 +1173,7 @@ Headers obligatoires :
 * `X-Retaia-Signature-Nonce`
 
 
-## 6) Derived (proxies/dérivés)
+## 6) Derived (previews/dérivés)
 
 Principe v1 :
 
@@ -1190,7 +1190,7 @@ Initialise un upload (permet chunking / reprise).
 
 Body (exemple) :
 
-* `kind: proxy_video | proxy_audio | proxy_photo | thumb | waveform`
+* `kind: preview_video | preview_audio | preview_photo | thumb | waveform`
 * `content_type`
 * `size_bytes`
 * `sha256?` (optionnel)
@@ -1235,26 +1235,27 @@ Retourne les dérivés disponibles et leurs URLs.
 
 ### GET `/assets/{uuid}/derived/{kind}`
 
-`kind = proxy_video | proxy_audio | proxy_photo | thumb | waveform`
+`kind = preview_video | preview_audio | preview_photo | thumb | waveform`
 
 Règles :
 
-* support Range requests pour proxies
+* support Range requests pour previews audio/vidéo
 * 404 si `state == PURGED`
+* `thumb` est réservé aux dérivés vidéo; une image fixe utilise `preview_photo` comme dérivé principal de consultation
 
 ### Profils de formats dérivés (normatif)
 
 Objectif :
 
 * tous les dérivés consommés par l'UI DOIVENT être lisibles par un navigateur moderne (desktop/mobile)
-* les proxies DOIVENT privilégier la compatibilité de lecture plutôt que l'optimisation codec agressive
+* les previews DOIVENT privilégier la compatibilité de lecture plutôt que l'optimisation codec agressive
 
-`proxy_video` (obligatoire pour vidéo) :
+`preview_video` (obligatoire pour vidéo) :
 
 * conteneur : `MP4` (`video/mp4`)
 * codec vidéo : `H.264/AVC` (`yuv420p`, progressif, non interlacé)
 * codec audio (si piste audio présente) : `AAC-LC` (`audio/mp4`, 44.1kHz ou 48kHz)
-* finalité : proxy de review navigateur, pas master intermédiaire
+* finalité : preview de review navigateur, pas master intermédiaire
 * framerate : DOIT conserver le framerate source (tolérance max ±0.01 fps)
 * cadence : DOIT rester en `CFR` (constant frame rate) pour stabilité seek/timeline
 * dimensions :
@@ -1271,14 +1272,14 @@ Objectif :
   * downmix multicanal autorisé pour compatibilité navigateur
   * bitrate audio recommandé `128 kbps`
 
-`proxy_audio` (obligatoire pour audio) :
+`preview_audio` (obligatoire pour audio) :
 
 * conteneur : `M4A` (`audio/mp4`) ou `MP3` (`audio/mpeg`)
 * codec recommandé : `AAC-LC` (fallback `MP3` autorisé)
 * sample rate : conserver la source si standard navigateur, sinon normaliser en 44.1kHz ou 48kHz
 * canaux : conserver mono/stéréo source (downmix explicite autorisé si documenté)
 
-`proxy_photo` (obligatoire pour image) :
+`preview_photo` (obligatoire pour image) :
 
 * format : `JPEG` (`image/jpeg`) ou `WEBP` (`image/webp`)
 * espace couleur : `sRGB`
@@ -1287,10 +1288,11 @@ Objectif :
 
 `thumb` :
 
+* réservé aux assets vidéo
 * format : `JPEG` (`image/jpeg`) ou `WEBP` (`image/webp`)
 * espace couleur : `sRGB`
-* taille preview par défaut : largeur `480px`
-* taille preview secondaire optionnelle : largeur `320px`
+* taille thumb par défaut : largeur `480px`
+* taille thumb secondaire optionnelle : largeur `320px`
 * ratio d'aspect conservé, upscale interdit
 * qualité cible :
   * `JPEG` qualité recommandée `80`
@@ -1392,7 +1394,7 @@ Effet :
 Objectif :
 
 * exposer les compteurs ingest sans dépendre des logs CLI
-* fournir les derniers sidecars/proxies non rattachés pour debug ops
+* fournir les derniers sidecars/dérivés de review non rattachés pour debug ops
 
 Response :
 
@@ -1596,7 +1598,7 @@ Règles :
 
 Objectif :
 
-* exposer la liste paginée des sidecars/proxies non rattachés
+* exposer la liste paginée des sidecars/dérivés de review non rattachés
 
 Query params :
 
@@ -1667,15 +1669,15 @@ Response (`202 Accepted`) :
 * `captured_at?`
 * `duration?`
 * `tags[]`
-* `has_proxy`
+* `has_preview`
 * `thumb_url?`
 
 ### AssetDetail
 
 * `summary: AssetSummary`
 * `paths: { storage_id, original_relative, sidecars_relative[] }`
-* `processing: { facts_done, thumbs_done, proxy_done, waveform_done, review_processing_version }`
-* `derived: { proxy_video_url?, proxy_audio_url?, waveform_url?, thumbs[] }`
+* `processing: { facts_done, thumbs_done, preview_done, waveform_done, review_processing_version }`
+* `derived: { preview_video_url?, preview_audio_url?, preview_photo_url?, waveform_url?, thumbs[] }`
 * `transcript: { status, text_preview?, updated_at? }`
 * `decisions: { current?, history[] }`
 * `audit: { path_history[], revision_history[] }`
@@ -1694,7 +1696,7 @@ Règle :
 ### Job
 
 * `job_id`
-* `job_type` (`extract_facts | generate_proxy | generate_thumbnails | generate_audio_waveform`)
+* `job_type` (`extract_facts | generate_preview | generate_thumbnails | generate_audio_waveform`)
 * `asset_uuid`
 * `lock_token`
 * `locked_until`

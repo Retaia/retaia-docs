@@ -1,6 +1,6 @@
-# STATE MACHINE — MediaAsset Lifecycle (v2, proxy-first)
+# STATE MACHINE — MediaAsset Lifecycle (v2, preview-first)
 
-Ce document définit la **machine à états formelle** des MediaAssets dans le système Retaia, version **proxy-first** avec traitement en arrière-plan par les agents.
+Ce document définit la **machine à états formelle** des MediaAssets dans le système Retaia, version **preview-first** avec traitement en arrière-plan par les agents.
 
 Il est **normatif** : toute implémentation doit respecter strictement ces états, transitions et interdictions.
 
@@ -8,7 +8,7 @@ Il est **normatif** : toute implémentation doit respecter strictement ces état
 ## Principe fondamental
 
 * Les **états** décrivent le **cycle de vie métier** (découverte → traitement → décision → move).
-* Les détails de traitement (proxy/thumb/transcription/suggestions) sont des **phases/flags**, pas des états principaux.
+* Les détails de traitement (preview/thumb/transcription/suggestions) sont des **phases/flags**, pas des états principaux.
 * KEEP/REJECT est une **décision humaine**.
 * L'application d'un move est **unitaire par asset** côté Core.
 * Une sélection de plusieurs assets ("batch") est un concept UI uniquement.
@@ -47,7 +47,7 @@ Fichier stable et éligible au processing.
 
 #### Signification
 
-Traitement “pour review” en cours via un ou plusieurs jobs atomiques : facts + thumbs + proxy + éventuels enrichissements requis par profil.
+Traitement “pour review” en cours via un ou plusieurs jobs atomiques : facts + preview + éventuels thumbs vidéo + éventuels enrichissements requis par profil.
 
 #### Transitions autorisées
 
@@ -70,7 +70,7 @@ Les dérivés minimaux de review sont prêts, mais un choix humain explicite de 
 #### Garanties
 
 * facts extraits et stockés en DB
-* proxy généré et disponible pour la review
+* preview générée et disponible pour la review
 * waveform générée si le média a une piste audio exploitable
 * l’asset est visible dans la même surface UI de review, mais aucune décision KEEP/REJECT n’est encore autorisée
 
@@ -89,8 +89,8 @@ Traitement nécessaire à la review terminé.
 #### Garanties (non négociables)
 
 * facts extraits et stockés en DB
-* thumbs générés
-* proxy généré et disponible pour la review
+* preview générée et disponible pour la review
+* thumbs générés quand le profil vidéo les exige
 * références vers dérivés enregistrées
 * tous les prérequis du `processing_profile` sont satisfaits
 
@@ -180,9 +180,9 @@ Ces flags existent dans la DB et sont mis à jour par les jobs.
 ### Processing review (requis pour PROCESSED)
 
 * `facts_done` (bool)
-* `thumbs_done` (bool)
-* `proxy_done` (bool) — requis
-* `waveform_done` (bool) — requis pour tout média avec piste audio exploitable
+* `thumbs_done` (bool) — requis pour les profils vidéo
+* `preview_done` (bool) — requis
+* `waveform_done` (bool) — requis pour les profils audio et pour les profils vidéo avec piste audio exploitable
 * `processing_profile` (string) — ex: `video_standard`, `audio_undefined`, `audio_music`, `audio_voice`
 * `review_processing_version` (string/int)
 
@@ -191,7 +191,7 @@ Ces flags existent dans la DB et sont mis à jour par les jobs.
 * `transcript_status` = `NONE | RUNNING | DONE | FAILED`
 * `transcript_version`
 * `transcript_updated_at`
-* à partir de la phase `v1.1+` validée, la transcription devient un prérequis de `PROCESSED` pour tout média avec piste audio exploitable dont le `processing_profile` l'exige
+* à partir de la phase `v1.1+` validée, la transcription devient un prérequis de `PROCESSED` pour tout média dont le `processing_profile` l'exige
 * avant cette phase validée, elle PEUT être activée plus tôt sous `feature_flags` sans modifier la conformité v1
 
 ### Suggestions (tags)

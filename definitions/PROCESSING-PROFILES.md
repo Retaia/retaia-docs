@@ -13,7 +13,7 @@ Règles :
 * le profil est fixé à la découverte (auto) et peut être modifié manuellement avant le premier claim
 * après le premier claim de job review, tout changement de profil exige un reprocess explicite
 * `PROCESSED` est atteint uniquement quand tous les jobs `required` du profil sont `completed`
-* à partir de la phase `v1.1+` validée, `transcribe_audio` devient requis pour tout média avec piste audio exploitable; avant cette phase validée, il PEUT être exercé plus tôt sous `feature_flags`
+* à partir de la phase `v1.1+` validée, `transcribe_audio` devient requis pour tout média dont le `processing_profile` l'exige; avant cette phase validée, il PEUT être exercé plus tôt sous `feature_flags`
 * pour un asset `AUDIO`, le profil auto par défaut est `audio_undefined` tant qu'un humain n'a pas qualifié explicitement le média
 * `audio_undefined` mène à `REVIEW_PENDING_PROFILE` dès que les dérivés minimaux sont prêts et force un choix explicite via `UI_WEB`
 
@@ -26,7 +26,7 @@ Usage : rush vidéo standard.
 Jobs required :
 
 * `extract_facts`
-* `generate_proxy`
+* `generate_preview`
 * `generate_thumbnails`
 * `generate_audio_waveform` (si piste audio exploitable)
 
@@ -46,8 +46,7 @@ Usage : musique / ambiances. La transcription n'est pas requise.
 Jobs required :
 
 * `extract_facts`
-* `generate_proxy`
-* `generate_thumbnails`
+* `generate_preview`
 * `generate_audio_waveform`
 
 Jobs optional avant validation `v1.1+` :
@@ -63,8 +62,7 @@ Usage : prises de son voix/interview.
 Jobs required :
 
 * `extract_facts`
-* `generate_proxy`
-* `generate_thumbnails`
+* `generate_preview`
 * `generate_audio_waveform`
 
 Jobs optional avant validation `v1.1+` du profil :
@@ -85,8 +83,7 @@ Usage : audio découvert automatiquement mais non encore qualifié par un humain
 Jobs required :
 
 * `extract_facts`
-* `generate_proxy`
-* `generate_thumbnails`
+* `generate_preview`
 * `generate_audio_waveform`
 
 Jobs forbidden tant que le profil n'a pas été choisi explicitement :
@@ -109,8 +106,7 @@ Usage : photo fixe.
 Jobs required :
 
 * `extract_facts`
-* `generate_proxy`
-* `generate_thumbnails`
+* `generate_preview`
 
 Jobs optional avant validation `v1.1+` :
 
@@ -151,7 +147,9 @@ Après premier claim :
 
 ## 4) Invariants
 
-* `extract_facts`, `generate_proxy`, `generate_thumbnails` sont requis pour tout profil v1
+* `extract_facts` et `generate_preview` sont requis pour tout profil v1
+* `generate_thumbnails` n'est requis que pour les profils vidéo
+* `generate_audio_waveform` est requis pour les profils audio et pour les profils vidéo avec piste audio exploitable
 * les profils ne prennent jamais de décision KEEP/REJECT
 * les profils n'autorisent aucune écriture directe agent sur NAS dérivés
 

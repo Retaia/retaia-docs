@@ -431,7 +431,7 @@ Tests obligatoires :
 
 Tests obligatoires :
 
-* `proxy_video` :
+* `preview_video` :
   * conteneur `video/mp4`
   * codec vidéo `H.264/AVC` lisible navigateur
   * piste audio (si présente) en `AAC-LC`
@@ -443,11 +443,11 @@ Tests obligatoires :
   * keyframe interval <= 2 secondes
   * MP4 faststart (`moov` en tête)
   * audio stéréo maximum, downmix multicanal autorisé
-* `proxy_audio` :
+* `preview_audio` :
   * format `audio/mp4` (AAC-LC) ou `audio/mpeg`
   * sample rate conforme (source conservée ou normalisée 44.1k/48k)
   * canaux cohérents avec policy de downmix
-* `proxy_photo` :
+* `preview_photo` :
   * format `image/jpeg` ou `image/webp`
   * `sRGB`
   * orientation EXIF normalisée
@@ -455,7 +455,7 @@ Tests obligatoires :
 * `thumb` :
   * format `image/jpeg` ou `image/webp`
   * `sRGB`
-  * taille preview par défaut largeur `480px`
+  * taille thumb par défaut largeur `480px`
   * vidéo courte (`< 120s`) : thumb principal extrait à `max(1s, 10% de la durée)`
   * vidéo longue (`>= 120s`) : thumb principal extrait à `5% de la durée`, avec fallback à `20s` si `5% > 20s`
   * si la frame cible est noire ou de fondu et qu'une heuristique légère est active, une frame voisine plus représentative est choisie
@@ -512,7 +512,7 @@ Tests obligatoires :
 
 Tests obligatoires :
 
-* sidecar/proxy orphelin (ex: `.lrf` sans parent) :
+* sidecar/dérivé orphelin (ex: `.lrf` sans parent) :
   * ne crée pas d'asset standalone
   * est marqué `queued` dans l'état de scan
   * incrémente `unmatched_sidecars` dans la sortie ingest
@@ -610,7 +610,7 @@ Tests obligatoires :
 
 * `q` (full-text) fonctionne en `v1`
 * `transcribe_audio`, `suggest_tags` et `suggested_tags*` sont hors périmètre v1 et planifiés en `v1.1+`
-* `transcribe_audio` devient obligatoire à partir de la phase `v1.1+` validée pour tout média avec piste audio exploitable
+* `transcribe_audio` devient obligatoire à partir de la phase `v1.1+` validée pour tout média dont le `processing_profile` l'exige
 * avant cette phase validée, `transcribe_audio` PEUT être exercé en pré-release uniquement via `feature_flags`
 
 ## 8.3) Feature flags (général)

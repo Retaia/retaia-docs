@@ -1086,7 +1086,7 @@ paths:
           in: query
           schema:
             type: string
-        - name: has_proxy
+        - name: has_preview
           in: query
           schema:
             type: boolean
@@ -1641,9 +1641,10 @@ paths:
       description: |
         Initializes upload for one derived file.
         Normative media profile constraints:
-        - `proxy_video`: `video/mp4` (H.264/AVC, browser-compatible), source framerate preserved.
-        - `proxy_audio`: `audio/mp4` (AAC-LC) or `audio/mpeg`.
-        - `proxy_photo` / `thumb`: `image/jpeg` or `image/webp`.
+        - `preview_video`: `video/mp4` (H.264/AVC, browser-compatible), source framerate preserved.
+        - `preview_audio`: `audio/mp4` (AAC-LC) or `audio/mpeg`.
+        - `preview_photo`: `image/jpeg` or `image/webp`.
+        - `thumb`: `image/jpeg` or `image/webp`, video-only.
         - `waveform`: `application/json` (preferred) or `application/octet-stream`.
       security:
         - TechnicalBearerAuth: []
@@ -1666,7 +1667,7 @@ paths:
               properties:
                 kind:
                   type: string
-                  enum: [proxy_video, proxy_audio, proxy_photo, thumb, waveform]
+                  enum: [preview_video, preview_audio, preview_photo, thumb, waveform]
                 content_type:
                   type: string
                   description: |
@@ -1798,7 +1799,7 @@ paths:
           required: true
           schema:
             type: string
-            enum: [proxy_video, proxy_audio, proxy_photo, thumb, waveform]
+            enum: [preview_video, preview_audio, preview_photo, thumb, waveform]
       responses:
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
@@ -2487,7 +2488,7 @@ paths:
                   path: "DJI/DCIM/100MEDIA/DJI_0123.MP4"
                   include_sidecars: true
                   include_derived: true
-                  reason: "proxy_backfill"
+                  reason: "preview_backfill"
       responses:
         "202":
           description: Target accepted for requeue processing
@@ -3286,7 +3287,7 @@ components:
           type: array
           items:
             type: string
-        has_proxy:
+        has_preview:
           type: boolean
         thumb_url:
           type: string
@@ -3351,7 +3352,7 @@ components:
           type: boolean
         thumbs_done:
           type: boolean
-        proxy_done:
+        preview_done:
           type: boolean
         waveform_done:
           type: boolean
@@ -3364,13 +3365,13 @@ components:
       type: object
       additionalProperties: false
       properties:
-        proxy_video_url:
+        preview_video_url:
           type: string
           nullable: true
-        proxy_audio_url:
+        preview_audio_url:
           type: string
           nullable: true
-        proxy_photo_url:
+        preview_photo_url:
           type: string
           nullable: true
         waveform_url:
@@ -3378,10 +3379,11 @@ components:
           nullable: true
           description: |
             Required for any asset with an exploitable audio track once state progresses beyond READY.
-            If `media_type=AUDIO` or facts reveal an exploitable audio track, this field MUST be present in all business states beyond READY.
+            If the effective processing profile requires a waveform, this field MUST be present in all business states beyond READY. For audio assets and for videos with an exploitable audio track, the active profile normally requires it.
             UI local fallback may exist for degraded playback UX but never replaces the required server/agent-derived waveform.
         thumbs:
           type: array
+          description: Video-only thumbnails. Photo assets rely on `preview_photo` as their primary review derivative.
           items:
             type: string
 
@@ -3473,7 +3475,7 @@ components:
           type: string
           enum:
             - extract_facts
-            - generate_proxy
+            - generate_preview
             - generate_thumbnails
             - generate_audio_waveform
         status:
@@ -3540,7 +3542,7 @@ components:
           type: string
         job_type:
           type: string
-          enum: [generate_proxy, generate_thumbnails, generate_audio_waveform]
+          enum: [generate_preview, generate_thumbnails, generate_audio_waveform]
         result:
           type: object
           additionalProperties: false
@@ -3604,7 +3606,7 @@ components:
             properties:
               kind:
                 type: string
-                enum: [proxy_video, proxy_audio, proxy_photo, thumb, waveform]
+                enum: [preview_video, preview_audio, preview_photo, thumb, waveform]
               ref:
                 type: string
               size_bytes:

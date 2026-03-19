@@ -102,8 +102,9 @@ Un **Derived** est un fichier généré à partir d’un MediaAsset, destiné à
 
 Exemples :
 
-* proxy vidéo
-* proxy audio
+* preview vidéo
+* preview audio
+* preview photo
 * thumbnail
 * waveform
 
@@ -114,15 +115,15 @@ Caractéristiques :
 * recréable à tout moment
 
 
-## Proxies
+## Previews
 
-Un **proxy** est un type de Derived optimisé pour la lecture via l’UI.
+Une **preview** est un type de Derived optimisé pour la lecture via l’UI.
 
-* requis pour atteindre l’état `PROCESSED` (profil dépendant du type de média)
-* utilisé exclusivement pour la review (UI)
+* requise pour atteindre l’état `PROCESSED` (profil dépendant du type de média)
+* utilisée exclusivement pour la review (UI)
 * généré par Retaia Agent
 
-Les proxies ne remplacent jamais les originaux.
+Les previews ne remplacent jamais les originaux.
 
 
 ## RUSHES_DB
@@ -251,7 +252,7 @@ Conditions :
 
 * facts
 * thumbs
-* proxies
+* previews
 
 
 ## PROCESSED
@@ -260,7 +261,7 @@ Conditions :
 
 Garanties :
 
-* proxies disponibles selon le `processing_profile` (incluant PHOTO/VIDEO/AUDIO)
+* previews disponibles selon le `processing_profile` (incluant PHOTO/VIDEO/AUDIO)
 * thumbs disponibles
 * facts stockés
 
@@ -316,7 +317,7 @@ Le **processing review** est le traitement minimal requis pour permettre la revi
 Il inclut :
 
 * extraction des facts
-* génération des proxies
+* génération des previews
 * génération des thumbs / waveforms
 
 
@@ -328,7 +329,7 @@ La **transcription** est un job dépendant de l'AI basé sur l'audio.
 * produit du texte
 * utilisé pour recherche et suggestions, puis requis comme prérequis de conformité processing quand la phase `v1.1+` validée l'impose
 * avant validation `v1.1+`, elle PEUT être exercée plus tôt sous `feature_flags`
-* à partir de la phase `v1.1+` validée, elle devient requise pour tout média avec piste audio exploitable avant d'atteindre `PROCESSED`
+* à partir de la phase `v1.1+` validée, elle devient requise pour tout média dont le `processing_profile` l'exige avant d'atteindre `PROCESSED`
 
 
 ## Suggestions

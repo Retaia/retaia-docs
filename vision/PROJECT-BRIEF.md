@@ -10,7 +10,7 @@ Le projet sépare strictement plusieurs applications spécialisées :
 
 * la **gestion, l’inventaire, les décisions et les déplacements** (orchestrés par Retaia Core, appliqués sur le NAS)
 * le **processing lourd** (réalisé en arrière-plan par les agents)
-* la **review humaine**, effectuée via une UI web fluide reposant sur des **proxies/dérivés**
+* la **review humaine**, effectuée via une UI web fluide reposant sur des **previews/dérivés**
 * l’**orchestration outillée**, via un client MCP distinct, dont les fonctions dépendantes de l’AI sont gouvernées par feature flags
 
 L’objectif est de construire un système **fiable, durable et compréhensible dans le temps**, qui respecte la décision humaine et la souveraineté des données.
@@ -45,7 +45,7 @@ Il manque un outil qui respecte :
 * Centraliser l’inventaire média dans Core, sur un stockage NAS piloté
 * Garantir qu’aucun fichier incomplet n’est jamais traité
 * Automatiser le processing courant **sans action manuelle récurrente** via des agents en arrière‑plan, tout en gardant l’enrôlement, l’approval et les actions sensibles sous contrôle humain
-* Permettre une **review fluide via proxies** après processing
+* Permettre une **review fluide via previews** après processing
 * Séparer strictement **facts**, **suggestions** et **decisions**
 * Permettre un tri humain clair (KEEP / REJECT)
 * Permettre la sélection multiple en UI, avec application des déplacements asset par asset côté Core
@@ -59,7 +59,7 @@ Il manque un outil qui respecte :
 * **NAS = support de stockage piloté par Core**
 * **Agent daemon = calcul uniquement**
 * **Décisions humaines uniquement** pour KEEP / REJECT
-* **Review via proxies**, jamais via originaux SMB dans le navigateur
+* **Review via previews**, jamais via originaux SMB dans le navigateur
 * **Aucune action destructive implicite**
 * **Batch = concept UI uniquement (sélection multiple)**
 * **Purge destructive uniquement sur REJECTED et explicitement configurée**
@@ -82,7 +82,7 @@ Responsabilités :
 * orchestration des jobs de processing
 * application des décisions de move par asset (multi-sélection UI possible)
 * gestion des sidecars
-* exposition des proxies/dérivés
+* exposition des previews/dérivés
 * purge différée avec état `PURGED`
 * audit et historique
 * API documentée (Swagger)
@@ -128,7 +128,7 @@ Responsabilités :
 * tourner en continu sur desktop/laptop/rpi
 * claim des jobs via API
 * accéder aux originaux via SMB/NFS
-* générer facts et dérivés (proxies, thumbs, waveforms)
+* générer facts et dérivés (previews, thumbs vidéo, waveforms)
 * produire des suggestions (tags, champs)
 
 Interdictions :
@@ -145,7 +145,7 @@ Caractéristiques :
 
 * servie par Symfony (same‑origin)
 * consomme l’API `/api/v1`
-* review via proxies/dérivés (lecture fluide)
+* review via previews/dérivés (lecture fluide)
 * aucune dépendance SMB côté navigateur
 
 ### AGENT_UI
