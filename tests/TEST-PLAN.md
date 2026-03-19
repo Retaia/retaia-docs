@@ -806,6 +806,16 @@ Tests obligatoires :
 * calcul de `effective_feature_enabled` produit `feature_effective.resolved` traçable par `request_id`/`trace_id`
 * métriques `feature_toggle_admin_total`, `feature_toggle_user_total`, `feature_denied_total`, `feature_effective_off_total` exposées
 * histogramme `feature_resolution_duration_ms` exposé
+* tout `app_feature_enabled.updated` accepté produit un audit event et incrémente `feature_toggle_admin_total`
+* tout `user_feature_enabled.updated` accepté produit un audit event et incrémente `feature_toggle_user_total`
+* tout `feature_access.denied` produit un audit event et incrémente `feature_denied_total`
+* tout `feature_effective.resolved` avec `effective_value=false` produit un audit event, incrémente `feature_effective_off_total` et observe `feature_resolution_duration_ms`
+* `actor_id` brut reste présent dans les journaux d'audit protégés
+* toute exportation hors frontière de confiance utilise `actor_id_pseudonymized=psd_<16 octets hex HMAC>`
+* seuils canoniques d'alerte conformes :
+  * `feature_denied_total{reason_code=\"CORE_PROTECTED\"}` >= `5` sur `5 minutes`
+  * `p95(feature_resolution_duration_ms) > 250ms` sur `15 minutes`
+  * `feature_effective_off_total` sur feature critique >= `10` sur `10 minutes`
 * logs/traces ne contiennent ni token, ni secret, ni PII en clair
 * roundtrip encrypt/decrypt valide avec librairie OpenPGP autorisée par stack
 * signature/verification valide pour payloads sensibles signés

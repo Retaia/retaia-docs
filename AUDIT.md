@@ -418,17 +418,11 @@ Constat :
 * la taxonomie des `reason_code` OFF est désormais fermée
 * `actor_id` peut encore être "pseudonymisé si nécessaire" sans règle de pseudonymisation partagée
 
-Impact :
+Points forts :
 
-* les métriques et raisons canoniques existent
-* mais les seuils d'alerte et la pseudonymisation restent locaux
-* donc les applications et ops enfants devront encore interpréter une partie du contrat
-
-À normer avant `v1.0.0` :
-
-* seuils minimaux ou statut explicitement non normatif des alertes
-* règle commune de pseudonymisation
-* niveau d'obligation exact entre audit log et métriques
+* seuils d'alerte minimaux désormais fermés
+* règle commune de pseudonymisation désormais définie
+* couplage obligatoire entre audit log et métriques désormais explicite
 
 ## 7. Zones de flou qui peuvent produire des divergences réelles
 
