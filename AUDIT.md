@@ -325,24 +325,18 @@ Références :
 
 Constat :
 
-* le contrat hook autorise `patches?`
-* les "domaines autorisés non destructifs" ne sont pas listés
-* la politique v1 est `fail-open`, sauf `blocking=true`
-* mais le corpus ne définit pas :
-  * qui peut marquer un hook `blocking`
-  * quels hooks peuvent être bloquants
-  * quel code d'erreur ou quel effet runtime est attendu si un hook bloquant échoue
+* le contrat hook autorise `patches?`, mais il est désormais fermé en `v1` :
+  * domaines autorisés limités à `fields` et `notes`
+  * `blocking=true` limité à `after_processed_before_decision_pending`
+  * échec d'un hook bloquant => `409 STATE_CONFLICT` + transition interrompue
+* le risque principal n'est plus la sémantique runtime des hooks v1, mais l'extension future de ce mécanisme hors de ce périmètre fermé
 
 Impact :
 
-* un mécanisme serveur partagé influence le lifecycle métier
-* mais ses règles de comportement restent partielles
+* le mécanisme v1 est maintenant suffisamment borné pour éviter des divergences majeures entre implémentations
 
 À normer avant `v1.0.0` :
 
-* registre canonique des patch domains autorisés
-* statut exact des hooks bloquants autorisés en v1
-* effet runtime exact d'un hook bloquant en échec
 * exposition observabilité/audit correspondante
 
 ### 6.8.d Contrats visibles UI encore décrits en prose, mais pas toujours reflétés dans OpenAPI

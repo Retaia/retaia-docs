@@ -321,6 +321,12 @@ Tests obligatoires :
 * capacités IA (providers/modèles/transcription/suggestions) couvertes par le plan de tests v1.1 (hors conformité v1)
 * runtime status-driven validé: la vérité d'état est synchronisée par polling, même si un canal push existe (WebSocket, SSE, webhook, autres push)
 * polling jobs/policy respecte les intervalles contractuels et applique backoff+jitter sur `429`
+* hooks serveur v1 :
+  * seuls `after_processed_before_decision_pending` et `on_enter_decision_pending` existent
+  * `blocking=true` n'est autorisé que pour `after_processed_before_decision_pending`
+  * un hook `blocking=true` en échec interrompt la transition, laisse l'asset dans l'état précédent et renvoie `409 STATE_CONFLICT`
+  * un hook `blocking=true` n'émet jamais de `patches`
+  * les `patches` de hook v1 sont limités à `fields` et `notes`
 
 ## 1.3) Gates de non-régression obligatoires (release blockers)
 
