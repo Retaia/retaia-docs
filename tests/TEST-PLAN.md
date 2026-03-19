@@ -772,6 +772,28 @@ Tests obligatoires :
 * update admin de `app_feature_enabled` produit un audit event `app_feature_enabled.updated`
 * update user de `user_feature_enabled` produit un audit event `user_feature_enabled.updated`
 * refus `FORBIDDEN_SCOPE` produit un audit event `feature_access.denied` avec `reason_code`
+* `feature_effective.resolved` expose `effective_value` et, si `OFF`, un `reason_code` canonique
+* `reason_code` feature canonique limite a `FEATURE_FLAG_OFF|ADMIN_DISABLED|USER_OPT_OUT|DEPENDENCY_OFF|DISABLE_ESCALATION|CORE_PROTECTED|UNSUPPORTED_CONTRACT_VERSION`
+* `DEPENDENCY_OFF` expose `dependency_key`
+* `DISABLE_ESCALATION` expose `parent_feature_key`
+* taxonomie observabilite cross-app disponible :
+  * `asset.state.changed`
+  * `asset.reprocess.requested`
+  * `asset.reopen.requested`
+  * `asset.processing_profile.changed`
+  * `asset.purge.requested`
+  * `asset.purge.completed`
+  * `job.claim.succeeded|job.claim.conflict`
+  * `job.heartbeat.succeeded|job.heartbeat.conflict`
+  * `job.submit.succeeded|job.submit.conflict`
+  * `job.fail.recorded`
+  * `hook.execution.succeeded|hook.execution.failed`
+  * `feature.contract_version.unsupported`
+* severite canonique observee :
+  * `job.fail.recorded` = `ERROR`
+  * `job.*.conflict` = `WARN`
+  * `asset.purge.*` = `WARN`
+  * `feature.contract_version.unsupported` = `WARN`
 * calcul de `effective_feature_enabled` produit `feature_effective.resolved` traçable par `request_id`/`trace_id`
 * métriques `feature_toggle_admin_total`, `feature_toggle_user_total`, `feature_denied_total`, `feature_effective_off_total` exposées
 * histogramme `feature_resolution_duration_ms` exposé

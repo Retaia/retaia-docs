@@ -22,6 +22,24 @@ Champs minimum :
 * `reason_code` (ex: `ADMIN_DISABLED`, `USER_OPT_OUT`, `DEPENDENCY_OFF`, `CORE_PROTECTED`)
 * `request_id` / `trace_id`
 
+Reason codes canoniques `v1` :
+
+* `FEATURE_FLAG_OFF`
+* `ADMIN_DISABLED`
+* `USER_OPT_OUT`
+* `DEPENDENCY_OFF`
+* `DISABLE_ESCALATION`
+* `CORE_PROTECTED`
+* `UNSUPPORTED_CONTRACT_VERSION`
+
+Regles opposables :
+
+* tout calcul `effective=OFF` DOIT pouvoir etre explique par exactement un `reason_code` primaire canonique
+* `feature_effective.resolved` DOIT inclure `effective_value`
+* `feature_effective.resolved` DOIT inclure `reason_code` quand `effective_value=false`
+* si `reason_code=DEPENDENCY_OFF`, le payload DOIT inclure `dependency_key`
+* si `reason_code=DISABLE_ESCALATION`, le payload DOIT inclure `parent_feature_key`
+
 ## 2) Metrics minimales
 
 Compteurs obligatoires :

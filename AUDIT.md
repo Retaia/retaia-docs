@@ -483,23 +483,15 @@ Points forts :
 
 * bonnes règles de redaction
 * bon schéma minimal d'événement sécurité
+* taxonomie minimale des événements opératoires cross-app désormais publiée
 
 Reste à normer :
 
-* événements non sécurité mais cross-app indispensables :
-  * transition d'état asset
-  * claim/release/fail job
-  * reprocess
-  * reopen
-  * change `processing_profile`
-  * purge
-  * incompatibilité feature flags contract version
-* taxonomie stable des `event_name` hors sécurité
-* niveaux de sévérité et payload minimaux pour les événements opératoires
+* articulation explicite avec les écrans ops/UI si certains événements deviennent des surfaces utilisateur obligatoires
 
 Sans cela :
 
-* Core, UI et Agent partageront l'API, mais pas la lecture commune des incidents runtime
+* Core, UI et Agent partagent désormais le vocabulaire runtime minimal, mais pas encore forcément sa présentation UX finale
 
 ### 6.9.b Observabilité de gouvernance de feature encore partiellement implicite
 
@@ -511,13 +503,14 @@ Constat :
 
 * le document impose des alertes sur "augmentation brutale", "façon anormale", "budget cible"
 * aucun seuil normatif n'est défini
-* `actor_id` peut être "pseudonymisé si nécessaire" sans règle de pseudonymisation partagée
+* la taxonomie des `reason_code` OFF est désormais fermée
+* `actor_id` peut encore être "pseudonymisé si nécessaire" sans règle de pseudonymisation partagée
 
 Impact :
 
-* les métriques sont listées
-* mais leur interprétation reste locale
-* donc les applications et ops enfants devront réinventer une partie du contrat
+* les métriques et raisons canoniques existent
+* mais les seuils d'alerte et la pseudonymisation restent locaux
+* donc les applications et ops enfants devront encore interpréter une partie du contrat
 
 À normer avant `v1.0.0` :
 
@@ -623,7 +616,6 @@ Action :
   * nonce anti-rejeu
   * polling
   * backoff
-* Fermer le registre canonique des événements observabilité cross-app.
 * Rendre stricts les endpoints ops partagés : tri, validation, contraintes de payload.
 * Fermer les règles de visibilité ou de redaction des sous-sections sensibles de `AssetDetail`.
 * Fermer la lecture partagée de `notes` / `fields` et le registre typé des champs métier partagés.
