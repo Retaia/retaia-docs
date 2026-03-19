@@ -1197,6 +1197,8 @@ paths:
     patch:
       tags: [Assets]
       summary: Update one asset (metadata and lifecycle transitions)
+      description: |
+        Partial human mutation. Only the provided fields are updated; omitted fields stay unchanged.
       security:
         - UserBearerAuth: []
       parameters:
@@ -1218,6 +1220,9 @@ paths:
                 fields:
                   type: object
                   additionalProperties: true
+                processing_profile:
+                  type: string
+                  enum: [video_standard, audio_undefined, audio_music, audio_voice, photo_standard]
                 state:
                   type: string
                   enum: [DECISION_PENDING, DECIDED_KEEP, DECIDED_REJECT, ARCHIVED, REJECTED]
