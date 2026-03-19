@@ -460,6 +460,11 @@ Tests obligatoires :
   * `GET /assets/{uuid}/derived` et `GET /assets/{uuid}/derived/{kind}` retournent `Cache-Control: private, no-store`
   * `GET /assets/{uuid}/derived/{kind}` retourne `200` ou `206` avec `Content-Type`
   * `Accept-Ranges: bytes` n'est présent que pour `preview_video` et `preview_audio`
+* upload multipart dérivés :
+  * `POST /assets/{uuid}/derived/upload/part` utilise `multipart/form-data`
+  * le champ binaire s'appelle `chunk`
+  * la réponse expose `part_etag`
+  * `POST /assets/{uuid}/derived/upload/complete` réutilise `parts[].part_number` + `parts[].part_etag`
 
 ## 3.3) Facts contract (obligatoire)
 

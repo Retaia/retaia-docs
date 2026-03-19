@@ -1312,13 +1312,19 @@ Upload d’une part (si chunking).
 
 Body :
 
-* `upload_id`
-* `part_number`
-* payload binaire (transport à préciser côté implémentation)
+* `multipart/form-data` obligatoire
+* champ texte `upload_id`
+* champ texte `part_number`
+* champ fichier binaire `chunk`
+
+Règles :
+
+* le transport JSON pour `derived/upload/part` n'est pas autorisé en `v1`
+* le form-data DOIT contenir exactement un champ binaire nommé `chunk`
 
 Response :
 
-* `etag` (ou checksum)
+* `part_etag`
 
 ### POST `/assets/{uuid}/derived/upload/complete`
 
@@ -1327,7 +1333,9 @@ Finalise l’upload.
 Body :
 
 * `upload_id`
-* `parts[]` (si multipart)
+* `parts[]` (si multipart), avec pour chaque entrée :
+  * `part_number`
+  * `part_etag`
 
 Effet :
 

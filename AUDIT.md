@@ -319,33 +319,6 @@ Sans cela :
 * `UI_WEB` peut attendre plus
 * `Agent` peut produire moins
 
-### 6.7.b Upload des dérivés encore partiellement laissé à l'implémentation
-
-Références :
-
-* [api/API-CONTRACTS.md](api/API-CONTRACTS.md)
-* [api/openapi/v1.yaml](api/openapi/v1.yaml)
-
-Constat :
-
-* `derived/upload/part` dit explicitement "payload binaire (transport à préciser côté implémentation)"
-* OpenAPI déclare seulement `upload_id` et `part_number`
-* le protocole multipart réel n'est donc pas normé
-
-Impact :
-
-* un `Agent` et un `Core` peuvent chacun être "conformes" à des docs prose, tout en étant incompatibles au runtime
-
-À normer avant `v1.0.0` :
-
-* transport exact :
-  * JSON + base64
-  * `multipart/form-data`
-  * body binaire brut
-* format de `parts[]` au `complete`
-* rôle exact de `etag` / checksum de part
-* stratégie de reprise et d'idempotence des parts
-
 ### 6.7.c Contrat des hooks trop ouvert pour rester cross-project sûr
 
 Références :
@@ -769,7 +742,6 @@ Action :
 * Remplacer les liens absolus locaux.
 * Ajouter des checks de cohérence inter-docs simples.
 * Uniformiser le vocabulaire `v1`, `v1.1+`, `phase validée`, `pre-release`.
-* Fermer le protocole d'upload des dérivés.
 ## 9. Ce qui est déjà suffisamment bien normé
 
 Les points suivants sont globalement solides et réutilisables tels quels comme socle `v1` :

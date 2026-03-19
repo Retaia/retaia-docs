@@ -1731,15 +1731,18 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
-              required: [upload_id, part_number]
+              required: [upload_id, part_number, chunk]
               properties:
                 upload_id:
                   type: string
                 part_number:
                   type: integer
+                chunk:
+                  type: string
+                  format: binary
       responses:
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
@@ -1749,6 +1752,15 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: Part uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [part_etag]
+                properties:
+                  part_etag:
+                    type: string
 
   /assets/{uuid}/derived/upload/complete:
     parameters:
@@ -1781,6 +1793,13 @@ paths:
                   type: array
                   items:
                     type: object
+                    additionalProperties: false
+                    required: [part_number, part_etag]
+                    properties:
+                      part_number:
+                        type: integer
+                      part_etag:
+                        type: string
       responses:
         "401":
           description: Unauthorized (`UNAUTHORIZED`)
