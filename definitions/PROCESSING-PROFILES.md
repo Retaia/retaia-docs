@@ -21,6 +21,7 @@ Règles :
 * après le premier claim de job review, tout changement de profil exige un reprocess explicite
 * `PROCESSED` est atteint uniquement quand tous les jobs `required` du profil sont `completed`
 * à partir de la phase `v1.1+` validée, `transcribe_audio` devient requis pour tout média dont le `processing_profile` l'exige; avant cette phase validée, il PEUT être exercé plus tôt sous `feature_flags`
+* `suggest_tags` n'est pas structurant pour les profils : c'est un enrichissement AI transversal, piloté par la phase active, les `feature_flags`, les capabilities agent et la qualité des inputs disponibles
 * pour un asset `AUDIO`, le profil auto par défaut est `audio_undefined` tant qu'un humain n'a pas qualifié explicitement le média
 * `audio_undefined` mène à `REVIEW_PENDING_PROFILE` dès que les dérivés minimaux sont prêts et force un choix explicite via `UI_WEB`
 
@@ -76,7 +77,6 @@ Jobs required :
 Jobs optional avant validation `v1.1+` :
 
 * `transcribe_audio` (si activé, **v1.1+**, activable plus tôt sous `feature_flags` si piste audio exploitable)
-* `suggest_tags` (si activé, **v1.1+**)
 
 Jobs required dès validation `v1.1+` :
 
@@ -92,8 +92,7 @@ Jobs required :
 
 Jobs optional avant validation `v1.1+` :
 
-* `suggest_tags`
-  (dépendant de l'AI, **v1.1+**)
+* aucun
 
 
 ### `audio_voice`
@@ -108,8 +107,6 @@ Jobs optional avant validation `v1.1+` du profil :
 
 * `transcribe_audio`
   (dépendant de l'AI, **v1.1+**, activable plus tôt uniquement sous `feature_flags`)
-* `suggest_tags`
-  (dépendant de l'AI, **v1.1+**)
 
 Jobs required dès validation `v1.1+` du profil :
 
@@ -131,7 +128,6 @@ Jobs required :
 Jobs forbidden tant que le profil n'a pas été choisi explicitement :
 
 * `transcribe_audio`
-* `suggest_tags`
 
 Règles spécifiques :
 
@@ -151,8 +147,7 @@ Jobs required :
 
 Jobs optional avant validation `v1.1+` :
 
-* `suggest_tags`
-  (dépendant de l'AI, **v1.1+**)
+* aucun
 
 Jobs forbidden :
 
@@ -196,6 +191,17 @@ Après premier claim :
 * `audio_undefined` ne DOIT JAMAIS être traité comme un profil final équivalent à `audio_music` ou `audio_voice`
 * les profils ne prennent jamais de décision KEEP/REJECT
 * les profils n'autorisent aucune écriture directe agent sur NAS dérivés
+
+## 5.1) Enrichissements AI transversaux
+
+Les enrichissements AI transversaux ne redéfinissent pas les profils.
+
+`suggest_tags` :
+
+* n'est pas un job structurant de `processing_profile`
+* PEUT être rendu éligible selon la phase active, les `feature_flags`, les capabilities agent et la qualité des inputs disponibles
+* reste non bloquant pour `PROCESSED`
+* a généralement plus de valeur quand `facts` sont disponibles et, si présent, quand un transcript existe déjà
 
 ## 6) Évolution
 

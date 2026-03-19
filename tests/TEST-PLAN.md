@@ -406,6 +406,7 @@ Tests obligatoires :
 * le `processing_profile` combine en v1 une baseline technique par `media_type` et, seulement si nécessaire, une qualification métier qui change réellement les jobs requis
 * `video_standard`, `audio_music`, `audio_voice`, `photo_standard` sont des profils effectifs de processing
 * `audio_undefined` est un profil transitoire de qualification, pas un profil final de processing complet
+* `suggest_tags` est un enrichissement AI transversal; il ne définit pas les profils et ne fait pas partie des prérequis de `PROCESSED`
 * avant validation `v1.1+`, `transcribe_audio` peut être activé plus tôt sous `feature_flags` et exposer un `transcript` pré-release hors conformité v1
 * dès validation `v1.1+`, tout média avec piste audio exploitable dont le profil l'exige (`video_standard`, `audio_voice`) exige `transcribe_audio` pour atteindre `PROCESSED`
 * changement de profil après claim exige reprocess
