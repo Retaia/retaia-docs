@@ -1043,9 +1043,9 @@ paths:
                     type: string
                 notes:
                   type: string
+                  nullable: true
                 fields:
-                  type: object
-                  additionalProperties: true
+                  $ref: "#/components/schemas/AssetFields"
                 processing_profile:
                   type: string
                   enum: [video_standard, audio_undefined, audio_music, audio_voice, photo_standard]
@@ -3154,6 +3154,11 @@ components:
       properties:
         summary:
           $ref: "#/components/schemas/AssetSummary"
+        notes:
+          type: string
+          nullable: true
+        fields:
+          $ref: "#/components/schemas/AssetFields"
         paths:
           $ref: "#/components/schemas/AssetPaths"
         processing:
@@ -3213,6 +3218,29 @@ components:
           type: string
         review_processing_version:
           type: string
+
+    AssetFieldValue:
+      anyOf:
+        - type: string
+        - type: number
+        - type: boolean
+        - type: array
+          items:
+            type: string
+        - type: array
+          items:
+            type: number
+        - type: array
+          items:
+            type: boolean
+
+    AssetFields:
+      type: object
+      additionalProperties:
+        $ref: "#/components/schemas/AssetFieldValue"
+      description: >
+        Shared complementary metadata map. Values stay JSON-simple; domains requiring
+        dedicated semantics, storage or security rules must not be hidden implicitly here.
 
     AssetDerived:
       type: object

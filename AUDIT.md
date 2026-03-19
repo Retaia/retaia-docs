@@ -833,43 +833,6 @@ Impact :
 * typer `processing_profile` par enum partagée et le relier sans ambiguïté à `PROCESSING-PROFILES.md`
 * fermer la structure minimale de chaque entrée `decisions.history[]`
 
-### 6.8.i Contrat de lecture/écriture asymétrique sur `notes` et `fields`
-
-Références :
-
-* [api/API-CONTRACTS.md](api/API-CONTRACTS.md)
-* [api/openapi/v1.yaml](api/openapi/v1.yaml)
-* [ui/UI-REFONTE-RECOMMANDATION.md](ui/UI-REFONTE-RECOMMANDATION.md)
-* [ui/UI-UX-BRIEF-DESIGNER.md](ui/UI-UX-BRIEF-DESIGNER.md)
-* [definitions/JOB-TYPES.md](definitions/JOB-TYPES.md)
-
-Constats :
-
-* `PATCH /assets/{uuid}` autorise explicitement `notes` et `fields`
-* la recherche `q=` est explicitement définie sur `filename` et `notes`
-* les jobs IA consomment `human_fields_ref` et `notes_ref` comme contexte humain prioritaire
-* pourtant ni `AssetSummary` ni `AssetDetail` n'exposent explicitement `notes` ou `fields` dans le contrat partagé
-* `fields` est en plus défini en écriture comme `Record<string, any>`, sans registre de clés partagées, sans type et sans bornes
-
-Impact :
-
-* la spec permet d'écrire des données que le contrat de lecture ne ferme pas
-* `UI_WEB` ne peut pas recharger proprement un état qu'il vient d'éditer sans connaissance implicite hors spec
-* les repos enfants seront tentés de définir eux-mêmes :
-  * quelles clés de `fields` existent
-  * quels types elles acceptent
-  * comment elles sont relues et affichées
-
-À normer avant `v1.0.0` :
-
-* décider si `notes` et `fields` font partie du contrat de lecture partagé
-* si oui, les ajouter explicitement à `AssetDetail`
-* fermer au minimum :
-  * registre de clés partagées de `fields`
-  * types autorisés
-  * politique d'extension éventuelle
-* si non, retirer leur usage normatif partagé dans recherche, UI et jobs
-
 ### 6.8.j Contrat HTTP réellement opposable encore incomplet dans OpenAPI
 
 Références :

@@ -849,9 +849,26 @@ Body (exemple) :
 
 * `tags: string[]`
 * `notes: string`
-* `fields: Record<string, any>`
+* `fields: Record<string, FieldValue>`
 * `processing_profile: video_standard | audio_undefined | audio_music | audio_voice | photo_standard`
 * `state: DECISION_PENDING | DECIDED_KEEP | DECIDED_REJECT | ARCHIVED | REJECTED` (transition explicite)
+
+Contrat `fields` (normatif) :
+
+* `fields` porte les métadonnées complémentaires partagées entre `Core`, `UI_WEB` et `AGENT`
+* `fields` reste extensible par clé, mais les valeurs DOIVENT rester JSON-simples :
+  * `string`
+  * `number`
+  * `boolean`
+  * `string[]`
+  * `number[]`
+  * `boolean[]`
+* tout domaine qui exige une sémantique dédiée, un stockage spécialisé ou une policy spécifique NE DOIT PAS être encodé implicitement dans `fields`
+* exemples de domaines à sortir du map générique quand ils existent comme contrat dédié :
+  * géométrie GPS précise
+  * adresse structurée
+  * transcript
+* `notes` et `fields` font partie du contrat de lecture partagé via `AssetDetail`
 
 Règles :
 
@@ -1751,6 +1768,8 @@ Response (`202 Accepted`) :
 ### AssetDetail
 
 * `summary: AssetSummary`
+* `notes: string?`
+* `fields: Record<string, FieldValue>`
 * `paths: { storage_id, original_relative, sidecars_relative[] }`
 * `processing: { facts_done, thumbs_done, preview_done, waveform_done, review_processing_version }`
 * `derived: { preview_video_url?, preview_audio_url?, preview_photo_url?, waveform_url?, thumbs[] }`
@@ -1798,6 +1817,8 @@ Contrat minimal `facts_patch` :
 * pour `VIDEO` : `duration_ms`, `media_format`, `video_codec`, `width`, `height`, `fps`
 * si une piste audio exploitable est détectée sur `VIDEO`, `audio_codec` devient requis
 * des champs supplémentaires sont autorisés, mais les champs minimaux applicables au `media_type` NE DOIVENT PAS manquer
+* un champ facts optionnel peut être promu vers `AssetDetail.fields` s'il doit rester visible et éditable côté `UI_WEB`
+* un champ facts nécessitant une sémantique dédiée, un index spécialisé ou une policy de sécurité spécifique DOIT devenir un champ/colonne dédié côté Core, pas une clé implicite de `fields`
 
 
 ## 10) Codes d’erreur (normatifs)
