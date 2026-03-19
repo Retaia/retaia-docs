@@ -103,6 +103,61 @@ Risque :
 
 ## 5. Incohérences documentaires avérées
 
+### 5.1 Gate contrat/docs annoncée, mais non matérialisée
+
+Références :
+
+* [tests/TEST-PLAN.md](tests/TEST-PLAN.md)
+* [api/API-CONTRACTS.md](api/API-CONTRACTS.md)
+* [scripts/check-contract-drift.sh](scripts/check-contract-drift.sh)
+* [scripts/check-doc-governance.sh](scripts/check-doc-governance.sh)
+* [.github/workflows/ci.yml](.github/workflows/ci.yml)
+
+Constat :
+
+* [tests/TEST-PLAN.md](tests/TEST-PLAN.md) et [api/API-CONTRACTS.md](api/API-CONTRACTS.md) affirment qu'une gate CI de cohérence contrat/docs doit casser si un endpoint ou un champ documenté n'existe plus dans `openapi/v1.yaml`
+* le repo matérialise aujourd'hui :
+  * `contract-drift`
+  * `doc-governance`
+  * validation OpenAPI
+* aucun script ni workflow versionné ne réalise réellement cette vérification de cohérence sémantique `API-CONTRACTS.md <-> openapi/v1.yaml`
+
+Risque :
+
+* la spec dit qu'un garde-fou existe, alors qu'il n'existe pas
+* une divergence prose/OpenAPI peut donc repasser en review tant qu'elle ne casse ni le hash ni le parse OpenAPI
+
+À normer / fermer avant `v1.0.0` :
+
+* soit implémenter réellement cette gate
+* soit requalifier la phrase actuelle en objectif de gouvernance non encore outillé
+
+### 5.2 Index canonique des documents encore faux sur au moins un fichier critique
+
+Références :
+
+* [DOCUMENT-INDEX.md](DOCUMENT-INDEX.md)
+* [definitions/CAPABILITIES.md](definitions/CAPABILITIES.md)
+
+Constat :
+
+* [DOCUMENT-INDEX.md](DOCUMENT-INDEX.md) classe [definitions/CAPABILITIES.md](definitions/CAPABILITIES.md) en version `v1.1+`
+* pourtant le document définit aussi des capacités socle `v1` utilisées dès le pipeline courant :
+  * `media.facts@1`
+  * `media.previews.*@1`
+  * `media.thumbnails@1`
+  * `audio.waveform@1`
+
+Risque :
+
+* un repo consommateur qui s'appuie sur l'index canonique peut croire à tort que `CAPABILITIES.md` n'est pas opposable pour `v1`
+* cela affaiblit précisément l'objectif du `DOCUMENT-INDEX.md` comme carte normative unique
+
+À normer / fermer avant `v1.0.0` :
+
+* corriger la colonne `Version` de [definitions/CAPABILITIES.md](definitions/CAPABILITIES.md) dans l'index
+* ou introduire une notation explicite du type `v1 + v1.1+`
+
 ## 6. Domaines partagés bien couverts, mais encore insuffisamment fermés
 
 ### 6.1 Machine à états et transitions
@@ -420,7 +475,7 @@ Les points suivants sont globalement solides et réutilisables tels quels comme 
 
 Le repo est désormais proche d'un état `v1.0.0` fermable sur le plan documentaire partagé.
 
-Le reliquat principal n'est plus un trou de contrat entre `Core`, `UI_WEB` et `Agent`, mais un contrôle externe GitHub :
+Les reliquats principaux ne sont plus nombreux, mais il en reste encore deux à fermer avant `v1.0.0` :
 
 * branch protection effective
 * preuve des checks requis côté dépôt GitHub

@@ -138,7 +138,10 @@ Pour tout agent qui déclare `meta.tags.suggestions@1` :
 * le support `llm.client.ollama@1` est obligatoire (phase 1)
 * `llm.client.chatgpt@1` et `llm.client.claude@1` sont activables en phase 2 via feature flags runtime
 * la sélection du client LLM DOIT rester explicite (configuration/feature flag/runtime policy)
-* un client LLM indisponible ne DOIT PAS casser le runtime agent global (fallback ou retry policy)
+* un client LLM indisponible ne DOIT PAS casser le runtime agent global :
+  * retry explicite autorisé
+  * aucun fallback implicite de provider dans le contrat partagé
+  * tout changement de provider DOIT résulter d'un choix runtime déjà validé
 
 ## 10. Transcription local-first (`validé en v1.1+`; activable plus tôt sous `feature_flags`)
 
