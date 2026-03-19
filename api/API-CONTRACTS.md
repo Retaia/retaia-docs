@@ -203,7 +203,7 @@ Comportement :
 
 * même `(actor, method, path, key)` et même body : même réponse rejouée
 * même clé mais body différent : `409 IDEMPOTENCY_CONFLICT`
-* durée de rétention des clés : 24h (configurable)
+* durée de rétention des clés : `24h`
 
 ### Derived URLs
 

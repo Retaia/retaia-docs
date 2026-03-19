@@ -540,6 +540,7 @@ Tests obligatoires :
 * purge seulement depuis `REJECTED`
 * purge supprime originaux + sidecars + dérivés
 * purge idempotente avec `Idempotency-Key`
+* rétention idempotency fixée à `24h`
 * `POST /assets/purge` exige une liste explicite `asset_uuids[]`
 * `POST /assets/purge` ne signifie jamais “purge tout” sans sélection explicite
 * `POST /assets/purge` peut réussir partiellement et retourne un résultat par asset
@@ -653,6 +654,7 @@ Tests obligatoires :
 * avant cette phase validée, `transcribe_audio` PEUT être exercé en pré-release uniquement via `feature_flags`
 * `suggest_tags` refuse de tourner si `facts_ref` est absent
 * `suggest_tags` accepte l'absence de `transcript_ref`
+* provider indisponible pour `suggest_tags` => `failed` retryable, sans fallback implicite de provider
 * si `transcript_ref` est présent, il est utilisé comme enrichissement sémantique préféré
 * les tags/champs/notes humains existants sont traités comme contexte faisant autorité pour éviter doublons et contradictions, jamais comme cible à réécrire automatiquement
 

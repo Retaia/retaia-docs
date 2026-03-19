@@ -426,45 +426,16 @@ Points forts :
 
 ## 7. Zones de flou qui peuvent produire des divergences réelles
 
-### 7.4 Trop de "configurable" sur des comportements cross-project
-
-Constat :
-
-* plusieurs comportements visibles et partagés restent définis comme "configurables" ou "selon policy" sans valeur canonique ici
-* exemples :
-  * timeout max de hook
-  * fraîcheur de signature
-  * budget cible observabilité
-  * stratégie de fallback provider
-  * rétention de certaines clés/idempotency
-
-Risque :
-
-* les repos enfants seront forcés de définir eux-mêmes une partie du comportement partagé
-* exactement ce que le golden rule 3 est censé empêcher
-
-Action :
-
-* distinguer explicitement :
-  * `configurable mais borné par spec`
-  * `local implementation detail`
-  * `non normatif`
-* tout paramètre cross-project doit avoir au minimum :
-  * unité
-  * valeur par défaut
-  * borne min/max si mutable
-  * surface d'exposition runtime si le client doit s'y adapter
-
 ## 8. Backlog de normalisation avant `v1.0.0`
 
 ### Priorité P0
 
-* Dédupliquer [tests/TEST-PLAN.md](tests/TEST-PLAN.md).
 * Matérialiser ou requalifier les exigences Secure SDLC.
 
 ### Priorité P1
 
-* Fermer la lecture partagée de `notes` / `fields` et le registre typé des champs métier partagés.
+* Fermer le tableau canonique `transition x endpoint x préconditions x code d'erreur`.
+* Fermer la complétude `job_type -> required_capabilities -> outputs` pour `facts`, `waveform`, `thumbnails` et `transcript`.
 
 ### Priorité P2
 
@@ -509,7 +480,7 @@ Tant que ces trois conditions ne sont pas remplies sur les domaines listés ci-d
 
 * Transformer les exigences Secure SDLC en contrôles réellement versionnés ou expliciter ce qui relève d’un réglage GitHub externe obligatoire.
 * Clarifier la taxonomie de versions: `v1` runtime actuel, `v1.1+` extensions futures et pré-release sous feature flags.
-* Ajouter des checks docs minimums pour une release de spec: liens relatifs, lint Markdown, et éventuellement drift entre documents normatifs majeurs.
+* Fermer le tableau canonique des transitions et la complétude `job_type -> outputs`.
 
 ### Vérifications faites
 

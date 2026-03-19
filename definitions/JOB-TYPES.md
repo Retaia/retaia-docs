@@ -303,7 +303,7 @@ Produire une transcription (et éventuellement des timecodes) à partir de l’a
 **Failure modes**
 
 * pas de piste audio → fatal
-* timeout / OOM → retryable (selon policy serveur)
+* timeout / OOM → retryable
 * moteur indisponible → retryable
 * backend distant demandé sans opt-in explicite → failed non bloquant (policy violation)
 
@@ -360,7 +360,8 @@ Règles :
 
 * modèle indisponible → retryable
 * entrée insuffisante → failed non bloquant
-* provider indisponible → fallback provider ou retryable selon policy serveur
+* provider indisponible → `failed` retryable
+* aucun fallback implicite de provider n'est autorisé dans le contrat partagé `v1.1+`; tout changement de provider DOIT résulter d'un choix runtime explicite déjà validé par Core et l'utilisateur
 * modèle absent du catalogue runtime autorisé → `failed` non bloquant (validation configuration)
 * provider désactivé par feature flag runtime -> `failed` non bloquant (`FORBIDDEN_SCOPE`)
 

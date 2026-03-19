@@ -26,7 +26,8 @@ Objectif: conserver `full-text search` et filtres de localisation sans exposer l
   * `geo_bbox` (min_lon,min_lat,max_lon,max_lat)
 * les coordonnees GPS source restent chiffrees
 * les filtres geo reposent sur index spatial derive (geocell/geohash/H3 ou equivalent)
-* precision geographique configurable pour limiter le risque de re-identification
+* la precision interne de l'index geographique est un detail d'implementation local, non expose aux clients
+* cette precision locale DOIT rester suffisante pour respecter le contrat fonctionnel de `geo_bbox` sans faux negatifs systematiques
 
 ## 4) Invariants anti-fuite
 
