@@ -334,8 +334,11 @@ Normalisation HTTP (normatif) :
 * `403` = authentification valide mais action interdite (`FORBIDDEN_ACTOR`, `FORBIDDEN_SCOPE`)
 * `404` = ressource métier introuvable (`USER_NOT_FOUND`)
 * `409` = conflit d’état métier (`MFA_ALREADY_ENABLED`, `MFA_NOT_ENABLED`, `STATE_CONFLICT`)
+* `409 STALE_LOCK_TOKEN` = lock/fencing token présent mais obsolète
+* `409 IDEMPOTENCY_CONFLICT` = même clé d'idempotence avec body différent
 * `422` = validation de payload échouée (`VALIDATION_FAILED`)
 * `429` = anti-abus/rate-limit (`TOO_MANY_ATTEMPTS`, `SLOW_DOWN`)
+* `423` = verrou requis absent ou invalide (`LOCK_REQUIRED`, `LOCK_INVALID`)
 
 Règle `VALIDATION_FAILED` (normatif) :
 
@@ -1140,6 +1143,8 @@ Headers obligatoires :
 Response :
 
 * `locked_until`
+* `423 LOCK_REQUIRED|LOCK_INVALID` si le `lock_token` requis est absent ou invalide
+* `409 STALE_LOCK_TOKEN` si le `lock_token` est présent mais obsolète
 
 ### POST `/jobs/{job_id}/submit`
 
@@ -1177,6 +1182,12 @@ Règle d'extension:
 
 * les `job_type` IA (`transcribe_audio`, `suggest_tags`) et leurs patch domains sont hors périmètre v1 et documentés dans le paquet normatif v1.1.
 
+Erreurs de lock/idempotence (normatif) :
+
+* `423 LOCK_REQUIRED|LOCK_INVALID` si le `lock_token` requis est absent ou invalide
+* `409 STALE_LOCK_TOKEN` si le `lock_token` est présent mais obsolète
+* `409 IDEMPOTENCY_CONFLICT` si la clé d'idempotence est réutilisée avec un body différent
+
 ### POST `/jobs/{job_id}/fail`
 
 Body :
@@ -1193,6 +1204,12 @@ Headers obligatoires :
 * `X-Retaia-Signature`
 * `X-Retaia-Signature-Timestamp`
 * `X-Retaia-Signature-Nonce`
+
+Erreurs de lock/idempotence (normatif) :
+
+* `423 LOCK_REQUIRED|LOCK_INVALID` si le `lock_token` requis est absent ou invalide
+* `409 STALE_LOCK_TOKEN` si le `lock_token` est présent mais obsolète
+* `409 IDEMPOTENCY_CONFLICT` si la clé d'idempotence est réutilisée avec un body différent
 
 
 ## 6) Derived (previews/dérivés)

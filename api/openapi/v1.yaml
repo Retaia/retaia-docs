@@ -1361,6 +1361,18 @@ paths:
                   locked_until:
                     type: string
                     format: date-time
+        "409":
+          description: Stale lock token (`STALE_LOCK_TOKEN`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "423":
+          description: Missing or invalid lock (`LOCK_REQUIRED` or `LOCK_INVALID`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /jobs/{job_id}/submit:
     post:
@@ -1398,7 +1410,7 @@ paths:
         "200":
           description: Job completed
         "409":
-          description: Idempotency conflict
+          description: Stale lock token or idempotency conflict (`STALE_LOCK_TOKEN` or `IDEMPOTENCY_CONFLICT`)
           content:
             application/json:
               schema:
@@ -1454,7 +1466,13 @@ paths:
         "200":
           description: Job failed recorded
         "409":
-          description: Idempotency conflict
+          description: Stale lock token or idempotency conflict (`STALE_LOCK_TOKEN` or `IDEMPOTENCY_CONFLICT`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "423":
+          description: Missing or invalid lock (`LOCK_REQUIRED` or `LOCK_INVALID`)
           content:
             application/json:
               schema:

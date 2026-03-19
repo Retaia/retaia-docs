@@ -771,24 +771,14 @@ Points forts :
 
 Reste à normer ou corriger :
 
-* le mapping est présenté comme "recommandé" alors que plusieurs usages sont déjà traités comme normatifs ailleurs
 * `RATE_LIMITED` apparaît dans le modèle d'erreur, mais le reste du corpus repose surtout sur `TOO_MANY_ATTEMPTS` et `SLOW_DOWN`
-* `423 LOCK_REQUIRED|LOCK_INVALID` existe ici, mais le corpus partagé utilise majoritairement `409` pour les conflits de lock
-* plusieurs réponses OpenAPI restent décrites de façon générique (`State conflict`, `Job not claimable`, `Invalid or missing lock`) sans fermer le `ErrorResponse.code` attendu par scénario
-* le corpus mélange au moins trois familles proches sans table canonique exhaustive :
-  * conflit d'état métier (`STATE_CONFLICT`)
-  * lock manquant/invalide (`LOCK_REQUIRED`, `LOCK_INVALID`)
-  * token de lock stale (`STALE_LOCK_TOKEN`)
+* plusieurs réponses OpenAPI restent encore génériques hors des cas de lock/idempotence déjà fermés
+* `RATE_LIMITED` apparaît dans le modèle d'erreur, mais le reste du corpus repose surtout sur `TOO_MANY_ATTEMPTS` et `SLOW_DOWN`
 
 Décision à prendre avant `v1.0.0` :
 
 * soit fermer une table canonique de tous les `ErrorResponse.code`
 * soit assumer un niveau de flexibilité, mais alors il faut l'annoncer clairement
-* fermer explicitement la répartition `409` vs `423` par endpoint et par cause, notamment pour :
-  * `jobs/{job_id}/submit`
-  * `jobs/{job_id}/fail`
-  * `jobs/{job_id}/heartbeat`
-  * mutations asset avec concurrence ou lock
 
 ### 6.9 Observabilité partagée
 

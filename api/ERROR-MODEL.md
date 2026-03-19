@@ -24,7 +24,7 @@ Toutes les erreurs JSON DOIVENT suivre :
 * `retryable` (boolean, obligatoire)
 * `correlation_id` (string, obligatoire)
 
-## 3) Mapping recommandé
+## 3) Mapping normatif
 
 * `400` -> `INVALID_TOKEN`, `INVALID_2FA_CODE`, `INVALID_DEVICE_CODE`, `EXPIRED_DEVICE_CODE`, `VALIDATION_FAILED` (paramètres query/path/header invalides)
 * `401` -> `UNAUTHORIZED`, `MFA_REQUIRED`
@@ -47,6 +47,8 @@ Codes auth complémentaires (selon endpoint/policy) :
 * pas de payload d'erreur ad-hoc par endpoint
 * `correlation_id` présent sur toute réponse d'erreur
 * `retryable` reflète la policy serveur, pas une supposition client
+* `423` est réservé aux verrous requis mais absents ou invalides
+* `409 STALE_LOCK_TOKEN` est réservé aux tokens de verrou/fencing devenus obsolètes
 
 ## 5) Règle Validation (`400` vs `422`)
 
