@@ -402,72 +402,6 @@ Impact :
 
 * garder ces invariants dans les payloads ops futurs et éviter toute réouverture implicite
 
-### 6.8.g Matrice authz encore trop agrégée pour certaines données visibles
-
-Références :
-
-* [policies/AUTHZ-MATRIX.md](policies/AUTHZ-MATRIX.md)
-* [api/API-CONTRACTS.md](api/API-CONTRACTS.md)
-* [api/openapi/v1.yaml](api/openapi/v1.yaml)
-
-Constats :
-
-* la matrice authz est bien posée au niveau endpoint, scope et état
-* en revanche, pour des payloads riches comme `AssetDetail`, elle ne dit pas explicitement si toutes les sous-sections sont toujours visibles de la même façon
-* le contrat ne ferme pas clairement si des champs comme :
-  * `paths`
-  * `audit.path_history`
-  * `audit.revision_history`
-  * `decisions.history`
-  * certaines URLs de dérivés
-  peuvent être masqués, redacts ou filtrés selon l'acteur
-
-Impact :
-
-* un `Core` peut choisir de renvoyer l'objet complet
-* un autre peut estimer qu'une partie du payload doit être masquée
-* `UI_WEB` et `Agent` n'ont alors plus un contrat unique sur la forme réellement observable
-
-À normer avant `v1.0.0` :
-
-* soit déclarer que `AssetDetail` est intégralement visible dès que l'endpoint est autorisé
-* soit fermer des règles de redaction/masquage champ par champ
-* mais ne pas laisser cette décision aux repos consommateurs
-
-### 6.8.h `AssetDetail` n'est pas assez fermé pour servir de contrat partagé stable
-
-Références :
-
-* [api/API-CONTRACTS.md](api/API-CONTRACTS.md)
-* [api/openapi/v1.yaml](api/openapi/v1.yaml)
-* [tests/TEST-PLAN.md](tests/TEST-PLAN.md)
-* [ui/UI-UX-BRIEF-DESIGNER.md](ui/UI-UX-BRIEF-DESIGNER.md)
-
-Constats :
-
-* la prose présente `AssetDetail` comme un agrégat structuré de référence pour la review
-* pourtant OpenAPI ne requiert que `summary` dans `AssetDetail`; `paths`, `processing`, `derived`, `decisions` et `audit` restent optionnels
-* des sous-structures importantes restent elles aussi très ouvertes :
-  * `AssetDecisions.history[]` n'impose aucun champ requis
-  * `AssetAudit.path_history[]` est un simple tableau de strings, sans sémantique d'ordre ou de forme
-  * `AssetDerived` ne ferme ni la présence minimale des URLs, ni leur type de cible, ni leur stabilité
-
-Impact :
-
-* deux implémentations Core peuvent renvoyer des `AssetDetail` très différents tout en restant conformes au schéma
-* `UI_WEB` devra deviner quels blocs sont toujours présents, partiellement présents ou absents
-* `Agent` et outils admin n'ont pas de vue suffisamment stable sur l'objet métier principal partagé
-
-À normer avant `v1.0.0` :
-
-* fermer quels sous-objets de `AssetDetail` sont obligatoires en lecture
-* fermer la structure minimale de `decisions.history[]`
-* fermer la sémantique et l'ordre de `path_history[]`
-* fermer le statut des URLs de dérivés :
-  * URL absolue ou relative
-  * stable ou éphémère
-  * servie directement ou via route Core
-
 ### 6.9 Observabilité partagée
 
 Couverture existante :
@@ -613,7 +547,6 @@ Action :
   * nonce anti-rejeu
   * polling
   * backoff
-* Fermer les règles de visibilité ou de redaction des sous-sections sensibles de `AssetDetail`.
 * Fermer la lecture partagée de `notes` / `fields` et le registre typé des champs métier partagés.
 
 ### Priorité P2

@@ -1879,6 +1879,19 @@ Response (`202 Accepted`) :
 * `decisions: { current?, history[] }`
 * `audit: { path_history[], revision_history[] }`
 
+Règles de visibilité et présence (normatives) :
+
+* dès que `GET /assets/{uuid}` est autorisé pour l'acteur courant, `AssetDetail` DOIT être exposé sans redaction actor-specific en `v1`
+* Core NE DOIT PAS masquer conditionnellement `paths`, `processing`, `derived`, `decisions` ou `audit` selon qu'il s'agit d'un `UserBearerAuth` ou d'un `TechnicalBearerAuth`
+* les sous-objets `paths`, `processing`, `derived`, `decisions` et `audit` DOIVENT toujours être présents dans `AssetDetail`
+* l'absence de données dans un sous-domaine DOIT être représentée par des champs nuls, tableaux vides ou valeurs par défaut compatibles, pas par l'omission du sous-objet
+
+`path_history[]` (normatif) :
+
+* liste chronologique croissante des chemins de référence connus pour l'asset
+* chaque entrée DOIT être un chemin relatif canonicalisé
+* `path_history[]` NE DOIT contenir ni chemin absolu, ni `..`, ni doublon consécutif
+
 `decisions.history[]` (normatif) :
 
 * `action` (`KEEP | REJECT | CLEAR`)

@@ -3478,7 +3478,7 @@ components:
 
     AssetDetail:
       type: object
-      required: [summary]
+      required: [summary, paths, processing, derived, decisions, audit]
       additionalProperties: false
       properties:
         summary:
@@ -3649,8 +3649,9 @@ components:
       properties:
         path_history:
           type: array
+          description: Chronological path history in ascending order, using canonical relative paths only.
           items:
-            type: string
+            $ref: "#/components/schemas/RelativeStoragePath"
         revision_history:
           type: array
           description: Append-only revision timeline in ascending `revision` order. The entry marked `is_current=true` matches the current `summary.revision_etag`.
