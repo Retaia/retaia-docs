@@ -17,7 +17,7 @@ Tests obligatoires :
 
 * precedence de config Core respectée : `.env` < `.env.<APP_ENV>` < `.env.local` < variables shell runtime (la valeur finale DOIT être celle de la dernière couche)
 * absence de `.env.<APP_ENV>` et/ou `.env.local` ne fait pas échouer le boot si les variables requises sont résolues
-* `APP_STORAGE_ID` mismatch avec `/.retaia.storage_id` => boot refusé (erreur explicite)
+* `APP_STORAGE_ID` mismatch avec le champ JSON `storage_id` du marker `/.retaia` => boot refusé (erreur explicite)
 * marker `/.retaia` absent => création automatique par Core au boot/update, puis validation
 * marker `/.retaia` JSON invalide => boot refusé (erreur explicite)
 * échec de migration atomique du marker (`create/write/rename`) => boot/update refusé (pas de mode dégradé)

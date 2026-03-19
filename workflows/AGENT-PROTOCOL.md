@@ -269,7 +269,7 @@ Configuration agent obligatoire:
 * pour chaque mount `storage_mounts[*]`, l’agent DOIT lire et valider le marker `/.retaia`
 * le marker `/.retaia` DOIT être considéré comme la référence locale canonique pour `paths.inbox`, `paths.archive`, `paths.rejects`
 * le marker `/.retaia` est créé et maintenu exclusivement par Retaia Core (au boot et lors des updates applicatifs); l’agent NE DOIT JAMAIS le créer, l’éditer ou le réparer
-* `source.storage_id` DOIT matcher strictement `/.retaia.storage_id`; sinon l’agent DOIT échouer explicitement
+* `source.storage_id` DOIT matcher strictement le champ JSON `storage_id` du marker `/.retaia`; sinon l’agent DOIT échouer explicitement
 * la résolution du fichier source DOIT se faire par concaténation contrôlée:
   * `absolute_input_path = storage_mounts[source.storage_id] + "/" + source.original_relative`
 * `source.*` DOIT rester relatif et ne DOIT PAS contenir `..`, de chemin absolu, ni de null byte

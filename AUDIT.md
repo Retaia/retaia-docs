@@ -210,36 +210,6 @@ Décision à prendre avant `v1.0.0` :
 * créer un document normatif unique de release gates
 * ou réduire la portée normative annoncée dans le README
 
-### 5.6 Contradiction sur le marker storage : `/.retaia` JSON vs `/.retaia.storage_id`
-
-Références :
-
-* [definitions/DEFINITIONS.md](definitions/DEFINITIONS.md)
-* [workflows/WORKFLOWS.md](workflows/WORKFLOWS.md)
-* [workflows/AGENT-PROTOCOL.md](workflows/AGENT-PROTOCOL.md)
-* [architecture/DEPLOYMENT-TOPOLOGY.md](architecture/DEPLOYMENT-TOPOLOGY.md)
-* [tests/TEST-PLAN.md](tests/TEST-PLAN.md)
-
-Constat :
-
-* plusieurs documents définissent le marker canonique comme un fichier JSON `/.retaia`
-* d'autres formulations exigent de matcher `APP_STORAGE_ID` ou `source.storage_id` contre `/.retaia.storage_id`
-* le corpus mélange donc :
-  * un champ JSON `storage_id` dans `/.retaia`
-  * et un pseudo-fichier/chemin `/.retaia.storage_id`
-
-Impact :
-
-* le contrat partagé de bootstrap storage n'est pas univoque
-* une implémentation Core ou Agent peut valider deux choses différentes
-
-Décision à prendre avant `v1.0.0` :
-
-* fermer une seule formulation canonique :
-  * `/.retaia` JSON
-  * champ `storage_id`
-* supprimer partout la forme `/.retaia.storage_id` si elle n'est pas réellement normative
-
 ### 5.7 Vocabulaire UI "canonique" mais libellés seulement "recommandés"
 
 Références :
@@ -1209,7 +1179,6 @@ Action :
 * Ajouter des checks de cohérence inter-docs simples.
 * Uniformiser le vocabulaire `v1`, `v1.1+`, `phase validée`, `reserved`, `non planned`.
 * Fermer le protocole d'upload des dérivés.
-* Fermer le contrat du marker `/.retaia` et supprimer toute variante concurrente.
 * Déclarer dans OpenAPI les headers cross-project normatifs manquants comme `Accept-Language`.
 
 ## 9. Ce qui est déjà suffisamment bien normé
