@@ -109,28 +109,6 @@ Statut avant `v1.0.0` :
 * la gouvernance repo/CI est fermée
 * des écarts contractuels et de périmètre documentaire restent encore à corriger
 
-### 4.2 Règles d'implémentation interne encore portées par des docs normatives partagées
-
-Références :
-
-* [workflows/AGENT-PROTOCOL.md](workflows/AGENT-PROTOCOL.md)
-* [ui/KEYBOARD-SHORTCUTS-REGISTRY.md](ui/KEYBOARD-SHORTCUTS-REGISTRY.md)
-
-Constat :
-
-* [workflows/AGENT-PROTOCOL.md](workflows/AGENT-PROTOCOL.md) impose encore que "la stack agent DOIT être implémentée en Rust" et cite une baseline librairies
-* [ui/KEYBOARD-SHORTCUTS-REGISTRY.md](ui/KEYBOARD-SHORTCUTS-REGISTRY.md) référence directement des fichiers `src/...` d'implémentation `retaia-ui`
-
-Risque :
-
-* `retaia-docs` dépasse le contrat partagé et impose des choix internes qui devraient rester dans les repos enfants
-* cela mélange "ce qui doit être identique entre clients" et "comment un client donné choisit de s'implémenter"
-
-À normer / fermer avant `v1.0.0` :
-
-* retirer des docs normatives partagées les choix d'implémentation interne non nécessaires à l'interopérabilité
-* déplacer ces contraintes vers les repos concernés, ou les requalifier explicitement comme recommandations non normatives
-
 ## 5. Domaines partagés désormais suffisamment fermés pour `v1.0.0`
 
 ### 5.1 Machine à états et transitions
@@ -443,9 +421,7 @@ Les points suivants sont globalement solides et réutilisables tels quels comme 
 
 Le repo est proche d'un état `v1.0.0` fermable, mais cette nouvelle passe montre qu'il reste encore quelques écarts à refermer.
 
-Les reliquats principaux portent désormais sur :
-
-* la séparation entre contrat partagé et règles d'implémentation interne
+Les reliquats principaux ne portent plus sur un écart contractuel critique identifié dans cette passe complémentaire.
 
 Le point central à retenir avant `v1.0.0` est désormais simple :
 
@@ -457,12 +433,12 @@ Le point central à retenir avant `v1.0.0` est désormais simple :
 
 ### Findings
 
-* `P2` Des docs normatives partagées portent encore des règles d'implémentation interne enfant : contrainte `Rust` et librairies dans [workflows/AGENT-PROTOCOL.md](workflows/AGENT-PROTOCOL.md), chemins `src/...` dans [ui/KEYBOARD-SHORTCUTS-REGISTRY.md](ui/KEYBOARD-SHORTCUTS-REGISTRY.md).
+* `P0` Aucun finding critique bloquant supplémentaire n'est resté ouvert après fermeture des écarts relevés dans cette passe complémentaire.
 
 
 ### Ce qui reste à normer avant `v1.0.0`
 
-* Retirer des docs normatives partagées les règles d'implémentation interne qui n'appartiennent pas au contrat inter-repos.
+* Aucun manque critique supplémentaire n'a été identifié après fermeture des points de cette passe complémentaire.
 
 ### Vérifications faites
 

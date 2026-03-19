@@ -51,14 +51,11 @@ Fournir un registre unique des raccourcis et des regles de gouvernance pour evit
 ## Process de changement
 
 1. Ajouter/mettre a jour l'entree dans ce registre.
-2. Mettre a jour `src/application/review/keyboardShortcutResolution.ts`.
-3. Mettre a jour les tests (`src/app.shortcuts.test.tsx`, `src/pages/ReviewPage.test.tsx`, tests BDD si impact cross-page).
+2. Mettre a jour l'implementation de resolution des raccourcis dans le repo `UI_WEB`.
+3. Mettre a jour les tests UI du repo `UI_WEB` (unitaires, integration, BDD si impact cross-page).
 4. Mettre a jour l'aide visuelle et les libelles i18n.
 5. Documenter le risque de collision dans la PR.
 
 ## References
 
-- `src/application/review/keyboardShortcutResolution.ts`
-- `src/hooks/useReviewKeyboardShortcuts.ts`
-- `src/components/app/ActionShortcutsSection.tsx`
 - `UI-GLOBAL-SPEC.md`

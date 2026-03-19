@@ -148,17 +148,17 @@ Support plateforme minimal attendu :
 * macOS (laptop) via `CLI` et `GUI`
 * Windows (desktop) via `CLI` et/ou `GUI`
 
-Contrainte d’implémentation :
+Contrainte d’implémentation partagée :
 
-* la stack agent DOIT être implémentée en Rust pour la portabilité binaire cross-platform et le service mode.
+* la stack agent DOIT rester portable en binaire/service mode sur les plateformes supportées.
 
 ### 3.2.1 Baseline implémentation (normatif)
 
-Pour éviter le code local à maintenir, cette règle s'applique à toute implémentation (quel que soit le langage) :
+Pour éviter le code local à maintenir, cette règle s'applique à toute implémentation :
 
 * pour une préoccupation transverse (parsing CLI, sérialisation, erreurs typées, notification OS, retry/backoff, etc.), une librairie dédiée et maintenue DOIT être utilisée
 * l'implémentation locale d'une préoccupation transverse est interdite tant qu'une librairie maintenue existe
-* si l'implémentation est en Rust, baseline attendue: `clap` (CLI), `thiserror` (erreurs typées), `tauri-plugin-notification` (notifications GUI Tauri)
+* le choix du langage, du framework et des bibliothèques concrètes relève du repo enfant tant qu'il respecte les contraintes de portabilité, de maintenance et le contrat partagé défini ici
 
 ### 3.3 Modes d’auth agent (normatif)
 
