@@ -3848,7 +3848,7 @@ components:
           type: integer
         fps:
           type: number
-        captured_at_original:
+        captured_at:
           type: string
           format: date-time
         exposure_time_s:

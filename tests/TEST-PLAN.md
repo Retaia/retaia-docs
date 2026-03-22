@@ -505,9 +505,9 @@ Tests obligatoires :
 * `AUDIO` : `facts_patch` contient au minimum `duration_ms`, `media_format`, `audio_codec`
 * `VIDEO` : `facts_patch` contient au minimum `duration_ms`, `media_format`, `video_codec`, `width`, `height`, `fps`
 * `VIDEO` avec piste audio exploitable : `audio_codec` est aussi présent
-* `facts_patch` accepte aussi des champs enrichis typés quand disponibles de façon déterministe, notamment `captured_at_original`, exposition/optique, audio enrichi, colorimétrie et `gps_*`
+* `facts_patch` accepte aussi des champs enrichis typés quand disponibles de façon déterministe, notamment `captured_at`, exposition/optique, audio enrichi, colorimétrie et `gps_*`
 * absence d'un champ minimal applicable => résultat facts incomplet, l'asset ne peut pas être considéré `PROCESSED`
-* si Core accepte `captured_at_original` comme horodatage fiable, il l'alimente dans le champ métier dédié `captured_at`
+* si `captured_at` est fourni dans `facts_patch`, il alimente directement le champ métier dédié `captured_at`
 * si Core accepte des `gps_*`, ils sont stockés dans des champs/colonnes dédiés typés côté Core, pas dans `fields`
 
 ## 4) Merge patch par domaine
