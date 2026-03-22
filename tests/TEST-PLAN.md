@@ -233,6 +233,8 @@ Tests obligatoires :
   * retourne `summary.revision_etag` et le header `ETag`
   * `summary.revision_etag` et `ETag` utilisent le même strong validator HTTP quoté
   * retourne `Cache-Control: private, no-store`
+  * `summary.captured_at` expose l'horodatage canonique de capture quand disponible
+  * les champs dédiés `gps_latitude`, `gps_longitude`, `gps_altitude_m`, `gps_altitude_relative_m`, `gps_altitude_absolute_m` sont exposés quand présents
   * expose toujours `paths`, `processing`, `derived`, `decisions` et `audit`
   * ne pratique aucune redaction actor-specific entre `UserBearerAuth` et `TechnicalBearerAuth` en `v1`
   * `summary` expose aussi `name`, `updated_at?` et `revision_etag?`
@@ -252,6 +254,7 @@ Tests obligatoires :
   * `If-Match` obligatoire
   * `If-Match` reprend exactement le strong validator HTTP quoté lu dans `ETag` / `summary.revision_etag`
   * `AssetSummary.revision_etag` et `GET /assets/{uuid}` exposent la même révision métier
+  * `PATCH /assets/{uuid}` accepte `captured_at` et les champs dédiés `gps_*` comme métadonnées humaines explicites, hors `fields`
   * le détail et son `ETag` restent la source canonique avant écriture si le client a un doute sur la fraîcheur de sa liste
   * précondition absente => `428 PRECONDITION_REQUIRED`
   * révision périmée => `412 PRECONDITION_FAILED`
