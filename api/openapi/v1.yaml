@@ -1235,6 +1235,15 @@ paths:
                 gps_altitude_absolute_m:
                   type: number
                   nullable: true
+                location_country:
+                  type: string
+                  nullable: true
+                location_city:
+                  type: string
+                  nullable: true
+                location_label:
+                  type: string
+                  nullable: true
                 processing_profile:
                   type: string
                   enum: [video_standard, audio_undefined, audio_music, audio_voice, photo_standard]
@@ -3554,6 +3563,15 @@ components:
           nullable: true
         gps_altitude_absolute_m:
           type: number
+          nullable: true
+        location_country:
+          type: string
+          nullable: true
+        location_city:
+          type: string
+          nullable: true
+        location_label:
+          type: string
           nullable: true
         paths:
           $ref: "#/components/schemas/AssetPaths"

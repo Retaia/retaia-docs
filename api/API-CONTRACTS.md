@@ -975,6 +975,9 @@ Body (exemple) :
 * `gps_altitude_m: number` (optionnel)
 * `gps_altitude_relative_m: number` (optionnel)
 * `gps_altitude_absolute_m: number` (optionnel)
+* `location_country: string` (optionnel)
+* `location_city: string` (optionnel)
+* `location_label: string` (optionnel)
 * `processing_profile: video_standard | audio_undefined | audio_music | audio_voice | photo_standard`
 * `state: DECISION_PENDING | DECIDED_KEEP | DECIDED_REJECT | ARCHIVED | REJECTED` (transition explicite)
 
@@ -1941,6 +1944,9 @@ Response (`202 Accepted`) :
 * `gps_altitude_m: number?`
 * `gps_altitude_relative_m: number?`
 * `gps_altitude_absolute_m: number?`
+* `location_country: string?`
+* `location_city: string?`
+* `location_label: string?`
 * `paths: { storage_id, original_relative, sidecars_relative[] }`
 * `processing: { facts_done, thumbs_done, preview_done, waveform_done, processing_profile, review_processing_version }`
 * `derived: { preview_video_url?, preview_audio_url?, preview_photo_url?, waveform_url?, thumbs[] }`
@@ -1953,6 +1959,7 @@ Règles de visibilité et présence (normatives) :
 * dès que `GET /assets/{uuid}` est autorisé pour l'acteur courant, `AssetDetail` DOIT être exposé sans redaction actor-specific en `v1`
 * `summary.captured_at` reste le champ canonique d'horodatage de capture exposé en lecture
 * les champs `gps_*` dédiés DOIVENT être exposés en lecture détaillée quand présents
+* les champs d'adresse dédiés `location_country`, `location_city`, `location_label` DOIVENT être exposés en lecture détaillée quand présents
 * Core NE DOIT PAS masquer conditionnellement `paths`, `processing`, `derived`, `decisions` ou `audit` selon qu'il s'agit d'un `UserBearerAuth` ou d'un `TechnicalBearerAuth`
 * les sous-objets `paths`, `processing`, `derived`, `decisions` et `audit` DOIVENT toujours être présents dans `AssetDetail`
 * l'absence de données dans un sous-domaine DOIT être représentée par des champs nuls, tableaux vides ou valeurs par défaut compatibles, pas par l'omission du sous-objet
