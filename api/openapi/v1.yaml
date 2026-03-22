@@ -3848,6 +3848,75 @@ components:
           type: integer
         fps:
           type: number
+        captured_at_original:
+          type: string
+          format: date-time
+        exposure_time_s:
+          type: number
+        aperture_f_number:
+          type: number
+        iso:
+          type: integer
+        focal_length_mm:
+          type: number
+        camera_make:
+          type: string
+        camera_model:
+          type: string
+        lens_model:
+          type: string
+        orientation:
+          type: integer
+        bitrate_kbps:
+          type: integer
+        sample_rate_hz:
+          type: integer
+        channel_count:
+          type: integer
+        bits_per_sample:
+          type: integer
+        rotation_deg:
+          type: integer
+        timecode_start:
+          type: string
+        pixel_format:
+          type: string
+        color_range:
+          type: string
+        color_space:
+          type: string
+        color_transfer:
+          type: string
+        color_primaries:
+          type: string
+        recorder_model:
+          type: string
+        gps_latitude:
+          type: number
+          minimum: -90
+          maximum: 90
+        gps_longitude:
+          type: number
+          minimum: -180
+          maximum: 180
+        gps_altitude_m:
+          type: number
+        gps_altitude_relative_m:
+          type: number
+        gps_altitude_absolute_m:
+          type: number
+        exposure_compensation_ev:
+          type: number
+        color_mode:
+          type: string
+        color_temperature_k:
+          type: integer
+        has_dji_metadata_track:
+          type: boolean
+        dji_metadata_track_types:
+          type: array
+          items:
+            type: string
 
     DerivedPatch:
       type: object

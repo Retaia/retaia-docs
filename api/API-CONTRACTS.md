@@ -2009,8 +2009,43 @@ Contrat minimal `facts_patch` :
 * pour `VIDEO` : `duration_ms`, `media_format`, `video_codec`, `width`, `height`, `fps`
 * si une piste audio exploitable est détectée sur `VIDEO`, `audio_codec` devient requis
 * des champs supplémentaires sont autorisés, mais les champs minimaux applicables au `media_type` NE DOIVENT PAS manquer
+* champs enrichis explicitement autorisés quand disponibles de façon déterministe :
+  * `captured_at_original`
+  * `exposure_time_s`
+  * `aperture_f_number`
+  * `iso`
+  * `focal_length_mm`
+  * `camera_make`
+  * `camera_model`
+  * `lens_model`
+  * `orientation`
+  * `bitrate_kbps`
+  * `sample_rate_hz`
+  * `channel_count`
+  * `bits_per_sample`
+  * `rotation_deg`
+  * `timecode_start`
+  * `pixel_format`
+  * `color_range`
+  * `color_space`
+  * `color_transfer`
+  * `color_primaries`
+  * `recorder_model`
+  * `gps_latitude`
+  * `gps_longitude`
+  * `gps_altitude_m`
+  * `gps_altitude_relative_m`
+  * `gps_altitude_absolute_m`
+  * `exposure_compensation_ev`
+  * `color_mode`
+  * `color_temperature_k`
+  * `has_dji_metadata_track`
+  * `dji_metadata_track_types[]`
+* `captured_at_original` est un champ d'extraction source ; si Core l'accepte comme horodatage fiable, il DOIT alimenter le champ métier dédié `captured_at`
+* les champs `gps_*` sont des facts source ; s'ils sont acceptés par Core, ils DOIVENT être promus dans un stockage/champ dédié typé côté Core
 * un champ facts optionnel peut être promu vers `AssetDetail.fields` s'il doit rester visible et éditable côté `UI_WEB`
 * un champ facts nécessitant une sémantique dédiée, un index spécialisé ou une policy de sécurité spécifique DOIT devenir un champ/colonne dédié côté Core, pas une clé implicite de `fields`
+* en conséquence, `captured_at_original` et les champs `gps_*` NE DOIVENT PAS être cachés implicitement dans `AssetDetail.fields`
 
 
 ## 10) Codes d’erreur (normatifs)

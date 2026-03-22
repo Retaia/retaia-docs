@@ -99,6 +99,40 @@ Règles :
 
 * `extract_facts` PEUT produire des champs supplémentaires, mais NE DOIT PAS omettre les champs minimaux applicables au `media_type`
 * l'absence d'un champ minimal applicable rend le résultat de facts incomplet
+* `extract_facts` PEUT aussi produire des facts enrichis typés quand ils sont disponibles de façon déterministe, notamment :
+  * `captured_at_original`
+  * `exposure_time_s`
+  * `aperture_f_number`
+  * `iso`
+  * `focal_length_mm`
+  * `camera_make`
+  * `camera_model`
+  * `lens_model`
+  * `orientation`
+  * `bitrate_kbps`
+  * `sample_rate_hz`
+  * `channel_count`
+  * `bits_per_sample`
+  * `rotation_deg`
+  * `timecode_start`
+  * `pixel_format`
+  * `color_range`
+  * `color_space`
+  * `color_transfer`
+  * `color_primaries`
+  * `recorder_model`
+  * `gps_latitude`
+  * `gps_longitude`
+  * `gps_altitude_m`
+  * `gps_altitude_relative_m`
+  * `gps_altitude_absolute_m`
+  * `exposure_compensation_ev`
+  * `color_mode`
+  * `color_temperature_k`
+  * `has_dji_metadata_track`
+  * `dji_metadata_track_types[]`
+* `captured_at_original` est un champ facts source ; lorsqu'il est accepté par Core comme horodatage fiable, il DOIT alimenter le champ métier dédié `captured_at`
+* les champs `gps_*` sont des facts source ; lorsqu'ils sont acceptés par Core, ils DOIVENT être stockés dans des colonnes/champs dédiés typés côté Core, jamais cachés implicitement dans `AssetDetail.fields`
 
 **Invariants**
 
