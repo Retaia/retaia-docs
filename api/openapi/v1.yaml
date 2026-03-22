@@ -1212,6 +1212,38 @@ paths:
                   nullable: true
                 fields:
                   $ref: "#/components/schemas/AssetFields"
+                captured_at:
+                  type: string
+                  format: date-time
+                  nullable: true
+                gps_latitude:
+                  type: number
+                  minimum: -90
+                  maximum: 90
+                  nullable: true
+                gps_longitude:
+                  type: number
+                  minimum: -180
+                  maximum: 180
+                  nullable: true
+                gps_altitude_m:
+                  type: number
+                  nullable: true
+                gps_altitude_relative_m:
+                  type: number
+                  nullable: true
+                gps_altitude_absolute_m:
+                  type: number
+                  nullable: true
+                location_country:
+                  type: string
+                  nullable: true
+                location_city:
+                  type: string
+                  nullable: true
+                location_label:
+                  type: string
+                  nullable: true
                 processing_profile:
                   type: string
                   enum: [video_standard, audio_undefined, audio_music, audio_voice, photo_standard]
@@ -3513,6 +3545,34 @@ components:
           nullable: true
         fields:
           $ref: "#/components/schemas/AssetFields"
+        gps_latitude:
+          type: number
+          minimum: -90
+          maximum: 90
+          nullable: true
+        gps_longitude:
+          type: number
+          minimum: -180
+          maximum: 180
+          nullable: true
+        gps_altitude_m:
+          type: number
+          nullable: true
+        gps_altitude_relative_m:
+          type: number
+          nullable: true
+        gps_altitude_absolute_m:
+          type: number
+          nullable: true
+        location_country:
+          type: string
+          nullable: true
+        location_city:
+          type: string
+          nullable: true
+        location_label:
+          type: string
+          nullable: true
         paths:
           $ref: "#/components/schemas/AssetPaths"
         processing:
@@ -3636,7 +3696,13 @@ components:
         status:
           type: string
           enum: [NONE, RUNNING, DONE, FAILED]
+        text:
+          type: string
+          nullable: true
         text_preview:
+          type: string
+          nullable: true
+        language:
           type: string
           nullable: true
         updated_at:
@@ -3722,6 +3788,7 @@ components:
             - generate_preview
             - generate_thumbnails
             - generate_audio_waveform
+            - transcribe_audio
         status:
           type: string
           enum: [pending, claimed, completed, failed]
@@ -3757,6 +3824,7 @@ components:
       oneOf:
         - $ref: "#/components/schemas/SubmitExtractFacts"
         - $ref: "#/components/schemas/SubmitDerived"
+        - $ref: "#/components/schemas/SubmitTranscript"
 
     SubmitExtractFacts:
       type: object
@@ -3814,6 +3882,34 @@ components:
               type: object
               additionalProperties: true
 
+    SubmitTranscript:
+      type: object
+      additionalProperties: false
+      required: [lock_token, fencing_token, job_type, result]
+      properties:
+        lock_token:
+          type: string
+        fencing_token:
+          type: integer
+          minimum: 1
+        job_type:
+          type: string
+          enum: [transcribe_audio]
+        result:
+          type: object
+          additionalProperties: false
+          required: [transcript_patch]
+          properties:
+            transcript_patch:
+              $ref: "#/components/schemas/TranscriptPatch"
+            warnings:
+              type: array
+              items:
+                type: string
+            metrics:
+              type: object
+              additionalProperties: true
+
     ProcessingResultPatch:
       type: object
       additionalProperties: false
@@ -3822,6 +3918,8 @@ components:
           $ref: "#/components/schemas/FactsPatch"
         derived_patch:
           $ref: "#/components/schemas/DerivedPatch"
+        transcript_patch:
+          $ref: "#/components/schemas/TranscriptPatch"
         warnings:
           type: array
           items:
@@ -3848,6 +3946,96 @@ components:
           type: integer
         fps:
           type: number
+        captured_at:
+          type: string
+          format: date-time
+        exposure_time_s:
+          type: number
+        aperture_f_number:
+          type: number
+        iso:
+          type: integer
+        focal_length_mm:
+          type: number
+        camera_make:
+          type: string
+        camera_model:
+          type: string
+        lens_model:
+          type: string
+        orientation:
+          type: integer
+        bitrate_kbps:
+          type: integer
+        sample_rate_hz:
+          type: integer
+        channel_count:
+          type: integer
+        bits_per_sample:
+          type: integer
+        rotation_deg:
+          type: integer
+        timecode_start:
+          type: string
+        pixel_format:
+          type: string
+        color_range:
+          type: string
+        color_space:
+          type: string
+        color_transfer:
+          type: string
+        color_primaries:
+          type: string
+        recorder_model:
+          type: string
+        gps_latitude:
+          type: number
+          minimum: -90
+          maximum: 90
+        gps_longitude:
+          type: number
+          minimum: -180
+          maximum: 180
+        gps_altitude_m:
+          type: number
+        gps_altitude_relative_m:
+          type: number
+        gps_altitude_absolute_m:
+          type: number
+        exposure_compensation_ev:
+          type: number
+        color_mode:
+          type: string
+        color_temperature_k:
+          type: integer
+        has_dji_metadata_track:
+          type: boolean
+        dji_metadata_track_types:
+          type: array
+          items:
+            type: string
+
+    TranscriptPatch:
+      type: object
+      additionalProperties: false
+      description: Pre-release transcript merge patch. Accepted only when `features.ai.transcribe_audio` is effectively enabled; outside v1 conformance scope until validated v1.1+ rollout.
+      properties:
+        status:
+          type: string
+          enum: [NONE, RUNNING, DONE, FAILED]
+        text:
+          type: string
+          nullable: true
+        text_preview:
+          type: string
+          nullable: true
+        language:
+          type: string
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
 
     DerivedPatch:
       type: object

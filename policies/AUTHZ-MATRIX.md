@@ -58,7 +58,7 @@ Acteurs normatifs :
 * acteur: `USER_INTERACTIVE`
 * scope: session utilisateur valide (`UserBearerAuth`)
 * portée: préférences feature de l'utilisateur courant
-* contrainte: désactivation d'une feature `CORE_V1_GLOBAL` interdite (`403 FORBIDDEN_SCOPE`)
+* contrainte: toute clé `deprecated` assimilée au nominal et envoyée explicitement DOIT être refusée (`422 VALIDATION_FAILED`)
 
 `GET /app/policy`
 

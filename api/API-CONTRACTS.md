@@ -103,7 +103,8 @@ Glossaire de lecture (opposable) :
 * Ce cycle DOIT permettre le continuous development sans casse des clients encore dans la fenêtre d'acceptance.
 * Ownership runtime: `accepted_feature_flags_contract_versions` est piloté par release/config Core (pas modifiable via endpoint admin runtime).
 * Les kill-switches permanents autorisés DOIVENT être listés dans [`FEATURE-FLAG-KILLSWITCH-REGISTRY.md`](../change-management/FEATURE-FLAG-KILLSWITCH-REGISTRY.md).
-* Le registre canonique des clés partagées `v1.0.0`, de leur tier, mutabilité et dépendances est défini dans [`FEATURE-FLAG-REGISTRY.md`](../change-management/FEATURE-FLAG-REGISTRY.md).
+* Le registre canonique des clés runtime encore actives, de leur tier, mutabilité et dépendances est défini dans [`FEATURE-FLAG-REGISTRY.md`](../change-management/FEATURE-FLAG-REGISTRY.md).
+* Les anciennes clés `deprecated` assimilées au nominal DOIVENT être retirées des implémentations enfants avant la release finale `v1.0.0`; elles ne doivent plus piloter aucun branchement runtime dans `Core`, `UI_WEB`, `Agent` ou `MCP`.
 
 ### Orchestration runtime (normatif)
 
@@ -160,10 +161,9 @@ Gouvernance des `user_feature_enabled` (opposable) :
 
 * lecture/modification : utilisateur authentifié sur lui-même via `GET/PATCH /auth/me/features`
 * portée : préférences utilisateur (opt-out local à l’utilisateur courant)
-* contrainte : les features classées `CORE_V1_GLOBAL` NE DOIVENT PAS être désactivables au scope utilisateur
-* tentative de désactivation d’une feature `CORE_V1_GLOBAL` => `403 FORBIDDEN_SCOPE`
 * effet runtime obligatoire : `user_feature_enabled=false` DOIT désactiver la feature pour l’utilisateur et appliquer la cascade de dépendances
 * valeur par défaut (migration-safe) : absence de clé `user_feature_enabled.<feature>` DOIT être interprétée comme `true`
+* les anciennes clés assimilées au nominal (`deprecated` dans `FEATURE-FLAG-REGISTRY.md`) NE DOIVENT PAS être acceptées dans `user_feature_enabled`; si elles sont envoyées explicitement, Core DOIT répondre `422 VALIDATION_FAILED`
 
 Gouvernance des `feature_flags` runtime (opposable) :
 
@@ -173,6 +173,7 @@ Gouvernance des `feature_flags` runtime (opposable) :
 * précondition d'écriture : applicable uniquement aux flags stockés en DB ou via un backend mutable équivalent
 * un flag encore `code-backed` DOIT être refusé en écriture avec `409 STATE_CONFLICT`
 * effet runtime obligatoire : un changement accepté DOIT être observable par les clients au prochain polling de `GET /app/policy`
+* les anciennes clés assimilées au nominal (`deprecated` dans `FEATURE-FLAG-REGISTRY.md`) NE DOIVENT PAS apparaître dans `feature_flags`
 
 Catalogue de dépendances et escalade (opposable) :
 
@@ -180,10 +181,8 @@ Catalogue de dépendances et escalade (opposable) :
 * chaque entrée DOIT inclure : `key`, `tier`, `user_can_disable`, `dependencies[]`, `disable_escalation[]`
 * règle de dépendance : si une dépendance est OFF, la feature dépendante devient OFF dans `effective_feature_enabled`
 * règle d’escalade : désactiver une feature parent DOIT désactiver toutes les features listées dans `disable_escalation[]`
-* règle de sûreté v1 globale : les features socle v1 (`CORE_V1_GLOBAL`) restent disponibles et ne sont pas impactées par des opt-out utilisateur
-* registre explicite obligatoire : Core DOIT exposer `core_v1_global_features[]` (liste canonique des clés non désactivables)
-* toute entrée `feature_governance` dont `key` appartient à `core_v1_global_features[]` DOIT avoir `tier=CORE_V1_GLOBAL` et `user_can_disable=false`
-* `core_v1_global_features[]` DOIT correspondre exactement aux clés `Tier = CORE_V1_GLOBAL` du registre [`FEATURE-FLAG-REGISTRY.md`](../change-management/FEATURE-FLAG-REGISTRY.md)
+* `feature_governance[]` NE DOIT lister que les clés runtime encore actives du registre canonique
+* les anciennes clés assimilées au nominal (`deprecated` dans `FEATURE-FLAG-REGISTRY.md`) NE DOIVENT PAS apparaître dans `feature_governance[]`
 * Core DOIT exposer un payload canonique d'explication :
   * `app_feature_explanations.<feature_key>` dans `GET /app/features`
   * `effective_feature_explanations.<feature_key>` dans `GET /auth/me/features`
@@ -199,7 +198,6 @@ Arbitrage admin/user (opposable) :
 * priorité d’évaluation: `feature_flags` -> `app_feature_enabled` -> `user_feature_enabled` -> dépendances/escalade
 * `app_feature_enabled=false` domine toujours (feature OFF pour tous les utilisateurs)
 * `app_feature_enabled=true` n’annule pas un opt-out utilisateur (`user_feature_enabled=false`)
-* `CORE_V1_GLOBAL` : toujours ON dans `effective_feature_enabled` (hors indisponibilité technique majeure hors scope flags/user)
 * l’algorithme opposable complet est défini dans [`FEATURE-RESOLUTION-ENGINE.md`](../policies/FEATURE-RESOLUTION-ENGINE.md)
 * observabilité/audit obligatoire défini dans [`FEATURE-GOVERNANCE-OBSERVABILITY.md`](../policies/FEATURE-GOVERNANCE-OBSERVABILITY.md)
 
@@ -522,13 +520,12 @@ Fenêtres temporelles partagées (normatif) :
 `GET /app/features`
 
 * security: `UserBearerAuth`
-* effet: retourne les switches applicatifs (`app_feature_enabled`) + métadonnées de gouvernance (`feature_governance`) + registre canonique `core_v1_global_features`
+* effet: retourne les switches applicatifs (`app_feature_enabled`) + métadonnées de gouvernance (`feature_governance`)
 * prérequis authz: acteur admin (contrôlé par la matrice [`AUTHZ-MATRIX.md`](../policies/AUTHZ-MATRIX.md))
 * contrat payload stable obligatoire:
   * `app_feature_enabled`
   * `app_feature_explanations`
   * `feature_governance`
-  * `core_v1_global_features`
 * réponses:
   * `200` succès
   * `401 UNAUTHORIZED`
@@ -541,6 +538,7 @@ Fenêtres temporelles partagées (normatif) :
 * body requis: `{ app_feature_enabled: { ... } }`
 * effet: met à jour les switches applicatifs globaux
 * règle: un switch applicatif désactivé DOIT empêcher la planification/exécution des fonctionnalités associées
+* contrainte: toute clé `deprecated` assimilée au nominal dans [`FEATURE-FLAG-REGISTRY.md`](../change-management/FEATURE-FLAG-REGISTRY.md) DOIT être refusée avec `422 VALIDATION_FAILED`
 * réponses:
   * `200` succès
   * `401 UNAUTHORIZED`
@@ -551,13 +549,12 @@ Fenêtres temporelles partagées (normatif) :
 
 * security: `UserBearerAuth`
 * effet: retourne les préférences feature de l’utilisateur (`user_feature_enabled`) et l’état effectif (`effective_feature_enabled`)
-* inclut `feature_governance`, `core_v1_global_features` et `effective_feature_explanations` pour appliquer localement dépendances, escalade, règles de protection et explication canonique d'un `OFF`
+* inclut `feature_governance` et `effective_feature_explanations` pour appliquer localement dépendances, escalade et explication canonique d'un `OFF`
 * contrat payload stable obligatoire:
   * `user_feature_enabled`
   * `effective_feature_enabled`
   * `effective_feature_explanations`
   * `feature_governance`
-  * `core_v1_global_features`
 * réponses:
   * `200` succès
   * `401 UNAUTHORIZED`
@@ -567,7 +564,7 @@ Fenêtres temporelles partagées (normatif) :
 * security: `UserBearerAuth`
 * body requis: `{ user_feature_enabled: { ... } }`
 * effet: met à jour les préférences feature de l’utilisateur courant
-* contrainte: tentative de désactivation d’une feature `CORE_V1_GLOBAL` refusée (`403 FORBIDDEN_SCOPE`)
+* contrainte: toute clé `deprecated` assimilée au nominal dans [`FEATURE-FLAG-REGISTRY.md`](../change-management/FEATURE-FLAG-REGISTRY.md) DOIT être refusée avec `422 VALIDATION_FAILED`
 * réponses:
   * `200` succès
   * `401 UNAUTHORIZED`
@@ -969,6 +966,15 @@ Body (exemple) :
 * `tags: string[]`
 * `notes: string`
 * `fields: Record<string, FieldValue>`
+* `captured_at: string` (UTC ISO-8601, optionnel)
+* `gps_latitude: number` (optionnel)
+* `gps_longitude: number` (optionnel)
+* `gps_altitude_m: number` (optionnel)
+* `gps_altitude_relative_m: number` (optionnel)
+* `gps_altitude_absolute_m: number` (optionnel)
+* `location_country: string` (optionnel)
+* `location_city: string` (optionnel)
+* `location_label: string` (optionnel)
 * `processing_profile: video_standard | audio_undefined | audio_music | audio_voice | photo_standard`
 * `state: DECISION_PENDING | DECIDED_KEEP | DECIDED_REJECT | ARCHIVED | REJECTED` (transition explicite)
 
@@ -987,6 +993,7 @@ Contrat `fields` (normatif) :
   * géométrie GPS précise
   * adresse structurée
   * transcript
+  * `captured_at`
 * `notes` et `fields` font partie du contrat de lecture partagé via `AssetDetail`
 
 Règles :
@@ -1281,8 +1288,8 @@ Headers obligatoires :
 
 Effets :
 
-* `extract_facts | generate_preview | generate_thumbnails | generate_audio_waveform` :
-  mise à jour des domaines `facts/derived`, puis `PROCESSING_REVIEW → REVIEW_PENDING_PROFILE|PROCESSED → DECISION_PENDING` selon le profil effectif et sa complétude
+* `extract_facts | generate_preview | generate_thumbnails | generate_audio_waveform | transcribe_audio` :
+  mise à jour des domaines `facts/derived/transcript`, puis `PROCESSING_REVIEW → REVIEW_PENDING_PROFILE|PROCESSED → DECISION_PENDING` selon le profil effectif et sa complétude
 
 Note v1 (important) :
 
@@ -1294,10 +1301,12 @@ Note v1 (important) :
 * ownership de patch par `job_type` :
   * `extract_facts` -> `facts_patch`
   * `generate_preview|generate_thumbnails|generate_audio_waveform` -> `derived_patch`
+  * `transcribe_audio` -> `transcript_patch`
 
 Règle d'extension:
 
-* les `job_type` IA (`transcribe_audio`, `suggest_tags`) et leurs patch domains sont hors périmètre v1 et documentés dans le paquet normatif v1.1.
+* `transcribe_audio` PEUT être exposé plus tôt sous `feature_flags`, mais reste hors conformité `v1` tant que la phase `v1.1+` n'est pas validée.
+* `suggest_tags` et les autres patch domains IA restent hors périmètre `v1` et documentés dans le paquet normatif `v1.1+`.
 
 Erreurs de lock/idempotence (normatif) :
 
@@ -1929,16 +1938,27 @@ Response (`202 Accepted`) :
 * `summary: AssetSummary`
 * `notes: string?`
 * `fields: Record<string, FieldValue>`
+* `gps_latitude: number?`
+* `gps_longitude: number?`
+* `gps_altitude_m: number?`
+* `gps_altitude_relative_m: number?`
+* `gps_altitude_absolute_m: number?`
+* `location_country: string?`
+* `location_city: string?`
+* `location_label: string?`
 * `paths: { storage_id, original_relative, sidecars_relative[] }`
 * `processing: { facts_done, thumbs_done, preview_done, waveform_done, processing_profile, review_processing_version }`
 * `derived: { preview_video_url?, preview_audio_url?, preview_photo_url?, waveform_url?, thumbs[] }`
-* `transcript: { status, text_preview?, updated_at? }`
+* `transcript: { status, text?, text_preview?, language?, updated_at? }`
 * `decisions: { current?, history[] }`
 * `audit: { path_history[], revision_history[] }`
 
 Règles de visibilité et présence (normatives) :
 
 * dès que `GET /assets/{uuid}` est autorisé pour l'acteur courant, `AssetDetail` DOIT être exposé sans redaction actor-specific en `v1`
+* `summary.captured_at` reste le champ canonique d'horodatage de capture exposé en lecture
+* les champs `gps_*` dédiés DOIVENT être exposés en lecture détaillée quand présents
+* les champs d'adresse dédiés `location_country`, `location_city`, `location_label` DOIVENT être exposés en lecture détaillée quand présents
 * Core NE DOIT PAS masquer conditionnellement `paths`, `processing`, `derived`, `decisions` ou `audit` selon qu'il s'agit d'un `UserBearerAuth` ou d'un `TechnicalBearerAuth`
 * les sous-objets `paths`, `processing`, `derived`, `decisions` et `audit` DOIVENT toujours être présents dans `AssetDetail`
 * l'absence de données dans un sous-domaine DOIT être représentée par des champs nuls, tableaux vides ou valeurs par défaut compatibles, pas par l'omission du sous-objet
@@ -1978,7 +1998,7 @@ Règle :
 ### Job
 
 * `job_id`
-* `job_type` (`extract_facts | generate_preview | generate_thumbnails | generate_audio_waveform`)
+* `job_type` (`extract_facts | generate_preview | generate_thumbnails | generate_audio_waveform | transcribe_audio`)
 * `asset_uuid`
 * `lock_token`
 * `fencing_token`
@@ -1993,6 +2013,7 @@ Règle :
 
 * `facts_patch?` (JSON partiel)
 * `derived_patch?` (`derived_manifest` partiel)
+* `transcript_patch?`
 * `warnings[]`
 * `metrics`
 
@@ -2009,8 +2030,55 @@ Contrat minimal `facts_patch` :
 * pour `VIDEO` : `duration_ms`, `media_format`, `video_codec`, `width`, `height`, `fps`
 * si une piste audio exploitable est détectée sur `VIDEO`, `audio_codec` devient requis
 * des champs supplémentaires sont autorisés, mais les champs minimaux applicables au `media_type` NE DOIVENT PAS manquer
+* champs enrichis explicitement autorisés quand disponibles de façon déterministe :
+  * `captured_at`
+  * `exposure_time_s`
+  * `aperture_f_number`
+  * `iso`
+  * `focal_length_mm`
+  * `camera_make`
+  * `camera_model`
+  * `lens_model`
+  * `orientation`
+  * `bitrate_kbps`
+  * `sample_rate_hz`
+  * `channel_count`
+  * `bits_per_sample`
+  * `rotation_deg`
+  * `timecode_start`
+  * `pixel_format`
+  * `color_range`
+  * `color_space`
+  * `color_transfer`
+  * `color_primaries`
+  * `recorder_model`
+  * `gps_latitude`
+  * `gps_longitude`
+  * `gps_altitude_m`
+  * `gps_altitude_relative_m`
+  * `gps_altitude_absolute_m`
+  * `exposure_compensation_ev`
+  * `color_mode`
+  * `color_temperature_k`
+  * `has_dji_metadata_track`
+  * `dji_metadata_track_types[]`
+* les champs `gps_*` sont des facts source ; s'ils sont acceptés par Core, ils DOIVENT être promus dans un stockage/champ dédié typé côté Core
 * un champ facts optionnel peut être promu vers `AssetDetail.fields` s'il doit rester visible et éditable côté `UI_WEB`
 * un champ facts nécessitant une sémantique dédiée, un index spécialisé ou une policy de sécurité spécifique DOIT devenir un champ/colonne dédié côté Core, pas une clé implicite de `fields`
+* en conséquence, `captured_at` et les champs `gps_*` NE DOIVENT PAS être cachés implicitement dans `AssetDetail.fields`
+
+Contrat `transcript_patch` (pré-release sous `feature_flags`, hors conformité `v1`) :
+
+* `status` (`NONE|RUNNING|DONE|FAILED`)
+* `text` (`string?`)
+* `text_preview` (`string?`)
+* `language` (`string?`)
+* `updated_at` (`date-time?`)
+* `transcribe_audio` est seul propriétaire de ce domaine
+* `transcript_patch` DOIT projeter vers `AssetDetail.transcript`
+* avant validation `v1.1+`, `transcript_patch` PEUT être accepté uniquement quand `features.ai.transcribe_audio` est effectivement `ON`
+* avant validation `v1.1+`, la présence ou l'absence de `transcript` NE DOIT PAS bloquer la complétude processing `v1`
+* aucun `segments[]` ni timecode segmenté ne fait partie du contrat partagé actuel
 
 
 ## 10) Codes d’erreur (normatifs)
