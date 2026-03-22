@@ -44,7 +44,7 @@ Un job qui ne respecte pas cette structure est invalide.
 | `generate_preview` | `v1` | `media.previews.video@1` ou `media.previews.audio@1` ou `media.previews.photo@1` | `preview_video` ou `preview_audio` ou `preview_photo` | `AssetDetail.derived` |
 | `generate_thumbnails` | `v1` | `media.thumbnails@1` | `thumbs[]` | `AssetDetail.derived.thumbs[]` |
 | `generate_audio_waveform` | `v1` | `audio.waveform@1` | `waveform_data` | `AssetDetail.derived.waveform_url` |
-| `transcribe_audio` | `v1.1+` (activable plus tôt sous `feature_flags`) | `speech.transcription@1` | `transcript_text` | `AssetDetail.transcript` |
+| `transcribe_audio` | `v1.1+` (activable plus tôt sous `feature_flags`) | `speech.transcription@1` | `transcript.status`, `transcript.text` | `AssetDetail.transcript` |
 | `suggest_tags` | `v1.1+` (activable plus tôt sous `feature_flags`) | `meta.tags.suggestions@1`, `llm.client.ollama@1` | `suggested_tags[]` | surface AI future, hors conformité `v1` |
 
 Règles :
@@ -327,7 +327,7 @@ Disponibilité : **v1.1+** (activable plus tôt sous `feature_flags` pendant le 
 Ce job peut rester indéfiniment en statut pending tant qu’aucun agent ne déclare la capability requise.
 
 **Objectif**  
-Produire une transcription (et éventuellement des timecodes) à partir de l’audio d’un média. À partir de la phase `v1.1+` validée, ce job devient requis pour tout média dont le `processing_profile` l'exige afin d'atteindre `PROCESSED`.
+Produire une transcription textuelle exploitable pour la recherche et les enrichissements sémantiques à partir de l’audio d’un média. À partir de la phase `v1.1+` validée, ce job devient requis pour tout média dont le `processing_profile` l'exige afin d'atteindre `PROCESSED`.
 
 **Required capabilities**
 
@@ -345,15 +345,25 @@ Produire une transcription (et éventuellement des timecodes) à partir de l’a
 
 **Expected outputs**
 
-* transcript_text
-* segments[] (optionnel : start_ms, end_ms, text)
-* confidence (optionnel)
+* `transcript.status`
+* `transcript.text`
+* `transcript.text_preview`
+* `transcript.language`
+* `transcript.updated_at`
+
+Projection runtime partagée :
+
+* ce job est seul propriétaire du domaine `transcript_patch`
+* `transcript_patch` DOIT projeter vers `AssetDetail.transcript`
+* avant validation `v1.1+`, cette projection reste pré-release, activable uniquement sous `feature_flags`
+* avant validation `v1.1+`, la présence ou l'absence du transcript NE DOIT PAS bloquer l'atteinte de `PROCESSED` ni une décision humaine `v1`
 
 **Invariants**
 
 * aucune modification du média original
 * aucune décision KEEP / REJECT
 * output recréable (si le moteur change de manière non rétrocompatible, incrémenter la version de capability)
+* aucun `segments[]` ni timecode segmenté n'entre dans le contrat partagé avant validation explicite d'une version ultérieure
 
 **Failure modes**
 

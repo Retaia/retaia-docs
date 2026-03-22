@@ -3696,7 +3696,13 @@ components:
         status:
           type: string
           enum: [NONE, RUNNING, DONE, FAILED]
+        text:
+          type: string
+          nullable: true
         text_preview:
+          type: string
+          nullable: true
+        language:
           type: string
           nullable: true
         updated_at:
@@ -3782,6 +3788,7 @@ components:
             - generate_preview
             - generate_thumbnails
             - generate_audio_waveform
+            - transcribe_audio
         status:
           type: string
           enum: [pending, claimed, completed, failed]
@@ -3817,6 +3824,7 @@ components:
       oneOf:
         - $ref: "#/components/schemas/SubmitExtractFacts"
         - $ref: "#/components/schemas/SubmitDerived"
+        - $ref: "#/components/schemas/SubmitTranscript"
 
     SubmitExtractFacts:
       type: object
@@ -3874,6 +3882,34 @@ components:
               type: object
               additionalProperties: true
 
+    SubmitTranscript:
+      type: object
+      additionalProperties: false
+      required: [lock_token, fencing_token, job_type, result]
+      properties:
+        lock_token:
+          type: string
+        fencing_token:
+          type: integer
+          minimum: 1
+        job_type:
+          type: string
+          enum: [transcribe_audio]
+        result:
+          type: object
+          additionalProperties: false
+          required: [transcript_patch]
+          properties:
+            transcript_patch:
+              $ref: "#/components/schemas/TranscriptPatch"
+            warnings:
+              type: array
+              items:
+                type: string
+            metrics:
+              type: object
+              additionalProperties: true
+
     ProcessingResultPatch:
       type: object
       additionalProperties: false
@@ -3882,6 +3918,8 @@ components:
           $ref: "#/components/schemas/FactsPatch"
         derived_patch:
           $ref: "#/components/schemas/DerivedPatch"
+        transcript_patch:
+          $ref: "#/components/schemas/TranscriptPatch"
         warnings:
           type: array
           items:
@@ -3977,6 +4015,27 @@ components:
           type: array
           items:
             type: string
+
+    TranscriptPatch:
+      type: object
+      additionalProperties: false
+      description: Pre-release transcript merge patch. Accepted only when `features.ai.transcribe_audio` is effectively enabled; outside v1 conformance scope until validated v1.1+ rollout.
+      properties:
+        status:
+          type: string
+          enum: [NONE, RUNNING, DONE, FAILED]
+        text:
+          type: string
+          nullable: true
+        text_preview:
+          type: string
+          nullable: true
+        language:
+          type: string
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
 
     DerivedPatch:
       type: object

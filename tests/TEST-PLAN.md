@@ -241,6 +241,8 @@ Tests obligatoires :
   * `summary` expose aussi `name`, `updated_at?` et `revision_etag?`
   * `processing.processing_profile` suit l'enum canonique des processing profiles
   * `transcript` pré-release n'expose pas de jeton de concurrence propre
+  * si `transcript` est exposé, il suit exactement `{ status, text?, text_preview?, language?, updated_at? }`
+  * `transcript` n'expose aucun `segments[]` en contrat partagé actuel
   * `decisions.history[]` expose au minimum `action`, `at`, `by` dans l'ordre chronologique croissant
   * `audit.path_history[]` est une liste de chemins relatifs canonicalisés, en ordre chronologique croissant
 * `GET /assets`:
@@ -520,6 +522,7 @@ Tests obligatoires :
 
 * `transcribe_audio` n'efface jamais `facts/derived`
 * `extract_facts` n'efface jamais `transcript`
+* `transcribe_audio` ne peut mettre à jour que `transcript_patch`
 * clés hors domaine autorisé renvoient `422 VALIDATION_FAILED`
 * `job_type` vs domaine patch suit strictement l'ownership spécifié
 * multi-sélection UI "ajout keyword" : N appels `PATCH /assets/{uuid}` indépendants, erreurs partielles isolées
@@ -668,6 +671,8 @@ Tests obligatoires :
 * le registre canonique `job_type -> required_capabilities -> outputs` défini dans `JOB-TYPES.md` est respecté sans output structurant implicite
 * `transcribe_audio` devient obligatoire à partir de la phase `v1.1+` validée pour tout média dont le `processing_profile` l'exige
 * avant cette phase validée, `transcribe_audio` PEUT être exercé en pré-release uniquement via `feature_flags`
+* quand il est activé en pré-release, `transcribe_audio` projette exactement `{ status, text?, text_preview?, language?, updated_at? }` dans `AssetDetail.transcript`
+* avant validation `v1.1+`, aucun `segments[]` ni timecode segmenté n'est attendu dans `AssetDetail.transcript`
 * `suggest_tags` refuse de tourner si `facts_ref` est absent
 * `suggest_tags` accepte l'absence de `transcript_ref`
 * provider indisponible pour `suggest_tags` => `failed` retryable, sans fallback implicite de provider

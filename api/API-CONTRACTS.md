@@ -1291,8 +1291,8 @@ Headers obligatoires :
 
 Effets :
 
-* `extract_facts | generate_preview | generate_thumbnails | generate_audio_waveform` :
-  mise à jour des domaines `facts/derived`, puis `PROCESSING_REVIEW → REVIEW_PENDING_PROFILE|PROCESSED → DECISION_PENDING` selon le profil effectif et sa complétude
+* `extract_facts | generate_preview | generate_thumbnails | generate_audio_waveform | transcribe_audio` :
+  mise à jour des domaines `facts/derived/transcript`, puis `PROCESSING_REVIEW → REVIEW_PENDING_PROFILE|PROCESSED → DECISION_PENDING` selon le profil effectif et sa complétude
 
 Note v1 (important) :
 
@@ -1304,10 +1304,12 @@ Note v1 (important) :
 * ownership de patch par `job_type` :
   * `extract_facts` -> `facts_patch`
   * `generate_preview|generate_thumbnails|generate_audio_waveform` -> `derived_patch`
+  * `transcribe_audio` -> `transcript_patch`
 
 Règle d'extension:
 
-* les `job_type` IA (`transcribe_audio`, `suggest_tags`) et leurs patch domains sont hors périmètre v1 et documentés dans le paquet normatif v1.1.
+* `transcribe_audio` PEUT être exposé plus tôt sous `feature_flags`, mais reste hors conformité `v1` tant que la phase `v1.1+` n'est pas validée.
+* `suggest_tags` et les autres patch domains IA restent hors périmètre `v1` et documentés dans le paquet normatif `v1.1+`.
 
 Erreurs de lock/idempotence (normatif) :
 
@@ -1950,7 +1952,7 @@ Response (`202 Accepted`) :
 * `paths: { storage_id, original_relative, sidecars_relative[] }`
 * `processing: { facts_done, thumbs_done, preview_done, waveform_done, processing_profile, review_processing_version }`
 * `derived: { preview_video_url?, preview_audio_url?, preview_photo_url?, waveform_url?, thumbs[] }`
-* `transcript: { status, text_preview?, updated_at? }`
+* `transcript: { status, text?, text_preview?, language?, updated_at? }`
 * `decisions: { current?, history[] }`
 * `audit: { path_history[], revision_history[] }`
 
@@ -1999,7 +2001,7 @@ Règle :
 ### Job
 
 * `job_id`
-* `job_type` (`extract_facts | generate_preview | generate_thumbnails | generate_audio_waveform`)
+* `job_type` (`extract_facts | generate_preview | generate_thumbnails | generate_audio_waveform | transcribe_audio`)
 * `asset_uuid`
 * `lock_token`
 * `fencing_token`
@@ -2014,6 +2016,7 @@ Règle :
 
 * `facts_patch?` (JSON partiel)
 * `derived_patch?` (`derived_manifest` partiel)
+* `transcript_patch?`
 * `warnings[]`
 * `metrics`
 
@@ -2066,6 +2069,19 @@ Contrat minimal `facts_patch` :
 * un champ facts optionnel peut être promu vers `AssetDetail.fields` s'il doit rester visible et éditable côté `UI_WEB`
 * un champ facts nécessitant une sémantique dédiée, un index spécialisé ou une policy de sécurité spécifique DOIT devenir un champ/colonne dédié côté Core, pas une clé implicite de `fields`
 * en conséquence, `captured_at` et les champs `gps_*` NE DOIVENT PAS être cachés implicitement dans `AssetDetail.fields`
+
+Contrat `transcript_patch` (pré-release sous `feature_flags`, hors conformité `v1`) :
+
+* `status` (`NONE|RUNNING|DONE|FAILED`)
+* `text` (`string?`)
+* `text_preview` (`string?`)
+* `language` (`string?`)
+* `updated_at` (`date-time?`)
+* `transcribe_audio` est seul propriétaire de ce domaine
+* `transcript_patch` DOIT projeter vers `AssetDetail.transcript`
+* avant validation `v1.1+`, `transcript_patch` PEUT être accepté uniquement quand `features.ai.transcribe_audio` est effectivement `ON`
+* avant validation `v1.1+`, la présence ou l'absence de `transcript` NE DOIT PAS bloquer la complétude processing `v1`
+* aucun `segments[]` ni timecode segmenté ne fait partie du contrat partagé actuel
 
 
 ## 10) Codes d’erreur (normatifs)
