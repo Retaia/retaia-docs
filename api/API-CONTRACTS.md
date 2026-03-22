@@ -104,6 +104,7 @@ Glossaire de lecture (opposable) :
 * Ownership runtime: `accepted_feature_flags_contract_versions` est piloté par release/config Core (pas modifiable via endpoint admin runtime).
 * Les kill-switches permanents autorisés DOIVENT être listés dans [`FEATURE-FLAG-KILLSWITCH-REGISTRY.md`](../change-management/FEATURE-FLAG-KILLSWITCH-REGISTRY.md).
 * Le registre canonique des clés runtime encore actives, de leur tier, mutabilité et dépendances est défini dans [`FEATURE-FLAG-REGISTRY.md`](../change-management/FEATURE-FLAG-REGISTRY.md).
+* Les anciennes clés `deprecated` assimilées au nominal DOIVENT être retirées des implémentations enfants avant la release finale `v1.0.0`; elles ne doivent plus piloter aucun branchement runtime dans `Core`, `UI_WEB`, `Agent` ou `MCP`.
 
 ### Orchestration runtime (normatif)
 

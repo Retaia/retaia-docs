@@ -54,6 +54,8 @@ Contraintes :
 * ces clés NE DOIVENT PLUS être émises dans `feature_flags`, `app_feature_enabled`, `user_feature_enabled`, `effective_feature_enabled` ni `feature_governance`
 * `core_v1_global_features` ne fait plus partie du contrat runtime partagé
 * toute tentative de mutation explicite de l'une de ces clés DOIT être refusée avec `422 VALIDATION_FAILED`
+* elles DOIVENT être retirées des implémentations enfants avant la release finale `v1.0.0`
+* aucun repo enfant (`Core`, `UI_WEB`, `Agent`, `MCP`) NE DOIT conserver de branchement runtime sur ces clés au moment de la release finale `v1.0.0`
 
 ## Références associées
 
