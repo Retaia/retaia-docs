@@ -112,9 +112,8 @@ Tests obligatoires :
 * `GET /app/features`:
   * bearer admin valide => `200` + payload `app_feature_enabled`
   * bearer user non-admin => `403 FORBIDDEN_ACTOR` ou `FORBIDDEN_SCOPE`
-  * payload stable obligatoire: `app_feature_enabled`, `app_feature_explanations`, `feature_governance`, `core_v1_global_features`
+  * payload stable obligatoire: `app_feature_enabled`, `app_feature_explanations`, `feature_governance`
   * réponse inclut `feature_governance[]` (`key`, `tier`, `user_can_disable`, `dependencies[]`, `disable_escalation[]`)
-  * réponse inclut `core_v1_global_features[]` (registre canonique des features non désactivables)
   * réponse inclut `app_feature_explanations.<feature_key>` avec `effective_value`, `reason_code?`, `dependency_key?`, `parent_feature_key?`
   * bearer absent/invalide => `401 UNAUTHORIZED`
 * `PATCH /app/features`:
@@ -125,14 +124,13 @@ Tests obligatoires :
   * `app_feature_enabled.features.ai=false` => seules les fonctionnalités MCP dépendantes de l’AI sont désactivées
 * `GET /auth/me/features`:
   * bearer valide => `200` + `user_feature_enabled` + `effective_feature_enabled` + `feature_governance`
-  * payload stable obligatoire: `user_feature_enabled`, `effective_feature_enabled`, `effective_feature_explanations`, `feature_governance`, `core_v1_global_features`
-  * réponse inclut `core_v1_global_features[]`
+  * payload stable obligatoire: `user_feature_enabled`, `effective_feature_enabled`, `effective_feature_explanations`, `feature_governance`
   * réponse inclut `effective_feature_explanations.<feature_key>` avec `effective_value`, `reason_code?`, `dependency_key?`, `parent_feature_key?`
   * bearer absent/invalide => `401 UNAUTHORIZED`
 * `PATCH /auth/me/features`:
   * bearer valide + body valide => `200` + préférences utilisateur mises à jour
   * bearer absent/invalide => `401 UNAUTHORIZED`
-  * tentative de désactivation d’une feature `CORE_V1_GLOBAL` => `403 FORBIDDEN_SCOPE`
+  * tentative d'écriture d'une clé `deprecated` assimilée au nominal => `422 VALIDATION_FAILED`
   * body invalide => `422 VALIDATION_FAILED`
   * désactivation d’une feature parent => `disable_escalation[]` appliquée dans `effective_feature_enabled`
   * dépendance OFF => feature dépendante OFF dans `effective_feature_enabled`
@@ -716,8 +714,6 @@ Cas OFF/ON minimum :
 * `app_feature_enabled.features.ai=ON` : fonctions MCP dépendantes de l’AI autorisées selon matrice authz et capabilities
 * `user_feature_enabled.features.ai=OFF` : fonctionnalités AI désactivées pour l’utilisateur courant sans impact global
 * admin remet ON une feature globalement après opt-out user => l’utilisateur concerné reste OFF
-* tentative d’opt-out utilisateur sur une feature `CORE_V1_GLOBAL` => refus `403 FORBIDDEN_SCOPE`
-* pour chaque clé de `core_v1_global_features[]`, la ligne `feature_governance.key` correspondante expose `tier=CORE_V1_GLOBAL` et `user_can_disable=false`
 * assimilation flag->mainline validée: après stabilisation, le flag disparaît de `server_policy.feature_flags` et le comportement final reste couvert par des tests non conditionnels
 * aucun code/test/doc OFF/ON obsolète persistant après retrait du flag (hors kill-switchs explicitement documentés)
 
@@ -743,8 +739,8 @@ Tests obligatoires :
 * continuous deployment validé: une release Core avec retrait de flag passe les gates CD sans exiger upgrade client synchronisée
 * chaque kill-switch permanent a une entrée dans `change-management/FEATURE-FLAG-KILLSWITCH-REGISTRY.md`
 * chaque clé partagée `v1.0.0` existe dans `change-management/FEATURE-FLAG-REGISTRY.md`
-* `core_v1_global_features[]` correspond exactement aux clés `Tier = CORE_V1_GLOBAL` du registre
 * `feature_governance[]` reste aligné avec `FEATURE-FLAG-REGISTRY.md` pour `tier`, `dependencies[]`, `disable_escalation[]` et `user_can_disable`
+* les clés `deprecated` assimilées au nominal n'apparaissent dans aucun payload runtime ni de préférences feature
 
 ## 8.4.b) Matrice de vérité feature governance
 
@@ -757,7 +753,7 @@ Tests obligatoires :
 * `feature_flags=ON`, `app=ON`, `user=ON`, dépendances ON => `effective=ON`
 * admin OFF puis user ON => `effective=OFF` (l’utilisateur ne peut pas réactiver)
 * admin ON après un user OFF persistant => `effective=OFF` pour cet utilisateur
-* tentative user OFF sur `CORE_V1_GLOBAL` => `403 FORBIDDEN_SCOPE`
+* tentative d'écriture d'une clé `deprecated` assimilée au nominal => `422 VALIDATION_FAILED`
 * clé `user_feature_enabled` absente => évaluée `true`
 
 ## 8.5) Contract drift (`contracts/`)
