@@ -14,7 +14,7 @@ Contenu et statut :
 * `KEYBOARD-SHORTCUTS-REGISTRY.md` : normatif
 * `UI-UX-BRIEF-DESIGNER.md` : non normatif
 * `UI-REFONTE-RECOMMANDATION.md` : non normatif
-* `UI-WIREFRAMES-TEXTE.md` : normatif
+* `UI-WIREFRAMES-TEXTE.md` : non normatif
 
 Regle :
 

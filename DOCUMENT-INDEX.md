@@ -89,7 +89,7 @@ Statuts autorisés :
 | `ui/UI-GLOBAL-SPEC.md` | `NORMATIVE` | UI contract | `UI_WEB` | `v1` |
 | `ui/UI-REFONTE-RECOMMANDATION.md` | `NON_NORMATIVE` | UI design exploration | `UI_WEB` | `v1` |
 | `ui/UI-UX-BRIEF-DESIGNER.md` | `NON_NORMATIVE` | UI design exploration | `UI_WEB` | `v1` |
-| `ui/UI-WIREFRAMES-TEXTE.md` | `NORMATIVE` | UI wireframes and required layout blocks | `UI_WEB` | `v1` |
+| `ui/UI-WIREFRAMES-TEXTE.md` | `NON_NORMATIVE` | UI design exploration | `UI_WEB` | `v1` |
 | `vision/PROJECT-BRIEF.md` | `NON_NORMATIVE` | Product vision | `CONTRIBUTORS` | `cross-version` |
 | `vision/ROADMAP.md` | `ROADMAP` | Product planning | `CONTRIBUTORS,OPS` | `cross-version` |
 | `workflows/AGENT-PROTOCOL.md` | `NORMATIVE` | Workflow contract | `CORE,AGENT,AGENT_UI,MCP` | `v1` |

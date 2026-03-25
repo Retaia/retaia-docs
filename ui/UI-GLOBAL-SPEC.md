@@ -122,7 +122,17 @@ Regles :
 * le rail droit est un panneau contextuel unique, pas un sous-systeme de navigation
 * `A supprimer` est une entree de navigation de premier niveau
 
-## 5.1) Visibilite minimale des etats metier
+## 5.1) Blocs metadata humains obligatoires
+
+Dans le detail asset partage (`/review/asset/:assetId`, `/library/asset/:assetId`, `/rejects/asset/:assetId`) :
+
+* un bloc `Projects` DOIT etre visible quand `projects[]` est present dans l'asset
+* `Projects` represente le contexte humain de rattachement/reutilisation de l'asset
+* `Projects` DOIT rester distinct de `location_*`, des tags et de `fields`
+* `Projects` PEUT etre editable dans les contextes autorises par l'ecran courant
+* l'absence de `projects[]` NE DOIT PAS masquer les autres metadata humaines
+
+## 5.2) Visibilite minimale des etats metier
 
 Regles :
 
