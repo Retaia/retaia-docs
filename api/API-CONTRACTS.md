@@ -975,6 +975,7 @@ Body (exemple) :
 * `location_country: string` (optionnel)
 * `location_city: string` (optionnel)
 * `location_label: string` (optionnel)
+* `projects: { project_id, project_name, created_at, description? }[]` (optionnel)
 * `processing_profile: video_standard | audio_undefined | audio_music | audio_voice | photo_standard`
 * `state: DECISION_PENDING | DECIDED_KEEP | DECIDED_REJECT | ARCHIVED | REJECTED` (transition explicite)
 
@@ -1005,6 +1006,8 @@ Règles :
 * si `If-Match` ne correspond plus au `revision_etag` courant de l'asset, Core DOIT refuser avec `412 PRECONDITION_FAILED`
 * la réponse d'erreur `412 PRECONDITION_FAILED` DOIT inclure au minimum `details.current_revision_etag` et `details.current_state` pour permettre un rechargement propre côté client
 * la multi-sélection UI (ex: ajout d'un keyword) DOIT envoyer des appels unitaires `PATCH /assets/{uuid}` (un par asset)
+* `projects[]` est éditable comme rattachement métier humain explicite; il reste hors `fields`
+* `projects[]` appartient au scope produit humain (`Core`, `UI_WEB`, puis `MCP`) et ne fait pas partie du contrat de processing `AGENT`
 * mutation `processing_profile` :
   * autorisée uniquement pour un acteur humain via `UI_WEB`
   * autorisée uniquement si `state in {READY, PROCESSING_REVIEW, REVIEW_PENDING_PROFILE}`
@@ -1946,6 +1949,7 @@ Response (`202 Accepted`) :
 * `location_country: string?`
 * `location_city: string?`
 * `location_label: string?`
+* `projects: { project_id, project_name, created_at, description? }[]`
 * `paths: { storage_id, original_relative, sidecars_relative[] }`
 * `processing: { facts_done, thumbs_done, preview_done, waveform_done, processing_profile, review_processing_version }`
 * `derived: { preview_video_url?, preview_audio_url?, preview_photo_url?, waveform_url?, thumbs[] }`
@@ -1959,6 +1963,10 @@ Règles de visibilité et présence (normatives) :
 * `summary.captured_at` reste le champ canonique d'horodatage de capture exposé en lecture
 * les champs `gps_*` dédiés DOIVENT être exposés en lecture détaillée quand présents
 * les champs d'adresse dédiés `location_country`, `location_city`, `location_label` DOIVENT être exposés en lecture détaillée quand présents
+* `projects[]` DOIT être exposé comme rattachement métier explicite, distinct de `location_*` et de `fields`
+* `projects[]` PEUT être vide; s'il contient des entrées, celles-ci DOIVENT être uniques par `project_id`
+* l'ordre de `projects[]` DOIT être stable pour un même état métier
+* chaque entrée de `projects[]` expose obligatoirement `project_id`, `project_name`, `created_at`, et PEUT inclure `description`
 * Core NE DOIT PAS masquer conditionnellement `paths`, `processing`, `derived`, `decisions` ou `audit` selon qu'il s'agit d'un `UserBearerAuth` ou d'un `TechnicalBearerAuth`
 * les sous-objets `paths`, `processing`, `derived`, `decisions` et `audit` DOIVENT toujours être présents dans `AssetDetail`
 * l'absence de données dans un sous-domaine DOIT être représentée par des champs nuls, tableaux vides ou valeurs par défaut compatibles, pas par l'omission du sous-objet
@@ -2065,7 +2073,8 @@ Contrat minimal `facts_patch` :
 * les champs `gps_*` sont des facts source ; s'ils sont acceptés par Core, ils DOIVENT être promus dans un stockage/champ dédié typé côté Core
 * un champ facts optionnel peut être promu vers `AssetDetail.fields` s'il doit rester visible et éditable côté `UI_WEB`
 * un champ facts nécessitant une sémantique dédiée, un index spécialisé ou une policy de sécurité spécifique DOIT devenir un champ/colonne dédié côté Core, pas une clé implicite de `fields`
-* en conséquence, `captured_at` et les champs `gps_*` NE DOIVENT PAS être cachés implicitement dans `AssetDetail.fields`
+* en conséquence, `captured_at`, les champs `gps_*` et `projects[]` NE DOIVENT PAS être cachés implicitement dans `AssetDetail.fields`
+* `projects[]` n'est ni un input attendu de job agent, ni un output structurant de processing
 
 Contrat `transcript_patch` (pré-release sous `feature_flags`, hors conformité `v1`) :
 

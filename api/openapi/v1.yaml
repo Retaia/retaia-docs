@@ -1244,6 +1244,10 @@ paths:
                 location_label:
                   type: string
                   nullable: true
+                projects:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/AssetProjectRef"
                 processing_profile:
                   type: string
                   enum: [video_standard, audio_undefined, audio_music, audio_voice, photo_standard]
@@ -3573,6 +3577,10 @@ components:
         location_label:
           type: string
           nullable: true
+        projects:
+          type: array
+          items:
+            $ref: "#/components/schemas/AssetProjectRef"
         paths:
           $ref: "#/components/schemas/AssetPaths"
         processing:
@@ -3656,6 +3664,24 @@ components:
       description: >
         Shared complementary metadata map. Values stay JSON-simple; domains requiring
         dedicated semantics, storage or security rules must not be hidden implicitly here.
+
+    AssetProjectRef:
+      type: object
+      additionalProperties: false
+      required: [project_id, project_name, created_at]
+      properties:
+        project_id:
+          type: string
+          minLength: 1
+        project_name:
+          type: string
+          minLength: 1
+        created_at:
+          type: string
+          format: date-time
+        description:
+          type: string
+          nullable: true
 
     AssetDerived:
       type: object
