@@ -1,8 +1,8 @@
 # Wireframes texte - refonte UI
 
-> Statut : recommandation design/UX non normative.
-> Source de cadrage : [UI-REFONTE-RECOMMANDATION.md](UI-REFONTE-RECOMMANDATION.md)
-> Objectif : decrire les ecrans cibles en filaire texte, sans imposer le design final.
+> Statut : wireframes UI normatifs pour `UI_WEB`.
+> Source de cadrage : [UI-GLOBAL-SPEC.md](UI-GLOBAL-SPEC.md) et [UI-REFONTE-RECOMMANDATION.md](UI-REFONTE-RECOMMANDATION.md)
+> Objectif : decrire les ecrans cibles en filaire texte et imposer la structure fonctionnelle minimale partagee.
 
 ## 1. Principes de lecture
 
@@ -12,6 +12,11 @@ Ces wireframes sont :
 - centres sur l'usage
 - alignes avec un shell Tailadmin
 - rediges avec des labels UI simples
+- normatifs pour la structure fonctionnelle minimale, les blocs obligatoires et leur hierarchie visible
+
+Regle :
+
+- l'implementation visuelle finale peut varier, mais l'absence d'un bloc ou d'un patron explicitement impose ici constitue un ecart documentaire pour `UI_WEB`
 
 Conventions :
 
@@ -78,6 +83,9 @@ Objectif :
 | Parametres      |                                                   | Tags                                | cours|
 | Compte          |                                                   | [tag] [tag] [+ Ajouter]             | ou   |
 |                 |                                                   |-------------------------------------| vide]|
+|                 |                                                   | Projects                            |      |
+|                 |                                                   | [Projet A] [Projet B] [+ Ajouter]   |      |
+|                 |                                                   |-------------------------------------|      |
 |                 |                                                   | Notes                               |      |
 |                 |                                                   | [zone de texte]                     | [Aide|
 |                 |                                                   |-------------------------------------| racc]|
@@ -96,6 +104,7 @@ Notes UX :
 - le choix `Table|Grille` doit etre persiste
 - le preview doit changer selon le type d'asset : image, video, audio, fallback
 - le transcript ne doit apparaitre que pour une video avec piste audio ou un asset audio only
+- le bloc `Projects` DOIT apparaitre dans le detail comme rattachement metier humain explicite, distinct des tags et de la localisation
 - `Space` lit ou met en pause le proxy, `K` conserve, `R` ecarte, `←` passe a l'asset precedent, `→` passe a l'asset suivant
 
 ### Variante grille - A traiter
@@ -188,7 +197,7 @@ Objectif :
 |-----------------| [ ] vignette  Nom / tags / date / type            | Nom                                 |------|
 | Langue          | [ ] vignette  Nom / tags / date / type            | Classe / Ecarte / A decider         | Infos|
 | Theme           |                                                   |-------------------------------------|------|
-| Connexion       |                                                   | Tags / Notes                        |      |
+| Connexion       |                                                   | Tags / Projects / Notes             |      |
 | Parametres      |                                                   |-------------------------------------|      |
 | Compte          |                                                   | Transcript / metadata detaillees    |      |
 +--------------------------------------------------------------------------------------------------------------+
@@ -203,6 +212,7 @@ Notes UX :
 - les differences principales portent sur les actions et le niveau d'urgence
 - `Table` est la vue par defaut
 - le choix `Table|Grille` doit etre persiste
+- le detail Bibliotheque DOIT conserver un bloc `Projects` visible au meme niveau que les autres metadonnees humaines editables
 
 ### Variante grille - Bibliotheque
 
@@ -217,7 +227,7 @@ Notes UX :
 |                 | [ ] [thumb] Nom fichier                           | [Preview]                           | Sel. |
 |                 |     type | date | etat visible                    |-------------------------------------| mult.|
 |-----------------| [ ] [thumb] Nom fichier                           | Nom                                 |------|
-| Langue          |     tags cles | etat visible                       | Tags / Notes                        | Infos|
+| Langue          |     tags cles | etat visible                       | Tags / Projects / Notes             | Infos|
 | Theme           | [ ] [thumb] Nom fichier                           |-------------------------------------|------|
 | Connexion       |     type | date | etat visible                    | Transcript / metadata detaillees    |      |
 | Parametres      |                                                   |                                     |      |
@@ -326,10 +336,11 @@ Usage :
 |                           [Play proxy] [00:12 / 01:42] [Volume]                                 |
 |                                                                                                  |
 |--------------------------------------------------------------------------------------------------|
-| (Conserver) (Ecarter) (Annuler)    Tags [tag] [tag] [+]    Notes [............................] |
+| (Conserver) (Ecarter) (Annuler)    Tags [tag] [tag] [+]    Projects [Projet A] [+]            |
 |--------------------------------------------------------------------------------------------------|
 | Infos essentielles                 | Infos detaillees                 | Transcript / historique    |
 | date, type, duree, poids           | chemin logique, source, etc.    | texte ou etat indisponible |
+| lieu / captured_at / projects      | description projet si presente  |                           |
 +--------------------------------------------------------------------------------------------------+
 ```
 
@@ -343,6 +354,7 @@ Notes UX :
 - `→` passe a l'asset suivant quand le contexte le permet
 - le transcript n'apparait que si le media contient de l'audio
 - si le proxy est indisponible, afficher un fallback lisible plutot qu'un lecteur vide
+- le detail plein ecran DOIT garder `Projects` visible comme contexte humain de reutilisation, sans le confondre avec le lieu de prise
 
 ## 9. Wireframe - Connexion
 
