@@ -234,6 +234,9 @@ Tests obligatoires :
   * `summary.captured_at` expose l'horodatage canonique de capture quand disponible
   * les champs dédiés `gps_latitude`, `gps_longitude`, `gps_altitude_m`, `gps_altitude_relative_m`, `gps_altitude_absolute_m` sont exposés quand présents
   * les champs dédiés `location_country`, `location_city`, `location_label` sont exposés quand présents
+  * `projects[]` expose le rattachement métier explicite de l'asset quand présent
+  * chaque entrée `projects[]` expose obligatoirement `project_id`, `project_name`, `created_at` et peut inclure `description?`
+  * `projects[]` reste distinct de `location_*` et de `fields`
   * expose toujours `paths`, `processing`, `derived`, `decisions` et `audit`
   * ne pratique aucune redaction actor-specific entre `UserBearerAuth` et `TechnicalBearerAuth` en `v1`
   * `summary` expose aussi `name`, `updated_at?` et `revision_etag?`
@@ -256,6 +259,7 @@ Tests obligatoires :
   * `If-Match` reprend exactement le strong validator HTTP quoté lu dans `ETag` / `summary.revision_etag`
   * `AssetSummary.revision_etag` et `GET /assets/{uuid}` exposent la même révision métier
   * `PATCH /assets/{uuid}` accepte `captured_at`, les champs dédiés `gps_*` et `location_*` comme métadonnées humaines explicites, hors `fields`
+  * `PATCH /assets/{uuid}` accepte aussi `projects[]` comme rattachement métier humain explicite, hors `fields`
   * le détail et son `ETag` restent la source canonique avant écriture si le client a un doute sur la fraîcheur de sa liste
   * précondition absente => `428 PRECONDITION_REQUIRED`
   * révision périmée => `412 PRECONDITION_FAILED`
@@ -513,6 +517,8 @@ Tests obligatoires :
 * absence d'un champ minimal applicable => résultat facts incomplet, l'asset ne peut pas être considéré `PROCESSED`
 * si `captured_at` est fourni dans `facts_patch`, il alimente directement le champ métier dédié `captured_at`
 * si Core accepte des `gps_*`, ils sont stockés dans des champs/colonnes dédiés typés côté Core, pas dans `fields`
+* `projects[]` n'est jamais porté par `facts_patch` ni caché dans `fields`; c'est un rattachement métier humain explicite
+* `projects[]` n'est pas un concept de processing `AGENT` et n'entre dans aucun output structurant de job
 
 ## 4) Merge patch par domaine
 
