@@ -435,6 +435,7 @@ Fenêtres temporelles partagées (normatif) :
   * `200` setup généré
   * `401 UNAUTHORIZED`
   * `409 MFA_ALREADY_ENABLED`
+  * `429 TOO_MANY_ATTEMPTS`
 
 `POST /auth/2fa/enable`
 
@@ -446,6 +447,7 @@ Fenêtres temporelles partagées (normatif) :
   * `400 INVALID_2FA_CODE`
   * `401 UNAUTHORIZED`
   * `409 MFA_ALREADY_ENABLED`
+  * `429 TOO_MANY_ATTEMPTS`
   * `422 VALIDATION_FAILED`
 
 `POST /auth/2fa/disable`
@@ -458,6 +460,20 @@ Fenêtres temporelles partagées (normatif) :
   * `400 INVALID_2FA_CODE`
   * `401 UNAUTHORIZED`
   * `409 MFA_NOT_ENABLED`
+  * `429 TOO_MANY_ATTEMPTS`
+  * `422 VALIDATION_FAILED`
+
+`POST /auth/2fa/recovery-codes/regenerate`
+
+* security: `UserBearerAuth`
+* body requis: `{ otp_code }`
+* effet: régénère les recovery codes après preuve TOTP fraîche
+* réponses:
+  * `200` succès
+  * `400 INVALID_2FA_CODE`
+  * `401 UNAUTHORIZED`
+  * `409 MFA_NOT_ENABLED`
+  * `429 TOO_MANY_ATTEMPTS`
   * `422 VALIDATION_FAILED`
 
 `POST /auth/logout`
