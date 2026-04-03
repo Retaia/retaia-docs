@@ -149,6 +149,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many 2FA setup attempts (`TOO_MANY_ATTEMPTS`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /auth/2fa/enable:
     parameters:

@@ -76,6 +76,7 @@ Tests obligatoires :
   * bearer valide + 2FA inactive => `200` + `otpauth_uri` / `secret` pour app externe (Authy...)
   * bearer absent/invalide => `401 UNAUTHORIZED`
   * 2FA déjà active => `409 MFA_ALREADY_ENABLED`
+  * rate limit => `429 TOO_MANY_ATTEMPTS`
 * `POST /auth/2fa/enable`:
   * bearer valide + `otp_code` valide => `200`
   * `otp_code` invalide => `400 INVALID_2FA_CODE`
