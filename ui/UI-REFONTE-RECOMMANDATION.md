@@ -1,9 +1,9 @@
 # Recommandation de refonte UI - Retaia
 
-> Statut : recommandation design/UX non normative.
+> Statut : recherche et recommandation design/UX non normative.
 > Base de travail : `../README.md`, `./UI-UX-BRIEF-DESIGNER.md`, `../vision/PROJECT-BRIEF.md`, `../state-machine/STATE-MACHINE.md`, `../definitions/DEFINITIONS.md`, `../policies/I18N-LOCALIZATION.md`, `../tests/TEST-PLAN.md`.
 > Cette proposition ne s'appuie pas sur le code existant et vise uniquement la refonte de l'interface.
-> En cas de conflit, `UI-GLOBAL-SPEC.md` prime pour les routes, le shell et les comportements UI globaux.
+> En cas de conflit, les documents normatifs du repo priment sur cette recommandation UI.
 
 ## 1. Intent produit
 

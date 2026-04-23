@@ -1,9 +1,9 @@
 # Brief UI/UX Designer - Retaia
 
 ## 1) Objectif du document
-> Statut : recommandation UI/UX non normative.
+> Statut : recherche et recommandation UI/UX non normative.
 > Source de verite normative : `api/`, `policies/`, `workflows/`, `state-machine/`, `definitions/`.
-> Routes, shell et comportements UI globaux : `UI-GLOBAL-SPEC.md`.
+> Routes, shell et comportements UI globaux : `UI-GLOBAL-SPEC.md` (cadrage non normatif).
 
 Ce document sert de brief fonctionnel pour le rebranding UI/UX.
 Le but est de décrire les fonctionnalités métier et les parcours utilisateur, sans imposer de direction visuelle.

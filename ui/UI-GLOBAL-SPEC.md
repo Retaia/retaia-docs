@@ -1,12 +1,17 @@
 # UI Global Spec
 
-Ce document fixe les regles globales UI partagees par `UI_WEB`.
+Ce document rassemble le cadrage global UI partage pour `UI_WEB`.
 
 Statut :
 
-* normatif pour les parcours UI, le vocabulaire visible, la navigation et les comportements d'interface
-* non substituable par une recommandation locale de `retaia-ui`
-* hors portee directe pour `AGENT_UI` sauf mention normative explicite dans un autre document partage
+* document UI/UX non normatif
+* support de recherche et de recommandation pour les parcours UI, le vocabulaire visible, la navigation et les comportements d'interface
+* hors portee directe pour `AGENT_UI` sauf si un autre document normatif y fait explicitement reference
+
+Regle de lecture :
+
+* les formulations `DOIT`, `NE DOIT PAS`, `obligatoire` et assimilées de ce document doivent etre lues comme recommandations de design et de coherence produit, pas comme contrat opposable
+* la source de verite normative reste dans `api/`, `policies/`, `workflows/`, `definitions/` et `tests/`
 
 ## 1) Routes UI canoniques
 
@@ -38,7 +43,7 @@ Regles :
 
 Le traitement groupe reste un concept UI uniquement.
 
-Machine d'etat UI normative :
+Machine d'etat UI recommandee :
 
 * `idle`
 * `selection_active`
@@ -90,7 +95,7 @@ Le registre de reference est :
 
 ## 4) Vocabulaire UI canonique
 
-Libelles FR visibles normatifs :
+Libelles FR visibles recommandes :
 
 * `Review` -> `A traiter`
 * `Library` -> `Bibliotheque`

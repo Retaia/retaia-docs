@@ -1,8 +1,8 @@
 # Wireframes texte - refonte UI
 
-> Statut : wireframes UI normatifs pour `UI_WEB`.
+> Statut : wireframes UI/UX non normatifs.
 > Source de cadrage : [UI-GLOBAL-SPEC.md](UI-GLOBAL-SPEC.md) et [UI-REFONTE-RECOMMANDATION.md](UI-REFONTE-RECOMMANDATION.md)
-> Objectif : decrire les ecrans cibles en filaire texte et imposer la structure fonctionnelle minimale partagee.
+> Objectif : decrire les ecrans cibles en filaire texte et illustrer une structure fonctionnelle recommande.
 
 ## 1. Principes de lecture
 
@@ -13,11 +13,12 @@ Ces wireframes sont :
 - alignes avec un shell Tailadmin
 - rediges avec des labels UI simples
 - alignes avec les regles normatives publiees ailleurs dans le corpus UI
-- normatifs pour la structure fonctionnelle minimale, les blocs obligatoires et leur hierarchie visible
+- utiles pour explorer une structure fonctionnelle minimale et les blocs a considerer
 
 Regle :
 
-- l'implementation visuelle finale peut varier, mais l'absence d'un bloc ou d'un patron explicitement impose ici constitue un ecart documentaire pour `UI_WEB`
+- l'implementation visuelle finale peut varier librement
+- ces wireframes n'imposent pas a eux seuls un contrat opposable pour `UI_WEB`
 
 Conventions :
 
