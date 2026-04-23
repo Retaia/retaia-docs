@@ -10,13 +10,14 @@ Statut :
 
 Contenu et statut :
 
-* `UI-GLOBAL-SPEC.md` : normatif
-* `KEYBOARD-SHORTCUTS-REGISTRY.md` : normatif
+* `UI-GLOBAL-SPEC.md` : non normatif
+* `KEYBOARD-SHORTCUTS-REGISTRY.md` : non normatif
 * `UI-UX-BRIEF-DESIGNER.md` : non normatif
 * `UI-REFONTE-RECOMMANDATION.md` : non normatif
-* `UI-WIREFRAMES-TEXTE.md` : normatif
+* `UI-WIREFRAMES-TEXTE.md` : non normatif
 
 Regle :
 
 * en cas de conflit, les contrats/policies/workflows normatifs du repo priment
-* un document UI non marque `normatif` ne peut pas redefinir une regle partagee implicite pour `Core`, `UI_WEB` ou `Agent`
+* les documents UI/UX servent de recherche, de cadrage et de recommandation produit
+* aucun document UI/UX ne definit a lui seul une regle partagee implicite pour `Core`, `UI_WEB` ou `Agent`

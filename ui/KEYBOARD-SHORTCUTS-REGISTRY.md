@@ -1,11 +1,16 @@
 # Keyboard Shortcuts Registry
 
-> Statut: registre UI global de reference.
-> Source de verite normative complementaire: `UI-GLOBAL-SPEC.md`.
+> Statut: registre UI/UX non normatif de reference.
+> Source de cadrage complementaire: `UI-GLOBAL-SPEC.md`.
 
 ## Objectif
 
 Fournir un registre unique des raccourcis et des regles de gouvernance pour eviter les collisions UX/a11y pendant les refactors.
+
+Regle de lecture:
+
+- ce registre sert de recommandation de design et d'implementation
+- il ne constitue pas a lui seul un contrat opposable cross-repo
 
 ## Regles de gouvernance
 
